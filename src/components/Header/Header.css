@@ -1,0 +1,178 @@
+.header-sec {
+  background: #fff;
+  color: #fff;
+  padding: 15px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  padding-left: 280px;
+}
+
+.header-sec.sidebar-collapsed {
+  padding-left: 70px;
+}
+
+.toggle-sidebar-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px;
+  color: #333;
+  transition: color 0.3s ease;
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  z-index: 1001;
+}
+
+.toggle-sidebar-btn:hover {
+  color: #000;
+}
+
+.left-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.logo-sec img {
+  height: 50px;
+  width: auto;
+}
+
+.logo-text h2 {
+  font-size: 1.2rem;
+  margin: 0;
+  color: #333;
+  font-weight: 600;
+}
+
+.logo-text p {
+  font-size: 0.9rem;
+  margin: 0;
+  color: #666;
+}
+
+.header-right-sec {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-right-sec-1 {
+  display: flex;
+  align-items: center;
+}
+
+.header-right-sec-1 label {
+  margin-bottom: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.rolemapping {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f5f5f5;
+  padding: 5px 10px;
+  border-radius: 4px;
+  min-width: 200px;
+}
+
+.icon-role {
+  color: #666;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.role-input {
+  border: none;
+  background: transparent;
+  color: #333;
+  font-size: 0.9rem;
+  padding: 2px 5px;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+}
+
+.role-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.role-input option {
+  background: #fff;
+  color: #333;
+  padding: 8px;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  background: #dc3545;
+  border: none;
+}
+
+.logout-btn:hover {
+  background: #c82333;
+}
+
+.icon-logout {
+  font-size: 1.2rem;
+}
+
+select {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #fff;
+  background-color: #fff;
+  color: #673ab7;
+  font-size: 16px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .header-sec,
+  .header-sec.sidebar-collapsed {
+    padding-left: 60px;
+  }
+
+  .header-sec {
+    padding: 5px 0;
+  }
+
+  .logo-text h2 {
+    font-size: 1rem;
+  }
+
+  .logo-text p {
+    font-size: 0.8rem;
+  }
+
+  .logo-sec img {
+    height: 40px;
+  }
+
+  .header-right-sec {
+    gap: 10px;
+  }
+
+  .header-right-sec-1 label {
+    display: none;
+  }
+
+  .rolemapping {
+    min-width: 150px;
+  }
+}

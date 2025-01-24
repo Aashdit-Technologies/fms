@@ -1,0 +1,240 @@
+.hierarchy-container {
+  padding: 20px;
+  background: #fff;
+  min-height: calc(100vh - 100px);
+}
+
+h2 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.config-note {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+  padding: 15px;
+  margin: -20px -20px 20px -20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  gap: 10px;
+}
+
+.toolbar button {
+  padding: 8px 16px;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.toolbar button:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #0066cc;
+}
+
+.toolbar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #ddd;
+}
+
+.node-form {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #333;
+  min-width: 60px;
+}
+
+.form-group input,
+.form-group select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 200px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+/* Tree layout */
+.tree-container {
+  padding: 40px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  min-height: 400px;
+  position: relative;
+  overflow: auto;
+}
+
+.tree-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.node-box {
+  padding: 15px 20px;
+  min-width: 180px;
+  text-align: center;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 1;
+}
+
+.node-box:hover {
+  border-color: #0066cc;
+  box-shadow: 0 2px 6px rgba(0, 102, 204, 0.1);
+}
+
+.node-box.selected {
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+}
+
+.node-name {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.node-type {
+  font-size: 12px;
+  color: #666;
+  padding: 2px 6px;
+  background: #f8f9fa;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Tree connections */
+.node-children {
+  display: flex;
+  flex-direction: row;
+  gap: 60px;
+  margin-top: 40px;
+  position: relative;
+  padding: 0 30px;
+}
+
+/* Vertical line from parent */
+.node-children::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  width: 2px;
+  height: 20px;
+  background: #ddd;
+  transform: translateX(-50%);
+}
+
+/* Horizontal line connecting siblings */
+.node-children::after {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ddd;
+}
+
+/* Vertical lines to each child */
+.tree-node::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  width: 2px;
+  height: 20px;
+  background: #ddd;
+  transform: translateX(-50%);
+}
+
+/* Root node specific styles */
+.root-node {
+  margin-bottom: 20px;
+}
+
+.root-node > .node-children {
+  margin-top: 40px;
+}
+
+.root-node > .node-children::before {
+  height: 20px;
+  top: -20px;
+}
+
+.root-node > .node-children::after {
+  top: -20px;
+}
+
+/* First level nodes */
+.root-node > .node-children > .tree-node::before {
+  top: -20px;
+  height: 20px;
+}
+
+/* Single child adjustments */
+.node-children.single-child::after {
+  display: none;
+}
+
+.node-children.single-child > .tree-node::before {
+  display: none;
+}
+
+/* Adjust spacing for better visualization */
+.tree-container {
+  padding: 60px;
+}
+
+.node-children {
+  margin-top: 50px;
+}
+
+/* Hide vertical line above root */
+.root-node::before {
+  display: none;
+}
