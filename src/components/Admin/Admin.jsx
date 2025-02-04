@@ -7,6 +7,12 @@ import Hierarchy from "../Hierarchy/Hierarchy";
 import DiarySection from "../DiarySection/DiarySection";
 import Letter from "../Letter/Letter";
 import "./Admin.css";
+import MainFile from "../FileSection/MainFile";
+import Scheduling from "../FileSection/Scheduling";
+import ManageRoom from "../ManageRoom/ManageRoom";
+import ManageRack from "../ManageRack/ManageRack";
+import ManageActivity from "../ManageActivity/ManageActivity";
+import ManageFile from "../ManageFile/ManageFile";
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -16,7 +22,7 @@ const Admin = () => {
     setMenuItems(data);
   };
 
-  // Flatten children menus for routing
+
   const getFlatMenuItems = (items) => {
     const flatMenu = [];
     items.forEach((menu) => {
@@ -50,7 +56,7 @@ const Admin = () => {
         />
         <AdminMain collapsed={collapsed}>
           <Routes>
-            {/* Welcome route */}
+            
             <Route 
               index 
               element={
@@ -60,7 +66,6 @@ const Admin = () => {
               } 
             />
 
-            {/* Static Routes */}
             <Route 
               path="hierarchy" 
               element={
@@ -73,7 +78,7 @@ const Admin = () => {
               path="file" 
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
-                  <DiarySection />
+                  <ManageFile />
                 </React.Suspense>
               } 
             />
@@ -85,16 +90,55 @@ const Admin = () => {
                 </React.Suspense>
               } 
             />
+            <Route 
+              path="scheduling" 
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <Scheduling />
+                </React.Suspense>
+              } 
+            />
+            <Route 
+              path="manage-room" 
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <ManageRoom />
+                </React.Suspense>
+              } 
+            />
+            <Route 
+              path="manage-rack" 
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <ManageRack />
+                </React.Suspense>
+              } 
+            />
+            <Route 
+              path="manage-activity" 
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <ManageActivity />
+                </React.Suspense>
+              } 
+            />
+            <Route 
+              path="/main-file" 
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <MainFile />
+                </React.Suspense>
+              } 
+            />
 
-            {/* Dynamic Routes from API */}
             {menuItems.map((menu) => {
-              // Skip menu items that are handled statically or are just containers (#)
+              
               if (menu.menuURL === '#') {
-                // If it's a container with children, render routes for children
+                
                 if (menu.children?.length > 0) {
                   return menu.children.map(child => {
                     const Component = child.menuComponent ? lazyLoadComponent(child.menuComponent) : null;
-                    const path = child.menuURL; // Keep the leading slash
+                    const path = child.menuURL; 
                     return (
                       <Route
                         key={child.menuId}
@@ -115,16 +159,20 @@ const Admin = () => {
                 return null;
               }
 
-              // Skip routes that we've defined statically
               if (menu.menuURL === '/hierarchy' || 
                   menu.menuURL === '/file' || 
-                  menu.menuURL === '/system/setup/menu/init') {
+                  menu.menuURL === '/system/setup/menu/init' || 
+                  menu.menuURL === '/scheduling' || 
+                  menu.menuURL === '/manage-room' || 
+                  menu.menuURL === '/manage-rack' || 
+                  menu.menuURL === '/manage-activity'|| 
+                  menu.menuURL === '/main-file') {
                 return null;
               }
 
-              // Handle regular routes
+             
               const Component = menu.menuComponent ? lazyLoadComponent(menu.menuComponent) : null;
-              const path = menu.menuURL; // Keep the leading slash
+              const path = menu.menuURL; 
               return (
                 <Route
                   key={menu.menuId}
@@ -142,7 +190,6 @@ const Admin = () => {
               );
             })}
 
-            {/* 404 route */}
             <Route 
               path="*" 
               element={

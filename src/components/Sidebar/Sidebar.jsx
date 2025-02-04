@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   FaHandPointLeft,
@@ -7,7 +7,7 @@ import {
   FaChevronRight,
   FaAngleDown,
 } from "react-icons/fa";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "boxicons/css/boxicons.min.css";
 import "./Sidebar.css";
@@ -15,11 +15,8 @@ import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 
 const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
-  const [openMenus, setOpenMenus] = useState({
-    menu: null,
-    submenu: null,
-  });
-
+  const [openMenus, setOpenMenus] = useState({});
+  const location = useLocation();
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
 
@@ -66,27 +63,105 @@ const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
   const handleMenuClick = (id) => {
     setOpenMenus((prev) => ({
       ...prev,
-      menu: prev.menu === id ? null : id,
-      submenu: null,
+      [id]: !prev[id], // Toggle the open state for the clicked menu
     }));
   };
 
-  const handleSubmenuClick = (id) => {
-    setOpenMenus((prev) => ({
-      ...prev,
-      submenu: prev.submenu === id ? null : id,
-    }));
+  const isActiveLink = (url) => {
+    return location.pathname === url;
   };
 
-  const handleToggleSidebar = () => {
-    setCollapsed(!collapsed);
+  const renderMenu = (menu) => {
+    const hasChildren = menu.children && menu.children.length > 0;
+    const isMenuOpen = openMenus[menu.menuId];
+
+    return (
+      <div key={menu.menuId} className="menu-item">
+        {menu.menuURL === "#" ? (
+          <div
+            className={`menu-title ${isMenuOpen ? "active" : ""}`}
+            onClick={() => handleMenuClick(menu.menuId)}
+          >
+            <div className="menu-content">
+              <i className={menu.menuIcon}></i>
+              {!collapsed && <span>{menu.menuText}</span>}
+            </div>
+            {hasChildren && !collapsed && (
+              <span className="arrow-icon">
+                {isMenuOpen ? <FaAngleDown /> : <FaChevronRight />}
+              </span>
+            )}
+          </div>
+        ) : (
+          <Link
+            to={menu.menuURL}
+            className={`menu-title ${isActiveLink(menu.menuURL) ? "active" : ""}`}
+          >
+            <div className="menu-content">
+              <i className={menu.menuIcon}></i>
+              {!collapsed && <span>{menu.menuText}</span>}
+            </div>
+            {hasChildren && !collapsed && (
+              <span className="arrow-icon">
+                {isMenuOpen ? <FaAngleDown /> : <FaChevronRight />}
+              </span>
+            )}
+          </Link>
+        )}
+
+        {hasChildren && isMenuOpen && !collapsed && (
+          <div className="submenu">
+            {menu.children.map((submenu) => (
+              <React.Fragment key={submenu.menuId}>
+                {submenu.menuURL === "#" ? (
+                  <div
+                    className={`submenu-item ${
+                      openMenus[submenu.menuId] ? "active" : ""
+                    }`}
+                    onClick={() => handleMenuClick(submenu.menuId)}
+                  >
+                    <i className={submenu.menuIcon}></i>
+                    <span>{submenu.menuText}</span>
+                    {submenu.children?.length > 0 && (
+                      <span className="arrow-icon">
+                        {openMenus[submenu.menuId] ? (
+                          <FaAngleDown />
+                        ) : (
+                          <FaChevronRight />
+                        )}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    to={submenu.menuURL}
+                    className={`submenu-item ${
+                      isActiveLink(submenu.menuURL) ? "active" : ""
+                    }`}
+                  >
+                    <i className={submenu.menuIcon}></i>
+                    <span>{submenu.menuText}</span>
+                  </Link>
+                )}
+
+                {submenu.children?.length > 0 && openMenus[submenu.menuId] && (
+                  <div className="nested-submenu">
+                    {submenu.children.map((nestedSubmenu) => renderMenu(nestedSubmenu))}
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (isLoading)
     return (
       <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
         <div className="sidebar-header">
-          <button className="toggle-btn" onClick={handleToggleSidebar}>
+          <button className="toggle-btn" onClick={() => setCollapsed(!collapsed)}>
             {collapsed ? <FaHandPointRight /> : <FaHandPointLeft />}
           </button>
         </div>
@@ -98,7 +173,7 @@ const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
     return (
       <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
         <div className="sidebar-header">
-          <button className="toggle-btn" onClick={handleToggleSidebar}>
+          <button className="toggle-btn" onClick={() => setCollapsed(!collapsed)}>
             {collapsed ? <FaHandPointRight /> : <FaHandPointLeft />}
           </button>
         </div>
@@ -108,70 +183,13 @@ const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
 
   return (
     <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-      <ToastContainer />
       <div className="sidebar-header">
-        <button className="toggle-btn" onClick={handleToggleSidebar}>
+        <button className="toggle-btn" onClick={() => setCollapsed(!collapsed)}>
           {collapsed ? <FaHandPointRight /> : <FaHandPointLeft />}
         </button>
       </div>
       <nav className="sidebar-nav">
-        {menuItems.map((menu) => (
-          <div key={menu.menuId} className="menu-item">
-            {menu.menuURL === '#' ? (
-              <div
-                className={`menu-title ${
-                  openMenus.menu === menu.menuId ? "active" : ""
-                }`}
-                onClick={() => handleMenuClick(menu.menuId)}
-              >
-                <div className="menu-content">
-                  <i className={menu.menuIcon}></i>
-                  {!collapsed && <span>{menu.menuText}</span>}
-                </div>
-                {menu.children?.length > 0 && !collapsed && (
-                  <span className="arrow-icon">
-                    {openMenus.menu === menu.menuId ? (
-                      <FaAngleDown />
-                    ) : (
-                      <FaChevronRight />
-                    )}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <Link
-                to={menu.menuURL}
-                className={`menu-title ${
-                  openMenus.menu === menu.menuId ? "active" : ""
-                }`}
-              >
-                <div className="menu-content">
-                  <i className={menu.menuIcon}></i>
-                  {!collapsed && <span>{menu.menuText}</span>}
-                </div>
-              </Link>
-            )}
-            {menu.children?.length > 0 &&
-              openMenus.menu === menu.menuId &&
-              !collapsed && (
-                <div className="submenu">
-                  {menu.children.map((submenu) => (
-                    <Link
-                      key={submenu.menuId}
-                      to={submenu.menuURL.startsWith('/') ? submenu.menuURL : `/${submenu.menuURL}`}
-                      className={`submenu-item ${
-                        openMenus.submenu === submenu.menuId ? "active" : ""
-                      }`}
-                      onClick={() => handleSubmenuClick(submenu.menuId)}
-                    >
-                      <i className={submenu.menuIcon}></i>
-                      <span>{submenu.menuText}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-          </div>
-        ))}
+        {menuItems.map((menu) => renderMenu(menu))}
       </nav>
     </div>
   );

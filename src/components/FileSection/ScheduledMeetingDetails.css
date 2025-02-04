@@ -1,0 +1,111 @@
+.custom-accordion .accordion-button::after {
+    display: none;
+}
+
+.custom-accordion .accordion-button {
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.custom-accordion .accordion-button:not(.collapsed) {
+    background-color: #f8f9fa;
+    box-shadow: none;
+}
+
+button.accordion-button {
+    border-bottom: 1px solid #eae6e6;
+}
+
+.custom-accordion .toggle-icon {
+    font-size: 1.25rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    cursor: pointer;
+}
+
+.custom-accordion .accordion-button:hover .toggle-icon {
+    color: #0d6efd;
+}
+
+.custom-accordion .accordion-button:focus {
+    box-shadow: none;
+    border-color: rgba(0,0,0,.125);
+}
+
+.custom-accordion .accordion-item {
+    border: 1px solid rgba(0,0,0,.125);
+    border-radius: 0.25rem;
+}
+
+/* Schedule button */
+.schedule-btn {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    transition: all 0.2s ease-in-out;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+}
+
+.schedule-btn:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.schedule-btn svg {
+    font-size: 0.875rem;
+}
+
+/* DataTable Custom Styles */
+.rdt_TableHeader {
+    min-height: auto !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.rdt_TableHeadRow {
+    font-weight: 600 !important;
+}
+
+.rdt_TableRow {
+    padding: 0.5rem 0;
+}
+
+.rdt_Pagination {
+    border-top: 1px solid #e9ecef;
+    padding: 0.75rem 0;
+}
+
+.rdt_Pagination select {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+    border: 1px solid #dee2e6;
+}
+
+/* Action buttons */
+.btn-link {
+    text-decoration: none;
+}
+
+.btn-link:hover {
+    opacity: 0.8;
+}
+
+/* Modal styles */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eae6e6;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #eae6e6;
+}
+
+.modal-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+}

@@ -6,7 +6,8 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
-import { toast } from 'react-toastify';
+import { toast, ToastContainer} from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 import { Select, MenuItem, FormControl, InputLabel, CircularProgress } from "@mui/material";
 
@@ -152,6 +153,7 @@ const Header = ({ collapsed }) => {
   return (
     <div className={`header-sec ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <div className="container-fluid">
+        <ToastContainer />
         <div className="row align-items-center justify-content-end">
           <div className="col-md-4">
             <div className="left-header">

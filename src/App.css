@@ -1,3 +1,6 @@
 :root{
     --backgroundColor:#349124;
 }
+.accordion-button::after{
+    display: none;
+}
