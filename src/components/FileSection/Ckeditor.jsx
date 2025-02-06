@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Accordion } from "react-bootstrap";
 import { FaPlus, FaMinus } from "react-icons/fa6";
 import { Select, MenuItem } from "@mui/material";
 import SunEditorComponent from "./SunEditorComponent";
 import UploadDocument from "./UploadDocument";
 
-
-const Ckeditor = () => {
-  
+const Ckeditor = ({ additionalDetails, fileDetails }) => {
   const [selectedItem, setSelectedItem] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [editorContent, setEditorContent] = useState("");
+
 
   const options = [
     "Noting No-1",
@@ -19,20 +19,31 @@ const Ckeditor = () => {
     "Noting No-5",
   ];
 
-  const handleSelectChange = (event) => {
+  // Initialize editor content from additionalDetails if available
+  useEffect(() => {
+    if (additionalDetails?.data?.note ) {
+      setEditorContent(additionalDetails.data.note);
+    }
+    
+  }, [additionalDetails?.data?.note]);
+
+  const handleSelectChange = useCallback((event) => {
     const value = event.target.value;
     setSelectedItem(value);
 
-    // If a valid option is selected, insert it as a link
     if (value) {
       const linkHTML = `<a href="https://example.com/${value.replace(" ", "-").toLowerCase()}" target="_blank">${value}</a>`;
-      setContent((prevContent) => `${prevContent}<br/>${linkHTML}<br/>`);
+      setEditorContent((prevContent) => `${prevContent}<br/>${linkHTML}<br/>`);
     }
-  };
+  }, []);
 
-  const toggleAccordion = () => {
-    setIsOpen(!isOpen);
-  };
+  const handleEditorChange = useCallback((newContent) => {
+    setEditorContent(newContent);
+  }, []);
+
+  const toggleAccordion = useCallback(() => {
+    setIsOpen((prev) => !prev);
+  }, []);
 
   return (
     <>
@@ -62,12 +73,20 @@ const Ckeditor = () => {
               </div>
             </Accordion.Header>
             <Accordion.Body>
-              <SunEditorComponent  />
+              <SunEditorComponent
+                content={editorContent}
+                placeholder="Enter your task action here..."
+                onContentChange={handleEditorChange}
+              />
             </Accordion.Body>
           </Accordion.Item>
         </Accordion>
       </div>
-      <UploadDocument  />
+      <UploadDocument
+        fileDetails={fileDetails}
+        additionalDetails={additionalDetails}
+        initialContent={editorContent}
+      />
     </>
   );
 };

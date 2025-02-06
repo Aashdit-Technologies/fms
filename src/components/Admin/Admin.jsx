@@ -4,7 +4,9 @@ import Header from "../Header/Header";
 import Sidebar from "../Sidebar/Sidebar";
 import AdminMain from "../AdminMain/AdminMain";
 import Hierarchy from "../Hierarchy/Hierarchy";
+import Despatch from "../DespatchSection/Despatch";
 import DiarySection from "../DiarySection/DiarySection";
+import LetterList from "../Inbox/LetterList";
 import Letter from "../Letter/Letter";
 import "./Admin.css";
 import MainFile from "../FileSection/MainFile";
@@ -13,6 +15,7 @@ import ManageRoom from "../ManageRoom/ManageRoom";
 import ManageRack from "../ManageRack/ManageRack";
 import ManageActivity from "../ManageActivity/ManageActivity";
 import ManageFile from "../ManageFile/ManageFile";
+
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -123,10 +126,34 @@ const Admin = () => {
               } 
             />
             <Route 
-              path="/main-file" 
+              path="main-file" 
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <MainFile />
+                </React.Suspense>
+              } 
+            />
+            <Route 
+              path="diary-section" 
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <DiarySection />
+                </React.Suspense>
+              } 
+            />
+            <Route 
+              path="despatch-section" 
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <Despatch />
+                </React.Suspense>
+              } 
+            />
+            <Route 
+              path="letter-section" 
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <LetterList />
                 </React.Suspense>
               } 
             />
@@ -165,8 +192,10 @@ const Admin = () => {
                   menu.menuURL === '/scheduling' || 
                   menu.menuURL === '/manage-room' || 
                   menu.menuURL === '/manage-rack' || 
-                  menu.menuURL === '/manage-activity'|| 
-                  menu.menuURL === '/main-file') {
+                  menu.menuURL === '/manage-activity' ||
+                  menu.menuURL === '/diary-section' ||
+                  menu.menuURL === '/despatch-section' ||
+                  menu.menuURL === '/letter-section') {
                 return null;
               }
 

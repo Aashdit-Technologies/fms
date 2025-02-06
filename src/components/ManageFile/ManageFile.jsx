@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { FaPlus, FaMinus } from "react-icons/fa6";
+import { 
+  Select, 
+  MenuItem, 
+  FormControl, 
+  InputLabel,
+  TextField
+} from '@mui/material';
 import "./ManageFile.css";
 import useApiListStore from "./ApiListStore";
 import api from "../../Api/Api";
@@ -231,231 +238,252 @@ const ManageFile = () => {
               {/* Office */}
             <div className="form-group col-md-3">
               <label htmlFor="officeSelect">Office</label>
-              <select
-                id="officeSelect"
-                className="form-control form-select"
-                value={selectedOffice}
-                onChange={(e) => handleSelectChange(setSelectedOffice, e)}
-              >
-                <option value="" disabled>
-                  Select Office
-                </option>
-                {office.map((offices) => (
-                  <option key={offices.officeOrgId} value={offices.officeOrgId}>
-                    {offices.officeOrgName}
-                  </option>
-                ))}
-              </select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Office</InputLabel>
+                <Select
+                  value={selectedOffice}
+                  onChange={(e) => handleSelectChange(setSelectedOffice, e)}
+                  label="Office"
+                >
+                  <MenuItem value="" disabled>
+                    Select Office
+                  </MenuItem>
+                  {office.map((offices) => (
+                    <MenuItem key={offices.officeOrgId} value={offices.officeOrgId}>
+                      {offices.officeOrgName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             {/* Department */}
             <div className="form-group col-md-3">
               <label htmlFor="departmentSelect">Select Department</label>
-              <select
-                id="departmentSelect"
-                className="form-control form-select"
-                value={selectedDepartment}
-                onChange={(e) => handleSelectChange(setSelectedDepartment, e)}
-              >
-                <option value="" disabled>
-                  Select Department
-                </option>
-                {departments.map((department) => (
-                  <option key={department.departmentId} value={department.departmentId}>
-                    {department.departmentName}
-                  </option>
-                ))}
-              </select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Department</InputLabel>
+                <Select
+                  value={selectedDepartment}
+                  onChange={(e) => handleSelectChange(setSelectedDepartment, e)}
+                  label="Department"
+                >
+                  <MenuItem value="" disabled>
+                    Select Department
+                  </MenuItem>
+                  {departments.map((department) => (
+                    <MenuItem key={department.departmentId} value={department.departmentId}>
+                      {department.departmentName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             {/* File Related To */}
             <div className="form-group col-md-3">
               <label htmlFor="fileRTLSelect">File Related To</label>
-              <select
-                id="fileRTLSelect"
-                className="form-control form-select"
-                value={selectedFileRTL}
-                onChange={(e) => handleSelectChange(setSelectedFileRTL, e)}
-              >
-                <option value="" disabled>
-                  Select File Related To
-                </option>
-                {fileRelatedToList.map((fileRtl) => (
-                  <option key={fileRtl.fileRelatedId} value={fileRtl.fileRelatedId}>
-                    {fileRtl.fileRelatedName}
-                  </option>
-                ))}
-              </select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>File Related To</InputLabel>
+                <Select
+                  value={selectedFileRTL}
+                  onChange={(e) => handleSelectChange(setSelectedFileRTL, e)}
+                  label="File Related To"
+                >
+                  <MenuItem value="" disabled>
+                    Select File Related To
+                  </MenuItem>
+                  {fileRelatedToList.map((fileRtl) => (
+                    <MenuItem key={fileRtl.fileRelatedId} value={fileRtl.fileRelatedId}>
+                      {fileRtl.fileRelatedName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             {/* Title */}
             <div className="form-group col-md-3">
               <label htmlFor="titleInput">Title</label>
-              <input
+              <TextField
+                fullWidth
+                variant="outlined"
                 id="titleInput"
-                type="text"
-                className="form-control"
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
+                label="Title"
               />
             </div>
 
             {/* Subject */}
             <div className="form-group col-md-3">
               <label htmlFor="subjectInput">Subject</label>
-              <input
+              <TextField
+                fullWidth
+                variant="outlined"
                 id="subjectInput"
-                type="text"
-                className="form-control"
                 value={formSubject}
                 onChange={(e) => setFormSubject(e.target.value)}
+                label="Subject"
               />
             </div>
 
             {/* Activity */}
             <div className="form-group col-md-3">
               <label htmlFor="activitySelect">Select Activity</label>
-              <select
-                id="activitySelect"
-                className="form-control form-select"
-                value={selectedActivity}
-                onChange={(e) => handleSelectChange(setSelectedActivity, e)}
-              >
-                <option value="" disabled>
-                  Select Activity
-                </option>
-                {activities.map((activity) => (
-                  <option key={activity.activityId} value={activity.activityId}>
-                    {activity.activityName}
-                  </option>
-                ))}
-              </select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Activity</InputLabel>
+                <Select
+                  value={selectedActivity}
+                  onChange={(e) => handleSelectChange(setSelectedActivity, e)}
+                  label="Activity"
+                >
+                  <MenuItem value="" disabled>
+                    Select Activity
+                  </MenuItem>
+                  {activities.map((activity) => (
+                    <MenuItem key={activity.activityId} value={activity.activityId}>
+                      {activity.activityName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             {/* Keyword */}
             <div className="form-group col-md-3">
               <label htmlFor="keywordInput">Keyword</label>
-              <input
+              <TextField
+                fullWidth
+                variant="outlined"
                 id="keywordInput"
-                type="text"
-                className="form-control"
                 value={formKeyword}
                 onChange={(e) => setFormKeyword(e.target.value)}
+                label="Keyword"
               />
             </div>
 
             {/* File Name */}
             <div className="form-group col-md-3">
               <label htmlFor="fileNameInput">File Name</label>
-              <input
+              <TextField
+                fullWidth
+                variant="outlined"
                 id="fileNameInput"
-                type="text"
-                className="form-control"
                 value={formFileName}
                 onChange={(e) => setFormFileName(e.target.value)}
+                label="File Name"
               />
             </div>
 
             {/* Custodian */}
             <div className="form-group col-md-3">
               <label htmlFor="custodianSelect">Select Custodian</label>
-              <select
-                id="custodianSelect"
-                className="form-control form-select"
-                value={selectedCustodian}
-                onChange={(e) => handleSelectChange(setSelectedCustodian, e)}
-              >
-                <option value="" disabled>
-                  Select Custodian
-                </option>
-                {custodians.map((custodian) => (
-                  <option
-                    key={custodian.employeeDeptMapId}
-                    value={custodian.employeeDeptMapId}
-                  >
-                    {`${custodian.employee.firstName} ${custodian.employee.middleName} ${custodian.employee.lastName} (${custodian.office.officeName} / ${custodian.department.departmentName})`}
-                  </option>
-                ))}
-              </select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Custodian</InputLabel>
+                <Select
+                  value={selectedCustodian}
+                  onChange={(e) => handleSelectChange(setSelectedCustodian, e)}
+                  label="Custodian"
+                >
+                  <MenuItem value="" disabled>
+                    Select Custodian
+                  </MenuItem>
+                  {custodians.map((custodian) => (
+                    <MenuItem
+                      key={custodian.employeeDeptMapId}
+                      value={custodian.employeeDeptMapId}
+                    >
+                      {`${custodian.employee.firstName} ${custodian.employee.middleName} ${custodian.employee.lastName} (${custodian.office.officeName} / ${custodian.department.departmentName})`}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             {/* Room */}
             <div className="form-group col-md-3">
               <label htmlFor="roomSelect">Select Room</label>
-              <select
-                id="roomSelect"
-                className="form-control form-select"
-                value={selectedRoom}
-                onChange={(e) => handleSelectChange(setSelectedRoom, e)}
-              >
-                <option value="" disabled>
-                  Select Room
-                </option>
-                {roomData.map((room) => (
-                  <option key={room.docRoomId} value={room.docRoomId}>
-                    {room.roomNumber}
-                  </option>
-                ))}
-              </select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Room</InputLabel>
+                <Select
+                  value={selectedRoom}
+                  onChange={(e) => handleSelectChange(setSelectedRoom, e)}
+                  label="Room"
+                >
+                  <MenuItem value="" disabled>
+                    Select Room
+                  </MenuItem>
+                  {roomData.map((room) => (
+                    <MenuItem key={room.docRoomId} value={room.docRoomId}>
+                      {room.roomNumber}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             {/* Rack */}
             <div className="form-group col-md-3">
               <label htmlFor="rackSelect">Select Rack</label>
-              <select
-                id="rackSelect"
-                className="form-control form-select"
-                value={selectedRack}
-                onChange={(e) => handleSelectChange(setSelectedRack, e)}
-              >
-                <option value="" disabled>
-                  Select Rack
-                </option>
-                {rackData.map((rack) => (
-                  <option key={rack.rackId} value={rack.rackId}>
-                    {rack.rackNumber}
-                  </option>
-                ))}
-              </select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Rack</InputLabel>
+                <Select
+                  value={selectedRack}
+                  onChange={(e) => handleSelectChange(setSelectedRack, e)}
+                  label="Rack"
+                >
+                  <MenuItem value="" disabled>
+                    Select Rack
+                  </MenuItem>
+                  {rackData.map((rack) => (
+                    <MenuItem key={rack.rackId} value={rack.rackId}>
+                      {rack.rackNumber}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             <div className="form-group col-md-3">
               <label htmlFor="cellSelect">Select Cell No</label>
-              <select
-                id="cellSelect"
-                className="form-control form-select"
-                value={selectedCell}
-                onChange={(e) => handleSelectChange(setSelectedCell, e)}
-              >
-                <option value="" disabled>
-                  Select Cell
-                </option>
-
-                {[1, 2, 3, 4, 5].map((cellValue) => (
-                        <option key={cellValue} value={cellValue}>
-                          {cellValue}
-                        </option>
-                      ))}
-              </select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Cell</InputLabel>
+                <Select
+                  value={selectedCell}
+                  onChange={(e) => handleSelectChange(setSelectedCell, e)}
+                  label="Cell"
+                >
+                  <MenuItem value="" disabled>
+                    Select Cell
+                  </MenuItem>
+                  {[1, 2, 3, 4, 5].map((cellValue) => (
+                    <MenuItem key={cellValue} value={cellValue}>
+                      {cellValue}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             <div className="form-group col-md-3">
               <label htmlFor="fileModuleSelect">Select File Module</label>
-              <select
-                id="fileModuleSelect"
-                className="form-control form-select"
-                value={selectedFileModule}
-                onChange={(e) => handleSelectChange(setSelectedFileModule, e)}
-              >
-                <option value="" disabled>
-                  Select File Module
-                </option>
-                {fileModules.map((fileModule) => (
-                  <option key={fileModule.moduleId} value={fileModule.moduleId}>
-                    {fileModule.moduleName}
-                  </option>
-                ))}
-              </select>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>File Module</InputLabel>
+                <Select
+                  value={selectedFileModule}
+                  onChange={(e) => handleSelectChange(setSelectedFileModule, e)}
+                  label="File Module"
+                >
+                  <MenuItem value="" disabled>
+                    Select File Module
+                  </MenuItem>
+                  {fileModules.map((fileModule) => (
+                    <MenuItem key={fileModule.moduleId} value={fileModule.moduleId}>
+                      {fileModule.moduleName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             <div className="col-md-12 text-center">

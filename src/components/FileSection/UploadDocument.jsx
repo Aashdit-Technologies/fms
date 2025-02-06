@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import PropTypes from "prop-types";
 import {
   TextField,
   Select,
@@ -32,26 +33,15 @@ import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
 import { toast } from "react-toastify";
 import "./FileDetails.css";
 import "./UploadDocument.css";
-// import { useLocation } from "react-router-dom";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
 import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { AccordionItem } from "react-bootstrap";
-
-const UploadDocument = ({ content }) => {
+const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
-    const { fileDetails,additionalDetails, setAdditionalDetails,setFileDetails } = useAuthStore((state) => ({
-      additionalDetails: state.additionalDetails,
-      setAdditionalDetails: state.setAdditionalDetails,
-      fileDetails: state.fileDetails,
-      setFileDetails: state.setFileDetails,
-    }));
-  // const location = useLocation();
-  // const fileDetails = location.state?.fileDetails || {};
-  // const additionalDetails = location.state?.additionalDetails || {};
   const [rows, setRows] = useState([
     {
       subject: "",
@@ -61,6 +51,19 @@ const UploadDocument = ({ content }) => {
       document: null,
     },
   ]);
+
+  const [editorContent, setEditorContent] = useState(initialContent || "");
+  // console.log("hlo0", additionalDetails);
+
+  useEffect(() => {
+    setEditorContent(initialContent || "");
+  }, [initialContent]);
+  const [filePriority, setFilePriority] = useState("Normal");
+  const [isConfidential, setIsConfidential] = useState(false);
+  const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
+  const [pendingConfidential, setPendingConfidential] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+
   const handleAddRow = useCallback(() => {
     setRows((prevRows) => [
       ...prevRows,
@@ -73,14 +76,6 @@ const UploadDocument = ({ content }) => {
       },
     ]);
   }, []);
-
-  const [filePriority, setFilePriority] = useState("Normal");
-  const [isConfidential, setIsConfidential] = useState(false);
-  const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
-  const [pendingConfidential, setPendingConfidential] = useState(false);
-  const [isOpen, setIsOpen] = useState(true);
-
- 
 
   const handleRemoveRow = (index) => {
     if (rows.length > 1) {
@@ -96,13 +91,18 @@ const UploadDocument = ({ content }) => {
   };
 
   const handleFileChange = (index, file) => {
-    if (file && (file.type === "image/jpeg" || file.type === "image/png")) {
+    if (
+      file &&
+      (file.type === "image/jpeg" ||
+        file.type === "image/png" ||
+        file.type === "application/pdf")
+    ) {
       const newRows = [...rows];
       newRows[index].document = file;
       setRows(newRows);
       toast.success("File uploaded successfully!");
     } else {
-      toast.error("Only JPG and PNG files are allowed.");
+      toast.error("Only JPG, PNG and PDF files are allowed.");
     }
   };
 
@@ -111,13 +111,7 @@ const UploadDocument = ({ content }) => {
     setConfirmationModalOpen(true);
   };
 
-  const handleMarkUp = () => {
-    toast.info("Document marked up!");
-  };
 
-  const handleMarkDown = () => {
-    toast.info("Document marked down!");
-  };
 
   const handleSendTo = () => {
     toast.success("Document sent successfully!");
@@ -131,60 +125,50 @@ const UploadDocument = ({ content }) => {
     toast.error("Operation cancelled!");
   };
 
-  const isRowFilled = (row) => {
-    return (
-      row.subject &&
-      row.type &&
-      (row.type !== "LETTER" || row.letterNumber) &&
-      row.date &&
-      row.document
-    );
-  };
-
   const formatDateToString = (date) => {
     if (!date) return "";
     return dayjs(date).format("DD/MM/YYYY");
   };
+
   const mutation = useMutation({
     mutationFn: async (data) => {
-      if (!fileDetails?.fileId || !fileDetails?.fileReceiptId) {
-        throw new Error("File details are missing!");
+      try {
+        const encryptedDataObject = encryptPayload({
+          fileId: fileDetails.data.fileId,
+          note: additionalDetails.data.note || null,
+          filerecptId: fileDetails.data.fileReceiptId,
+          prevNoteId: additionalDetails?.data?.prevNoteId,
+          priority: data.filePriority,
+          isConfidential: data.isConfidential,
+        });
+
+        const encryptedDocumentData = encryptPayload({
+          documents: data.documents.map((doc) => ({
+            ...doc,
+            date: dayjs(doc.date).format("DD/MM/YYYY"),
+          })),
+        });
+
+        const formData = new FormData();
+        formData.append("dataObject", encryptedDataObject);
+        formData.append("documentData", encryptedDocumentData);
+
+        data.uploadedDocuments.forEach((file) => {
+          formData.append("uploadedDocuments", file);
+        });
+
+        return api.post("/file/save-notesheet-and-documents", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } catch (error) {
+        if (error.response?.status === 401) {
+          throw new Error("Session expired. Please login again.");
+        }
+        throw error;
       }
-
-      if (!data?.additionalDetails || !data?.documents?.length) {
-        throw new Error("Missing required document data fields!");
-      }
-
-      const encryptedDataObject = encryptPayload({
-        fileId: fileDetails.fileId,
-        note: additionalDetails.note || null,
-        filerecptId: fileDetails.fileReceiptId,
-        prevNoteId: additionalDetails.prevNoteId || null,
-        priority: data.filePriority,
-        isConfidential: data.isConfidential,
-      });
-
-      const encryptedDocumentData = encryptPayload({
-        documents: data.documents.map((doc) => ({
-          ...doc,
-          date: dayjs(doc.date).format("DD/MM/YYYY"),
-        })),
-      });
-
-      const formData = new FormData();
-      formData.append("dataObject", encryptedDataObject);
-      formData.append("documentData", encryptedDocumentData);
-
-      data.uploadedDocuments.forEach((file) => {
-        formData.append("uploadedDocuments", file);
-      });
-
-      return api.post("/file/save-notesheet-and-documents", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
     },
   });
 
@@ -196,82 +180,59 @@ const UploadDocument = ({ content }) => {
     }
   }, [isError, error]);
 
-  // const handleSubmit = async (file) => {
-  //   const data = {
-  //     content,
-  //     filePriority,
-  //     isConfidential,
-  //     documents: rows.map((row) => ({
-  //       docSubject: row.subject,
-  //       letterType: row.type,
-  //       letterNumber: row.type === "LETTER" ? row.letterNumber : null,
-  //       letterDate: row.date,
-  //     })),
-  //     uploadedDocuments: rows.map((row) => row.document).filter(Boolean),
-  //   };
-  //   try {
-  //     mutate(data, {
-  //       onSuccess: async (response) => {
-  //         console.log("API success:", response);
-  //         toast.success("Document uploaded successfully!");
+  const handleSubmit = async () => {
+    if (!fileDetails) {
+      toast.error("File details are missing");
+      return;
+    }
 
-  //         const token = useAuthStore.getState().token;
-  //         const payload2 = encryptPayload({ fileId: fileDetails.fileId });
-  //         const response2 = await api.post(
-  //           "/file/get-draft-notesheet",
-  //           { dataObject: payload2 },
-  //           { headers: { Authorization: `Bearer ${token}` } }
-  //         );
-  //         try {
-  //           const [response2] = await Promise.all([
-  //             api.post(
-  //               "/file/get-draft-notesheet",
-  //               { dataObject: payload2 },
-  //               { headers: { Authorization: `Bearer ${token}` } }
-  //             ),
-  //           ]);
+    // Get file ID from either fileId or id property
+    const fileId = fileDetails?.data?.fileId || fileDetails.id;
+    if (!fileId) {
+      toast.error("File ID is missing");
+      return;
+    }
 
-  //           // You can now handle response2 inside onSuccess
-  //           console.log("Draft notesheet fetched:", response2);
+    // Get receipt ID from any of the possible property names
+    const filerecptId =
+      fileDetails?.data?.fileReceiptId ||
+      fileDetails.fileReceiptId ||
+      fileDetails.fileReceiptId;
+    if (!filerecptId) {
+      toast.error("File Receipt ID is missing");
+      return;
+    }
 
-  //           // Optionally show a success toast for the second API
-  //           toast.success("Draft notesheet fetched successfully!");
-  //         } catch (error) {
-  //           // Handle errors for the second API call
-  //           console.error("Error fetching draft notesheet:", error);
-  //           toast.error(error.message || "Failed to fetch draft notesheet");
-  //         }
-  //       },
-  //       onError: (error) => {
-  //         console.error("API error:", error);
-  //         toast.error(error.message || "Submission failed");
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error("Submission error:", error);
-  //     toast.error(error.message || "Submission failed");
-  //   }
-  // };
-  const handleSubmit = async (file) => {
-    console.log('Submitting...');
     const data = {
-      content,
+      fileId: fileId,
+      filerecptId: filerecptId,
       filePriority,
       isConfidential,
       documents: rows.map((row) => ({
-        docSubject: row.subject,
-        letterType: row.type,
-        letterNumber: row.type === "LETTER" ? row.letterNumber : null,
-        letterDate: row.date,
+        docSubject: row.subject || "",
+        letterType: row.type || "LETTER",
+        letterNumber: row.letterNumber || "",
+        letterDate: formatDateToString(row.date),
+        content: editorContent,
       })),
       uploadedDocuments: rows.map((row) => row.document).filter(Boolean),
     };
-  
+
     try {
       mutate(data, {
         onSuccess: async (response) => {
           console.log("API success:", response);
           toast.success("Document uploaded successfully!");
+          setRows([
+            {
+              subject: "",
+              type: "LETTER",
+              letterNumber: "",
+              date: null,
+              document: null,
+            },
+          ]);
+          setEditorContent("");
         },
         onError: (error) => {
           console.error("API error:", error);
@@ -283,7 +244,56 @@ const UploadDocument = ({ content }) => {
       toast.error(error.message || "Submission failed");
     }
   };
-  
+
+  const markActionMutation = useMutation({
+    mutationFn: async (action) => {
+      try {
+        const markupPayloads = {
+          actionTaken: action,
+        };
+
+       
+        const encryptedDataObject = encryptPayload(markupPayloads);
+
+        const formData = new FormData();
+        formData.append("dataObject", encryptedDataObject);
+
+        // Make the API call
+        const response = await api.post(
+          "/file/get-mark-up-or-mark-down",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        return response.data;
+      } catch (error) {
+        console.error("API Error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Operation successful!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Something went wrong!");
+    },
+  });
+
+  const {
+    mutate: triggerMarkAction,
+    isLoading: isSubmittingAction,
+    isError: hasActionError,
+    error: markActionError,
+  } = markActionMutation;
+
+  const handleMarkupOrMarkdown = (action) => {
+    triggerMarkAction(action);
+  };
+
   return (
     <Box sx={{ p: 3, maxWidth: 1200, margin: "auto", marginTop: "20px" }}>
       <Accordion defaultActiveKey="0" className="custom-accordion">
@@ -319,7 +329,7 @@ const UploadDocument = ({ content }) => {
                       <TextField
                         fullWidth
                         size="small"
-                        label="Subject*"
+                        label="Subject"
                         value={row.subject}
                         onChange={(e) =>
                           handleInputChange(index, "subject", e.target.value)
@@ -334,13 +344,13 @@ const UploadDocument = ({ content }) => {
                         size="small"
                         sx={{ height: "54px" }}
                       >
-                        <InputLabel>Type*</InputLabel>
+                        <InputLabel>Type</InputLabel>
                         <Select
                           value={row.type}
                           onChange={(e) =>
                             handleInputChange(index, "type", e.target.value)
                           }
-                          label="Type*"
+                          label="Type"
                         >
                           <MenuItem value="LETTER">LETTER</MenuItem>
                           <MenuItem value="DOCUMENT">DOCUMENT</MenuItem>
@@ -354,7 +364,7 @@ const UploadDocument = ({ content }) => {
                       <TextField
                         fullWidth
                         size="small"
-                        label="Letter Number*"
+                        label="Letter Number"
                         value={row.letterNumber}
                         onChange={(e) =>
                           handleInputChange(
@@ -363,7 +373,6 @@ const UploadDocument = ({ content }) => {
                             e.target.value
                           )
                         }
-                        disabled={row.type !== "LETTER"}
                         sx={{ height: "54px" }}
                       />
                     </Grid>
@@ -371,21 +380,28 @@ const UploadDocument = ({ content }) => {
                     <Grid item xs={2.4}>
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <MobileDatePicker
-                          label="Date*"
+                          label="Date"
                           value={
                             row.date ? dayjs(row.date, "DD/MM/YYYY") : null
-                          } // Ensure correct parsing
+                          }
                           onChange={(date) => {
-                            if (date) {
-                              handleInputChange(
-                                index,
-                                "date",
-                                dayjs(date).format("DD/MM/YYYY")
-                              );
-                            } else {
+                            try {
+                              if (date && date.isValid()) {
+                                const formattedDate =
+                                  dayjs(date).format("DD/MM/YYYY");
+                                handleInputChange(index, "date", formattedDate);
+                              } else {
+                                handleInputChange(index, "date", "");
+                              }
+                            } catch (error) {
+                              console.error("Date parsing error:", error);
                               handleInputChange(index, "date", "");
                             }
                           }}
+                          maxDate={dayjs()}
+                          shouldDisableDate={(date) =>
+                            dayjs(date).isAfter(dayjs())
+                          }
                           renderInput={(params) => (
                             <TextField
                               {...params}
@@ -413,7 +429,7 @@ const UploadDocument = ({ content }) => {
                         <input
                           type="file"
                           hidden
-                          accept=".jpg,.png"
+                          accept=".jpg,.jpeg,.png,.pdf"
                           onChange={(e) =>
                             handleFileChange(index, e.target.files[0])
                           }
@@ -421,7 +437,7 @@ const UploadDocument = ({ content }) => {
                       </Button>
                     </Grid>
 
-                    {rows.length > 1 && !isRowFilled(row) && (
+                    {rows.length > 1 && (
                       <Grid item xs={0.8}>
                         <IconButton
                           size="small"
@@ -502,18 +518,21 @@ const UploadDocument = ({ content }) => {
                   variant="contained"
                   color="primary"
                   startIcon={<FaArrowUp />}
-                  onClick={handleMarkUp}
+                  onClick={() => handleMarkupOrMarkdown("MARKUP")}
+                  disabled={isSubmittingAction} 
                 >
-                  Mark Up
+                  {isSubmittingAction ? "Marking Up..." : "Mark Up"}
                 </Button>
                 <Button
                   variant="contained"
                   color="primary"
                   startIcon={<FaArrowDown />}
-                  onClick={handleMarkDown}
+                  onClick={() => handleMarkupOrMarkdown("MARKDOWN")}
+                  disabled={isSubmittingAction}
                 >
-                  Mark Down
+                  {isSubmittingAction ? "Marking Down..." : "Mark Down"}
                 </Button>
+
                 <Button
                   variant="contained"
                   color="primary"
@@ -598,6 +617,22 @@ const UploadDocument = ({ content }) => {
       </Modal>
     </Box>
   );
+};
+
+UploadDocument.propTypes = {
+  fileDetails: PropTypes.shape({
+    fileId: PropTypes.string,
+    filerecptId: PropTypes.string,
+  }),
+  initialContent: PropTypes.string,
+};
+
+UploadDocument.defaultProps = {
+  fileDetails: {
+    fileId: null,
+    filerecptId: null,
+  },
+  initialContent: "",
 };
 
 export default React.memo(UploadDocument);

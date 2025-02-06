@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { Accordion } from "react-bootstrap";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import "./FileDetails.css";
-import { Modal, Box, Typography, Button, Card, CardContent, Grid } from "@mui/material";
-import useAuthStore from "../../store/Store";
+import { Modal, Box, Typography, Button, Grid } from "@mui/material";
 
 const DetailItem = ({ label, value }) => (
   <Box sx={{ mb: 1.5, borderBottom: "1px solid #ccc", pb: 1 }}>
@@ -15,20 +14,20 @@ const DetailItem = ({ label, value }) => (
     </Typography>
   </Box>
 );
-const FileDetails = () => {
-  const { fileDetails, setFileDetails } = useAuthStore((state) => ({
-    fileDetails: state.fileDetails,
-    setFileDetails: state.setFileDetails,
-  }));
+
+const FileDetails = ({fileDetails}) => {
   const [isOpen, setIsOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const allDetails = fileDetails.data
+  console.log("fileDetails", allDetails);
+  
 
   const handleShowDetails = () => {
     setIsModalOpen(true);
   };
-  
 
-  return (<>
+  return (
+    <>
       <div className="py-4">
         <Accordion defaultActiveKey="0" className="custom-accordion">
           <Accordion.Item eventKey="0">
@@ -51,11 +50,11 @@ const FileDetails = () => {
                       <div className="card-body">
                         <div className="mb-3">
                           <label className="text-muted small text-uppercase">File Number</label>
-                          <p className="mb-0 fw-medium clickable-text" onClick={() => handleShowDetails()}>{fileDetails.fileNo || 'N/A'}</p>
+                          <p className="mb-0 fw-medium clickable-text" onClick={() => handleShowDetails()}>{allDetails.fileNo || 'N/A'}</p>
                         </div>
                         <div className="mb-3">
                           <label className="text-muted small text-uppercase">File Name</label>
-                          <p className="mb-0 fw-medium">{fileDetails.fileName || 'N/A'}</p>
+                          <p className="mb-0 fw-medium">{allDetails.fileName || 'N/A'}</p>
                         </div>
                       </div>
                     </div>
@@ -64,17 +63,16 @@ const FileDetails = () => {
                     <div className="card h-100 border-0 bg-light">
                       <div className="card-body">
                         <div className="mb-3">
-                          <label className="text-muted small text-uppercase">Subject </label>
-                          <p className="mb-0 fw-medium " >{fileDetails.subject || 'N/A'}</p>
+                          <label className="text-muted small text-uppercase">Subject</label>
+                          <p className="mb-0 fw-medium">{allDetails.subject || 'N/A'}</p>
                         </div>
                         <div className="mb-3">
-                          <label className="text-muted small text-uppercase">Title </label>
-                          <p className="mb-0 fw-medium">{fileDetails.title || 'N/A'}</p>
+                          <label className="text-muted small text-uppercase">Title</label>
+                          <p className="mb-0 fw-medium">{allDetails.title || 'N/A'}</p>
                         </div>
                       </div>
                     </div>
                   </div>
-                  
                 </div>
               ) : (
                 <div className="alert alert-info" role="alert">
@@ -86,31 +84,32 @@ const FileDetails = () => {
           </Accordion.Item>
         </Accordion>
       </div>
-       {/* Modal to Show File Details */}
-       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <Box sx={modalStyle} >
+
+      {/* Modal to Show File Details */}
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <Box sx={modalStyle}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, textAlign: "center", color: "#1976d2", borderBottom: "2px solid #1976d2" }}>
-            File Details: {fileDetails?.fileNo || "N/A"}
+            File Details: {allDetails?.fileNo || "N/A"}
           </Typography>
           <Grid container spacing={2} sx={{ mt: 2 }}>
             {/* Column 1 */}
             <Grid item xs={12} sm={6}>
-              <DetailItem label="File Number" value={fileDetails?.fileNo} />
-              <DetailItem label="File Type" value={fileDetails?.fileType} />
-              <DetailItem label="File Name" value={fileDetails?.fileName} />
-              <DetailItem label="Subject" value={fileDetails?.subject} />
-              <DetailItem label="Title" value={fileDetails?.title} />
-              <DetailItem label="Activity" value={fileDetails?.activity} />
+              <DetailItem label="File Number" value={allDetails?.fileNo} />
+              <DetailItem label="File Type" value={allDetails?.fileType} />
+              <DetailItem label="File Name" value={allDetails?.fileName} />
+              <DetailItem label="Subject" value={allDetails?.subject} />
+              <DetailItem label="Title" value={allDetails?.title} />
+              <DetailItem label="Activity" value={allDetails?.activity} />
             </Grid>
 
             {/* Column 2 */}
             <Grid item xs={12} sm={6}>
-              <DetailItem label="Custodian" value={fileDetails?.custodian} />
-              <DetailItem label="Room Number" value={fileDetails?.room} />
-              <DetailItem label="Rack Number" value={fileDetails?.rack} />
-              <DetailItem label="Cell Number" value={fileDetails?.cell} />
-              <DetailItem label="Created By" value={fileDetails?.createdBy} />
-              <DetailItem label="Created Date" value={fileDetails?.createdDate} />
+              <DetailItem label="Custodian" value={allDetails?.custodian} />
+              <DetailItem label="Room Number" value={allDetails?.room} />
+              <DetailItem label="Rack Number" value={allDetails?.rack} />
+              <DetailItem label="Cell Number" value={allDetails?.cell} />
+              <DetailItem label="Created By" value={allDetails?.createdBy} />
+              <DetailItem label="Created Date" value={allDetails?.createdDate} />
             </Grid>
           </Grid>
 
@@ -121,7 +120,6 @@ const FileDetails = () => {
           </Box>
         </Box>
       </Modal>
-      
     </>
   );
 };
@@ -141,4 +139,5 @@ const modalStyle = {
   border: "2px solid #1976d2",
   outline: "none",
 };
+
 export default FileDetails;
