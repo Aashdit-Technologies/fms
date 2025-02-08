@@ -63,28 +63,27 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const [pendingConfidential, setPendingConfidential] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false); // To control the modal visibility
-  const [selectedRow, setSelectedRow] = useState(null); // To store the selected row index
-  const [isSendEnabled, setIsSendEnabled] = useState(false); // To enable/disable the Send button
-
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [isSendEnabled, setIsSendEnabled] = useState(false);
+  const [modalAction, setModalAction] = useState("");
+  const [apiResponseData, setApiResponseData] = useState([]);
 
   const handleRadioButtonChange = (index) => {
     setSelectedRow(index);
-    setIsSendEnabled(true); // Enable the Send button when a radio button is selected
+    setIsSendEnabled(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedRow(null); // Reset the selected row when the modal is closed
-    setIsSendEnabled(false); // Disable the Send button again when closing modal
+    setSelectedRow(null);
+    setIsSendEnabled(false);
   };
 
   const handleSend = () => {
     if (selectedRow !== null) {
-      console.log("Send action triggered for row:", selectedRow);
-      // You can implement the send action here (API call or other functionality)
-      handleCloseModal(); // Close the modal after sending
+      newEndpointMutation.mutate();
+      handleCloseModal();
     }
   };
 
@@ -293,7 +292,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
             },
           }
         );
-
+        setApiResponseData(response.data);
         return response.data;
       } catch (error) {
         console.error("API Error:", error);
@@ -315,7 +314,39 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     error: markActionError,
   } = markActionMutation;
 
+  const newEndpointMutation = useMutation({
+    mutationFn: async () => {
+      try {
+        const payload = encryptPayload({
+          actionTaken: modalAction,
+          filerecptId: fileDetails.data.fileReceiptId,
+          notesheetId: fileDetails.data.notesheetId,
+          fileId: fileDetails.data.fileId,
+          receiverEmpRoleMap: fileDetails.data.receiverEmpRoleMap,
+        });
+
+        const response = await api.post("/new-endpoint", payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setApiResponseData(response.data);
+        return response.data;
+      } catch (error) {
+        console.error("New API Error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      toast.success("New API call successful!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "New API call failed!");
+    },
+  });
   const handleMarkupOrMarkdown = (action) => {
+    setModalAction(action);
     triggerMarkAction(action);
     setIsModalOpen(true);
   };
@@ -670,12 +701,10 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
             Select Action
           </Typography>
 
-          <Table>
+          <Table bordered>
             <thead>
               <tr>
-                <th>Designation</th>
-                <th>Section</th>
-                <th>Name</th>
+                <th>EmployeeName</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -693,10 +722,22 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                   </td>
                 </tr>
               ))}
+              {apiResponseData.map((data, index) => (
+                <tr key={index}>
+                  <td>{data.designation}</td>
+                  <td>{data.section}</td>
+                  <td>{data.name}</td>
+                  <td>
+                    <Radio
+                      checked={selectedRow === index}
+                      onChange={() => handleRadioButtonChange(index)}
+                    />
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </Table>
 
-          {/* Send Button */}
           <Box sx={{ mt: 2 }}>
             <Button
               variant="contained"
@@ -705,6 +746,14 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
               onClick={handleSend}
             >
               Send
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleCloseModal}
+              sx={{ ml: 2 }}
+            >
+              Cancel
             </Button>
           </Box>
         </Box>
