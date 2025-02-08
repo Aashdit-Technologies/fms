@@ -319,9 +319,10 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       try {
         const payload = encryptPayload({
           actionTaken: modalAction,
-          filerecptId: fileDetails.data.fileReceiptId,
-          notesheetId: fileDetails.data.notesheetId,
           fileId: fileDetails.data.fileId,
+          note: additionalDetails.data.note || null,
+          filerecptId: fileDetails.data.fileReceiptId,
+          notesheetId: additionalDetails?.data?.prevNoteId,
           receiverEmpRoleMap: fileDetails.data.receiverEmpRoleMap,
         });
 
@@ -330,8 +331,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
             Authorization: `Bearer ${token}`,
           },
         });
-
-        setApiResponseData(response.data);
         return response.data;
       } catch (error) {
         console.error("New API Error:", error);
