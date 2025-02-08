@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import DataTable from 'react-data-table-component';
-import { Button, TextField, Box } from '@mui/material';
-import { FaEye, FaDownload, FaHistory, FaArrowLeft, FaArrowRight } from 'react-icons/fa'; // Add necessary icons
-import styled from '@emotion/styled';
+import React, { useState, useEffect } from "react";
+import DataTable from "react-data-table-component";
+import { Button, TextField, Box } from "@mui/material";
+import {
+  FaEye,
+  FaDownload,
+  FaHistory,
+  FaArrowLeft,
+  FaArrowRight,
+} from "react-icons/fa"; // Add necessary icons
+import styled from "@emotion/styled";
+import { encryptPayload } from "../../utils/encrypt";
+import api from "../../Api/Api";
+import useAuthStore from "../../store/Store";
 
 const StyledButton = styled(Button)`
   margin: 0 4px;
@@ -12,7 +21,7 @@ const StyledButton = styled(Button)`
 
 const TableContainer = styled.div`
   background: #f4f7fc;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   padding: 16px;
   border-radius: 8px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
@@ -48,33 +57,79 @@ const ActionButton = styled(Button)`
 const customStyles = {
   table: {
     style: {
-      backgroundColor: 'white',
-    }
+      backgroundColor: "white",
+    },
   },
   headRow: {
     style: {
-      backgroundColor: '#007bff',
-      color: 'white',
-      fontWeight: 'bold',
-      minHeight: '50px',
-      fontSize: '14px'
-    }
+      backgroundColor: "#007bff",
+      color: "white",
+      fontWeight: "bold",
+      minHeight: "50px",
+      fontSize: "14px",
+    },
   },
   rows: {
     style: {
-      fontSize: '14px',
-      color: '#333',
-      minHeight: '50px',
-      '&:nth-of-type(odd)': {
-        backgroundColor: '#f0f5ff'
-      }
-    }
-  }
+      fontSize: "14px",
+      color: "#333",
+      minHeight: "50px",
+      "&:nth-of-type(odd)": {
+        backgroundColor: "#f0f5ff",
+      },
+    },
+  },
 };
 
-const Correspondence = ({ correspondence, onView, onHistory, onDownload }) => {
-  const [filterText, setFilterText] = useState('');
+const Correspondence = ({ correspondence, onView, onHistory }) => {
+  console.log("correspondence", correspondence.data);
+  
+    const token =
+      useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  const [filterText, setFilterText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
+  
+
+  const download = async (row) => {
+    if (!row || !row.correspondenceName || !row.correspondencePath) {
+      console.error("Invalid row data for download");
+      return;
+    }
+  
+    try {
+      const encryptedDload = {
+        documentName: row.correspondenceName,
+        documentPath: row.correspondencePath, 
+      };
+  
+      const response = await api.post("/download/download-document", encryptedDload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json', 
+        },
+      });
+  
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = row.correspondenceName;
+      link.click();
+      window.URL.revokeObjectURL(url);
+  
+      if (response.data && response.data.success) {
+        console.log("Download successful!");
+      } else {
+        console.error("Failed to download the document");
+      }
+    } catch (error) {
+      // Enhanced error handling
+      console.error("Error downloading the document", error);
+      alert("An error occurred while downloading the document. Please try again.");
+    }
+  };
+  
+  
 
   useEffect(() => {
     setFilteredData(correspondence?.data || []);
@@ -82,68 +137,85 @@ const Correspondence = ({ correspondence, onView, onHistory, onDownload }) => {
 
   const columns = [
     {
-      name: 'SI.#',
-      selector: row => row.refNo,
+      name: "SI.#",
+      selector: (row) => row.refNo,
       sortable: true,
-      width: '140px',
-      cell: row => (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontWeight: 'bold', color: '#007bff' }}>Ref. No - {row.refNo}</div>
-          <div style={{
-            backgroundColor: row.corrType === 'DOCUMENT' ? '#6f42c1' : '#28a745',
-            color: 'white',
-            padding: '4px 10px',
-            borderRadius: '10px',
-            fontSize: '12px',
-            marginTop: '4px',
-            textAlign: 'center',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
+      width: "140px",
+      cell: (row) => (
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontWeight: "bold", color: "#007bff" }}>
+            Ref. No - {row.refNo}
+          </div>
+          <div
+            style={{
+              backgroundColor:
+                row.corrType === "DOCUMENT" ? "#6f42c1" : "#28a745",
+              color: "white",
+              padding: "4px 10px",
+              borderRadius: "10px",
+              fontSize: "12px",
+              marginTop: "4px",
+              textAlign: "center",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             {row.corrType}
-            {row.letterType === 'INWARD' && <FaArrowLeft size={16} />}
-            {row.letterType === 'OUTWARD' && <FaArrowRight size={16} />}
+            {row.letterType === "INWARD" && <FaArrowLeft size={16} />}
+            {row.letterType === "OUTWARD" && <FaArrowRight size={16} />}
           </div>
         </div>
-      )
+      ),
     },
     {
-      name: 'Subject',
-      selector: row => row.subject,
+      name: "Subject",
+      selector: (row) => row.subject,
       sortable: true,
-      grow: 2
+      grow: 2,
     },
     {
-      name: 'Added By',
-      selector: row => row.addedBy,
+      name: "Added By",
+      selector: (row) => row.addedBy,
       sortable: true,
-      width: '180px'
+      width: "180px",
     },
     {
-      name: 'Added Date',
-      selector: row => row.addedDate,
+      name: "Added Date",
+      selector: (row) => row.addedDate,
       sortable: true,
-      width: '140px'
+      width: "140px",
     },
     {
-      name: 'Action',
-      cell: row => (
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <StyledButton variant="contained" color="primary" onClick={() => onView(row)}>
+      name: "Action",
+      cell: (row) => (
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <StyledButton
+            variant="contained"
+            color="primary"
+            onClick={() => onView(row)}
+          >
             <FaEye size={16} />
           </StyledButton>
-          <StyledButton variant="contained" color="secondary" onClick={() => onHistory(row)}>
+          <StyledButton
+            variant="contained"
+            color="secondary"
+            onClick={() => onHistory(row)}
+          >
             <FaHistory size={16} />
           </StyledButton>
-          <StyledButton variant="contained" style={{ backgroundColor: '#28a745' }} onClick={() => onDownload(row)}>
-            <FaDownload size={16} />
+          <StyledButton
+            variant="contained"
+            style={{ backgroundColor: "#28a745" }}
+            onClick={() => download(row)}
+          >
+              <FaDownload size={16} />
           </StyledButton>
         </Box>
       ),
-      width: '160px',
-      center: true
-    }
+      width: "160px",
+      center: true,
+    },
   ];
 
   return (
@@ -159,13 +231,15 @@ const Correspondence = ({ correspondence, onView, onHistory, onDownload }) => {
         size="small"
         placeholder="Search Correspondence"
         value={filterText}
-        onChange={e => setFilterText(e.target.value)}
-        style={{ margin: '12px 16px', width: '300px' }}
+        onChange={(e) => setFilterText(e.target.value)}
+        style={{ margin: "12px 16px", width: "300px" }}
       />
 
       <DataTable
         columns={columns}
-        data={filteredData.filter(item => item.subject?.toLowerCase().includes(filterText.toLowerCase()))}
+        data={filteredData.filter((item) =>
+          item.subject?.toLowerCase().includes(filterText.toLowerCase())
+        )}
         pagination
         customStyles={customStyles}
         highlightOnHover

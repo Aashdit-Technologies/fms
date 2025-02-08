@@ -13,6 +13,7 @@ import {
   Modal,
   Switch,
   Typography,
+  Radio,
 } from "@mui/material";
 import {
   FaPlus,
@@ -38,7 +39,7 @@ import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
 import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { AccordionItem } from "react-bootstrap";
+import { AccordionItem, Table } from "react-bootstrap";
 const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
@@ -53,7 +54,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   ]);
 
   const [editorContent, setEditorContent] = useState(initialContent || "");
-  // console.log("hlo0", additionalDetails);
 
   useEffect(() => {
     setEditorContent(initialContent || "");
@@ -63,6 +63,36 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const [pendingConfidential, setPendingConfidential] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false); // To control the modal visibility
+  const [selectedRow, setSelectedRow] = useState(null); // To store the selected row index
+  const [isSendEnabled, setIsSendEnabled] = useState(false); // To enable/disable the Send button
+
+
+
+  const handleRadioButtonChange = (index) => {
+    setSelectedRow(index);
+    setIsSendEnabled(true); // Enable the Send button when a radio button is selected
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedRow(null); // Reset the selected row when the modal is closed
+    setIsSendEnabled(false); // Disable the Send button again when closing modal
+  };
+
+  const handleSend = () => {
+    if (selectedRow !== null) {
+      console.log("Send action triggered for row:", selectedRow);
+      // You can implement the send action here (API call or other functionality)
+      handleCloseModal(); // Close the modal after sending
+    }
+  };
+
+  const tableRows = [
+    { designation: "Manager", section: "Sales", name: "John Doe" },
+    { designation: "Assistant", section: "Marketing", name: "Jane Smith" },
+    { designation: "Lead", section: "HR", name: "George Brown" },
+  ];
 
   const handleAddRow = useCallback(() => {
     setRows((prevRows) => [
@@ -110,8 +140,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     setPendingConfidential(e.target.checked);
     setConfirmationModalOpen(true);
   };
-
-
 
   const handleSendTo = () => {
     toast.success("Document sent successfully!");
@@ -186,14 +214,12 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       return;
     }
 
-    // Get file ID from either fileId or id property
     const fileId = fileDetails?.data?.fileId || fileDetails.id;
     if (!fileId) {
       toast.error("File ID is missing");
       return;
     }
 
-    // Get receipt ID from any of the possible property names
     const filerecptId =
       fileDetails?.data?.fileReceiptId ||
       fileDetails.fileReceiptId ||
@@ -252,7 +278,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
           actionTaken: action,
         };
 
-       
         const encryptedDataObject = encryptPayload(markupPayloads);
 
         const formData = new FormData();
@@ -292,10 +317,14 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
 
   const handleMarkupOrMarkdown = (action) => {
     triggerMarkAction(action);
+    setIsModalOpen(true);
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1200, margin: "auto", marginTop: "20px" }}>
+    <Box
+      sx={{ p: 3, maxWidth: 1200, margin: "auto", marginTop: "20px" }}
+      className="uploaddocument"
+    >
       <Accordion defaultActiveKey="0" className="custom-accordion">
         <AccordionItem eventKey="0">
           <Card>
@@ -519,7 +548,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                   color="primary"
                   startIcon={<FaArrowUp />}
                   onClick={() => handleMarkupOrMarkdown("MARKUP")}
-                  disabled={isSubmittingAction} 
+                  disabled={isSubmittingAction}
                 >
                   {isSubmittingAction ? "Marking Up..." : "Mark Up"}
                 </Button>
@@ -611,6 +640,71 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
               }}
             >
               No
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* Modal for Table and Send Button */}
+      <Modal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        aria-labelledby="markup-markdown-modal"
+        aria-describedby="modal-to-select-action"
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            bgcolor: "background.paper",
+            padding: 3,
+            borderRadius: 2,
+            maxWidth: "600px",
+            margin: "auto",
+            marginTop: "50px",
+            overflow: "auto",
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Select Action
+          </Typography>
+
+          <Table>
+            <thead>
+              <tr>
+                <th>Designation</th>
+                <th>Section</th>
+                <th>Name</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tableRows.map((row, index) => (
+                <tr key={index}>
+                  <td>{row.designation}</td>
+                  <td>{row.section}</td>
+                  <td>{row.name}</td>
+                  <td>
+                    <Radio
+                      checked={selectedRow === index}
+                      onChange={() => handleRadioButtonChange(index)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+
+          {/* Send Button */}
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={!isSendEnabled}
+              onClick={handleSend}
+            >
+              Send
             </Button>
           </Box>
         </Box>

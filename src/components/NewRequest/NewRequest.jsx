@@ -265,7 +265,6 @@ const NewRequest = () => {
         <div className="row">
           <div className="col-md-4">
             <FormControl fullWidth variant="outlined">
-              <InputLabel>Priority</InputLabel>
               <Select
                 value={priority}
                 onChange={(e) => handleSelectChange(setPriority, e)}
@@ -283,7 +282,6 @@ const NewRequest = () => {
 
           <div className="col-md-4">
             <FormControl fullWidth variant="outlined">
-              <InputLabel>File Module</InputLabel>
               <Select
                 value={selectedFileModule}
                 onChange={(e) => handleSelectChange(setSelectedFileModule, e)}

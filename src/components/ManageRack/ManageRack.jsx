@@ -175,7 +175,6 @@ const ManageRack = () => {
   };
 
   const handleEdit = (rack) => {
-    debugger;
     console.log("Editing Rack:", rack);
     console.log("Rack Room ID:", rack.docRoom.docRoomId);
     setRack({

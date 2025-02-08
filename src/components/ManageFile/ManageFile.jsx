@@ -200,7 +200,6 @@ const ManageFile = () => {
   
 
   useEffect(() => {
-    debugger;
     console.log("Activities:", activities);
     console.log("Selected Activity:", selectedActivity);
   
@@ -259,7 +258,6 @@ const ManageFile = () => {
 
             {/* Department */}
             <div className="form-group col-md-3">
-              <label htmlFor="departmentSelect">Select Department</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Department</InputLabel>
                 <Select
@@ -281,7 +279,6 @@ const ManageFile = () => {
 
             {/* File Related To */}
             <div className="form-group col-md-3">
-              <label htmlFor="fileRTLSelect">File Related To</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>File Related To</InputLabel>
                 <Select
@@ -303,7 +300,6 @@ const ManageFile = () => {
 
             {/* Title */}
             <div className="form-group col-md-3">
-              <label htmlFor="titleInput">Title</label>
               <TextField
                 fullWidth
                 variant="outlined"
@@ -316,7 +312,6 @@ const ManageFile = () => {
 
             {/* Subject */}
             <div className="form-group col-md-3">
-              <label htmlFor="subjectInput">Subject</label>
               <TextField
                 fullWidth
                 variant="outlined"
@@ -329,7 +324,6 @@ const ManageFile = () => {
 
             {/* Activity */}
             <div className="form-group col-md-3">
-              <label htmlFor="activitySelect">Select Activity</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Activity</InputLabel>
                 <Select
@@ -351,7 +345,6 @@ const ManageFile = () => {
 
             {/* Keyword */}
             <div className="form-group col-md-3">
-              <label htmlFor="keywordInput">Keyword</label>
               <TextField
                 fullWidth
                 variant="outlined"
@@ -364,7 +357,6 @@ const ManageFile = () => {
 
             {/* File Name */}
             <div className="form-group col-md-3">
-              <label htmlFor="fileNameInput">File Name</label>
               <TextField
                 fullWidth
                 variant="outlined"
@@ -377,7 +369,6 @@ const ManageFile = () => {
 
             {/* Custodian */}
             <div className="form-group col-md-3">
-              <label htmlFor="custodianSelect">Select Custodian</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Custodian</InputLabel>
                 <Select
@@ -393,7 +384,7 @@ const ManageFile = () => {
                       key={custodian.employeeDeptMapId}
                       value={custodian.employeeDeptMapId}
                     >
-                      {`${custodian.employee.firstName} ${custodian.employee.middleName} ${custodian.employee.lastName} (${custodian.office.officeName} / ${custodian.department.departmentName})`}
+                      {`${custodian.employee.firstName} ${custodian.employee.middleName || ""} ${custodian.employee.lastName} (${custodian.office.officeName} / ${custodian.department.departmentName})`}
                     </MenuItem>
                   ))}
                 </Select>
@@ -402,7 +393,6 @@ const ManageFile = () => {
 
             {/* Room */}
             <div className="form-group col-md-3">
-              <label htmlFor="roomSelect">Select Room</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Room</InputLabel>
                 <Select
@@ -424,7 +414,6 @@ const ManageFile = () => {
 
             {/* Rack */}
             <div className="form-group col-md-3">
-              <label htmlFor="rackSelect">Select Rack</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Rack</InputLabel>
                 <Select
@@ -445,7 +434,6 @@ const ManageFile = () => {
             </div>
 
             <div className="form-group col-md-3">
-              <label htmlFor="cellSelect">Select Cell No</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Cell</InputLabel>
                 <Select
@@ -466,7 +454,6 @@ const ManageFile = () => {
             </div>
 
             <div className="form-group col-md-3">
-              <label htmlFor="fileModuleSelect">Select File Module</label>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>File Module</InputLabel>
                 <Select

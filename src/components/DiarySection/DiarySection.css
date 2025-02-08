@@ -1,11 +1,11 @@
 /* Modal Styles */
-.modal-content {
+.diary-section-container-modal .modal-content {
   border-radius: 8px;
   border: none;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.modal-header {
+.diary-section-container-modal .modal-header {
   padding: 1rem 1.5rem;
   background-color: #207785;
   color: white;
@@ -13,27 +13,27 @@
   border-radius: 8px 8px 0 0;
 }
 
-.modal-header .modal-title {
+.diary-section-container-modal .modal-header .modal-title {
   font-size: 1.1rem;
   font-weight: 500;
   margin: 0;
 }
 
-.modal-header .btn-close {
+.diary-section-container-modal .modal-header .btn-close {
   color: white;
   opacity: 0.8;
 }
 
-.modal-header .btn-close:hover {
+.diary-section-container-modal .modal-header .btn-close:hover {
   opacity: 1;
 }
 
-.modal-body {
+.diary-section-container-modal .modal-body {
   padding: 1.5rem;
   background-color: #f8f9fa;
 }
 
-.modal-footer {
+.diary-section-container-modal .modal-footer {
   padding: 1rem 1.5rem;
   border-top: 1px solid #dee2e6;
   background-color: #f8f9fa;
@@ -41,73 +41,73 @@
 }
 
 /* Button Styles */
-.btn {
+.diary-section-container .btn {
   padding: 0.5rem 1.5rem;
   font-weight: 500;
   border-radius: 4px;
   transition: all 0.2s ease;
 }
 
-.btn-primary {
+.diary-section-container .btn-primary {
   background-color: #207785;
   border-color: #207785;
 }
 
-.btn-primary:hover {
+.diary-section-container .btn-primary:hover {
   background-color: #1a5f6a;
   border-color: #1a5f6a;
 }
 
-.btn-secondary {
+.diary-section-container .btn-secondary {
   background-color: #6c757d;
   border-color: #6c757d;
 }
 
-.btn-secondary:hover {
+.diary-section-container .btn-secondary:hover {
   background-color: #5a6268;
   border-color: #5a6268;
 }
 
 /* Form Controls */
-.form-control {
+.diary-section-container .form-control {
   border-radius: 4px;
   border: 1px solid #ced4da;
   padding: 0.5rem 0.75rem;
   transition: border-color 0.2s ease;
 }
 
-.form-control:focus {
+.diary-section-container .form-control:focus {
   border-color: #207785;
   box-shadow: 0 0 0 0.2rem rgba(32, 119, 133, 0.25);
 }
 
 /* Table Styles */
-.table-responsive {
+.diary-section-container .table-responsive {
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.rdt_TableHeader {
+.diary-section-container .rdt_TableHeader {
   background-color: #f8f9fa;
   padding: 1rem;
   font-weight: 500;
 }
 
-.rdt_TableHeadRow {
+.diary-section-container .rdt_TableHeadRow {
   background-color: #207785;
   color: white;
 }
 
-.rdt_TableRow {
+.diary-section-container .rdt_TableRow {
   border-bottom: 1px solid #dee2e6;
 }
 
-.rdt_TableRow:hover {
+.diary-section-container .rdt_TableRow:hover {
   background-color: #f8f9fa;
 }
 
 /* Accordion Styles */
-.accordion-header {
+.diary-section-container .accordion-header {
   background-color: #f8f9fa;
   padding: 1rem;
   border-radius: 4px;
@@ -116,21 +116,21 @@
   transition: background-color 0.2s ease;
 }
 
-.accordion-header:hover {
+.diary-section-container .accordion-header:hover {
   background-color: #e9ecef;
 }
 
-.accordion-title {
+.diary-section-container .accordion-title {
   font-weight: 500;
   color: #333;
 }
 
-.accordion-icon {
+.diary-section-container .accordion-icon {
   float: right;
   color: #207785;
 }
 
-.accordion-body {
+.diary-section-container .accordion-body {
   padding: 1rem;
   background-color: white;
   border-radius: 4px;
@@ -138,16 +138,16 @@
 }
 
 /* Utility Classes */
-.cursor-pointer {
+.diary-section-container .cursor-pointer {
   cursor: pointer;
 }
 
-.disabled {
+.diary-section-container .disabled {
   cursor: no-drop;
   opacity: 0.6;
 }
 
-.list-group {
+.diary-section-container .list-group {
   position: absolute;
   width: 100%;
   z-index: 1000;
@@ -155,22 +155,22 @@
 }
 
 /* Animation */
-.fade {
+.diary-section-container .fade {
   transition: opacity 0.2s ease-in-out;
 }
 
-.show {
+.diary-section-container .show {
   opacity: 1;
 }
 
-.diary-section-container {
+.diary-section-container .diary-section-container {
   margin: 20px auto;
   border: 1px solid #ddd;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.accordion-header {
+.diary-section-container .accordion-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -181,12 +181,12 @@
   pointer-events: none; /* Prevents clicks on the header */
 }
 
-.accordion-title {
+.diary-section-container .accordion-title {
   font-weight: 500;
   color: #333;
 }
 
-.accordion-icon {
+.diary-section-container .accordion-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -200,12 +200,12 @@
   pointer-events: auto; /* Enables clicks only on the icon */
 }
 
-.accordion-icon:hover {
+.diary-section-container .accordion-icon:hover {
   background-color: #1a5f6a;
   transform: scale(1.1);
 }
 
-.accordion-body {
+.diary-section-container .accordion-body {
   padding: 1rem;
   border: 1px solid #dee2e6;
   border-radius: 4px;

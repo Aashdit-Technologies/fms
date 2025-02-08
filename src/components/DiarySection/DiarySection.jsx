@@ -191,6 +191,7 @@ const DiarySection = () => {
     isUrgent: false,
     letterType: "",
     uploadedLetter:null,
+    documentMetaId: null 
   });
 
   const [rows, setRows] = useState([
@@ -917,7 +918,7 @@ const DiarySection = () => {
   const saveFormData = async (savensendValue) => {
     try {
       const formDataToSend = new FormData();
-
+  
       const empDeptDetailsVoList = rows.map((row) => ({
         departmentId: row.departmentName || null,
         designationId: row.addresseeDesignation || null,
@@ -925,13 +926,13 @@ const DiarySection = () => {
         memoNumber: row.memoNumber || null,
         documentReceipentId: null,
       }));
-
+  
       const enclosureDetailsVoList = enclosureRows.map((row) => ({
         encTypeId: row.enclosureType || null,
         encName: row.enclosureName || null,
         enclosureId: null,
       }));
-
+  
       const payload = {
         senderAddbookIdHidden: formData.senderAddbookIdHidden || null,
         letterNumber: formData.letterNumber || null,
@@ -946,20 +947,21 @@ const DiarySection = () => {
         letterType: "E",
         empDeptDetailsVoList,
         enclosureDetailsVoList,
+        documentMetaId: formData.documentMetaId || null 
       };
-
+  
       formDataToSend.append("dataObject", encryptPayload(payload));
-
+  
       if (formData.uploadedLetter) {
         formDataToSend.append("uploadedLetter", formData.uploadedLetter);
       }
-
+  
       enclosureRows.forEach((row, index) => {
         if (row.file) {
           formDataToSend.append("enclosureDocuments", row.file);
         }
       });
-
+  
       const response = await api.post(
         "diary-section/upload-letter",
         formDataToSend,
@@ -970,7 +972,7 @@ const DiarySection = () => {
           },
         }
       );
-
+  
       if (response.status === 200) {
         toast.success("Form saved successfully!", { autoClose: 3000 });
         setFormData({
@@ -983,8 +985,9 @@ const DiarySection = () => {
           isUrgent: false,
           letterType: "",
           uploadedLetter: null,
+          documentMetaId:  null
         });
-
+  
         setRows([
           {
             departmentName: "",
@@ -1284,7 +1287,7 @@ const handleEditButtonClick = async (row) => {
 
       console.log("Letter Data:", letterData);
 
-      // Extract sender details
+      
       const senderAddressBook = editedList.sender_addressbook 
         ? editedList.sender_addressbook.trim().replace(/^"|"$/g, '')  
         : "";
@@ -1296,6 +1299,7 @@ const handleEditButtonClick = async (row) => {
       const senderDistrict = senderParts[3] || "";
 
       setFormData({
+        ...formData,
         senderAddbookIdHidden: senderId,
         letterNumber: editedList.lnumber || "",
         senderDate: editedList.senderdate 
@@ -1307,7 +1311,8 @@ const handleEditButtonClick = async (row) => {
         isUrgent: editedList.urgent || false,
         letterType: editedList.docname || "",
         uploadedLetter:editedList.docname || "",
-        addEnclosureChecked: editedList.enclosurelst?.length > 0 
+        addEnclosureChecked: editedList.enclosurelst?.length > 0 ,
+        documentMetaId: row.documentMetaDataId 
       });
 
       setSenderDetails({
