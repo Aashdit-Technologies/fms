@@ -5,11 +5,10 @@ import { Select, MenuItem } from "@mui/material";
 import SunEditorComponent from "./SunEditorComponent";
 import UploadDocument from "./UploadDocument";
 
-const Ckeditor = ({ additionalDetails, fileDetails }) => {
+const Ckeditor = ({ additionalDetails, fileDetails,content }) => {
   const [selectedItem, setSelectedItem] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [editorContent, setEditorContent] = useState("");
-
+  const [editorContent, setEditorContent] = useState( content || '');
 
   const options = [
     "Noting No-1",
@@ -19,12 +18,10 @@ const Ckeditor = ({ additionalDetails, fileDetails }) => {
     "Noting No-5",
   ];
 
-  // Initialize editor content from additionalDetails if available
   useEffect(() => {
-    if (additionalDetails?.data?.note ) {
+    if (additionalDetails?.data?.note) {
       setEditorContent(additionalDetails.data.note);
     }
-    
   }, [additionalDetails?.data?.note]);
 
   const handleSelectChange = useCallback((event) => {
@@ -77,6 +74,7 @@ const Ckeditor = ({ additionalDetails, fileDetails }) => {
                 content={editorContent}
                 placeholder="Enter your task action here..."
                 onContentChange={handleEditorChange}
+                additionalDetails={additionalDetails}
               />
             </Accordion.Body>
           </Accordion.Item>

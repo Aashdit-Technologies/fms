@@ -14,6 +14,7 @@ import {
   setupTokenExpirationChecker,
   checkTokenExpiration,
 } from "./utils/tokenUtils";
+import GlobalStyleFont from "./Fonts/GlobalStyleFont";
 
 const LoginPage = React.lazy(() => import("./components/LoginPage/LoginPage"));
 const AdminPanel = React.lazy(() => import("./components/Admin/Admin"));
@@ -43,6 +44,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <GlobalStyleFont />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route

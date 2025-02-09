@@ -86,14 +86,6 @@ const Admin = () => {
               } 
             />
             <Route 
-              path="system/setup/menu/init" 
-              element={
-                <React.Suspense fallback={<div>Loading...</div>}>
-                  <Letter />
-                </React.Suspense>
-              } 
-            />
-            <Route 
               path="scheduling" 
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
@@ -150,7 +142,7 @@ const Admin = () => {
               } 
             />
             <Route 
-              path="letter-section" 
+              path="system/setup/menu/init" 
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <LetterList />
@@ -194,8 +186,7 @@ const Admin = () => {
                   menu.menuURL === '/manage-rack' || 
                   menu.menuURL === '/manage-activity' ||
                   menu.menuURL === '/diary-section' ||
-                  menu.menuURL === '/despatch-section' ||
-                  menu.menuURL === '/letter-section') {
+                  menu.menuURL === '/despatch-section') {
                 return null;
               }
 

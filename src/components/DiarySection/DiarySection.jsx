@@ -7,7 +7,7 @@ import DataTable from "react-data-table-component";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { FaToggleOn, FaToggleOff } from "react-icons/fa";
 import { Tabs, Tab, Dropdown, Modal} from "react-bootstrap";
 import { FaPencilAlt } from "react-icons/fa";
@@ -1714,17 +1714,7 @@ const handleFileUploadChangeencloser = (index, event) => {
 
   return (
     <>
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+     
 
       {/* Upload Inward Letter Section */}
       <div className="diary-section-container">

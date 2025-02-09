@@ -1,20 +1,31 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card } from "react-bootstrap";
 import { Button } from "@mui/material";
 import { MdNote } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-const NoteSheet = () => {
-  const navigate = useNavigate();
-  const notes = Array.from({ length: 10 }).map((_, index) => ({
-    id: 100 + index,
-    author: `Author ${index + 1}`,
-    designation: "Designation",
-    content: `This is sample content for note ${index + 1}.`,
-    date: `02-09-202${index % 5} ${10 + (index % 10)}:${30 + (index % 30)} AM`,
-    estimatedCost: `Rs. ${(index + 1) * 5000}/-`,
-  }));
+const NoteSheet = ({ noteSheets }) => {
+  console.log("noteSheets", noteSheets);
 
+  // Ensure notes is always an array
+  const [notes, setNotes] = useState([]);
+
+  console.log("notes", notes);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if noteSheets is an array before setting it
+    if (Array.isArray(noteSheets.data)) {
+      setNotes(noteSheets.data);
+    } else {
+      setNotes([]); // Fallback to an empty array
+    }
+  }, [noteSheets]);
+  const convertHTMLToText = (htmlContent) => {
+    const doc = new DOMParser().parseFromString(htmlContent, "text/html");
+    return doc.body.textContent || doc.body.innerText;
+  };
   const badgeColors = ["#ff5733", "#1e90ff", "#28a745", "#ffcc00"];
 
   return (
@@ -45,43 +56,45 @@ const NoteSheet = () => {
 
         {/* Notes List */}
         <div className="notes-container">
-          {notes.map((note, index) => (
-            <Card.Body
-              key={note.id}
-              className="note-card-body"
-              style={{
-                background: index % 2 === 0 ? "#ffffff" : "#f8f9fa",
-                borderLeft: `6px solid ${
-                  badgeColors[index % badgeColors.length]
-                }`,
-              }}
-            >
-              <div
-                className="note-index"
-                style={{ background: badgeColors[index % badgeColors.length] }}
+          {notes.length > 0 ? (
+            notes.map((note, index) => (
+              <Card.Body
+                key={note.noteSheetId}
+                className="note-card-body"
+                style={{
+                  background: index % 2 === 0 ? "#ffffff" : "#f8f9fa",
+                  borderLeft: `6px solid ${
+                    badgeColors[index % badgeColors.length]
+                  }`,
+                }}
               >
-                {index + 1}
-              </div>
-              <p className="note-author">
-                <strong>Noting By:</strong>{" "}
-                <span className="text-primary">{note.author}</span> (
-                {note.designation})
-              </p>
-              <p className="note-content">{note.content}</p>
-              <p>
-                <strong>Estimated Cost:</strong>{" "}
-                <span className="text-danger">{note.estimatedCost}</span>
-              </p>
-              <p className="note-date">
-                {note.author} | {note.date}
-              </p>
-            </Card.Body>
-          ))}
+                <div
+                  className="note-index"
+                  style={{
+                    background: badgeColors[index % badgeColors.length],
+                  }}
+                >
+                  {index + 1}
+                </div>
+                <p className="note-author">
+                  <strong>Noting By:</strong>{" "}
+                  <span className="text-primary">{note.senderName}</span> (
+                  {note.senderDesignation})
+                </p>
+                <p className="note-content">{convertHTMLToText(note.note)}</p>
+                <p className="note-date">
+                  {note.senderName} | {note.createdDate} | {note.createdTime}
+                </p>
+              </Card.Body>
+            ))
+          ) : (
+            <p>No notes available</p> // Fallback message
+          )}
         </div>
       </Card>
 
       {/* CSS Styles */}
-      <style >{`
+      <style>{`
         .note-sheet-container {
           display: flex;
           justify-content: center;
@@ -104,7 +117,6 @@ const NoteSheet = () => {
           overflow-y: auto;
           padding: 20px;
           overflow-x: hidden;
-
         }
         .note-card-body {
           position: relative;
@@ -164,7 +176,6 @@ const NoteSheet = () => {
         ::-webkit-scrollbar-thumb:hover {
           background: #1565C0; 
         }
-
       `}</style>
     </div>
   );

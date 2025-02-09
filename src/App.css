@@ -4,3 +4,446 @@
 .accordion-button::after{
     display: none;
 }
+.admin-main {
+    flex: 1;
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+    background: #f5f5f5;
+    overflow: hidden;
+  }
+  
+  .admin-main.collapsed {
+    margin-left: 60px;
+  }
+  
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: 100%;
+  }
+  
+  .card-body {
+    padding: 1.25rem;
+  }
+  
+  @media (max-width: 768px) {
+    .admin-main {
+      padding: 10px;
+    }
+    
+    .admin-main.collapsed {
+      margin-left: 0;
+    }
+  }
+
+
+  .admin-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .parent-container {
+    display: flex;
+    margin-top: 80px;
+    min-height: calc(100vh - 80px);
+    transition: all 0.3s ease;
+    margin-left: 280px; 
+  }
+  
+  .parent-container.collapsed {
+    margin-left: 70px; 
+  }
+  
+  .main-content {
+    flex: 1;
+    padding: 20px;
+    transition: all 0.3s ease;
+    width: calc(100vw - 280px);
+  }
+  
+  .collapsed .main-content {
+    width: calc(100vw - 70px); 
+  }
+  
+  @media (max-width: 768px) {
+    .parent-container {
+      margin-left: 0;
+      margin-top: 60px;
+    }
+    
+    .parent-container.collapsed {
+      margin-left: 0;
+    }
+  
+    .main-content,
+    .collapsed .main-content {
+      width: 100%;
+    }
+  }
+.eERqiV{
+    overflow: auto;
+}
+.nav-tabs{
+    gap: 5px; 
+}
+.new-request-container {
+    padding: 24px;
+    min-height: calc(100vh - 64px);
+    background-color: #f5f5f5;
+  }
+  
+/* Modal Styles */
+.diary-section-container-modal .modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .diary-section-container-modal .modal-header {
+    padding: 1rem 1.5rem;
+    background-color: #207785;
+    color: white;
+    border-bottom: 1px solid #1a5f6a;
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .diary-section-container-modal .modal-header .modal-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+  }
+  
+  .diary-section-container-modal .modal-header .btn-close {
+    color: white;
+    opacity: 0.8;
+  }
+  
+  .diary-section-container-modal .modal-header .btn-close:hover {
+    opacity: 1;
+  }
+  
+  .diary-section-container-modal .modal-body {
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+  }
+  
+  .diary-section-container-modal .modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+  }
+  
+  /* Button Styles */
+  .diary-section-container .btn {
+    font-weight: 500;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .diary-section-container .btn-primary {
+    background-color: #207785;
+    border-color: #207785;
+  }
+  
+  .diary-section-container .btn-primary:hover {
+    background-color: #1a5f6a;
+    border-color: #1a5f6a;
+  }
+  
+  .diary-section-container .btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+  }
+  
+  .diary-section-container .btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+  }
+  
+  /* Form Controls */
+  .diary-section-container .form-control {
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    padding: 0.5rem 0.75rem;
+    transition: border-color 0.2s ease;
+  }
+  
+  .diary-section-container .form-control:focus {
+    border-color: #207785;
+    box-shadow: 0 0 0 0.2rem rgba(32, 119, 133, 0.25);
+  }
+  
+  /* Table Styles */
+  .diary-section-container .table-responsive {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .diary-section-container .rdt_TableHeader {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    font-weight: 500;
+  }
+  
+  .diary-section-container .rdt_TableHeadRow {
+    background-color: #207785;
+    color: white;
+  }
+  
+  .diary-section-container .rdt_TableRow {
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .diary-section-container .rdt_TableRow:hover {
+    background-color: #f8f9fa;
+  }
+  
+  /* Accordion Styles */
+  .diary-section-container .accordion-header {
+    background-color: #e9ecef;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .diary-section-container .accordion-header:hover {
+    background-color: #e9ecef;
+  }
+  
+  .diary-section-container .accordion-title {
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .diary-section-container .accordion-icon {
+    float: right;
+    color: #207785;
+  }
+  
+  .diary-section-container .accordion-body {
+    padding: 1rem;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Utility Classes */
+  .diary-section-container .cursor-pointer {
+    cursor: pointer;
+  }
+  
+  .diary-section-container .disabled {
+    cursor: no-drop;
+    opacity: 0.6;
+  }
+  
+  .diary-section-container .list-group {
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Animation */
+  .diary-section-container .fade {
+    transition: opacity 0.2s ease-in-out;
+  }
+  
+  .diary-section-container .show {
+    opacity: 1;
+  }
+  
+  .diary-section-container .diary-section-container {
+    margin: 20px auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  
+  .diary-section-container .accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    pointer-events: none; /* Prevents clicks on the header */
+  }
+  
+  .diary-section-container .accordion-title {
+    font-weight: 700;
+    color: #1A5F6A;
+    font-size: 16px;
+    text-transform: capitalize;
+  }
+  
+  .diary-section-container .accordion-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #207785;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    pointer-events: auto; /* Enables clicks only on the icon */
+  }
+  
+  .diary-section-container .accordion-icon:hover {
+    background-color: #1a5f6a;
+    transform: scale(1.1);
+  }
+  
+  .diary-section-container .accordion-body {
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-top: -0.5rem;
+    background-color: white;
+  }
+  
+  .no-drop-cursor {
+    cursor: no-drop;
+    background-color: #f8f9fa; 
+    padding-right: 40px;
+  }
+  
+  .no-drop-cursor:hover {
+    cursor: no-drop;
+  }
+  
+  .list-group {
+    position: absolute; 
+    z-index: 10; 
+    width: 30%;
+    background-color: #fff; 
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .list-group-item {
+    cursor: pointer;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .react-datepicker__input-container {
+    position: relative;
+    display: inline-block;
+    width: 136% !important;
+  }
+ 
+  
+  /* Action Buttons */
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .action-buttons .MuiIconButton-root {
+    padding: 8px;
+  }
+  
+  
+  /* React Bootstrap Tabs */
+  .nav-tabs {
+    margin-bottom: 24px;
+    gap: 5px;
+  }
+  
+  .nav-tabs .nav-link {
+    color: #1A5F6A;
+    border: 1px solid #1A5F6A;
+    padding: 10px ;
+    font-weight: 500;
+    position: relative;
+  }
+  
+  .nav-tabs .nav-link:hover {
+    color: #1A5F6A;
+    border: 1px solid #1A5F6A;
+  }
+  
+  .nav-tabs .nav-link.active {
+    color: #fff;
+    background: #1A5F6A;
+  }
+  
+  
+  
+  /* Loading State */
+  .text-center .MuiCircularProgress-root {
+    color: #1976d2;
+  }
+  
+  /* Dialog Styles */
+  .MuiDialog-paper {
+    min-width: 600px;
+  }
+  
+  .MuiDialogTitle-root {
+    background-color: #f5f5f5;
+    color: #1976d2;
+  }
+  
+  .MuiDialogContent-root {
+    padding: 24px !important;
+  }
+  
+  .MuiDialogActions-root {
+    padding: 16px 24px !important;
+    background-color: #f5f5f5;
+  }
+  
+  /* Status Colors */
+  .MuiTypography-root[color="success.main"] {
+    color: #2e7d32;
+    font-weight: 500;
+  }
+  
+  /* Tooltips */
+  [data-tooltip-id] {
+    cursor: pointer;
+  }
+  
+  .react-tooltip {
+    background-color: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  /* Icons */
+  .me-2 {
+    margin-right: 8px;
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .new-request-container {
+      padding: 16px;
+    }
+    
+    .MuiDialog-paper {
+      min-width: auto;
+      margin: 16px;
+    }
+    
+    .nav-tabs .nav-link {
+      padding: 8px 16px;
+    }
+  }
+  

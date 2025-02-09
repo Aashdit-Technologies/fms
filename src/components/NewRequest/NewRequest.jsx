@@ -1,13 +1,19 @@
 import React, { useState } from "react";
-import { Tooltip } from 'react-tooltip';
-import { FaHistory, FaEdit, FaArchive, FaSearch, FaFilter } from 'react-icons/fa';
-import { Tab, Tabs, Accordion } from 'react-bootstrap';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  TextField, 
-  Select, 
-  MenuItem, 
-  FormControl, 
+import { Tooltip } from "react-tooltip";
+import {
+  FaHistory,
+  FaEdit,
+  FaArchive,
+  FaSearch,
+  FaFilter,
+} from "react-icons/fa";
+import { Tab, Tabs, Accordion } from "react-bootstrap";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
   InputLabel,
   Paper,
   Button,
@@ -25,9 +31,9 @@ import {
   TableHead,
   TableRow,
   CircularProgress,
-  Alert
-} from '@mui/material';
-import './NewRequest.css';
+  Alert,
+} from "@mui/material";
+import "./NewRequest.css";
 import useApiListStore from "../ManageFile/ApiListStore";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
@@ -45,26 +51,26 @@ const NewRequest = () => {
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
   const [fileDetails, setFileDetails] = useState(null);
   const [fileDetailsModalVisible, setFileDetailsModalVisible] = useState(false);
-  
+
   const Navigate = useNavigate();
   const queryClient = useQueryClient();
   const token = useAuthStore.getState().token;
-  const { fileModules, fetchAllData } = useApiListStore();
+  const { fileModules = [], fetchAllData } = useApiListStore();
 
   // Query for room data
   const { data: roomData = [] } = useQuery({
-    queryKey: ['rooms'],
+    queryKey: ["rooms"],
     queryFn: async () => {
       const response = await api.get("/manage-room", {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data.roomList;
-    }
+    },
   });
 
   // Query for rack data based on roomId
   const { data: rackData = [] } = useQuery({
-    queryKey: ['racks', roomId],
+    queryKey: ["racks", roomId],
     queryFn: async () => {
       if (!roomId) return [];
       const payload = { docRoomId: roomId };
@@ -75,41 +81,42 @@ const NewRequest = () => {
       });
       return response.data.rackList;
     },
-    enabled: !!roomId
+    enabled: !!roomId,
   });
 
   // Query for filtered data
-  const { data: nRData = { prioritylst: [], receiptList: [] }, isLoading } = useQuery({
-    queryKey: ['newRequests', priority, selectedFileModule],
-    queryFn: async () => {
-      const payload = {
-        priority: priority || null,
-        fileModule: selectedFileModule || null,
-        pageno: 1,
-      };
-      const encryptedMessage = encryptPayload(payload);
-      const response = await api.get("/file/new-request", {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { dataObject: encryptedMessage },
-      });
-      return response.data;
-    }
-  });
+  const { data: nRData = { prioritylst: [], receiptList: [] }, isLoading } =
+    useQuery({
+      queryKey: ["newRequests", priority, selectedFileModule],
+      queryFn: async () => {
+        const payload = {
+          priority: priority || null,
+          fileModule: selectedFileModule || null,
+          pageno: 1,
+        };
+        const encryptedMessage = encryptPayload(payload);
+        const response = await api.get("/file/new-request", {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { dataObject: encryptedMessage },
+        });
+        return response.data;
+      },
+    });
 
   // Query for file history
   const { data: historyData = [] } = useQuery({
-    queryKey: ['fileHistory', selectedFile?.fileId],
+    queryKey: ["fileHistory", selectedFile?.fileId],
     queryFn: async () => {
       if (!selectedFile?.fileId) return [];
       const payload = { fileId: selectedFile.fileId };
       const encryptedMessage = encryptPayload(payload);
       const response = await api.get("file/view-file-history", {
         headers: { Authorization: `Bearer ${token}` },
-        params: { dataObject: encryptedMessage }
+        params: { dataObject: encryptedMessage },
       });
       return response.data.history || [];
     },
-    enabled: !!selectedFile?.fileId && historyModalVisible
+    enabled: !!selectedFile?.fileId && historyModalVisible,
   });
 
   // Mutation for editing file
@@ -126,25 +133,48 @@ const NewRequest = () => {
         lastFileSentDate: "",
       });
 
-      const [response1, response2, response3] = await Promise.all([
-        api.post("/file/basic-details", { dataObject: payload1 }, { headers: { Authorization: `Bearer ${token}` } }),
-        api.post("/file/get-draft-notesheet", { dataObject: payload2 }, { headers: { Authorization: `Bearer ${token}` } }),
-        api.post("/file/file-correspondences", { dataObject: payload3 }, { headers: { Authorization: `Bearer ${token}` } }),
+      const [response1, response2, response3, response4] = await Promise.all([
+        api.post(
+          "/file/basic-details",
+          { dataObject: payload1 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+        api.post(
+          "/file/get-draft-notesheet",
+          { dataObject: payload2 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+        api.post(
+          "/file/file-correspondences",
+          { dataObject: payload3 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+        api.post(
+          "/file/file-notesheets",
+          { dataObject: payload3 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
       ]);
 
-      return { fileDetails: response1.data, additionalDetails: response2.data, correspondence: response3.data };
+      return {
+        fileDetails: response1.data,
+        additionalDetails: response2.data,
+        correspondence: response3.data,
+        noteSheets: response4.data,
+      };
     },
     onSuccess: (data) => {
       setFileDetails(data.fileDetails);
-      Navigate("/main-file", { 
-        state: { 
-          fileDetails: data.fileDetails, 
-          additionalDetails: data.additionalDetails, 
-          correspondence: data.correspondence 
+      Navigate("/main-file", {
+        state: {
+          fileDetails: data.fileDetails,
+          additionalDetails: data.additionalDetails,
+          correspondence: data.correspondence,
+          noteSheets: data.noteSheets
         },
-        replace: true 
+        replace: true,
       });
-    }
+    },
   });
 
   // Mutation for sending file to rack
@@ -160,9 +190,9 @@ const NewRequest = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['newRequests']);
+      queryClient.invalidateQueries(["newRequests"]);
       closeModal();
-    }
+    },
   });
 
   // Mutation for creating volume file
@@ -182,8 +212,8 @@ const NewRequest = () => {
     },
     onSuccess: (data) => {
       alert(data.message);
-      queryClient.invalidateQueries(['newRequests']);
-    }
+      queryClient.invalidateQueries(["newRequests"]);
+    },
   });
 
   // Mutation for creating part file
@@ -203,8 +233,8 @@ const NewRequest = () => {
     },
     onSuccess: (data) => {
       alert(data.message);
-      queryClient.invalidateQueries(['newRequests']);
-    }
+      queryClient.invalidateQueries(["newRequests"]);
+    },
   });
 
   // Event Handlers
@@ -262,41 +292,47 @@ const NewRequest = () => {
           </Accordion.Header>
           <Accordion.Body>
             <Paper elevation={3} className="filter-section p-4">
-        <div className="row">
-          <div className="col-md-4">
-            <FormControl fullWidth variant="outlined">
-              <Select
-                value={priority}
-                onChange={(e) => handleSelectChange(setPriority, e)}
-                label="Priority"
-              >
-                <MenuItem value="All">All</MenuItem>
-                {nRData.prioritylst?.map((priorityItem, index) => (
-                  <MenuItem key={index} value={priorityItem}>
-                    {priorityItem}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </div>
+              <div className="row">
+                <div className="col-md-4">
+                  <FormControl fullWidth variant="outlined">
+                    <Select
+                      value={priority}
+                      onChange={(e) => handleSelectChange(setPriority, e)}
+                      label="Priority"
+                    >
+                      <MenuItem value="All">All</MenuItem>
+                      {nRData.prioritylst?.map((priorityItem, index) => (
+                        <MenuItem key={index} value={priorityItem}>
+                          {priorityItem}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
 
-          <div className="col-md-4">
-            <FormControl fullWidth variant="outlined">
-              <Select
-                value={selectedFileModule}
-                onChange={(e) => handleSelectChange(setSelectedFileModule, e)}
-                label="File Module"
-              >
-                <MenuItem value="0">All</MenuItem>
-                {fileModules?.map((fileModule) => (
-                  <MenuItem key={fileModule.moduleId} value={fileModule.moduleId}>
-                    {fileModule.moduleName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </div>
-        </div>
+                <div className="col-md-4">
+                  <FormControl fullWidth variant="outlined">
+                    <Select
+                      value={selectedFileModule}
+                      onChange={(e) =>
+                        handleSelectChange(setSelectedFileModule, e)
+                      }
+                      label="File Module"
+                    >
+                      <MenuItem value="0">All</MenuItem>
+                      {Array.isArray(fileModules) &&
+                        fileModules.map((fileModule) => (
+                          <MenuItem
+                            key={fileModule.moduleId}
+                            value={fileModule.moduleId}
+                          >
+                            {fileModule.moduleName}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
             </Paper>
           </Accordion.Body>
         </Accordion.Item>
@@ -310,111 +346,126 @@ const NewRequest = () => {
           <Accordion.Body>
             <Paper elevation={3} className="p-4">
               <Tabs defaultActiveKey="files" className="mb-4">
-          <Tab eventKey="files" title="Files">
-            <TableContainer>
-              {isLoading ? (
-                <Box className="text-center py-4">
-                  <CircularProgress />
-                  <Typography className="mt-2">Loading data...</Typography>
-                </Box>
-              ) : (
-                <Table className="custom-table">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>SL</TableCell>
-                      <TableCell>File Number</TableCell>
-                      <TableCell>File Name</TableCell>
-                      <TableCell>From</TableCell>
-                      <TableCell>Send On</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Action</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {nRData.receiptList && nRData.receiptList.length > 0 ? (
-                      nRData.receiptList.map((item, index) => (
-                        <TableRow key={index} hover>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>
-                            <Button
-                              color="primary"
-                              onClick={() => handleFileDetailsClick(item)}
-                              sx={{ textTransform: 'none' }}
-                            >
-                              {item.fileNo}
-                            </Button>
-                          </TableCell>
-                          <TableCell>{item.fileName}</TableCell>
-                          <TableCell>{item.fromEmployee}</TableCell>
-                          <TableCell>{item.sentOn}</TableCell>
-                          <TableCell>
-                            <Typography 
-                              color={item.status === 'Active' ? 'success.main' : 'text.primary'}
-                            >
-                              {item.status}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Box className="action-buttons">
-              <IconButton
-                sx={{
-                  backgroundColor: '#1976d2',
-                  color: 'white',
-                  '&:hover': { backgroundColor: '#1976d2' }
-                }}
-                size="small"
-                onClick={() => handleSendToRack(item)}
-                data-tooltip-id="send-tooltip"
-                data-tooltip-content="Send to Rack"
-              >
-                <FaArchive />
-              </IconButton>
-              <IconButton
-                sx={{
-                  backgroundColor: '#2e7d32',
-                  color: 'white',
-                  '&:hover': { backgroundColor: '#2e7d32' }
-                }}
-                size="small"
-                onClick={() => editFileMutation.mutate(item)}
-                data-tooltip-id="edit-tooltip"
-                data-tooltip-content="Edit File"
-              >
-                <FaEdit />
-              </IconButton>
-              <IconButton
-                sx={{
-                  backgroundColor: '#0288d1',
-                  color: 'white',
-                  '&:hover': { backgroundColor: '#0288d1' }
-                }}
-                size="small"
-                onClick={() => handleHistoryClick(item)}
-                data-tooltip-id="history-tooltip"
-                data-tooltip-content="View History"
-              >
-                <FaHistory />
-              </IconButton>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                <Tab eventKey="files" title="Files">
+                  <TableContainer>
+                    {isLoading ? (
+                      <Box className="text-center py-4">
+                        <CircularProgress />
+                        <Typography className="mt-2">
+                          Loading data...
+                        </Typography>
+                      </Box>
                     ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} align="center">
-                          <Typography color="text.secondary">
-                            No data available
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
+                      <Table className="custom-table">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>SL</TableCell>
+                            <TableCell>File Number</TableCell>
+                            <TableCell>File Name</TableCell>
+                            <TableCell>From</TableCell>
+                            <TableCell>Send On</TableCell>
+                            <TableCell>Status</TableCell>
+                            <TableCell>Action</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {nRData.receiptList &&
+                          nRData.receiptList.length > 0 ? (
+                            nRData.receiptList.map((item, index) => (
+                              <TableRow key={index} hover>
+                                <TableCell>{index + 1}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    color="primary"
+                                    onClick={() => handleFileDetailsClick(item)}
+                                    sx={{ textTransform: "none" }}
+                                  >
+                                    {item.fileNo}
+                                  </Button>
+                                </TableCell>
+                                <TableCell>{item.fileName}</TableCell>
+                                <TableCell>{item.fromEmployee}</TableCell>
+                                <TableCell>{item.sentOn}</TableCell>
+                                <TableCell>
+                                  <Typography
+                                    color={
+                                      item.status === "Active"
+                                        ? "success.main"
+                                        : "text.primary"
+                                    }
+                                  >
+                                    {item.status}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Box className="action-buttons">
+                                    <IconButton
+                                      sx={{
+                                        backgroundColor: "#1976d2",
+                                        color: "white",
+                                        "&:hover": {
+                                          backgroundColor: "#1976d2",
+                                        },
+                                      }}
+                                      size="small"
+                                      onClick={() => handleSendToRack(item)}
+                                      data-tooltip-id="send-tooltip"
+                                      data-tooltip-content="Send to Rack"
+                                    >
+                                      <FaArchive />
+                                    </IconButton>
+                                    <IconButton
+                                      sx={{
+                                        backgroundColor: "#2e7d32",
+                                        color: "white",
+                                        "&:hover": {
+                                          backgroundColor: "#2e7d32",
+                                        },
+                                      }}
+                                      size="small"
+                                      onClick={() =>
+                                        editFileMutation.mutate(item)
+                                      }
+                                      data-tooltip-id="edit-tooltip"
+                                      data-tooltip-content="Edit File"
+                                    >
+                                      <FaEdit />
+                                    </IconButton>
+                                    <IconButton
+                                      sx={{
+                                        backgroundColor: "#0288d1",
+                                        color: "white",
+                                        "&:hover": {
+                                          backgroundColor: "#0288d1",
+                                        },
+                                      }}
+                                      size="small"
+                                      onClick={() => handleHistoryClick(item)}
+                                      data-tooltip-id="history-tooltip"
+                                      data-tooltip-content="View History"
+                                    >
+                                      <FaHistory />
+                                    </IconButton>
+                                  </Box>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={7} align="center">
+                                <Typography color="text.secondary">
+                                  No data available
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
                     )}
-                  </TableBody>
-                </Table>
-              )}
-            </TableContainer>
-          </Tab>
-        </Tabs>
-              </Paper>
+                  </TableContainer>
+                </Tab>
+              </Tabs>
+            </Paper>
           </Accordion.Body>
         </Accordion.Item>
       </Accordion>
@@ -425,15 +476,8 @@ const NewRequest = () => {
       <Tooltip id="history-tooltip" />
 
       {/* Send to Rack Modal */}
-      <Dialog 
-        open={modalVisible} 
-        onClose={closeModal}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          Send to Rack
-        </DialogTitle>
+      <Dialog open={modalVisible} onClose={closeModal} maxWidth="md" fullWidth>
+        <DialogTitle>Send to Rack</DialogTitle>
         <form onSubmit={handleFormSubmit}>
           <DialogContent>
             {sendToRackMutation.isError && (
@@ -441,7 +485,7 @@ const NewRequest = () => {
                 Error sending file to rack. Please try again.
               </Alert>
             )}
-            
+
             <TableContainer component={Paper} className="mb-4">
               <Table size="small">
                 <TableHead>
@@ -526,13 +570,13 @@ const NewRequest = () => {
             <Button onClick={closeModal} color="inherit">
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              variant="contained" 
+            <Button
+              type="submit"
+              variant="contained"
               color="primary"
               disabled={sendToRackMutation.isPending}
             >
-              {sendToRackMutation.isPending ? 'Submitting...' : 'Submit'}
+              {sendToRackMutation.isPending ? "Submitting..." : "Submit"}
             </Button>
           </DialogActions>
         </form>
@@ -588,7 +632,9 @@ const NewRequest = () => {
             <Table>
               <TableBody>
                 <TableRow>
-                  <TableCell component="th" width="30%">File No</TableCell>
+                  <TableCell component="th" width="30%">
+                    File No
+                  </TableCell>
                   <TableCell>{fileDetails?.fileNo}</TableCell>
                 </TableRow>
                 <TableRow>
@@ -628,24 +674,26 @@ const NewRequest = () => {
           </TableContainer>
         </DialogContent>
         <DialogActions>
-          <Button 
-            variant="contained" 
-            color="success" 
+          <Button
+            variant="contained"
+            color="success"
             onClick={() => handleVolumeFile(fileDetails)}
             disabled={createVolumeMutation.isPending}
           >
-            {createVolumeMutation.isPending ? 'Creating...' : 'Create New Volume'}
+            {createVolumeMutation.isPending
+              ? "Creating..."
+              : "Create New Volume"}
           </Button>
-          <Button 
-            variant="contained" 
-            color="success" 
+          <Button
+            variant="contained"
+            color="success"
             onClick={() => handlePartFile(fileDetails)}
             disabled={createPartMutation.isPending}
           >
-            {createPartMutation.isPending ? 'Creating...' : 'Create Part File'}
+            {createPartMutation.isPending ? "Creating..." : "Create Part File"}
           </Button>
-          <Button 
-            onClick={() => setFileDetailsModalVisible(false)} 
+          <Button
+            onClick={() => setFileDetailsModalVisible(false)}
             color="inherit"
           >
             Close

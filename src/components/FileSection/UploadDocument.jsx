@@ -40,7 +40,10 @@ import { encryptPayload } from "../../utils/encrypt";
 import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { AccordionItem, Table } from "react-bootstrap";
-const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
+import { useNavigate } from "react-router-dom";
+const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => {
+  const navigate = useNavigate();
+  
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
   const [rows, setRows] = useState([
@@ -52,7 +55,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       document: null,
     },
   ]);
-
+ 
   const [editorContent, setEditorContent] = useState(initialContent || "");
 
   useEffect(() => {
@@ -68,10 +71,16 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   const [isSendEnabled, setIsSendEnabled] = useState(false);
   const [modalAction, setModalAction] = useState("");
   const [apiResponseData, setApiResponseData] = useState([]);
+  const [receiverEmpRoleMap, setReceiverEmpRoleMap] = useState(null);
+  console.log("API Response Data:", apiResponseData);
 
   const handleRadioButtonChange = (index) => {
     setSelectedRow(index);
     setIsSendEnabled(true);
+    console.log("Selected Index:", index);
+    console.log("Action Value:", apiResponseData[index]?.empDeptRoleId);
+    const actionValue = apiResponseData[index]?.empDeptRoleId || null;
+    setReceiverEmpRoleMap(actionValue);
   };
 
   const handleCloseModal = () => {
@@ -83,16 +92,10 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   const handleSend = () => {
     if (selectedRow !== null) {
       newEndpointMutation.mutate();
-      handleCloseModal();
     }
+    
   };
-
-  const tableRows = [
-    { designation: "Manager", section: "Sales", name: "John Doe" },
-    { designation: "Assistant", section: "Marketing", name: "Jane Smith" },
-    { designation: "Lead", section: "HR", name: "George Brown" },
-  ];
-
+ 
   const handleAddRow = useCallback(() => {
     setRows((prevRows) => [
       ...prevRows,
@@ -162,7 +165,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       try {
         const encryptedDataObject = encryptPayload({
           fileId: fileDetails.data.fileId,
-          note: additionalDetails.data.note || null,
+          note: editorContent || null,
           filerecptId: fileDetails.data.fileReceiptId,
           prevNoteId: additionalDetails?.data?.prevNoteId,
           priority: data.filePriority,
@@ -184,12 +187,20 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
           formData.append("uploadedDocuments", file);
         });
 
-        return api.post("/file/save-notesheet-and-documents", formData, {
+        const Response = await api.post("/file/save-notesheet-and-documents", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
         });
+        if (Response.status === 200) {
+          const payload2 = encryptPayload({ fileId: fileDetails.data.fileId });
+          return api.post("/file/get-draft-notesheet", { dataObject: payload2 }, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        }
       } catch (error) {
         if (error.response?.status === 401) {
           throw new Error("Session expired. Please login again.");
@@ -292,7 +303,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
             },
           }
         );
-        setApiResponseData(response.data);
+        setApiResponseData(response.data.data);
         return response.data;
       } catch (error) {
         console.error("API Error:", error);
@@ -315,20 +326,32 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   } = markActionMutation;
 
   const newEndpointMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (data) => {
+      if (!receiverEmpRoleMap) {
+        toast.error("Please select an action.");
+        return;
+      }
+
       try {
-        const payload = encryptPayload({
+        const sendfilepayload = {
           actionTaken: modalAction,
           fileId: fileDetails.data.fileId,
-          note: additionalDetails.data.note || null,
+          note: additionalDetails.data.note,
           filerecptId: fileDetails.data.fileReceiptId,
           notesheetId: additionalDetails?.data?.prevNoteId,
-          receiverEmpRoleMap: fileDetails.data.receiverEmpRoleMap,
-        });
+          receiverEmpRoleMap: receiverEmpRoleMap,
+        };
 
-        const response = await api.post("/new-endpoint", payload, {
+        const encryptedDataObjectUpDown = encryptPayload(sendfilepayload);
+        
+
+        const SendformData = new FormData();
+        SendformData.append("dataObject", encryptedDataObjectUpDown);
+
+      
+        const response = await api.post("file/send-file", SendformData, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`, 
           },
         });
         return response.data;
@@ -338,12 +361,16 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       }
     },
     onSuccess: (data) => {
-      toast.success("New API call successful!");
+      toast.success(data.message || "Operation successful!");
+      if (data.outcome === true) {
+        navigate("/file");  
+      }
     },
     onError: (error) => {
       toast.error(error.message || "New API call failed!");
     },
   });
+ 
   const handleMarkupOrMarkdown = (action) => {
     setModalAction(action);
     triggerMarkAction(action);
@@ -708,32 +735,33 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
               </tr>
             </thead>
             <tbody>
-              {tableRows.map((row, index) => (
-                <tr key={index}>
-                  <td>{row.designation}</td>
-                  <td>{row.section}</td>
-                  <td>{row.name}</td>
-                  <td>
-                    <Radio
-                      checked={selectedRow === index}
-                      onChange={() => handleRadioButtonChange(index)}
-                    />
-                  </td>
+              {Array.isArray(apiResponseData) && apiResponseData.length > 0 ? (
+                apiResponseData.map((data, index) => {
+                  // Ensure employee name and role are extracted properly
+                  const employeeName = data.empNameWithDesgAndDept || data.name;
+                  const actionValue = data.empDeptRoleId || null;
+
+                  // Debugging: Log the current row data
+                  console.log("Row Data:", data);
+
+                  return (
+                    <tr key={index}>
+                      <td>{employeeName}</td>
+                      <td>
+                        <Radio
+                          checked={selectedRow === index}
+                          onChange={() => handleRadioButtonChange(index)}
+                          value={actionValue}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="2">No data available</td>
                 </tr>
-              ))}
-              {apiResponseData.map((data, index) => (
-                <tr key={index}>
-                  <td>{data.designation}</td>
-                  <td>{data.section}</td>
-                  <td>{data.name}</td>
-                  <td>
-                    <Radio
-                      checked={selectedRow === index}
-                      onChange={() => handleRadioButtonChange(index)}
-                    />
-                  </td>
-                </tr>
-              ))}
+              )}
             </tbody>
           </Table>
 

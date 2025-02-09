@@ -8,10 +8,10 @@ import {
   TextField
 } from '@mui/material';
 import "./ManageFile.css";
-import useApiListStore from "./ApiListStore";
 import api from "../../Api/Api";
 import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
+import useApiListStore from "./ApiListStore";
 import NewRequest from "../NewRequest/NewRequest";
 import RequestStatus from "../RequestStatus/RequestStatus";
 
@@ -35,8 +35,6 @@ const ManageFile = () => {
   const [submitError, setSubmitError] = useState("");
   const [activeTab, setActiveTab] = useState("tab1"); 
 
-
-
   const [roomData, setRoomData] = useState([]); 
   const [rackData, setRackData] = useState([]);
 
@@ -54,9 +52,7 @@ const ManageFile = () => {
 
   useEffect(() => {
     fetchAllData();
-    
-  }, []);
-
+  }, [fetchAllData]);
 
   useEffect(() => {
     const fetchRoomData = async () => {
@@ -76,8 +72,6 @@ const ManageFile = () => {
     fetchRoomData();
   }, []);
 
-
-  
   useEffect(() => {
     const fetchRackData = async () => {
       if (!selectedRoom) {
@@ -108,8 +102,6 @@ const ManageFile = () => {
   
     fetchRackData();
   }, [selectedRoom]); // Add selectedRoom as a dependency
-  
-
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -178,8 +170,6 @@ const ManageFile = () => {
     }
   };
 
-
-
   const toggleFormAccordion = () => {
     setIsFormOpen((prev) => !prev);
   };
@@ -196,30 +186,24 @@ const ManageFile = () => {
     setActiveTab(tabId);
   };
 
-
-  
-
   useEffect(() => {
     console.log("Activities:", activities);
     console.log("Selected Activity:", selectedActivity);
   
-    const selectedActivityObj = activities.find(
-      (activity) => String(activity.activityId) === selectedActivity
-    );
+    if (Array.isArray(activities)) {
+      const selectedActivityObj = activities.find(
+        (activity) => String(activity.activityId) === selectedActivity
+      );
   
-    console.log("Selected Activity Object:", selectedActivityObj);
+      console.log("Selected Activity Object:", selectedActivityObj);
   
-    if (formTitle && formSubject && selectedActivityObj) {
-      setFormFileName(`${formTitle}/${formSubject}/${selectedActivityObj.activityName}`);
-    } else {
-      setFormFileName(""); 
+      if (formTitle && formSubject && selectedActivityObj) {
+        setFormFileName(`${formTitle}/${formSubject}/${selectedActivityObj.activityName}`);
+      } else {
+        setFormFileName("");
+      }
     }
   }, [formTitle, formSubject, selectedActivity, activities]);
-  
-  
-  
-  
-  
 
   return (
     <div className="manageFile-section-container">
@@ -234,7 +218,7 @@ const ManageFile = () => {
         <div className="accordion-body">
           <form className="row" onSubmit={handleSubmit}>
 
-              {/* Office */}
+            {/* Office */}
             <div className="form-group col-md-3">
               <label htmlFor="officeSelect">Office</label>
               <FormControl fullWidth variant="outlined">
@@ -247,7 +231,7 @@ const ManageFile = () => {
                   <MenuItem value="" disabled>
                     Select Office
                   </MenuItem>
-                  {office.map((offices) => (
+                  {office && office.map((offices) => (
                     <MenuItem key={offices.officeOrgId} value={offices.officeOrgId}>
                       {offices.officeOrgName}
                     </MenuItem>
@@ -268,7 +252,7 @@ const ManageFile = () => {
                   <MenuItem value="" disabled>
                     Select Department
                   </MenuItem>
-                  {departments.map((department) => (
+                  {departments && departments.map((department) => (
                     <MenuItem key={department.departmentId} value={department.departmentId}>
                       {department.departmentName}
                     </MenuItem>
@@ -289,7 +273,7 @@ const ManageFile = () => {
                   <MenuItem value="" disabled>
                     Select File Related To
                   </MenuItem>
-                  {fileRelatedToList.map((fileRtl) => (
+                  {fileRelatedToList && fileRelatedToList.map((fileRtl) => (
                     <MenuItem key={fileRtl.fileRelatedId} value={fileRtl.fileRelatedId}>
                       {fileRtl.fileRelatedName}
                     </MenuItem>
@@ -334,7 +318,7 @@ const ManageFile = () => {
                   <MenuItem value="" disabled>
                     Select Activity
                   </MenuItem>
-                  {activities.map((activity) => (
+                  {activities && activities.map((activity) => (
                     <MenuItem key={activity.activityId} value={activity.activityId}>
                       {activity.activityName}
                     </MenuItem>
@@ -379,7 +363,7 @@ const ManageFile = () => {
                   <MenuItem value="" disabled>
                     Select Custodian
                   </MenuItem>
-                  {custodians.map((custodian) => (
+                  {custodians && custodians.map((custodian) => (
                     <MenuItem
                       key={custodian.employeeDeptMapId}
                       value={custodian.employeeDeptMapId}
@@ -403,7 +387,7 @@ const ManageFile = () => {
                   <MenuItem value="" disabled>
                     Select Room
                   </MenuItem>
-                  {roomData.map((room) => (
+                  {roomData && roomData.map((room) => (
                     <MenuItem key={room.docRoomId} value={room.docRoomId}>
                       {room.roomNumber}
                     </MenuItem>
@@ -424,7 +408,7 @@ const ManageFile = () => {
                   <MenuItem value="" disabled>
                     Select Rack
                   </MenuItem>
-                  {rackData.map((rack) => (
+                  {rackData && rackData.map((rack) => (
                     <MenuItem key={rack.rackId} value={rack.rackId}>
                       {rack.rackNumber}
                     </MenuItem>
@@ -464,7 +448,7 @@ const ManageFile = () => {
                   <MenuItem value="" disabled>
                     Select File Module
                   </MenuItem>
-                  {fileModules.map((fileModule) => (
+                  {fileModules && fileModules.map((fileModule) => (
                     <MenuItem key={fileModule.moduleId} value={fileModule.moduleId}>
                       {fileModule.moduleName}
                     </MenuItem>
