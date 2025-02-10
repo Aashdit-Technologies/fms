@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { MdLock, MdVisibility, MdVisibilityOff } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
@@ -50,7 +49,6 @@ const LoginPage = () => {
         </div>
       </div>
       <div className="container-fluid">
-        <ToastContainer />
         <div className="container cntr_cls">
           <div className="box">
             <div className="shadow"></div>

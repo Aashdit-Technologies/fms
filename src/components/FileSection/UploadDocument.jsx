@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
+import ReactSelect from "react-select";
 import {
   TextField,
   Select,
@@ -14,7 +15,9 @@ import {
   Switch,
   Typography,
   Radio,
+  InputAdornment,
 } from "@mui/material";
+
 import {
   FaPlus,
   FaMinus,
@@ -25,6 +28,7 @@ import {
   FaPaperPlane,
   FaBan,
   FaCheckCircle,
+  FaSearch,
 } from "react-icons/fa";
 import Accordion from "react-bootstrap/Accordion";
 import Card from "react-bootstrap/Card";
@@ -41,9 +45,9 @@ import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { AccordionItem, Table } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => {
+const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   const navigate = useNavigate();
-  
+
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
   const [rows, setRows] = useState([
@@ -55,7 +59,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => 
       document: null,
     },
   ]);
- 
+
   const [editorContent, setEditorContent] = useState(initialContent || "");
 
   useEffect(() => {
@@ -67,18 +71,31 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => 
   const [pendingConfidential, setPendingConfidential] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSendToModalOpen, setIsSendToModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isSendEnabled, setIsSendEnabled] = useState(false);
   const [modalAction, setModalAction] = useState("");
   const [apiResponseData, setApiResponseData] = useState([]);
+  const [searchFilters, setSearchFilters] = useState({
+    department: "",
+    role: "",
+    name: "",
+    id: "",
+  });
+
   const [receiverEmpRoleMap, setReceiverEmpRoleMap] = useState(null);
-  console.log("API Response Data:", apiResponseData);
+  const officeOptions = [
+    { value: "HO", label: "Head Office || HO" },
+    { value: "ANGUL", label: "Angul || ANGUL" },
+    { value: "BCoD-1", label: "Bhubaneswar Const.- I || BCoD-1" },
+    { value: "BCoD-2", label: "Bhubaneswar Const.- II || BCoD-2" },
+    { value: "BCoD-3", label: "Bhubaneswar Const.- III || BCoD-3" },
+    { value: "BHM", label: "Berhampur || BHM" },
+  ];
 
   const handleRadioButtonChange = (index) => {
     setSelectedRow(index);
     setIsSendEnabled(true);
-    console.log("Selected Index:", index);
-    console.log("Action Value:", apiResponseData[index]?.empDeptRoleId);
     const actionValue = apiResponseData[index]?.empDeptRoleId || null;
     setReceiverEmpRoleMap(actionValue);
   };
@@ -93,9 +110,8 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => 
     if (selectedRow !== null) {
       newEndpointMutation.mutate();
     }
-    
   };
- 
+
   const handleAddRow = useCallback(() => {
     setRows((prevRows) => [
       ...prevRows,
@@ -143,8 +159,18 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => 
     setConfirmationModalOpen(true);
   };
 
-  const handleSendTo = () => {
-    toast.success("Document sent successfully!");
+  const handleSearch = () => {
+    const filteredData = searchFilters.filter((data) => {
+      return (
+        (searchFilters.department === "" ||
+          data.department === searchFilters.department) &&
+        (searchFilters.role === "" || data.role === searchFilters.role) &&
+        (searchFilters.name === "" ||
+          data.empNameWithDesgAndDept.includes(searchFilters.name)) &&
+        (searchFilters.id === "" || data.id.includes(searchFilters.id))
+      );
+    });
+    setSearchFilters(filteredData);
   };
 
   const handleEndTask = () => {
@@ -187,19 +213,27 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => 
           formData.append("uploadedDocuments", file);
         });
 
-        const Response = await api.post("/file/save-notesheet-and-documents", formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        if (Response.status === 200) {
-          const payload2 = encryptPayload({ fileId: fileDetails.data.fileId });
-          return api.post("/file/get-draft-notesheet", { dataObject: payload2 }, {
+        const Response = await api.post(
+          "/file/save-notesheet-and-documents",
+          formData,
+          {
             headers: {
               Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
             },
-          });
+          }
+        );
+        if (Response.status === 200) {
+          const payload2 = encryptPayload({ fileId: fileDetails.data.fileId });
+          return api.post(
+            "/file/get-draft-notesheet",
+            { dataObject: payload2 },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
         }
       } catch (error) {
         if (error.response?.status === 401) {
@@ -343,15 +377,13 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => 
         };
 
         const encryptedDataObjectUpDown = encryptPayload(sendfilepayload);
-        
 
         const SendformData = new FormData();
         SendformData.append("dataObject", encryptedDataObjectUpDown);
 
-      
         const response = await api.post("file/send-file", SendformData, {
           headers: {
-            Authorization: `Bearer ${token}`, 
+            Authorization: `Bearer ${token}`,
           },
         });
         return response.data;
@@ -363,14 +395,14 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => 
     onSuccess: (data) => {
       toast.success(data.message || "Operation successful!");
       if (data.outcome === true) {
-        navigate("/file");  
+        navigate("/file");
       }
     },
     onError: (error) => {
       toast.error(error.message || "New API call failed!");
     },
   });
- 
+
   const handleMarkupOrMarkdown = (action) => {
     setModalAction(action);
     triggerMarkAction(action);
@@ -623,7 +655,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => 
                   variant="contained"
                   color="primary"
                   startIcon={<FaPaperPlane />}
-                  onClick={handleSendTo}
+                  onClick={() => setIsSendToModalOpen(true)}
                 >
                   Send To
                 </Button>
@@ -648,7 +680,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => 
           </Card>
         </AccordionItem>
       </Accordion>
-
       <Modal
         open={confirmationModalOpen}
         onClose={() => setConfirmationModalOpen(false)}
@@ -701,7 +732,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => 
           </Box>
         </Box>
       </Modal>
-
       {/* Modal for Table and Send Button */}
       <Modal
         open={isModalOpen}
@@ -783,6 +813,178 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, }) => 
               Cancel
             </Button>
           </Box>
+        </Box>
+      </Modal>
+      // Add the "Send To" modal structure
+      <Modal
+        open={isSendToModalOpen}
+        onClose={() => setIsSendToModalOpen(false)}
+        aria-labelledby="send-to-modal"
+        aria-describedby="modal-to-send-file"
+      >
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            padding: 0,
+            borderRadius: 2,
+            maxWidth: "800px",
+            margin: "auto",
+            marginTop: "50px",
+            overflow: "auto",
+          }}
+        >
+          {/* Modal Heading with Background Color */}
+          <Box
+            sx={{
+              bgcolor: "#1976d2", // Blue background color
+              color: "white", // White text color
+              padding: 1,
+              borderRadius: "4px 4px 0 0", // Rounded corners at the top
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
+            <Typography variant="h6">Send To</Typography>
+          </Box>
+          <div className="w-100 px-4 ">
+            {/* Filter and Search Section */}
+            <Grid container spacing={2} sx={{ mb: 3, mt: 2 }}>
+              {/* Department Select Field */}
+              <Grid item xs={3}>
+                <label>Office Name</label>
+                <ReactSelect
+                  options={officeOptions}
+                  value={officeOptions.find(
+                    (option) => option.value === searchFilters.office
+                  )}
+                  onChange={(selectedOption) =>
+                    setSearchFilters({
+                      ...searchFilters,
+                      office: selectedOption.value,
+                    })
+                  }
+                  isSearchable
+                />
+              </Grid>
+
+              <Grid item xs={3}>
+                <label>Office Name</label>
+                <ReactSelect
+                  options={officeOptions}
+                  value={officeOptions.find(
+                    (option) => option.value === searchFilters.office
+                  )}
+                  onChange={(selectedOption) =>
+                    setSearchFilters({
+                      ...searchFilters,
+                      office: selectedOption.value,
+                    })
+                  }
+                  isSearchable
+                />
+              </Grid>
+              <Grid item xs={3}>
+                <label>Office Name</label>
+                <ReactSelect
+                  options={officeOptions}
+                  value={officeOptions.find(
+                    (option) => option.value === searchFilters.office
+                  )}
+                  onChange={(selectedOption) =>
+                    setSearchFilters({
+                      ...searchFilters,
+                      office: selectedOption.value,
+                    })
+                  }
+                  isSearchable
+                />
+              </Grid>
+              <Grid item xs={3}>
+                <label>Office Name</label>
+                <ReactSelect
+                  options={officeOptions}
+                  value={officeOptions.find(
+                    (option) => option.value === searchFilters.office
+                  )}
+                  onChange={(selectedOption) =>
+                    setSearchFilters({
+                      ...searchFilters,
+                      office: selectedOption.value,
+                    })
+                  }
+                  isSearchable
+                />
+              </Grid>
+            </Grid>
+
+            {/* Search Button */}
+            <div className="sendtomodl_btn w-100 text-center">
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ mb: 3 }}
+                onClick={handleSearch}
+              >
+                Search
+              </Button>
+            </div>
+
+            {/* Table Section */}
+            <Table bordered>
+              <thead>
+                <tr>
+                  <th>Employee Name</th>
+                  <th>Department</th>
+                  <th>Role</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.isArray(searchFilters) && searchFilters.length > 0 ? (
+                  searchFilters.map((data, index) => (
+                    <tr key={index}>
+                      <td>{data.empNameWithDesgAndDept || data.name}</td>
+                      <td>{data.department || "N/A"}</td>
+                      <td>{data.role || "N/A"}</td>
+                      <td>
+                        <Radio
+                          checked={selectedRow === index}
+                          onChange={() => handleRadioButtonChange(index)}
+                          value={data.empDeptRoleId || null}
+                        />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4">No data available</td>
+                  </tr>
+                )}
+              </tbody>
+            </Table>
+
+            {/* Action Buttons */}
+            <div className="sendtomodl_btn w-100 text-center">
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={!isSendEnabled}
+                  // onClick={handleSendToModal}
+                >
+                  Send
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => setIsSendToModalOpen(false)}
+                  sx={{ ml: 2 }}
+                >
+                  Cancel
+                </Button>
+              </Box>
+            </div>
+          </div>
         </Box>
       </Modal>
     </Box>

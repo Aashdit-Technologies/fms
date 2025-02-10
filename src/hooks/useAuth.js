@@ -27,7 +27,7 @@ export const useAuth = () => {
 
         return response.data;
       } catch (error) {
-        console.error('Login error:', error);
+        toast.error(error.message || 'Login failed.');
         throw error; 
       }
     },
@@ -35,13 +35,14 @@ export const useAuth = () => {
       if (data?.outcome) {
         setToken(data.data);
         queryClient.invalidateQueries(['user']);
+        toast.success(data.message || 'Login successful!');
         navigate('/');
       } else {
-        console.log(data.data);
+        toast.error(data.data || 'Login failed.');
       }
     },
     onError: (error) => {
-      console.error('Mutation failed:', error);
+      toast.error(error.message || 'Login failed.');
     },
   });
 
@@ -61,15 +62,15 @@ export const useAuth = () => {
 
         navigate('/login');
       } catch (error) {
-        console.error('Logout error:', error);
+        toast.error('Logout error:', error);
         throw error;  
       }
     },
     onSuccess: () => {
-      console.log('Successfully logged out.');
+      toast.success('Successfully logged out.');
     },
     onError: (error) => {
-      console.error('Logout failed:', error);
+      toast.error(error.message || 'Logout failed.');
     },
   });
 

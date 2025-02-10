@@ -82,33 +82,30 @@ const customStyles = {
 };
 
 const Correspondence = ({ correspondence, onView, onHistory }) => {
-  console.log("correspondence", correspondence.data);
-  
-    const token =
-      useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  const token =
+    useAuthStore((state) => state.token) || sessionStorage.getItem("token");
   const [filterText, setFilterText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
-  
 
   const download = async (row) => {
     if (!row || !row.correspondenceName || !row.correspondencePath) {
       console.error("Invalid row data for download");
       return;
     }
-  
+
     try {
       const encryptedDload = {
         documentName: row.correspondenceName,
-        documentPath: row.correspondencePath, 
+        documentPath: row.correspondencePath,
       };
-  
+
       const response = await api.post("/download/download-document", encryptedDload, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json', 
+          'Content-Type': 'application/json',
         },
       });
-  
+
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -116,7 +113,7 @@ const Correspondence = ({ correspondence, onView, onHistory }) => {
       link.download = row.correspondenceName;
       link.click();
       window.URL.revokeObjectURL(url);
-  
+
       if (response.data && response.data.success) {
         console.log("Download successful!");
       } else {
@@ -128,8 +125,6 @@ const Correspondence = ({ correspondence, onView, onHistory }) => {
       alert("An error occurred while downloading the document. Please try again.");
     }
   };
-  
-  
 
   useEffect(() => {
     setFilteredData(correspondence?.data || []);
@@ -209,7 +204,7 @@ const Correspondence = ({ correspondence, onView, onHistory }) => {
             style={{ backgroundColor: "#28a745" }}
             onClick={() => download(row)}
           >
-              <FaDownload size={16} />
+            <FaDownload size={16} />
           </StyledButton>
         </Box>
       ),

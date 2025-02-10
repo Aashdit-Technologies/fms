@@ -46,19 +46,23 @@ const useApiListStore = create(
             api.get("/rack-list", { headers: { Authorization: `Bearer ${token}` } }),
             api.get("/room-list", { headers: { Authorization: `Bearer ${token}` } }),
             api.get("/office-list", { headers: { Authorization: `Bearer ${token}` } }),
+            
           ]);
+          
 
           set({
-            activities: activityResponse.data.activityList || [],
-            custodians: custodianResponse.data.custodianList || [],
-            departments: departmentResponse.data.departmentList || [],
-            fileModules: fileModuleResponse.data.fileModuleList || [],
-            fileRelatedToList: fileRelatedToResponse.data.fileRelatedToList || [],
-            racks: rackResponse.data.rackList || [],
-            rooms: roomResponse.data.roomList || [],
-            office: officeResponse.data.officeDetails || [],
+            activities: activityResponse.data.activityList,
+            custodians: custodianResponse.data.custodianList,
+            departments: departmentResponse.data.departmentList,
+            fileModules: fileModuleResponse.data.fileModuleList,
+            fileRelatedToList: fileRelatedToResponse.data.fileRelatedToList,
+            racks: rackResponse.data.rackList,
+            rooms: roomResponse.data.roomList,
+            office: officeResponse.data.officeDetails,
             isLoading: false,
           });
+          
+          
         } catch (error) {
           console.error("Error fetching data:", error.message);
           set({
@@ -67,6 +71,7 @@ const useApiListStore = create(
           });
         }
       },
+      
     }),
     {
       name: "api-list-storage",
@@ -81,7 +86,9 @@ const useApiListStore = create(
         office: state.office,
       }),
     }
+    
   )
+  
 );
 
 export default useApiListStore;

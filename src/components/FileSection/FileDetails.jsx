@@ -15,12 +15,11 @@ const DetailItem = ({ label, value }) => (
   </Box>
 );
 
-const FileDetails = ({fileDetails}) => {
+const FileDetails = ({ fileDetails }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const allDetails = fileDetails.data
+  const allDetails = fileDetails?.data || {};
   console.log("fileDetails", allDetails);
-  
 
   const handleShowDetails = () => {
     setIsModalOpen(true);
@@ -50,7 +49,7 @@ const FileDetails = ({fileDetails}) => {
                       <div className="card-body">
                         <div className="mb-3">
                           <label className="text-muted small text-uppercase">File Number</label>
-                          <p className="mb-0 fw-medium clickable-text" onClick={() => handleShowDetails()}>{allDetails.fileNo || 'N/A'}</p>
+                          <p className="mb-0 fw-medium clickable-text" onClick={handleShowDetails}>{allDetails.fileNo || 'N/A'}</p>
                         </div>
                         <div className="mb-3">
                           <label className="text-muted small text-uppercase">File Name</label>
@@ -89,27 +88,27 @@ const FileDetails = ({fileDetails}) => {
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <Box sx={modalStyle}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, textAlign: "center", color: "#1976d2", borderBottom: "2px solid #1976d2" }}>
-            File Details: {allDetails?.fileNo || "N/A"}
+            File Details: {allDetails.fileNo || "N/A"}
           </Typography>
           <Grid container spacing={2} sx={{ mt: 2 }}>
             {/* Column 1 */}
             <Grid item xs={12} sm={6}>
-              <DetailItem label="File Number" value={allDetails?.fileNo} />
-              <DetailItem label="File Type" value={allDetails?.fileType} />
-              <DetailItem label="File Name" value={allDetails?.fileName} />
-              <DetailItem label="Subject" value={allDetails?.subject} />
-              <DetailItem label="Title" value={allDetails?.title} />
-              <DetailItem label="Activity" value={allDetails?.activity} />
+              <DetailItem label="File Number" value={allDetails.fileNo} />
+              <DetailItem label="File Type" value={allDetails.fileType} />
+              <DetailItem label="File Name" value={allDetails.fileName} />
+              <DetailItem label="Subject" value={allDetails.subject} />
+              <DetailItem label="Title" value={allDetails.title} />
+              <DetailItem label="Activity" value={allDetails.activity} />
             </Grid>
 
             {/* Column 2 */}
             <Grid item xs={12} sm={6}>
-              <DetailItem label="Custodian" value={allDetails?.custodian} />
-              <DetailItem label="Room Number" value={allDetails?.room} />
-              <DetailItem label="Rack Number" value={allDetails?.rack} />
-              <DetailItem label="Cell Number" value={allDetails?.cell} />
-              <DetailItem label="Created By" value={allDetails?.createdBy} />
-              <DetailItem label="Created Date" value={allDetails?.createdDate} />
+              <DetailItem label="Custodian" value={allDetails.custodian} />
+              <DetailItem label="Room Number" value={allDetails.room} />
+              <DetailItem label="Rack Number" value={allDetails.rack} />
+              <DetailItem label="Cell Number" value={allDetails.cell} />
+              <DetailItem label="Created By" value={allDetails.createdBy} />
+              <DetailItem label="Created Date" value={allDetails.createdDate} />
             </Grid>
           </Grid>
 

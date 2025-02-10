@@ -16,16 +16,18 @@ const NoteSheet = ({ noteSheets }) => {
 
   useEffect(() => {
     // Check if noteSheets is an array before setting it
-    if (Array.isArray(noteSheets.data)) {
+    if (noteSheets && Array.isArray(noteSheets.data)) {
       setNotes(noteSheets.data);
     } else {
       setNotes([]); // Fallback to an empty array
     }
   }, [noteSheets]);
+
   const convertHTMLToText = (htmlContent) => {
     const doc = new DOMParser().parseFromString(htmlContent, "text/html");
     return doc.body.textContent || doc.body.innerText;
   };
+
   const badgeColors = ["#ff5733", "#1e90ff", "#28a745", "#ffcc00"];
 
   return (
