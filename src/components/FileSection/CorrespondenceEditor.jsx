@@ -13,7 +13,8 @@ const CorrespondenceEditor = ({ content, onContentChange }) => {
       ref={editor}
       value={content}
       config={{ readonly: false, placeholder: "Start typing..." }}
-      onChange={handleEditorChange}  
+      onChange={handleEditorChange} 
+      key={content} 
     />
   );
 };

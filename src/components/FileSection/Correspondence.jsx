@@ -170,7 +170,7 @@ const Correspondence = ({
 
   const handleCreateDraft = () => {
     if (offices) {
-      setOfficeNames(offices); // Set office names if data fetched successfully
+      setOfficeNames(offices); 
     }
     setModalOpen(true);
   };

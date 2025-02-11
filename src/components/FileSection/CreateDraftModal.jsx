@@ -4,30 +4,65 @@ import {
   Box,
   IconButton,
   Button,
-  TextField,
   Typography,
   Grid,
 } from "@mui/material";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import CorrespondenceEditor from "./CorrespondenceEditor";
 import ReactSelect from "react-select";
-const CreateDraftModal = ({ open, onClose ,officeNames}) => {
-  console.log("hii",officeNames.data);
-  
+
+const CreateDraftModal = ({ open, onClose, officeNames }) => {
+  const [data, setData] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     subject: "",
     referenceNo: "",
     addedBy: "",
     content: "",
+    office: "",
+    tempType: "", 
   });
+
+  
+  useEffect(() => {
+    if (officeNames && officeNames.data) {
+      setData(officeNames.data);
+    }
+  }, [officeNames]);
   useEffect(() => {
     if (open) {
       setShowForm(false);
     }
   }, [open]);
+  useEffect(() => {
+      setFormData({
+        subject: "",
+        referenceNo: "",
+        addedBy: "",
+        content: "",
+        office: "",
+        tempType: "",
+      });
+  }, []);
 
-  
+  const officeOptions = Array.isArray(data)
+    ? data.map((item) => ({
+        label: item.tempType, 
+        value: item.templateId, 
+        tempContent: item.tempContent, 
+      }))
+    : [];
+
+  const handleOfficeChange = (selectedOption) => {
+    if (selectedOption) {
+      setFormData((prev) => ({
+        ...prev,
+        office: selectedOption.value,
+        tempType: selectedOption.label, 
+        content: selectedOption.tempContent,
+      }));
+    }
+  };
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -64,16 +99,11 @@ const CreateDraftModal = ({ open, onClose ,officeNames}) => {
             <Grid item xs={12}>
               <label>Office Name</label>
               <ReactSelect
-                // options={officeOptions}
-                // value={officeOptions.find(
-                //   (option) => option.value === formData.office
-                // )}
-                // onChange={(selectedOption) =>
-                //   setFormData((prev) => ({
-                //     ...prev,
-                //     office: selectedOption.value,
-                //   }))
-                // }
+                options={officeOptions}
+                value={officeOptions.find(
+                  (option) => option.value === formData.office
+                )}
+                onChange={handleOfficeChange}
                 isSearchable
               />
             </Grid>
@@ -104,6 +134,8 @@ const CreateDraftModal = ({ open, onClose ,officeNames}) => {
                 referenceNo: "",
                 addedBy: "",
                 content: "",
+                office: "",
+                tempType: "",
               })
             }
           >
