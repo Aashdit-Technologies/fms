@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { FaPlus, FaMinus } from "react-icons/fa6";
+import { FaPlus, FaMinus, FaLock, FaLockOpen, FaEdit } from "react-icons/fa";
+import { Accordion } from "react-bootstrap";
+import { TextField, Button } from "@mui/material";
 import api from "../../Api/Api";
 import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
 import "./ManageActivity.css";
+import DataTable from "react-data-table-component"; // Import DataTable
+
+// import { Button } from "@mui/material";
 
 const ManageActivity = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -16,24 +21,21 @@ const ManageActivity = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activityData, setActivityData] = useState([]);
   const [editingActivityId, setEditingActivityId] = useState(null);
-  
+  const [activeKey, setActiveKey] = useState("1");
+
+  const fetchActivityData = async () => {
+    try {
+      const token = useAuthStore.getState().token;
+      const response = await api.get("/manage-activity", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setActivityData(response.data.data);
+    } catch (error) {
+      console.error("Error fetching activity data:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchActivityData = async () => {
-      try {
-        const token = useAuthStore.getState().token;
-        const response = await api.get("/manage-activity", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        console.log("Fetched Activity Data:", response.data.activityList);
-        setActivityData(response.data.activityList);
-      } catch (error) {
-        console.error("Error fetching activity data:", error);
-      }
-    };
-
     fetchActivityData();
   }, []);
 
@@ -72,11 +74,7 @@ const ManageActivity = () => {
       const response = await api.post(
         "/save-edit-activity",
         { dataObject: encryptedMessage },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       alert(
@@ -84,6 +82,7 @@ const ManageActivity = () => {
           ? "Activity updated successfully!"
           : "Activity added successfully!"
       );
+      fetchActivityData();
 
       setActivityData((prevData) =>
         editingActivityId
@@ -93,14 +92,19 @@ const ManageActivity = () => {
           : [...prevData, response.data]
       );
 
-      setActivity({ activityCode: "", activityName: "", activityRemarks: "" });
-      setEditingActivityId(null);
+      handleReset();
     } catch (error) {
       console.error("Error saving data:", error);
       alert("Failed to save data.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleReset = () => {
+    setActivity({ activityCode: "", activityName: "", activityRemarks: "" });
+    setEditingActivityId(null);
+    setIsFormOpen(false);
   };
 
   const handleStatusToggle = async (activity) => {
@@ -114,18 +118,18 @@ const ManageActivity = () => {
 
       const encryptedMessage = encryptPayload(payload);
 
-      const response = await api.post(
+      await api.post(
         "/update-activity-status",
         {},
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
           params: { dataObject: encryptedMessage },
         }
       );
 
-      alert(`Activity status updated to ${updatedStatus ? "Active" : "Inactive"}!`);
+      alert(
+        `Activity status updated to ${updatedStatus ? "Active" : "Inactive"}!`
+      );
       setActivityData((prevData) =>
         prevData.map((item) =>
           item.activityId === activity.activityId
@@ -147,120 +151,228 @@ const ManageActivity = () => {
     });
     setEditingActivityId(activity.activityId);
     setIsFormOpen(true);
+    setActiveKey("0");
   };
+
+
+  const columns = [
+    {
+      name: "Sl",
+      selector: (row, index) => index + 1,
+      sortable: true,
+      width: "70px",
+    },
+    {
+      name: "Activity Code",
+      selector: (row) => row.activityCode,
+      sortable: true,
+    },
+    {
+      name: "Activity Name",
+      selector: (row) => row.activityName,
+      sortable: true,
+    },
+    {
+      name: "Activity Remarks",
+      selector: (row) => row.activityRemarks,
+    },
+    {
+      name: "Active",
+      selector: (row) => (row.isActive ? "Yes" : "No"),
+      sortable: true,
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <div className="d-flex" style={{ width: "max-content" }}>
+          <Button
+            variant="contained"
+            color={row.isActive ? "error" : "success"}
+            size="small"
+            title={row.isActive ? "Deactivate" : "Activate"}
+            startIcon={row.isActive ? <FaLock /> : <FaLockOpen />}
+            onClick={() => handleStatusToggle(row)}
+          >
+            
+          </Button>
+          <Button
+            variant="outlined"
+            color="warning"
+            size="small"
+            title="Edit"
+            startIcon={<FaEdit />}
+            onClick={() => handleEdit(row)}
+            style={{ marginLeft: "8px" }}
+          >
+            {/* Edit */}
+          </Button>
+        </div>
+      ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
+    },
+  ];
 
   return (
     <div className="activity-section-container">
-   
-      <div className="accordion-header" onClick={() => setIsFormOpen(!isFormOpen)}>
-        <span className="accordion-title">
-          {editingActivityId ? "Edit Activity Details" : "Add Activity Details"}
-        </span>
-        <span className="accordion-icon">
-          {isFormOpen ? <FaMinus /> : <FaPlus />}
-        </span>
-      </div>
-      {isFormOpen && (
-        <div className="accordion-body">
-          <form onSubmit={handleSubmit} className="row">
-            <div className="form-group col-md-3">
-              <label htmlFor="activityCode">Activity Code:</label>
-              <input
-                type="number"
-                className="form-control"
-                id="activityCode"
-                name="activityCode"
-                value={activity.activityCode}
-                onChange={handleInputChange}
-                placeholder="Enter Activity Code"
-              />
-            </div>
-            <div className="form-group col-md-3">
-              <label htmlFor="activityName">Activity Name:</label>
-              <input
-                type="text"
-                className="form-control"
-                id="activityName"
-                name="activityName"
-                value={activity.activityName}
-                onChange={handleInputChange}
-                placeholder="Enter Activity Name"
-              />
-            </div>
-            <div className="form-group col-md-3">
-              <label htmlFor="activityRemarks">Activity Remarks:</label>
-              <textarea
-                className="form-control"
-                id="activityRemarks"
-                name="activityRemarks"
-                value={activity.activityRemarks}
-                onChange={handleInputChange}
-                placeholder="Enter Activity Remarks"
-              ></textarea>
-            </div>
-            <div className="col-md-12 text-center mt-3">
-              <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : editingActivityId ? "Update Activity" : "Save"}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
+        {/* Add/Edit Activity Accordion */}
+        <Accordion.Item eventKey="0">
+          <Accordion.Header onClick={() => setIsFormOpen((prev) => !prev)}>
+            <span className="accordion-title">
+              {editingActivityId
+                ? "Edit Activity Details"
+                : "Add Activity Details"}
+            </span>
+            <span className="accordion-icon">
+              {isFormOpen ? <FaMinus /> : <FaPlus />}
+            </span>
+          </Accordion.Header>
+          <Accordion.Body>
+            <form onSubmit={handleSubmit} className="row">
+              <div className="form-group col-md-3">
+                <TextField
+                  fullWidth
+                  label="Activity Code"
+                  variant="outlined"
+                  id="activityCode"
+                  name="activityCode"
+                  value={activity.activityCode}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="form-group col-md-3">
+                <TextField
+                  fullWidth
+                  label="Activity Name"
+                  variant="outlined"
+                  id="activityName"
+                  name="activityName"
+                  value={activity.activityName}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="form-group col-md-3">
+                <TextField
+                  fullWidth
+                  label="Activity Remarks"
+                  variant="outlined"
+                  multiline
+                  rows={3}
+                  id="activityRemarks"
+                  name="activityRemarks"
+                  value={activity.activityRemarks}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="col-md-12 text-center mt-3">
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting
+                    ? "Saving..."
+                    : editingActivityId
+                    ? "Update Activity"
+                    : "Save"}
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  className="ms-2"
+                  onClick={handleReset}
+                >
+                  Reset
+                </Button>
+              </div>
+            </form>
+          </Accordion.Body>
+        </Accordion.Item>
 
-      
-      <div className="accordion-header mt-5" onClick={() => setIsTableOpen(!isTableOpen)}>
-        <span className="accordion-title">View Activities</span>
-        <span className="accordion-icon">
-          {isTableOpen ? <FaMinus /> : <FaPlus />}
-        </span>
-      </div>
-      {isTableOpen && (
-        <div className="accordion-body">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Activity Code</th>
-                <th>Activity Name</th>
-                <th>Activity Remarks</th>
-                <th>Active</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activityData && activityData.length > 0 ? (
-                activityData.map((activity) => (
-                  <tr key={activity.activityId}>
-                    <td>{activity.activityCode}</td>
-                    <td>{activity.activityName}</td>
-                    <td>{activity.activityRemarks}</td>
-                    <td>{activity.isActive ? "Yes" : "No"}</td>
-                    <td>
-                      <button
-                        className={`btn btn-sm ${
-                          activity.isActive ? "btn-danger" : "btn-success"
-                        }`}
-                        onClick={() => handleStatusToggle(activity)}
-                      >
-                        {activity.isActive ? "Deactivate" : "Activate"}
-                      </button>
-                      <button
-                        className="btn btn-sm btn-warning ms-2"
-                        onClick={() => handleEdit(activity)}
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5">No data available</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+        {/* View Activity Table Accordion */}
+        <Accordion.Item eventKey="1" className="mt-3">
+          <Accordion.Header onClick={() => setIsTableOpen((prev) => !prev)}>
+            <span className="accordion-title">View Activities</span>
+            <span className="accordion-icon">
+              {isTableOpen ? <FaMinus /> : <FaPlus />}
+            </span>
+          </Accordion.Header>
+          <Accordion.Body>
+            <div className="row">
+              <div className="col-md-12">
+                <div className="table-responsive">
+                  {/* <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Sl</th>
+                        <th>Activity Code</th>
+                        <th>Activity Name</th>
+                        <th>Activity Remarks</th>
+                        <th>Active</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activityData.length > 0 ? (
+                        activityData.map((activity, index) => (
+                          <tr key={index}>
+                            <td>{index + 1}</td>
+                            <td>{activity.activityCode}</td>
+                            <td>{activity.activityName}</td>
+                            <td>{activity.activityRemarks}</td>
+                            <td>{activity.isActive ? "Yes" : "No"}</td>
+                            <td
+                              className="d-flex"
+                              style={{ width: "max-content" }}
+                            >
+                              <button
+                                className={`btn btn-sm ${
+                                  activity.isActive
+                                    ? "btn-danger"
+                                    : "btn-success"
+                                }`}
+                                onClick={() => handleStatusToggle(activity)}
+                              >
+                                {activity.isActive ? (
+                                  <FaLock />
+                                ) : (
+                                  <FaLockOpen />
+                                )}
+                              </button>
+                              <button
+                                className="btn btn-sm btn-warning ms-2"
+                                onClick={() => handleEdit(activity)}
+                              >
+                                <FaEdit />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5">No data available</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table> */}
+
+                <DataTable
+                      columns={columns}
+                      data={activityData}
+                      pagination
+                      highlightOnHover
+                      responsive
+                      noDataComponent="No data available"
+                    />
+                </div>
+              </div>
+            </div>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
     </div>
   );
 };

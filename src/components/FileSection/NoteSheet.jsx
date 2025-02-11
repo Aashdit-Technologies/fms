@@ -100,9 +100,9 @@ const NoteSheet = ({ noteSheets }) => {
         .note-sheet-container {
           display: flex;
           justify-content: center;
-          margin-top: 20px;
         }
         .note-card {
+          height: 500px;
           width: 100%;
           background-color: #f9f9f9;
           border-radius: 12px;

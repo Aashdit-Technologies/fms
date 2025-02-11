@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
-import { Button, TextField, Box } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+} from "@mui/material";
 import {
   FaEye,
   FaDownload,
   FaHistory,
   FaArrowLeft,
   FaArrowRight,
-} from "react-icons/fa"; // Add necessary icons
+  FaPlus,
+  FaTimes,
+} from "react-icons/fa";
 import styled from "@emotion/styled";
-import { encryptPayload } from "../../utils/encrypt";
+// import { encryptPayload } from "../../utils/encrypt";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
+import CreateDraftModal from "./CreateDraftModal";
 
 const StyledButton = styled(Button)`
   margin: 0 4px;
@@ -20,11 +27,13 @@ const StyledButton = styled(Button)`
 `;
 
 const TableContainer = styled.div`
-  background: #f4f7fc;
+  background: #ffffff;
   font-family: "Roboto", sans-serif;
   padding: 16px;
   border-radius: 8px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  height: 500px;
+  overflow: auto;
 `;
 
 const TopSection = styled.div`
@@ -81,9 +90,16 @@ const customStyles = {
   },
 };
 
-const Correspondence = ({ correspondence, onView, onHistory }) => {
+const Correspondence = ({
+  correspondence,
+  onView,
+  onHistory,
+  open,
+  onClose,
+}) => {
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  const [modalOpen, setModalOpen] = useState(false);
   const [filterText, setFilterText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
 
@@ -99,12 +115,16 @@ const Correspondence = ({ correspondence, onView, onHistory }) => {
         documentPath: row.correspondencePath,
       };
 
-      const response = await api.post("/download/download-document", encryptedDload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.post(
+        "/download/download-document",
+        encryptedDload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
@@ -122,7 +142,9 @@ const Correspondence = ({ correspondence, onView, onHistory }) => {
     } catch (error) {
       // Enhanced error handling
       console.error("Error downloading the document", error);
-      alert("An error occurred while downloading the document. Please try again.");
+      alert(
+        "An error occurred while downloading the document. Please try again."
+      );
     }
   };
 
@@ -214,33 +236,36 @@ const Correspondence = ({ correspondence, onView, onHistory }) => {
   ];
 
   return (
-    <TableContainer>
-      <TopSection>
-        <Title>Correspondence</Title>
-        <ActionButton variant="contained" title="Click to create a new draft">
-          Create Draft
-        </ActionButton>
-      </TopSection>
+    <>
+      <TableContainer>
+        <TopSection>
+          <Title>Correspondence</Title>
+          <ActionButton variant="contained" onClick={() => setModalOpen(true)} title="Click to create a new draft">
+            Create Draft
+          </ActionButton>
+        </TopSection>
 
-      <TextField
-        size="small"
-        placeholder="Search Correspondence"
-        value={filterText}
-        onChange={(e) => setFilterText(e.target.value)}
-        style={{ margin: "12px 16px", width: "300px" }}
-      />
+        <TextField
+          size="small"
+          placeholder="Search Correspondence"
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+          style={{ margin: "12px 16px", width: "300px" }}
+        />
 
-      <DataTable
-        columns={columns}
-        data={filteredData.filter((item) =>
-          item.subject?.toLowerCase().includes(filterText.toLowerCase())
-        )}
-        pagination
-        customStyles={customStyles}
-        highlightOnHover
-        striped
-      />
-    </TableContainer>
+        <DataTable
+          columns={columns}
+          data={filteredData.filter((item) =>
+            item.subject?.toLowerCase().includes(filterText.toLowerCase())
+          )}
+          pagination
+          customStyles={customStyles}
+          highlightOnHover
+          striped
+        />
+      </TableContainer>
+      <CreateDraftModal open={modalOpen} onClose={() => setModalOpen(false)} />
+    </>
   );
 };
 

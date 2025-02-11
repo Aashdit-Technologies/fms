@@ -1,268 +1,301 @@
-import React, { useState, useEffect } from "react";
-import { FaPlus, FaMinus } from "react-icons/fa6";
+import React, { useState, useEffect, useCallback } from "react";
+import { Accordion } from "react-bootstrap";
+import {
+  FaPlus,
+  FaMinus,
+  FaCheck,
+  FaTimes,
+  FaEdit,
+  FaLock,
+  FaLockOpen,
+} from "react-icons/fa";
+import { TextField, Button } from "@mui/material"; // Importing Button from Material-UI
+import { toast } from "react-toastify";
 import api from "../../Api/Api";
 import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
+import DataTable from "react-data-table-component"; 
+
+import "react-toastify/dist/ReactToastify.css";
 import "./ManageRoom.css";
 
 const ManageRoom = () => {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isTableOpen, setIsTableOpen] = useState(true);
-  const [room, setRoom] = useState({
-    roomNumber: "",
-    description: "",
-  });
+  const [activeKey, setActiveKey] = useState("1");
+  const [isFormOpen, setIsFormOpen] = useState();
+  const [isTableOpen, setIsTableOpen] = useState();
+  const [room, setRoom] = useState({ roomNumber: "", description: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roomData, setRoomData] = useState([]);
-  const [editingRoomId, setEditingRoomId] = useState(null); // Tracks the room being edited
+  const [editingRoomId, setEditingRoomId] = useState(null);
 
-  // Fetch room data when the component loads
-  useEffect(() => {
-    const fetchRoomData = async () => {
-      try {
-        const token = useAuthStore.getState().token;
-        const response = await api.get("/manage-room", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setRoomData(response.data.roomList);
-      } catch (error) {
-        console.error("Error fetching room data:", error);
-        
+  const token = useAuthStore.getState().token;
+
+  // Fetch Room Data
+  const fetchRoomData = useCallback(async () => {
+    try {
+      const { data } = await api.get("/manage-room", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if(data.outcome != true){
+        toast.error(data.message);
       }
-    };
-    fetchRoomData();
-  }, []);
+      setRoomData(data.data || []);
+    } catch (error) {
+      console.error("Error fetching room data:", error);
+    }
+  }, [token]);
 
-  // Handle form input changes
+  useEffect(() => {
+    fetchRoomData();
+  }, [fetchRoomData]);
+
+  // Handle Input Changes
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setRoom((prevRoom) => ({ ...prevRoom, [name]: value }));
+    setRoom((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // Reset form
+  // Reset Form
   const handleReset = () => {
     setRoom({ roomNumber: "", description: "" });
     setEditingRoomId(null);
   };
 
-  // Save or update room details
+  // Handle Submit (Add/Edit Room)
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!room.roomNumber || room.roomNumber <= 0 || !room.description) {
+      toast.warning("Please fill in all fields correctly.");
+      return;
+    }
+
     setIsSubmitting(true);
-
-    // Validation
-    if (!room.roomNumber || room.roomNumber <= 0) {
-      alert("Please enter a valid room number.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!room.description) {
-      alert("Please enter a room description.");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      const token = useAuthStore.getState().token;
-      const payload = {
+      const payload = encryptPayload({
         roomNumber: room.roomNumber,
         description: room.description,
         ...(editingRoomId && { docRoomId: editingRoomId }),
-      };
+      });
 
-      const encryptedMessage = encryptPayload(payload);
-      const response = await api.post(
+      const { data } = await api.post(
         "/save-room-details",
-        { dataObject: encryptedMessage },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { dataObject: payload },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      alert(editingRoomId ? "Room updated successfully!" : "Room added successfully!");
-
-      // Update the table with new or updated room data
-      if (editingRoomId) {
-        setRoomData((prevData) =>
-          prevData.map((item) =>
-            item.docRoomId === editingRoomId ? response.data : item
-          )
-        );
-      } else {
-        setRoomData((prevData) => [...prevData, response.data]);
+      if(data.outcome != true){
+        toast.error(data.message);
       }
-
+      else{
+        toast.success(data.message);
+      }
+      fetchRoomData();
       handleReset();
     } catch (error) {
       console.error("Error saving data:", error);
-      alert("Failed to save data.");
+      toast.error("Failed to save data.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Toggle room active/inactive status
+  // Toggle Room Active/Inactive Status
   const handleStatusToggle = async (room) => {
     const updatedStatus = !room.isActive;
     try {
-      const token = useAuthStore.getState().token;
-      const payload = {
+      const payload = encryptPayload({
         docRoomId: room.docRoomId,
         isActive: updatedStatus,
-      };
+      });
 
-      const encryptedMessage = encryptPayload(payload);
-      await api.post(
+      const { data } = await api.post(
         "/update-room-status",
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
-          params: { dataObject: encryptedMessage },
+          params: { dataObject: payload },
         }
       );
-
-      alert(`Room status updated to ${updatedStatus ? "Active" : "Inactive"}!`);
-
-      // Update the status in the table
-      setRoomData((prevData) =>
-        prevData.map((item) =>
+      debugger
+      if(data.outcome != true){
+        toast.error(data.message);
+      }
+      else{
+        toast.success(data.message);
+      }
+      setRoomData((prev) =>
+        prev.map((item) =>
           item.docRoomId === room.docRoomId
             ? { ...item, isActive: updatedStatus }
             : item
         )
       );
+      
+
+     
     } catch (error) {
       console.error("Error updating room status:", error);
-      alert("Failed to update room status.");
+      toast.error("Failed to update room status.");
     }
   };
 
-  // Open the form for editing a room
+  // Edit Room (Ensure form section opens)
   const handleEdit = (room) => {
-    setRoom({
-      roomNumber: room.roomNumber,
-      description: room.description,
-    });
+    setRoom({ roomNumber: room.roomNumber, description: room.description });
     setEditingRoomId(room.docRoomId);
-    setIsFormOpen(true);
+    setActiveKey("0");
   };
 
-  // Toggle form and table accordions
-  const toggleFormAccordion = () => setIsFormOpen(!isFormOpen);
-  const toggleTableAccordion = () => setIsTableOpen(!isTableOpen);
+  // Columns configuration for DataTable with Serial Number
+  const columns = [
+    {
+      name: "Sl No.",
+      selector: (row, index) => index + 1, // Add Serial Number column
+      sortable: false,
+    },
+    {
+      name: "Room Number",
+      selector: (row) => row.roomNumber,
+      sortable: true,
+    },
+    {
+      name: "Description",
+      selector: (row) => row.description,
+      sortable: true,
+    },
+    {
+      name: "Rack Count",
+      selector: (row) => row.rackCount || "N/A",
+    },
+    {
+      name: "Active",
+      cell: (row) =>
+        row.isActive ? (
+          <FaCheck className="text-success" title="Active" />
+        ) : (
+          <FaTimes className="text-danger" title="Inactive" />
+        ),
+      sortable: true,
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <div>
+          {/* Use Material UI Button for toggling status */}
+          <Button
+            variant="contained"
+            color={row.isActive ? "success" : "error"}
+            size="small"
+            onClick={() => handleStatusToggle(row)}
+            startIcon={row.isActive ? <FaLock /> : <FaLockOpen />}
+            title={row.isActive ? "In-Active" : "Active"}
+          >
+          </Button>
+          {/* Use Material UI Button for editing */}
+          <Button
+            variant="outlined"
+            color="warning"
+            size="small"
+            onClick={() => handleEdit(row)}
+            startIcon={<FaEdit />}
+            className="ms-2"
+            title="Edit"
+          >
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="room-section-container">
-      {/* Form Accordion */}
-      <div className="accordion-header" onClick={toggleFormAccordion}>
-        <span className="accordion-title">
-          {editingRoomId ? "Edit Room Details" : "Add Room Details"}
-        </span>
-        <span className="accordion-icon">{isFormOpen ? <FaMinus /> : <FaPlus />}</span>
-      </div>
-      {isFormOpen && (
-        <div className="accordion-body">
-          <form onSubmit={handleSubmit} className="row">
-            <div className="form-group col-md-3">
-              <label htmlFor="roomNumber">Room:</label>
-              <input
-                type="text"
-                className="form-control"
-                id="roomNumber"
-                name="roomNumber"
-                value={room.roomNumber}
-                onChange={handleInputChange}
-                placeholder="Enter Room"
-              />
-            </div>
-            <div className="form-group col-md-3">
-              <label htmlFor="description">Room Description:</label>
-              <textarea
-                className="form-control"
-                id="description"
-                name="description"
-                value={room.description}
-                onChange={handleInputChange}
-                placeholder="Enter room description"
-              ></textarea>
-            </div>
-            <div className="col-md-12 text-center mt-3">
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting
-                  ? "Saving..."
-                  : editingRoomId
-                  ? "Update Room"
-                  : "Save"}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary ms-2"
-                onClick={handleReset}
-              >
-                Reset
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      {/* Form & Table Accordion */}
+      <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
+        {/* Form Accordion */}
+        <Accordion.Item eventKey="0">
+          <Accordion.Header onClick={() => setIsFormOpen((prev) => !prev)}>
+            <span className="accordion-title">
+              {editingRoomId ? "Edit Room Details" : "Add Room Details"}
+            </span>
+            <span className="accordion-icon">
+              {isFormOpen ? <FaMinus /> : <FaPlus />}
+            </span>
+          </Accordion.Header>
+          <Accordion.Body>
+            <form className="row">
+              <div className="form-group col-md-3">
+                <TextField
+                  label="Room Number"
+                  variant="outlined"
+                  fullWidth
+                  id="roomNumber"
+                  name="roomNumber"
+                  value={room.roomNumber}
+                  onChange={handleInputChange}
+                  placeholder="Enter Room"
+                />
+              </div>
+              <div className="form-group col-md-12 mt-3">
+                <TextField
+                  label="Room Description"
+                  variant="outlined"
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  id="description"
+                  name="description"
+                  value={room.description}
+                  onChange={handleInputChange}
+                  placeholder="Enter room description"
+                />
+              </div>
+              <div className="col-md-12 text-center mt-3">
+                <Button
+                  onClick={handleSubmit}
+                  type="button"
+                  variant="contained"
+                  color="primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting
+                    ? "Saving..."
+                    : editingRoomId
+                    ? "Update Room"
+                    : "Save"}
+                </Button>
+                <Button
+                  variant="outlined"
+                  type="button"
+                  color="secondary"
+                  className="ms-2"
+                  onClick={handleReset}
+                >
+                  Reset
+                </Button>
+              </div>
+            </form>
+          </Accordion.Body>
+        </Accordion.Item>
 
-      {/* Table Accordion */}
-      <div className="accordion-header mt-5" onClick={toggleTableAccordion}>
-        <span className="accordion-title">View Rooms</span>
-        <span className="accordion-icon">{isTableOpen ? <FaMinus /> : <FaPlus />}</span>
-      </div>
-      {isTableOpen && (
-        <div className="accordion-body">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Room Number</th>
-                <th>Description</th>
-                <th>Rack Count</th>
-                <th>Active</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {roomData && roomData.length > 0 ? (
-                roomData.map((room) => (
-                  <tr key={room.docRoomId}>
-                    <td>{room.roomNumber}</td>
-                    <td>{room.description}</td>
-                    <td>{room.rackCount || "N/A"}</td>
-                    <td>{room.isActive ? "Yes" : "No"}</td>
-                    <td>
-                      <button
-                        className={`btn btn-sm ${
-                          room.isActive ? "btn-danger" : "btn-success"
-                        }`}
-                        onClick={() => handleStatusToggle(room)}
-                      >
-                        {room.isActive ? "Deactivate" : "Activate"}
-                      </button>
-                      <button
-                        className="btn btn-sm btn-warning ms-2"
-                        onClick={() => handleEdit(room)}
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5">No data available</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+        {/* Table Accordion */}
+        <Accordion.Item eventKey="1" className="mt-3">
+          <Accordion.Header onClick={() => setIsTableOpen((prev) => !prev)}>
+            <span className="accordion-title">View Rooms</span>
+            <span className="accordion-icon">
+              {isTableOpen ? <FaMinus /> : <FaPlus />}
+            </span>
+          </Accordion.Header>
+          <Accordion.Body>
+            <DataTable
+              columns={columns}
+              data={roomData}
+              pagination
+              responsive
+              highlightOnHover
+              pointerOnHover
+              className="custom-data-table table table-bordered"
+            />
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
     </div>
   );
 };

@@ -1,73 +1,68 @@
 import React, { useState, useEffect } from "react";
-import { FaPlus, FaMinus } from "react-icons/fa6";
+import {
+  FaPlus,
+  FaMinus,
+  FaCheck,
+  FaTimes,
+  FaEdit,
+  FaLock,
+  FaLockOpen,
+} from "react-icons/fa";
 import api from "../../Api/Api";
 import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
-import "./ManageRack.css";
+import { toast } from "react-toastify"; // Import toast
+import DataTable from "react-data-table-component"; // Import DataTable
+import "react-toastify/dist/ReactToastify.css"; // Import toast styles
+import Accordion from "react-bootstrap/Accordion";
+import {
+  TextField,
+  FormControl,
+  Button,
+  CircularProgress,
+  Autocomplete,
+} from "@mui/material";
+
+// toast.configure(); // Initialize toast notifications
 
 const ManageRack = () => {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isTableOpen, setIsTableOpen] = useState(true);
-  const [rack, setRack] = useState({
-    rackNumber: "",
-    noOfCell: "", // Added field for noOfCell
-    roomId: "", // Added field for room selection
-  });
+  const [activeKey, setActiveKey] = useState("1");
+  const [rack, setRack] = useState({ rackNumber: "", noOfCell: "", roomId: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rackData, setRackData] = useState([]);
-  const [roomList, setRoomList] = useState([]); // For room list
-  const [editingRackId, setEditingRackId] = useState(null); // Track rack being edited
+  const [roomList, setRoomList] = useState([]);
+  const [editingRackId, setEditingRackId] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(true);
+  const [isTableOpen, setIsTableOpen] = useState(true);
 
-  // Fetch room and rack data
+  const fetchRackData = async () => {
+    try {
+      const token = useAuthStore.getState().token;
+      const response = await api.get("/manage-rack", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRackData(response.data?.data?.rackList?.data || []);
+      setRoomList(response.data?.data?.roomList || []);
+    } catch (error) {
+      console.error("Error fetching rack data:", error);
+      toast.error("Failed to fetch rack data.");
+    }
+  };
+
   useEffect(() => {
-    const fetchRackData = async () => {
-      try {
-        const token = useAuthStore.getState().token;
-        const response = await api.get("/manage-rack", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        console.log("Fetched Rack Data:", response.data.rackList);
-        setRackData(response.data.rackList);
-        setRoomList(response.data.roomList);
-      } catch (error) {
-        console.error("Error fetching rack data:", error);
-      }
-    };
-
-    
-
     fetchRackData();
   }, []);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setRack((prevRack) => ({
-      ...prevRack,
-      [name]: value,
-    }));
+    setRack({ ...rack, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Validation
-    if (!rack.rackNumber || rack.rackNumber <= 0) {
-      alert("Please enter a valid rack number.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!rack.noOfCell) {
-      alert("Please enter the number of cells.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!rack.roomId) {
-      alert("Please select a room.");
+    if (!rack.rackNumber || rack.rackNumber <= 0 || !rack.noOfCell || !rack.roomId) {
+      toast.warning("Please fill out all fields correctly.");
       setIsSubmitting(false);
       return;
     }
@@ -79,248 +74,198 @@ const ManageRack = () => {
         noOfCell: rack.noOfCell,
         roomId: rack.roomId,
       };
-
-      // Add rackId to the payload if editing
-      if (editingRackId) {
-        payload.rackId = editingRackId;
-      }
-
+      if (editingRackId) payload.rackId = editingRackId;
       const encryptedMessage = encryptPayload(payload);
 
-      const response = await api.post(
+      await api.post(
         "/save-rack-details",
         { dataObject: encryptedMessage },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("API Response:", response.data);
-      alert(
-        editingRackId
-          ? "Rack details updated successfully!"
-          : "Rack added successfully!"
-      );
-
-      if (editingRackId) {
-        setRackData((prevData) =>
-          prevData.map((item) =>
-            item.rackId === editingRackId ? response.data : item
-          )
-        );
-      } else {
-        setRackData((prevData) => [...prevData, response.data]);
-      }
-
+      fetchRackData();
+      toast.success(editingRackId ? "Rack updated successfully!" : "Rack added successfully!");
       setRack({ rackNumber: "", noOfCell: "", roomId: "" });
       setEditingRackId(null);
     } catch (error) {
       console.error("Error saving data:", error);
-      alert("Failed to save data.");
+      toast.error("Failed to save data.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleStatusToggle = async (rack) => {
-    const updatedStatus = !rack.isActive;
     try {
       const token = useAuthStore.getState().token;
-      const payload = {
-        rackId: rack.rackId,
-        isActive: updatedStatus,
-      };
-
-      
-      
+      const payload = { rackId: rack.rackId, isActive: !rack.isActive };
       const encryptedMessage = encryptPayload(payload);
 
-      const response = await api.post(
+      await api.post(
         "/update-rack-status/",
         {},
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          params: {
-            dataObject: encryptedMessage,
-          },
+          headers: { Authorization: `Bearer ${token}` },
+          params: { dataObject: encryptedMessage },
         }
       );
 
-      console.log("Status Update Response:", response.data);
-      alert(`Rack status updated to ${updatedStatus ? "Active" : "Inactive"}!`);
-
-      setRackData((prevData) =>
-        prevData.map((item) =>
-          item.rackId === rack.rackId
-            ? { ...item, isActive: updatedStatus }
-            : item
-        )
-      );
+      toast.success(`Rack status updated to ${!rack.isActive ? "Active" : "Inactive"}!`);
+      fetchRackData();
     } catch (error) {
       console.error("Error updating rack status:", error);
-      alert("Failed to update rack status.");
+      toast.error("Failed to update rack status.");
     }
   };
 
-  const toggleFormAccordion = () => {
-    setIsFormOpen(!isFormOpen);
-  };
-
-  const toggleTableAccordion = () => {
-    setIsTableOpen(!isTableOpen);
-  };
-
   const handleEdit = (rack) => {
-    console.log("Editing Rack:", rack);
-    console.log("Rack Room ID:", rack.docRoom.docRoomId);
     setRack({
       rackNumber: rack.rackNumber,
       noOfCell: rack.noOfCell,
-      roomId: rack.docRoom.docRoomId, // Use the same key as in rackData
+      roomId: rack.docRoom?.docRoomId,
     });
     setEditingRackId(rack.rackId);
-    setIsFormOpen(true); // Open the form if not already open
+    setActiveKey("0");
   };
-  
+
+  const handleReset = () => {
+    setRack({ rackNumber: "", noOfCell: "", roomId: "" });
+    setEditingRackId(null);
+  };
+
+  // Define columns for DataTable
+  const columns = [
+    { name: "Sl", selector: (row, index) => index + 1, sortable: true, width: "60px" },
+    { name: "Rack Number", selector: (row) => row.rackNumber, sortable: true },
+    { name: "No of Cells", selector: (row) => row.noOfCell, sortable: true },
+    { name: "Room", selector: (row) => row.docRoom?.roomNumber || "N/A", sortable: true },
+    {
+      name: "Active",
+      cell: (row) =>
+        row.isActive ? <FaCheck className="text-success" /> : <FaTimes className="text-danger" />,
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <div>
+      {/* Use Material UI Button for toggling status */}
+      <Button
+        variant="contained"
+        color={row.isActive ? "success" : "error"}
+        size="small"
+        onClick={() => handleStatusToggle(row)}
+        startIcon={row.isActive ? <FaLock /> : <FaLockOpen />}
+        title={row.isActive ? "In-Active" : "Active"}
+      />
+      
+      {/* Use Material UI Button for editing */}
+      <Button
+        variant="outlined"
+        color="warning"
+        size="small"
+        onClick={() => handleEdit(row)}
+        startIcon={<FaEdit />}
+        className="ms-2"
+        title="Edit"
+      />
+    </div>
+      ),
+      ignoreRowClick: true,
+    },
+  ];
 
   return (
     <div className="rack-section-container">
-      {/* Form Accordion */}
-      <div className="accordion-header" onClick={toggleFormAccordion}>
-        <span className="accordion-title">
-          {editingRackId ? "Edit Rack Details" : "Add Rack Details"}
-        </span>
-        <span className="accordion-icon">
-          {isFormOpen ? <FaMinus /> : <FaPlus />}
-        </span>
-      </div>
-      {isFormOpen && (
-        <div className="accordion-body">
+      <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
+        <Accordion.Item eventKey="0">
+          <Accordion.Header onClick={() => setIsFormOpen((prev) => !prev)}>
+            <span className="accordion-title">
+              {editingRackId ? "Edit Rack Details" : "Add Rack Details"}
+            </span>
+            <span className="accordion-icon">{isFormOpen ? <FaMinus /> : <FaPlus />}</span>
+          </Accordion.Header>
+          <Accordion.Body>
           <form onSubmit={handleSubmit} className="row">
-
-            {/* Select Room */}
             <div className="form-group col-md-3">
-              <label htmlFor="roomId">Select Room:</label>
-              <select
-                className="form-control"
-                id="roomId"
-                name="roomId"
-                value={rack.roomId}
-                onChange={handleInputChange}
-              >
-                <option value="">Select Room</option>
-                {roomList.map((room) => (
-                  <option key={room.docRoomId} value={room.docRoomId} >
-                    {room.roomNumber}
-                  </option>
-                ))}
-                ;
-              </select>
-            </div>
+                <FormControl fullWidth style={{ marginTop: "17px" }}>
+                  <Autocomplete
+                    options={roomList}
+                    getOptionLabel={(option) => option.roomNumber.toString()}
+                    renderInput={(params) => (
+                      <TextField {...params} label="Select Room" variant="outlined" />
+                    )}
+                    value={roomList.find((room) => room.docRoomId === rack.roomId) || null}
+                    onChange={(_, newValue) => {
+                      setRack({ ...rack, roomId: newValue ? newValue.docRoomId : "" });
+                    }}
+                  />
+                </FormControl>
+              </div>
+              <div className="form-group col-md-3">
+                <TextField
+                  label="Rack Number"
+                  id="rackNumber"
+                  name="rackNumber"
+                  value={rack.rackNumber}
+                  onChange={handleInputChange}
+                  fullWidth
+                  variant="outlined"
+                  margin="normal"
+                  placeholder="Enter rack number"
+                />
+              </div>
+              <div className="form-group col-md-3">
+                <TextField
+                  label="Number of Cells"
+                  id="noOfCell"
+                  name="noOfCell"
+                  value={rack.noOfCell}
+                  onChange={handleInputChange}
+                  fullWidth
+                  variant="outlined"
+                  margin="normal"
+                  type="number"
+                  placeholder="Enter number of cells"
+                />
+              </div>
+              <div className="col-md-12 text-center mt-3">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  type="submit"
+                  disabled={isSubmitting}
+                  startIcon={isSubmitting && <CircularProgress size={24} />}
+                >
+                  {isSubmitting
+                    ? "Saving..."
+                    : editingRackId
+                    ? "Update Rack"
+                    : "Save"}
+                </Button>
+                <Button
+                  variant="outlined"
+                  type="button"
+                  color="secondary"
+                  className="ms-2"
+                  onClick={handleReset}
+                >
+                  Reset
+                </Button>
+              </div>
+            </form>
+          </Accordion.Body>
+        </Accordion.Item>
 
-            <div className="form-group col-md-3">
-              <label htmlFor="rackNumber">Rack Number:</label>
-              <input
-                type="text"
-                className="form-control"
-                id="rackNumber"
-                name="rackNumber"
-                value={rack.rackNumber}
-                onChange={handleInputChange}
-                placeholder="Enter rack number"
-              />
-            </div>
-
-            <div className="form-group col-md-3">
-              <label htmlFor="noOfCell">Number of Cells:</label>
-              <input
-                type="number"
-                className="form-control"
-                id="noOfCell"
-                name="noOfCell"
-                value={rack.noOfCell}
-                onChange={handleInputChange}
-                placeholder="Enter number of cells"
-              />
-            </div>
-
-            
-
-            <div className="col-md-12 text-center mt-3">
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting
-                  ? "Saving..."
-                  : editingRackId
-                  ? "Update Rack"
-                  : "Save"}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Table Accordion */}
-      <div className="accordion-header mt-5" onClick={toggleTableAccordion}>
-        <span className="accordion-title">View Racks</span>
-        <span className="accordion-icon">
-          {isTableOpen ? <FaMinus /> : <FaPlus />}
-        </span>
-      </div>
-      {isTableOpen && (
-        <div className="accordion-body">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Rack Number</th>
-                <th>No of Cells</th>
-                <th>Room</th>
-                <th>Active</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rackData && rackData.length > 0 ? (
-                rackData.map((rack) => (
-                  <tr key={rack.rackId}>
-                    <td>{rack.rackNumber}</td>
-                    <td>{rack.noOfCell}</td>
-                    <td>{rack.docRoom?.roomNumber}</td>
-                    <td>{rack.isActive ? "Yes" : "No"}</td>
-                    <td>
-                      <button
-                        className={`btn btn-sm ${
-                          rack.isActive ? "btn-danger" : "btn-success"
-                        }`}
-                        onClick={() => handleStatusToggle(rack)}
-                      >
-                        {rack.isActive ? "Deactivate" : "Activate"}
-                      </button>
-                      <button
-                        className="btn btn-sm btn-warning ms-2"
-                        onClick={() => handleEdit(rack)}
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5">No data available</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+        <Accordion.Item eventKey="1" className="mt-3">
+          <Accordion.Header onClick={() => setIsTableOpen((prev) => !prev)}>
+            <span className="accordion-title">View Racks</span>
+            <span className="accordion-icon">{isTableOpen ? <FaMinus /> : <FaPlus />}</span>
+          </Accordion.Header>
+          <Accordion.Body>
+            <DataTable columns={columns} data={rackData} pagination highlightOnHover />
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
     </div>
   );
 };

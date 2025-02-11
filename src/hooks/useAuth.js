@@ -1,5 +1,6 @@
 // hooks/useAuth.js
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
 import api from '../Api/Api';  
 import useAuthStore from '../store/Store';
@@ -18,19 +19,23 @@ export const useAuth = () => {
           password: credentials.password,
           captcha: "is",
         };
-
+  
         const encryptedMessage = encryptPayload(payload);
-
+  
         const response = await api.post('/umt/login', {
           dataObject: encryptedMessage,
         });
-
+  
+        
+  
         return response.data;
       } catch (error) {
-        toast.error(error.message || 'Login failed.');
-        throw error; 
+        const errorMessage = error.response?.data?.message || error.message || "Login failed.";
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
       }
     },
+  
     onSuccess: (data) => {
       if (data?.outcome) {
         setToken(data.data);
@@ -38,13 +43,17 @@ export const useAuth = () => {
         toast.success(data.message || 'Login successful!');
         navigate('/');
       } else {
-        toast.error(data.data || 'Login failed.');
+        // ✅ Show a toast for failed login attempt (e.g., "Account is Locked")
+        toast.error(data.message || 'Login failed.');
       }
     },
+  
     onError: (error) => {
+      // ✅ More reliable error handling
       toast.error(error.message || 'Login failed.');
     },
   });
+  
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -67,7 +76,7 @@ export const useAuth = () => {
       }
     },
     onSuccess: () => {
-      toast.success('Successfully logged out.');
+      toast.success('Logout successful!');
     },
     onError: (error) => {
       toast.error(error.message || 'Logout failed.');

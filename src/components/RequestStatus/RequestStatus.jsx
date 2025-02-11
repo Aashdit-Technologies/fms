@@ -1,118 +1,292 @@
 import React, { useState, useEffect } from "react";
+import DataTable from "react-data-table-component";
+import { Button } from "@mui/material";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import useApiListStore from "../ManageFile/ApiListStore";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
+import { encryptPayload } from "../../utils/encrypt.js";
+import dayjs from "dayjs";
 
 const RequestStatus = () => {
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const [rqstStsData, setRqstStsData] = useState({ prioritylst: [], receiptList: [] });
-  const [loading, setLoading] = useState(false); // Loading state
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
+  const [rqstStsData, setRqstStsData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [fileDetails, setFileDetails] = useState(null);
+  const [fileDetailsModalVisible, setFileDetailsModalVisible] = useState(false);
 
   useEffect(() => {
     fetchFilteredData(fromDate, toDate);
   }, [fromDate, toDate]);
 
   const fetchFilteredData = async (fromDate, toDate) => {
-    setLoading(true); // Show loading spinner
+    setLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const params = {};
 
-      // Add filters to params if they are set
-      if (fromDate) params.fromDate = fromDate;
-      if (toDate) params.toDate = toDate;
+      if (fromDate)
+        params.fromDate = dayjs(fromDate).format("DD/MM/YYYY") || "";
+      if (toDate) params.toDate = dayjs(toDate).format("DD/MM/YYYY") || "";
+
+      const payload = {
+        fromDate: params.fromDate,
+        toDate: params.toDate,
+      };
+
+      const encryptedMessage = encryptPayload(payload);
 
       const response = await api.get("/file/view-status", {
         headers: { Authorization: `Bearer ${token}` },
-        params,
+        params: { dataObject: encryptedMessage },
       });
 
-      setRqstStsData(response.data); // Update table data
+      setRqstStsData(response.data.data || []);
     } catch (error) {
       console.error("Error fetching filtered data:", error);
     } finally {
-      setLoading(false); // Stop loading spinner
+      setLoading(false);
     }
   };
 
-  const handleDateChange = (setter, event) => {
-    setter(event.target.value);
+
+  const handleCallFor = async (fileId, fileReceiptId) => {
+    try {
+      const token = useAuthStore.getState().token;
+      // const payload = encryptPayload({ fileId, fileReceiptId });
+
+      const payload = { fileReceiptId: fileReceiptId, fileId: fileId, calltype:"callfor"};
+      const encryptedMessage = encryptPayload(payload);
+      await api.post("file/call-for-recall",
+        { dataObject: encryptedMessage },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      alert("Request Sent Successfully");
+    } catch (error) {
+      console.error("Error in Call For request:", error);
+    }
   };
+
+  const handleReCall = async (fileId, fileReceiptId) => {
+    try {
+      const token = useAuthStore.getState().token;
+      // const payload = encryptPayload({ fileId, fileReceiptId });
+
+      const payload = { fileReceiptId: fileReceiptId, fileId: fileId, calltype:"recall"};
+      const encryptedMessage = encryptPayload(payload);
+      await api.post("file/call-for-recall",
+        { dataObject: encryptedMessage },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      alert("Request Sent Successfully");
+    } catch (error) {
+      console.error("Error in Call For request:", error);
+    }
+  };
+
+  const handleFileDetailsClick = (file) => {
+    setFileDetails(file);
+    setFileDetailsModalVisible(true);
+  };
+
+  const columns = [
+    {
+      name: "SL",
+      selector: (row, index) => index + 1,
+      sortable: true,
+    },
+    {
+      name: "File Number",
+      selector: (row) => row.fileNo,
+      sortable: true,
+      cell : (row) => (
+        <div style={{ display: "flex", flexDirection:"column", alignItems: "start", gap: "8px" }}>
+          <a href="#" onClick={() => handleFileDetailsClick(row)}>
+            {row.fileNo}
+          </a>
+          <span className="bg-primary rounded text-white p-1">{row.priority}</span>
+        </div>
+      ),
+    },
+    {
+      name: "File Name",
+      selector: (row) => row.fileName,
+      sortable: true,
+    },
+    {
+      name: "From",
+      selector: (row) => row.fromEmployee,
+      sortable: true,
+    },
+    {
+      name: "Send On",
+      selector: (row) => row.sentOn,
+      sortable: true,
+    },
+    {
+      name: "Status",
+      selector: (row) => row.status,
+      sortable: true,
+      cell: (row) => (
+        <span className="bg-secondary text-white rounded p-1">
+          {row.status}
+        </span>
+      ),
+      
+    },
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="d-flex">
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            title="Call For"
+            className="ms-2"
+            onClick={() => handleCallFor(row.fileId, row.fileReceiptId)}
+          >
+            Call For
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            title="Recall"
+            className="ms-2"
+            onClick={() => handleReCall(row.fileId, row.fileReceiptId)}
+          >
+            Recall
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div>
-      <div className="row">
-        {/* From Date Filter */}
-        <div className="form-group col-md-3">
-          <label htmlFor="fromDate">From Date</label>
-          <input
-            type="date"
-            id="fromDate"
-            className="form-control"
-            value={fromDate}
-            onChange={(e) => handleDateChange(setFromDate, e)}
-          />
-        </div>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <div className="row mb-3">
+          <div className="form-group col-md-3">
+            <DatePicker
+              label="From Date"
+              value={fromDate}
+              onChange={(newValue) => setFromDate(newValue)}
+              format="DD/MM/YYYY"
+              renderInput={(params) => (
+                <TextField {...params} fullWidth variant="outlined" />
+              )}
+            />
+          </div>
 
-        {/* To Date Filter */}
-        <div className="form-group col-md-3">
-          <label htmlFor="toDate">To Date</label>
-          <input
-            type="date"
-            id="toDate"
-            className="form-control"
-            value={toDate}
-            onChange={(e) => handleDateChange(setToDate, e)}
-          />
-        </div>
-
-        <div className="col-md-12 mt-5">
-          <div className="table-responsive">
-            {loading ? (
-              <p>Loading data...</p>
-            ) : (
-              <table className="table table-bordered">
-                <thead>
-                  <tr>
-                    <th>SL</th>
-                    <th>File Number</th>
-                    <th>File Name</th>
-                    <th>From</th>
-                    <th>Send On</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rqstStsData.receiptList && rqstStsData.receiptList.length > 0 ? (
-                    rqstStsData.receiptList.map((item, index) => (
-                      <tr key={index}>
-                        <td>{index + 1}</td>
-                        <td>
-                          <a href="#">{item.fileNo}</a>
-                        </td>
-                        <td>{item.fileName}</td>
-                        <td>{item.fromEmployee}</td>
-                        <td>{item.sentOn}</td>
-                        <td>{item.status}</td>
-                        <td>
-                          <button>Edit</button>
-                          <button>Delete</button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="7">No data available</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
+          <div className="form-group col-md-3">
+            <DatePicker
+              label="To Date"
+              value={toDate}
+              onChange={(newValue) => setToDate(newValue)}
+              format="DD/MM/YYYY"
+              renderInput={(params) => (
+                <TextField {...params} fullWidth variant="outlined" />
+              )}
+            />
           </div>
         </div>
-      </div>
+      </LocalizationProvider>
+
+      <DataTable
+        columns={columns}
+        data={rqstStsData}
+        progressPending={loading}
+        striped
+        bordered
+        pagination
+        highlightOnHover
+      />
+
+{fileDetailsModalVisible && fileDetails && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">File Details</h5>
+                <button
+                  type="button"
+                  className="close"
+                  onClick={() => setFileDetailsModalVisible(false)}
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="modal-body">
+                <table className="table">
+                  <tbody>
+                    <tr>
+                      <th>File No</th>
+                      <td>{fileDetails.fileNo}</td>
+                    </tr>
+                    <tr>
+                      <th>File Name</th>
+                      <td>{fileDetails.fileName}</td>
+                    </tr>
+                    <tr>
+                      <th>From Employee</th>
+                      <td>{fileDetails.fromEmployee}</td>
+                    </tr>
+                    <tr>
+                      <th>Sent On</th>
+                      <td>{fileDetails.sentOn}</td>
+                    </tr>
+                    <tr>
+                      <th>Status</th>
+                      <td>{fileDetails.status}</td>
+                    </tr>
+                    <tr>
+                      <th>Priority</th>
+                      <td>{fileDetails.priority}</td>
+                    </tr>
+                    <tr>
+                      <th>File Module</th>
+                      <td>{fileDetails.fileType}</td>
+                    </tr>
+                    <tr>
+                      <th>Room</th>
+                      <td>{fileDetails.roomNumber}</td>
+                    </tr>
+                    <tr>
+                      <th>Rack</th>
+                      <td>{fileDetails.rackNumber}</td>
+                    </tr>
+                    <tr>
+                      <th>Cell</th>
+                      <td>{fileDetails.cellNumber}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setFileDetailsModalVisible(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

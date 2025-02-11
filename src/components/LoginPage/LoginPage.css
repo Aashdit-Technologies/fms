@@ -143,5 +143,9 @@
     position: absolute;
     top: 5%;
     left: 4%;
+    width: 25%;
 }
-
+.log-logo-sec img{
+    width: 100%;
+    object-fit: cover;
+}

@@ -15,6 +15,7 @@ import ManageRoom from "../ManageRoom/ManageRoom";
 import ManageRack from "../ManageRack/ManageRack";
 import ManageActivity from "../ManageActivity/ManageActivity";
 import ManageFile from "../ManageFile/ManageFile";
+import Welcome from "../Welcome/Welcome";
 
 
 const Admin = () => {
@@ -63,9 +64,7 @@ const Admin = () => {
             <Route 
               index 
               element={
-                <div className="welcome-page">
-                  <h1>Welcome to File Management System</h1>
-                </div>
+                <Welcome />
               } 
             />
 

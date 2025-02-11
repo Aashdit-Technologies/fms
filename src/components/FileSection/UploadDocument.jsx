@@ -446,7 +446,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                     <Grid item xs={2.4}>
                       <TextField
                         fullWidth
-                        size="small"
                         label="Subject"
                         value={row.subject}
                         onChange={(e) =>
@@ -459,7 +458,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                     <Grid item xs={2.4}>
                       <FormControl
                         fullWidth
-                        size="small"
                         sx={{ height: "54px" }}
                       >
                         <InputLabel>Type</InputLabel>
@@ -481,7 +479,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                     <Grid item xs={2.4}>
                       <TextField
                         fullWidth
-                        size="small"
                         label="Letter Number"
                         value={row.letterNumber}
                         onChange={(e) =>
@@ -815,7 +812,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
           </Box>
         </Box>
       </Modal>
-      // Add the "Send To" modal structure
       <Modal
         open={isSendToModalOpen}
         onClose={() => setIsSendToModalOpen(false)}
@@ -846,7 +842,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
           >
             <Typography variant="h6">Send To</Typography>
           </Box>
-          <div className="w-100 px-4 ">
+          <div className="w-100 px-4 pb-3">
             {/* Filter and Search Section */}
             <Grid container spacing={2} sx={{ mb: 3, mt: 2 }}>
               {/* Department Select Field */}

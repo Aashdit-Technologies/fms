@@ -1,243 +1,188 @@
-import React, { useState } from "react";
-import { Tooltip } from "react-tooltip";
-import {
-  FaHistory,
-  FaEdit,
-  FaArchive,
-  FaSearch,
-  FaFilter,
-} from "react-icons/fa";
-import { Tab, Tabs, Accordion } from "react-bootstrap";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Paper,
-  Button,
-  IconButton,
-  Typography,
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import "./NewRequest.css";
+import React, { useState, useEffect } from "react";
+import { useMutation,  } from "@tanstack/react-query";
 import useApiListStore from "../ManageFile/ApiListStore";
 import api from "../../Api/Api";
+import { FaEdit, FaHistory } from "react-icons/fa";
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt.js";
+import MainFile from "../FileSection/MainFile.jsx";
 import { useNavigate } from "react-router-dom";
+import DataTable from "react-data-table-component"; // Import DataTable
+import { Autocomplete, TextField, Button } from "@mui/material"; // Import Material UI components
+import { MdOutlineMoveDown } from "react-icons/md";
 
 const NewRequest = () => {
   const [selectedFileModule, setSelectedFileModule] = useState("0");
   const [priority, setPriority] = useState("All");
+  const [prioritylyst, setPrioritylyst] = useState("");
+  const [nRData, setNRData] = useState({ prioritylst: [], receiptList: [] });
+  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [roomId, setRoom] = useState("");
   const [rackId, setRack] = useState("");
   const [cellNo, setCell] = useState("");
+
+  const { fileModules, fetchAllData } = useApiListStore();
+  const [roomData, setRoomData] = useState([]);
+  const [rackData, setRackData] = useState([]);
+
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
+  const [historyData, setHistoryData] = useState([]);
+
   const [fileDetails, setFileDetails] = useState(null);
   const [fileDetailsModalVisible, setFileDetailsModalVisible] = useState(false);
-
   const Navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const token = useAuthStore.getState().token;
-  const { fileModules = [], fetchAllData } = useApiListStore();
 
-  // Query for room data
-  const { data: roomData = [] } = useQuery({
-    queryKey: ["rooms"],
-    queryFn: async () => {
-      const response = await api.get("/manage-room", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      return response.data.roomList;
-    },
-  });
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
 
-  // Query for rack data based on roomId
-  const { data: rackData = [] } = useQuery({
-    queryKey: ["racks", roomId],
-    queryFn: async () => {
-      if (!roomId) return [];
-      const payload = { docRoomId: roomId };
-      const encryptedMessage = encryptPayload(payload);
-      const response = await api.get("/manage-file-rack", {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { dataObject: encryptedMessage },
-      });
-      return response.data.rackList;
-    },
-    enabled: !!roomId,
-  });
-
-  // Query for filtered data
-  const { data: nRData = { prioritylst: [], receiptList: [] }, isLoading } =
-    useQuery({
-      queryKey: ["newRequests", priority, selectedFileModule],
-      queryFn: async () => {
-        const payload = {
-          priority: priority || null,
-          fileModule: selectedFileModule || null,
-          pageno: 1,
-        };
-        const encryptedMessage = encryptPayload(payload);
-        const response = await api.get("/file/new-request", {
+  useEffect(() => {
+    const fetchRoomData = async () => {
+      try {
+        const token = useAuthStore.getState().token;
+        const response = await api.get("/manage-room", {
           headers: { Authorization: `Bearer ${token}` },
-          params: { dataObject: encryptedMessage },
         });
-        return response.data;
-      },
-    });
+        setRoomData(response.data.data || []);
+      } catch (error) {
+        console.error("Error fetching room data:", error);
+      }
+    };
+    fetchRoomData();
+  }, []);
 
-  // Query for file history
-  const { data: historyData = [] } = useQuery({
-    queryKey: ["fileHistory", selectedFile?.fileId],
-    queryFn: async () => {
-      if (!selectedFile?.fileId) return [];
-      const payload = { fileId: selectedFile.fileId };
+  useEffect(() => {
+    const fetchRackData = async () => {
+      if (!roomId) {
+        setRackData([]);
+        return;
+      }
+
+      const payload = { docRoomId: roomId };
+
+      try {
+        const token = useAuthStore.getState().token;
+        const encryptedMessage = encryptPayload(payload);
+        const response = await api.get("/manage-file-rack", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            dataObject: encryptedMessage,
+          },
+        });
+        setRackData(response.data.data || []);
+      } catch (error) {
+        console.error("Error fetching rack data:", error);
+        setRackData([]); // Clear rack data on error
+      }
+    };
+
+    fetchRackData();
+  }, [roomId]);
+
+  const fetchFilteredData = async (priority, fileModule) => {
+    setLoading(true);
+    try {
+      const token = useAuthStore.getState().token;
+
+      // Create the payload with explicit structure
+      const payload = {
+        priority: priority || null,
+        fileModule: fileModule || null,
+        pageno: 1,
+      };
+
+      // Encrypt the payload
       const encryptedMessage = encryptPayload(payload);
-      const response = await api.get("file/view-file-history", {
+
+      // Send the encrypted data as a parameter
+      const response = await api.get("file/new-request", {
         headers: { Authorization: `Bearer ${token}` },
         params: { dataObject: encryptedMessage },
       });
-      return response.data.history || [];
-    },
-    enabled: !!selectedFile?.fileId && historyModalVisible,
-  });
+      setNRData(response.data.data || []);
+      setPrioritylyst(response.data.data.prioritylst || []);
 
-  // Mutation for editing file
-  const editFileMutation = useMutation({
-    mutationFn: async (file) => {
-      const payload1 = encryptPayload({
-        tabPanelId: 1,
-        fileId: file.fileId,
-        fileReceiptId: file.fileReceiptId,
-      });
-      const payload2 = encryptPayload({ fileId: file.fileId });
-      const payload3 = encryptPayload({
-        fileId: file.fileId,
-        lastFileSentDate: "",
-      });
+      console.log(response.data.data);
+    } catch (error) {
+      console.error("Error fetching filtered data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      const [response1, response2, response3, response4] = await Promise.all([
-        api.post(
-          "/file/basic-details",
-          { dataObject: payload1 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-        api.post(
-          "/file/get-draft-notesheet",
-          { dataObject: payload2 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-        api.post(
-          "/file/file-correspondences",
-          { dataObject: payload3 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-        api.post(
-          "/file/file-notesheets",
-          { dataObject: payload3 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-      ]);
+  useEffect(() => {
+    fetchFilteredData(priority, selectedFileModule);
+  }, [priority, selectedFileModule]);
 
-      return {
-        fileDetails: response1.data,
-        additionalDetails: response2.data,
-        correspondence: response3.data,
-        noteSheets: response4.data,
-      };
-    },
-    onSuccess: (data) => {
-      setFileDetails(data.fileDetails);
-      Navigate("/main-file", {
-        state: {
-          fileDetails: data.fileDetails,
-          additionalDetails: data.additionalDetails,
-          correspondence: data.correspondence,
-          noteSheets: data.noteSheets
-        },
-        replace: true,
-      });
-    },
-  });
+    // Mutation for editing file
+    const fetchFileDetails = async (file) => {
+      if (!file) return;
+      const token = sessionStorage.getItem("token");
+      try {
+        setLoading(true);
+        
+        const payload1 = encryptPayload({
+          tabPanelId: 1,
+          fileId: file.fileId,
+          fileReceiptId: file.fileReceiptId,
+        });
+        const payload2 = encryptPayload({ fileId: file.fileId });
+        const payload3 = encryptPayload({
+          fileId: file.fileId,
+          lastFileSentDate: "",
+        });
+    
+        const [response1, response2, response3, response4] = await Promise.all([
+          api.post(
+            "/file/basic-details",
+            { dataObject: payload1 },
+            { headers: { Authorization: `Bearer ${token}` } }
+          ),
+          api.post(
+            "/file/get-draft-notesheet",
+            { dataObject: payload2 },
+            { headers: { Authorization: `Bearer ${token}` } }
+          ),
+          api.post(
+            "/file/file-correspondences",
+            { dataObject: payload3 },
+            { headers: { Authorization: `Bearer ${token}` } }
+          ),
+          api.post(
+            "/file/file-notesheets",
+            { dataObject: payload3 },
+            { headers: { Authorization: `Bearer ${token}` } }
+          ),
+        ]);
+    
+        const fileData = {
+          fileDetails: response1.data,
+          additionalDetails: response2.data,
+          correspondence: response3.data,
+          noteSheets: response4.data,
+        };
+    
+        setFileDetails(fileData.fileDetails);
+    
+        Navigate("/main-file", {
+          state: fileData,
+          replace: true,
+        });
+    
+      } catch (error) {
+        console.error("Error fetching file details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    const handleEditClick = (file) => {
+      fetchFileDetails(file);
+    };
 
-  // Mutation for sending file to rack
-  const sendToRackMutation = useMutation({
-    mutationFn: async ({ fileId, roomId, rackId, cellNo }) => {
-      const payload = { fileId, roomId, rackId, cellNo };
-      const encryptedMessage = encryptPayload(payload);
-      const response = await api.post(
-        "/file/update-room-rack-cell",
-        { dataObject: encryptedMessage },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["newRequests"]);
-      closeModal();
-    },
-  });
-
-  // Mutation for creating volume file
-  const createVolumeMutation = useMutation({
-    mutationFn: async (fileId) => {
-      const payload = { fileId };
-      const encryptedMessage = encryptPayload(payload);
-      const response = await api.post(
-        "file/create-volume-file",
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { dataObject: encryptedMessage },
-        }
-      );
-      return response.data;
-    },
-    onSuccess: (data) => {
-      alert(data.message);
-      queryClient.invalidateQueries(["newRequests"]);
-    },
-  });
-
-  // Mutation for creating part file
-  const createPartMutation = useMutation({
-    mutationFn: async (fileReceiptId) => {
-      const payload = { fileReceiptId };
-      const encryptedMessage = encryptPayload(payload);
-      const response = await api.post(
-        "file/create-part-file",
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { dataObject: encryptedMessage },
-        }
-      );
-      return response.data;
-    },
-    onSuccess: (data) => {
-      alert(data.message);
-      queryClient.invalidateQueries(["newRequests"]);
-    },
-  });
-
-  // Event Handlers
   const handleSelectChange = (setter, event) => {
     setter(event.target.value);
   };
@@ -255,19 +200,55 @@ const NewRequest = () => {
     setCell("");
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    sendToRackMutation.mutate({
-      fileId: selectedFile.fileId,
-      roomId,
-      rackId,
-      cellNo,
-    });
+    try {
+      const token = useAuthStore.getState().token;
+
+      const payload = {
+        fileId: selectedFile.fileId,
+        roomId,
+        rackId,
+        cellNo,
+      };
+
+      const encryptedMessage = encryptPayload(payload);
+
+      const response = await api.post(
+        "/file/update-room-rack-cell",
+        { dataObject: encryptedMessage },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("File successfully sent to rack:", response.data);
+      closeModal();
+    } catch (error) {
+      console.error("Error submitting the form:", error);
+    }
   };
 
-  const handleHistoryClick = (file) => {
-    setSelectedFile(file);
-    setHistoryModalVisible(true);
+  const handleHistoryClick = async (file) => {
+    const payload = { fileId: file.fileId };
+    try {
+      const token = useAuthStore.getState().token;
+      const encryptedMessage = encryptPayload(payload);
+      const response = await api.get("file/view-file-history", {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          dataObject: encryptedMessage,
+        },
+      });
+
+      console.log("History Data Response:", response.data);
+      setHistoryData(response.data.fileHist || []);
+      setHistoryModalVisible(true);
+    } catch (error) {
+      console.error("Error fetching history:", error);
+    }
   };
 
   const handleFileDetailsClick = (file) => {
@@ -275,432 +256,457 @@ const NewRequest = () => {
     setFileDetailsModalVisible(true);
   };
 
-  const handleVolumeFile = (fileDetails) => {
-    createVolumeMutation.mutate(fileDetails.fileId);
+  const handleVolumeFile = async (fileDetails) => {
+    debugger;
+    const payload = { fileId: fileDetails.fileId };
+
+    try {
+      const token = useAuthStore.getState().token;
+      const encryptedMessage = encryptPayload(payload); // Ensure it's properly awaited
+
+      const response = await api.post(
+        "file/create-volume-file",
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { dataObject: encryptedMessage },
+        }
+      );
+
+      if (response.status === 200) {
+        alert(response.data.message); // Ensure correct response access
+      }
+    } catch (error) {
+      console.error("Error fetching:", error);
+    }
   };
 
-  const handlePartFile = (fileDetails) => {
-    createPartMutation.mutate(fileDetails.fileReceiptId);
+  const handlePartFile = async (fileDetails) => {
+    const payload = { fileReceiptId: fileDetails.fileReceiptId };
+
+    try {
+      const token = useAuthStore.getState().token;
+      const encryptedMessage = encryptPayload(payload); // Ensure it's properly awaited
+
+      const response = await api.post(
+        "file/create-part-file",
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { dataObject: encryptedMessage },
+        }
+      );
+
+      if (response.status === 200) {
+        alert(response.data.message); // Ensure correct response access
+      }
+    } catch (error) {
+      console.error("Error fetching:", error);
+    }
   };
+
+  const columns = [
+    {
+      name: "SL",
+      selector: (row, index) => index + 1,
+      sortable: true,
+    },
+    {
+      name: "File Number",
+      selector: (row) => row.fileNo, // This correctly selects fileNo
+      cell: (row) => (
+        <div style={{ display: "flex", flexDirection:"column", alignItems: "start", gap: "8px" }}>
+          <a href="#" onClick={() => handleFileDetailsClick(row)}>
+            {row.fileNo}
+          </a>
+          <span className="bg-primary rounded text-white p-1">{row.priority}</span>
+        </div>
+      ),
+      sortable: true,
+    },
+    
+    {
+      name: "File Name",
+      selector: (row) => row.fileName,
+      sortable: true,
+    },
+    {
+      name: "From",
+      selector: (row) => row.fromEmployee,
+      sortable: true,
+    },
+    {
+      name: "Send On",
+      selector: (row) => row.sentOn,
+      sortable: true,
+    },
+    {
+      name: "Status",
+      selector: (row) => row.status,
+      sortable: true,
+      cell: (row) => (
+        <span className="bg-warning text-white rounded p-1">
+          {row.status}
+        </span>
+      ),
+      
+    },
+    {
+      name: "Action",
+      cell: (row) => (
+        <>
+          <Button
+            variant="contained"
+            color="warning"
+            size="small"
+            title="Send to Rack"
+            startIcon={<MdOutlineMoveDown />}
+            onClick={() => handleSendToRack(row)}
+          ></Button>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            title="Edit"
+            className="ms-2"
+            startIcon={<FaEdit />}
+            onClick={() => handleEditClick(row)}
+          ></Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            title="Edit"
+            className="ms-2"
+            startIcon={<FaHistory />}
+            onClick={() => handleHistoryClick(row)}
+          >
+          </Button>
+        </>
+      ),
+    },
+  ];
 
   return (
-    <Box className="new-request-container">
-      <Accordion defaultActiveKey="0" className="mb-4">
-        <Accordion.Item eventKey="0">
-          <Accordion.Header>
-            <FaFilter className="me-2" /> Filter Options
-          </Accordion.Header>
-          <Accordion.Body>
-            <Paper elevation={3} className="filter-section p-4">
-              <div className="row">
-                <div className="col-md-4">
-                  <FormControl fullWidth variant="outlined">
-                    <Select
-                      value={priority}
-                      onChange={(e) => handleSelectChange(setPriority, e)}
-                      label="Priority"
-                    >
-                      <MenuItem value="All">All</MenuItem>
-                      {nRData.prioritylst?.map((priorityItem, index) => (
-                        <MenuItem key={index} value={priorityItem}>
-                          {priorityItem}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
-
-                <div className="col-md-4">
-                  <FormControl fullWidth variant="outlined">
-                    <Select
-                      value={selectedFileModule}
-                      onChange={(e) =>
-                        handleSelectChange(setSelectedFileModule, e)
-                      }
-                      label="File Module"
-                    >
-                      <MenuItem value="0">All</MenuItem>
-                      {Array.isArray(fileModules) &&
-                        fileModules.map((fileModule) => (
-                          <MenuItem
-                            key={fileModule.moduleId}
-                            value={fileModule.moduleId}
-                          >
-                            {fileModule.moduleName}
-                          </MenuItem>
-                        ))}
-                    </Select>
-                  </FormControl>
-                </div>
-              </div>
-            </Paper>
-          </Accordion.Body>
-        </Accordion.Item>
-      </Accordion>
-
-      <Accordion defaultActiveKey="0">
-        <Accordion.Item eventKey="0">
-          <Accordion.Header>
-            <FaSearch className="me-2" /> File List
-          </Accordion.Header>
-          <Accordion.Body>
-            <Paper elevation={3} className="p-4">
-              <Tabs defaultActiveKey="files" className="mb-4">
-                <Tab eventKey="files" title="Files">
-                  <TableContainer>
-                    {isLoading ? (
-                      <Box className="text-center py-4">
-                        <CircularProgress />
-                        <Typography className="mt-2">
-                          Loading data...
-                        </Typography>
-                      </Box>
-                    ) : (
-                      <Table className="custom-table">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>SL</TableCell>
-                            <TableCell>File Number</TableCell>
-                            <TableCell>File Name</TableCell>
-                            <TableCell>From</TableCell>
-                            <TableCell>Send On</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Action</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {nRData.receiptList &&
-                          nRData.receiptList.length > 0 ? (
-                            nRData.receiptList.map((item, index) => (
-                              <TableRow key={index} hover>
-                                <TableCell>{index + 1}</TableCell>
-                                <TableCell>
-                                  <Button
-                                    color="primary"
-                                    onClick={() => handleFileDetailsClick(item)}
-                                    sx={{ textTransform: "none" }}
-                                  >
-                                    {item.fileNo}
-                                  </Button>
-                                </TableCell>
-                                <TableCell>{item.fileName}</TableCell>
-                                <TableCell>{item.fromEmployee}</TableCell>
-                                <TableCell>{item.sentOn}</TableCell>
-                                <TableCell>
-                                  <Typography
-                                    color={
-                                      item.status === "Active"
-                                        ? "success.main"
-                                        : "text.primary"
-                                    }
-                                  >
-                                    {item.status}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <Box className="action-buttons">
-                                    <IconButton
-                                      sx={{
-                                        backgroundColor: "#1976d2",
-                                        color: "white",
-                                        "&:hover": {
-                                          backgroundColor: "#1976d2",
-                                        },
-                                      }}
-                                      size="small"
-                                      onClick={() => handleSendToRack(item)}
-                                      data-tooltip-id="send-tooltip"
-                                      data-tooltip-content="Send to Rack"
-                                    >
-                                      <FaArchive />
-                                    </IconButton>
-                                    <IconButton
-                                      sx={{
-                                        backgroundColor: "#2e7d32",
-                                        color: "white",
-                                        "&:hover": {
-                                          backgroundColor: "#2e7d32",
-                                        },
-                                      }}
-                                      size="small"
-                                      onClick={() =>
-                                        editFileMutation.mutate(item)
-                                      }
-                                      data-tooltip-id="edit-tooltip"
-                                      data-tooltip-content="Edit File"
-                                    >
-                                      <FaEdit />
-                                    </IconButton>
-                                    <IconButton
-                                      sx={{
-                                        backgroundColor: "#0288d1",
-                                        color: "white",
-                                        "&:hover": {
-                                          backgroundColor: "#0288d1",
-                                        },
-                                      }}
-                                      size="small"
-                                      onClick={() => handleHistoryClick(item)}
-                                      data-tooltip-id="history-tooltip"
-                                      data-tooltip-content="View History"
-                                    >
-                                      <FaHistory />
-                                    </IconButton>
-                                  </Box>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={7} align="center">
-                                <Typography color="text.secondary">
-                                  No data available
-                                </Typography>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    )}
-                  </TableContainer>
-                </Tab>
-              </Tabs>
-            </Paper>
-          </Accordion.Body>
-        </Accordion.Item>
-      </Accordion>
-
-      {/* Tooltips */}
-      <Tooltip id="send-tooltip" />
-      <Tooltip id="edit-tooltip" />
-      <Tooltip id="history-tooltip" />
-
-      {/* Send to Rack Modal */}
-      <Dialog open={modalVisible} onClose={closeModal} maxWidth="md" fullWidth>
-        <DialogTitle>Send to Rack</DialogTitle>
-        <form onSubmit={handleFormSubmit}>
-          <DialogContent>
-            {sendToRackMutation.isError && (
-              <Alert severity="error" className="mb-3">
-                Error sending file to rack. Please try again.
-              </Alert>
+    <div>
+      <div className="row">
+        <div className="form-group col-md-3">
+          {/* <label htmlFor="prioritySelect">Priority</label> */}
+          <Autocomplete
+            id="prioritySelect"
+            options={["All", ...prioritylyst]}
+            getOptionLabel={(option) => option}
+            value={priority || null}
+            onChange={(event, newValue) => setPriority(newValue || "")}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Select Priority"
+                variant="outlined"
+                fullWidth
+              />
             )}
+          />
+        </div>
 
-            <TableContainer component={Paper} className="mb-4">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>File Number</TableCell>
-                    <TableCell>Room</TableCell>
-                    <TableCell>Rack</TableCell>
-                    <TableCell>Cell</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>{selectedFile?.fileNo}</TableCell>
-                    <TableCell>{selectedFile?.roomNumber}</TableCell>
-                    <TableCell>{selectedFile?.rackNumber}</TableCell>
-                    <TableCell>{selectedFile?.cellNumber}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
+        <div className="form-group col-md-3">
+          {/* <label htmlFor="fileModuleSelect">File Module</label> */}
+          <Autocomplete
+            id="fileModuleSelect"
+            options={[{ moduleId: "0", moduleName: "All" }, ...fileModules]}
+            getOptionLabel={(option) => option.moduleName}
+            value={
+              fileModules.find((f) => f.moduleId === selectedFileModule) || null
+            }
+            onChange={(event, newValue) =>
+              setSelectedFileModule(newValue ? newValue.moduleId : "")
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Select File Module"
+                variant="outlined"
+                fullWidth
+              />
+            )}
+          />
+        </div>
 
-            <div className="row">
-              <div className="col-md-4">
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel>Room</InputLabel>
-                  <Select
-                    value={roomId}
-                    onChange={(e) => handleSelectChange(setRoom, e)}
-                    label="Room"
-                  >
-                    <MenuItem value="">Select Room</MenuItem>
-                    {roomData.map((roomItem) => (
-                      <MenuItem
-                        key={roomItem.docRoomId}
-                        value={roomItem.docRoomId}
+        <div className="col-md-12 mt-5">
+          <div className="table-responsive">
+            <DataTable
+              columns={columns}
+              data={nRData.data || []}
+              pagination
+              highlightOnHover
+              progressPending={loading}
+              striped
+              bordered
+              noDataComponent={<div>No data available</div>}
+            />
+          </div>
+        </div>
+      </div>
+
+      {modalVisible && selectedFile && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Send to Rack</h5>
+                <button type="button" className="close" onClick={closeModal}>
+                  &times;
+                </button>
+              </div>
+              <form onSubmit={handleFormSubmit}>
+                <div className="modal-body">
+                  <div className="row">
+                    <div className="table-responsive">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th>File Number</th>
+                            <th>Room</th>
+                            <th>Rack</th>
+                            <th>Cell</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>{selectedFile.fileNo}</td>
+                            <td>{selectedFile.roomNumber}</td>
+                            <td>{selectedFile.rackNumber}</td>
+                            <td>{selectedFile.cellNumber}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="form-group col-md-4">
+                      <label htmlFor="roomSelect">Room</label>
+                      <select
+                        id="roomSelect"
+                        className="form-control"
+                        value={roomId}
+                        onChange={(e) => handleSelectChange(setRoom, e)}
                       >
-                        {roomItem.roomNumber}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </div>
-              <div className="col-md-4">
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel>Rack</InputLabel>
-                  <Select
-                    value={rackId}
-                    onChange={(e) => handleSelectChange(setRack, e)}
-                    label="Rack"
+                        <option value="">Select Room</option>
+                        {roomData.map((roomItem) => (
+                          <option
+                            key={roomItem.docRoomId}
+                            value={roomItem.docRoomId}
+                          >
+                            {roomItem.roomNumber}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group col-md-4">
+                      <label htmlFor="rackSelect">Rack</label>
+                      <select
+                        id="rackSelect"
+                        className="form-control"
+                        value={rackId}
+                        onChange={(e) => handleSelectChange(setRack, e)}
+                      >
+                        <option value="">Select Rack</option>
+                        {rackData.map((rackItem) => (
+                          <option key={rackItem.rackId} value={rackItem.rackId}>
+                            {rackItem.rackNumber}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group col-md-4">
+                      <label htmlFor="cellSelect">Cell</label>
+                      <select
+                        id="cellSelect"
+                        className="form-control"
+                        value={cellNo}
+                        onChange={(e) => handleSelectChange(setCell, e)}
+                        disabled={!rackId}
+                      >
+                        <option value="">Select Cell</option>
+                        {[1, 2, 3, 4, 5].map((cellValue) => (
+                          <option key={cellValue} value={cellValue}>
+                            {cellValue}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={closeModal}
                   >
-                    <MenuItem value="">Select Rack</MenuItem>
-                    {rackData.map((rackItem) => (
-                      <MenuItem key={rackItem.rackId} value={rackItem.rackId}>
-                        {rackItem.rackNumber}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </div>
-              <div className="col-md-4">
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel>Cell</InputLabel>
-                  <Select
-                    value={cellNo}
-                    onChange={(e) => handleSelectChange(setCell, e)}
-                    label="Cell"
-                    disabled={!rackId}
-                  >
-                    <MenuItem value="">Select Cell</MenuItem>
-                    {[1, 2, 3, 4, 5].map((cellValue) => (
-                      <MenuItem key={cellValue} value={cellValue}>
-                        {cellValue}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </div>
+                    Close
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Submit
+                  </button>
+                </div>
+              </form>
             </div>
-          </DialogContent>
-
-          <DialogActions>
-            <Button onClick={closeModal} color="inherit">
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              disabled={sendToRackMutation.isPending}
-            >
-              {sendToRackMutation.isPending ? "Submitting..." : "Submit"}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+          </div>
+        </div>
+      )}
 
       {/* History Modal */}
-      <Dialog
-        open={historyModalVisible}
-        onClose={() => setHistoryModalVisible(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>File History</DialogTitle>
-        <DialogContent>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Action</TableCell>
-                  <TableCell>Timestamp</TableCell>
-                  <TableCell>Performed By</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {historyData.map((historyItem, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{historyItem.action}</TableCell>
-                    <TableCell>{historyItem.timestamp}</TableCell>
-                    <TableCell>{historyItem.performedBy}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setHistoryModalVisible(false)} color="inherit">
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {historyModalVisible && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-xl">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">File History</h5>
+                <button
+                  type="button"
+                  className="close"
+                  onClick={() => setHistoryModalVisible(false)}
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="modal-body">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Sl</th>
+                      <th>File Number</th>
+                      <th>Sender</th>
+                      <th>Reciver</th>
+                      <th>Docket No.</th>
+                      <th>Action Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyData.map((historyItem, index) => (
+                      <tr key={index}>
+                        <td>{index + 1}</td>
+                        <td>{historyItem.fileNo}</td>
+                        <td>{historyItem.sender || "NA"}</td>
+                        <td>{historyItem.receiver || "NA"}</td>
+                        <td>{historyItem.docketNo || "NA"}</td>
+                        <td>{historyItem.actionDate || "NA"}</td>
+                        <td>{historyItem.status || "NA"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setHistoryModalVisible(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* File Details Modal */}
-      <Dialog
-        open={fileDetailsModalVisible && !!fileDetails}
-        onClose={() => setFileDetailsModalVisible(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>File Details</DialogTitle>
-        <DialogContent>
-          <TableContainer>
-            <Table>
-              <TableBody>
-                <TableRow>
-                  <TableCell component="th" width="30%">
-                    File No
-                  </TableCell>
-                  <TableCell>{fileDetails?.fileNo}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell component="th">File Name</TableCell>
-                  <TableCell>{fileDetails?.fileName}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell component="th">From Employee</TableCell>
-                  <TableCell>{fileDetails?.fromEmployee}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell component="th">Sent On</TableCell>
-                  <TableCell>{fileDetails?.sentOn}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell component="th">Status</TableCell>
-                  <TableCell>{fileDetails?.status}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell component="th">Priority</TableCell>
-                  <TableCell>{fileDetails?.priority}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell component="th">Room</TableCell>
-                  <TableCell>{fileDetails?.roomNumber}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell component="th">Rack</TableCell>
-                  <TableCell>{fileDetails?.rackNumber}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell component="th">Cell</TableCell>
-                  <TableCell>{fileDetails?.cellNumber}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() => handleVolumeFile(fileDetails)}
-            disabled={createVolumeMutation.isPending}
-          >
-            {createVolumeMutation.isPending
-              ? "Creating..."
-              : "Create New Volume"}
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() => handlePartFile(fileDetails)}
-            disabled={createPartMutation.isPending}
-          >
-            {createPartMutation.isPending ? "Creating..." : "Create Part File"}
-          </Button>
-          <Button
-            onClick={() => setFileDetailsModalVisible(false)}
-            color="inherit"
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+      {fileDetailsModalVisible && fileDetails && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">File Details</h5>
+                <button
+                  type="button"
+                  className="close"
+                  onClick={() => setFileDetailsModalVisible(false)}
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="modal-body">
+                <table className="table">
+                  <tbody>
+                    <tr>
+                      <th>File No</th>
+                      <td>{fileDetails.fileNo}</td>
+                    </tr>
+                    <tr>
+                      <th>File Name</th>
+                      <td>{fileDetails.fileName}</td>
+                    </tr>
+                    <tr>
+                      <th>From Employee</th>
+                      <td>{fileDetails.fromEmployee}</td>
+                    </tr>
+                    <tr>
+                      <th>Sent On</th>
+                      <td>{fileDetails.sentOn}</td>
+                    </tr>
+                    <tr>
+                      <th>Status</th>
+                      <td>{fileDetails.status}</td>
+                    </tr>
+                    <tr>
+                      <th>Priority</th>
+                      <td>{fileDetails.priority}</td>
+                    </tr>
+                    <tr>
+                      <th>File Module</th>
+                      <td>{fileDetails.fileType}</td>
+                    </tr>
+                    <tr>
+                      <th>Room</th>
+                      <td>{fileDetails.roomNumber}</td>
+                    </tr>
+                    <tr>
+                      <th>Rack</th>
+                      <td>{fileDetails.rackNumber}</td>
+                    </tr>
+                    <tr>
+                      <th>Cell</th>
+                      <td>{fileDetails.cellNumber}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={() => handleVolumeFile(fileDetails)}
+                >
+                  Create New Voume
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={() => handlePartFile(fileDetails)}
+                >
+                  Create Part File
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setFileDetailsModalVisible(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -51,14 +51,14 @@ const useApiListStore = create(
           
 
           set({
-            activities: activityResponse.data.activityList,
-            custodians: custodianResponse.data.custodianList,
-            departments: departmentResponse.data.departmentList,
-            fileModules: fileModuleResponse.data.fileModuleList,
-            fileRelatedToList: fileRelatedToResponse.data.fileRelatedToList,
-            racks: rackResponse.data.rackList,
-            rooms: roomResponse.data.roomList,
-            office: officeResponse.data.officeDetails,
+            activities: activityResponse.data.data,
+            custodians: custodianResponse.data.data,
+            departments: departmentResponse.data.data,
+            fileModules: fileModuleResponse.data.data,
+            fileRelatedToList: fileRelatedToResponse.data.data,
+            racks: rackResponse.data.data,
+            rooms: roomResponse.data.data,
+            office: officeResponse.data.data,
             isLoading: false,
           });
           
