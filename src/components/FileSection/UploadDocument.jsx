@@ -470,8 +470,10 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                         >
                           <MenuItem value="LETTER">LETTER</MenuItem>
                           <MenuItem value="DOCUMENT">DOCUMENT</MenuItem>
-                          <MenuItem value="FILE">FILE</MenuItem>
-                          <MenuItem value="REPORT">REPORT</MenuItem>
+                          <MenuItem value="DRAWING">DRAWING</MenuItem>
+                          <MenuItem value="MAP">MAP</MenuItem>
+                          <MenuItem value="SKETCH">MAP</MenuItem>
+                          <MenuItem value="OTHER">OTHER</MenuItem>
                         </Select>
                       </FormControl>
                     </Grid>
