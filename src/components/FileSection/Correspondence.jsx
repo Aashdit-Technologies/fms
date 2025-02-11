@@ -19,6 +19,7 @@ import styled from "@emotion/styled";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import CreateDraftModal from "./CreateDraftModal";
+import { useQuery } from "@tanstack/react-query";
 
 const StyledButton = styled(Button)`
   margin: 0 4px;
@@ -89,6 +90,12 @@ const customStyles = {
     },
   },
 };
+  const fetchOffices = async () => {
+  const response = await api.get("file/letter-content");
+  console.log("officedata",response.data);
+  
+  return response.data;
+};
 
 const Correspondence = ({
   correspondence,
@@ -102,6 +109,15 @@ const Correspondence = ({
   const [modalOpen, setModalOpen] = useState(false);
   const [filterText, setFilterText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
+  const [officeNames, setOfficeNames] = useState([]); 
+  const { data: offices, isLoading } = useQuery({
+    queryKey: ["offices"],
+    queryFn: fetchOffices, 
+    staleTime: 60000, 
+    cacheTime: 300000,
+  });
+  
+ 
 
   const download = async (row) => {
     if (!row || !row.correspondenceName || !row.correspondencePath) {
@@ -151,6 +167,13 @@ const Correspondence = ({
   useEffect(() => {
     setFilteredData(correspondence?.data || []);
   }, [correspondence]);
+
+  const handleCreateDraft = () => {
+    if (offices) {
+      setOfficeNames(offices); // Set office names if data fetched successfully
+    }
+    setModalOpen(true);
+  };
 
   const columns = [
     {
@@ -240,7 +263,7 @@ const Correspondence = ({
       <TableContainer>
         <TopSection>
           <Title>Correspondence</Title>
-          <ActionButton variant="contained" onClick={() => setModalOpen(true)} title="Click to create a new draft">
+          <ActionButton variant="contained" onClick={handleCreateDraft} title="Click to create a new draft">
             Create Draft
           </ActionButton>
         </TopSection>
@@ -264,7 +287,7 @@ const Correspondence = ({
           striped
         />
       </TableContainer>
-      <CreateDraftModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <CreateDraftModal open={modalOpen} onClose={() => setModalOpen(false)} officeNames={officeNames} />
     </>
   );
 };

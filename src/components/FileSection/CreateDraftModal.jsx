@@ -11,7 +11,9 @@ import {
 import { FaPlus, FaMinus } from "react-icons/fa";
 import CorrespondenceEditor from "./CorrespondenceEditor";
 import ReactSelect from "react-select";
-const CreateDraftModal = ({ open, onClose }) => {
+const CreateDraftModal = ({ open, onClose ,officeNames}) => {
+  console.log("hii",officeNames.data);
+  
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     subject: "",
@@ -24,6 +26,8 @@ const CreateDraftModal = ({ open, onClose }) => {
       setShowForm(false);
     }
   }, [open]);
+
+  
 
   return (
     <Modal open={open} onClose={onClose}>
