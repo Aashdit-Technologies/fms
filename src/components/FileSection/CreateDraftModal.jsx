@@ -77,47 +77,6 @@ const CreateDraftModal = ({ open, onClose ,officeNames}) => {
                 isSearchable
               />
             </Grid>
-            <Grid item xs={12}>
-              <label>Letter Template</label>
-              <ReactSelect
-                // options={letterTemplateOptions}
-                // value={letterTemplateOptions.find(
-                //   (option) => option.value === formData.letterTemplate
-                // )}
-                // onChange={(selectedOption) =>
-                //   setFormData((prev) => ({
-                //     ...prev,
-                //     letterTemplate: selectedOption.value,
-                //   }))
-                // } options={letterTemplateOptions}
-                // value={letterTemplateOptions.find(
-                //   (option) => option.value === formData.letterTemplate
-                // )}
-                // onChange={(selectedOption) =>
-                //   setFormData((prev) => ({
-                //     ...prev,
-                //     letterTemplate: selectedOption.value,
-                //   }))
-                // }
-                isSearchable
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <label>Letter Template</label>
-              <ReactSelect
-                // options={letterTemplateOptions}
-                // value={letterTemplateOptions.find(
-                //   (option) => option.value === formData.letterTemplate
-                // )}
-                // onChange={(selectedOption) =>
-                //   setFormData((prev) => ({
-                //     ...prev,
-                //     letterTemplate: selectedOption.value,
-                //   }))
-                // }
-                isSearchable
-              />
-            </Grid>
           </Box>
         )}
 
