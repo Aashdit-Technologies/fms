@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
-import {
-  Box,
-  Button,
-  TextField,
-} from "@mui/material";
+import { Box, Button, TextField } from "@mui/material";
 import {
   FaEye,
   FaDownload,
@@ -13,6 +9,7 @@ import {
   FaArrowRight,
   FaPlus,
   FaTimes,
+  FaCloudUploadAlt,
 } from "react-icons/fa";
 import styled from "@emotion/styled";
 // import { encryptPayload } from "../../utils/encrypt";
@@ -20,6 +17,7 @@ import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import CreateDraftModal from "./CreateDraftModal";
 import { useQuery } from "@tanstack/react-query";
+import { UploadModal, HistoryModal } from "./Modal/AllIconModal";
 
 const StyledButton = styled(Button)`
   margin: 0 4px;
@@ -90,10 +88,10 @@ const customStyles = {
     },
   },
 };
-  const fetchOffices = async () => {
+const fetchOffices = async () => {
   const response = await api.get("file/letter-content");
-  console.log("officedata",response.data);
-  
+  console.log("officedata", response.data);
+
   return response.data;
 };
 
@@ -107,17 +105,17 @@ const Correspondence = ({
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
   const [modalOpen, setModalOpen] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [filterText, setFilterText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
-  const [officeNames, setOfficeNames] = useState([]); 
+  const [officeNames, setOfficeNames] = useState([]);
   const { data: offices, isLoading } = useQuery({
     queryKey: ["offices"],
-    queryFn: fetchOffices, 
-    staleTime: 60000, 
+    queryFn: fetchOffices,
+    staleTime: 60000,
     cacheTime: 300000,
   });
-  
- 
 
   const download = async (row) => {
     if (!row || !row.correspondenceName || !row.correspondencePath) {
@@ -170,7 +168,7 @@ const Correspondence = ({
 
   const handleCreateDraft = () => {
     if (offices) {
-      setOfficeNames(offices); 
+      setOfficeNames(offices);
     }
     setModalOpen(true);
   };
@@ -189,7 +187,11 @@ const Correspondence = ({
           <div
             style={{
               backgroundColor:
-                row.corrType === "DOCUMENT" ? "#6f42c1" : "#28a745",
+                row.corrType === "DOCUMENT"
+                  ? "#6f42c1"
+                  : row.corrType === "DRAFT"
+                  ? "yellow"
+                  : "#28a745",
               color: "white",
               padding: "4px 10px",
               borderRadius: "10px",
@@ -230,27 +232,58 @@ const Correspondence = ({
       name: "Action",
       cell: (row) => (
         <Box sx={{ display: "flex", justifyContent: "center" }}>
-          <StyledButton
-            variant="contained"
-            color="primary"
-            onClick={() => onView(row)}
-          >
-            <FaEye size={16} />
-          </StyledButton>
-          <StyledButton
-            variant="contained"
-            color="secondary"
-            onClick={() => onHistory(row)}
-          >
-            <FaHistory size={16} />
-          </StyledButton>
-          <StyledButton
-            variant="contained"
-            style={{ backgroundColor: "#28a745" }}
-            onClick={() => download(row)}
-          >
-            <FaDownload size={16} />
-          </StyledButton>
+          {row.corrType === "LETTER" && (
+            <>
+              <StyledButton
+                variant="contained"
+                color="primary"
+                onClick={() => setUploadModalOpen(true)}
+              >
+                <FaCloudUploadAlt size={16} />
+              </StyledButton>
+              <StyledButton
+                variant="contained"
+                color="secondary"
+                onClick={() => setHistoryModalOpen(true)}
+              >
+                <FaHistory size={16} />
+              </StyledButton>
+              <StyledButton
+                variant="contained"
+                style={{ backgroundColor: "#28a745" }}
+                onClick={() => download(row)}
+              >
+                <FaDownload size={16} />
+              </StyledButton>
+            </>
+          )}
+          {row.corrType === "DOCUMENT" && (
+            <StyledButton
+              variant="contained"
+              style={{ backgroundColor: "#28a745" }}
+              onClick={() => download(row)}
+            >
+              <FaDownload size={16} />
+            </StyledButton>
+          )}
+          {row.corrType === "DRAFT" && (
+            <>
+              <StyledButton
+                variant="contained"
+                color="primary"
+                onClick={() => onView(row)}
+              >
+                <FaEdit size={16} />
+              </StyledButton>
+              <StyledButton
+                variant="contained"
+                style={{ backgroundColor: "#28a745" }}
+                onClick={() => download(row)}
+              >
+                <FaDownload size={16} />
+              </StyledButton>
+            </>
+          )}
         </Box>
       ),
       width: "160px",
@@ -263,7 +296,11 @@ const Correspondence = ({
       <TableContainer>
         <TopSection>
           <Title>Correspondence</Title>
-          <ActionButton variant="contained" onClick={handleCreateDraft} title="Click to create a new draft">
+          <ActionButton
+            variant="contained"
+            onClick={handleCreateDraft}
+            title="Click to create a new draft"
+          >
             Create Draft
           </ActionButton>
         </TopSection>
@@ -287,7 +324,13 @@ const Correspondence = ({
           striped
         />
       </TableContainer>
-      <CreateDraftModal open={modalOpen} onClose={() => setModalOpen(false)} officeNames={officeNames} />
+      <UploadModal open={uploadModalOpen} onClose={() => setUploadModalOpen(false)} />
+      <HistoryModal open={historyModalOpen} onClose={() => setHistoryModalOpen(false)} />
+      <CreateDraftModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        officeNames={officeNames}
+      />
     </>
   );
 };

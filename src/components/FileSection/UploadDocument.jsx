@@ -491,6 +491,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                           )
                         }
                         sx={{ height: "54px" }}
+                        disabled={row.type !== "LETTER"} 
                       />
                     </Grid>
 
