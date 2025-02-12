@@ -17,7 +17,7 @@ import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import CreateDraftModal from "./CreateDraftModal";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {HistoryModal } from "./Modal/AllIconModal";
+import {HistoryModal, UploadModal } from "./Modal/AllIconModal";
 
 const StyledButton = styled(Button)`
   margin: 0 4px;
@@ -107,7 +107,7 @@ const Correspondence = ({
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
   const [modalOpen, setModalOpen] = useState(false);
-  // const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyData, setHistoryData] = useState([]);
   const [filterText, setFilterText] = useState("");
@@ -120,7 +120,6 @@ const Correspondence = ({
     cacheTime: 300000,
   });
 
-   // Mutation for fetching history data
    const fetchHistoryData = async (draftNo, token) => {
     const encryptedData = encryptPayload({ draftNo: draftNo });
     const response = await api.post(
@@ -151,7 +150,7 @@ const Correspondence = ({
   });
 
   const handleHistoryClick = (row) => {
-    fetchHistory(row.draftNo); // Trigger the fetchHistory mutation when history is clicked
+    fetchHistory(row.draftNo); 
   };
   const download = async (row) => {
     if (!row || !row.correspondenceName || !row.correspondencePath) {
@@ -367,10 +366,10 @@ const Correspondence = ({
           striped
         />
       </TableContainer>
-      {/* <UploadModal
+      <UploadModal
         open={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
-      /> */}
+      />
       <HistoryModal
         open={historyModalOpen}
         onClose={() => setHistoryModalOpen(false)}

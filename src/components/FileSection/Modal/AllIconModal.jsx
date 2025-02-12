@@ -131,3 +131,14 @@ export const HistoryModal = ({ open, onClose, historyData }) => {
     </Modal>
   );
 };
+
+export const UploadModal = ({ open, onClose }) => (
+  <Modal open={open} onClose={onClose}>
+    <Box sx={modalStyle}>
+      <Typography variant="h6" component="h2" gutterBottom>
+        Upload Encloser
+      </Typography>
+      {/* Add upload form or content here */}
+    </Box>
+  </Modal>
+);
