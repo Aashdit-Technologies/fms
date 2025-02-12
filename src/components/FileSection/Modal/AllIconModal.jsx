@@ -1,5 +1,6 @@
 import React from "react";
-import { Modal, Box, Typography } from "@mui/material";
+import { Modal, Box, Typography, IconButton, Button } from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
 import DataTable from 'react-data-table-component';
 
 const modalStyle = {
@@ -9,7 +10,6 @@ const modalStyle = {
   transform: "translate(-50%, -50%)",
   width: 800,
   bgcolor: "background.paper",
-  borderRadius: 8,
   boxShadow: 24,
   p: 4,
 };
@@ -45,23 +45,32 @@ const columns = [
   },
 ];
 
-export const HistoryModal = ({ open, onClose, historyData  }) => {
-  console.log("History Data:", historyData.data);
-  
-  const isValidHistoryData = Array.isArray(historyData.data) && historyData.data.length > 0;
-  console.log("isValidHistoryData:", isValidHistoryData);
-  
+export const HistoryModal = ({ open, onClose, historyData }) => {
+  const data = historyData.data;
+  const isValidHistoryData = Array.isArray(data) && data.length > 0;
 
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={modalStyle}>
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
         <Typography variant="h6" component="h2" gutterBottom>
           View History
         </Typography>
         {isValidHistoryData ? (
           <DataTable
             columns={columns}
-            data={historyData}
+            data={data}
             pagination
             highlightOnHover
           />
