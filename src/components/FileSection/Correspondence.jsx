@@ -17,7 +17,7 @@ import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import CreateDraftModal from "./CreateDraftModal";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {HistoryModal, UploadModal } from "./Modal/AllIconModal";
+import { HistoryModal, UploadModal } from "./Modal/AllIconModal";
 
 const StyledButton = styled(Button)`
   margin: 0 4px;
@@ -95,8 +95,6 @@ const fetchOffices = async () => {
   return response.data;
 };
 
-
-
 const Correspondence = ({
   correspondence,
   onView,
@@ -110,6 +108,7 @@ const Correspondence = ({
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyData, setHistoryData] = useState([]);
+  const [enclosuresData, setEnclosuresData] = useState([]);
   const [filterText, setFilterText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [officeNames, setOfficeNames] = useState([]);
@@ -120,7 +119,7 @@ const Correspondence = ({
     cacheTime: 300000,
   });
 
-   const fetchHistoryData = async (draftNo, token) => {
+  const fetchHistoryData = async (draftNo, token) => {
     const encryptedData = encryptPayload({ draftNo: draftNo });
     const response = await api.post(
       "file/file-corr-history",
@@ -132,25 +131,51 @@ const Correspondence = ({
       }
     );
     console.log("History Data:", response.data);
-    
+
     return response.data;
   };
-  
-  
+  const fetchEnclosuresData = async (corrId) => {
+    const encryptedData = encryptPayload({ corrId:corrId });
+    const response = await api.post(
+      "file/get-file-correspondence-enclosures",
+      { dataObject: encryptedData },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    console.log("Enclosures Data:", response.data);
+    return response.data;
+  };
+  const { mutate: fetchEnclosures, isLoading: isLoadingEnclosures } =
+    useMutation({
+      mutationFn: fetchEnclosuresData,
+      onSuccess: (data) => {
+        setUploadModalOpen(true);
+        setEnclosuresData(data);
+      },
+      onError: (error) => {
+        console.error("Error fetching enclosures", error);
+      },
+    });
 
   const { mutate: fetchHistory, isLoading: isLoadingHistory } = useMutation({
-    mutationFn: fetchHistoryData, 
+    mutationFn: fetchHistoryData,
     onSuccess: (data) => {
-      setHistoryData(data);        
-      setHistoryModalOpen(true);   
+      setHistoryData(data);
+      setHistoryModalOpen(true);
     },
     onError: (error) => {
       console.error("Error fetching history", error);
     },
   });
 
+  const handleUploadClick = (row) => {
+    fetchEnclosures(row.corrId);
+  };
   const handleHistoryClick = (row) => {
-    fetchHistory(row.draftNo); 
+    fetchHistory(row.draftNo);
   };
   const download = async (row) => {
     if (!row || !row.correspondenceName || !row.correspondencePath) {
@@ -207,7 +232,6 @@ const Correspondence = ({
     }
     setModalOpen(true);
   };
-  
 
   const columns = [
     {
@@ -369,6 +393,8 @@ const Correspondence = ({
       <UploadModal
         open={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
+        enclosuresData={enclosuresData}
+        isLoading={isLoadingEnclosures}
       />
       <HistoryModal
         open={historyModalOpen}
