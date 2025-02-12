@@ -19,7 +19,6 @@ const FileDetails = ({ fileDetails }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const allDetails = fileDetails?.data || {};
-  console.log("fileDetails", allDetails);
 
   const handleShowDetails = () => {
     setIsModalOpen(true);

@@ -16,7 +16,7 @@ import ManageRack from "../ManageRack/ManageRack";
 import ManageActivity from "../ManageActivity/ManageActivity";
 import ManageFile from "../ManageFile/ManageFile";
 import Welcome from "../Welcome/Welcome";
-
+import AddToFile from "../Inbox/AddToFile";
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -25,7 +25,6 @@ const Admin = () => {
   const handleMenuData = (data) => {
     setMenuItems(data);
   };
-
 
   const getFlatMenuItems = (items) => {
     const flatMenu = [];
@@ -60,103 +59,105 @@ const Admin = () => {
         />
         <AdminMain collapsed={collapsed}>
           <Routes>
-            
-            <Route 
-              index 
-              element={
-                <Welcome />
-              } 
-            />
+            <Route index element={<Welcome />} />
 
-            <Route 
-              path="hierarchy" 
+            <Route
+              path="hierarchy"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <Hierarchy />
                 </React.Suspense>
-              } 
+              }
             />
-            <Route 
-              path="file" 
+            <Route
+              path="file"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <ManageFile />
                 </React.Suspense>
-              } 
+              }
             />
-            <Route 
-              path="scheduling" 
+            <Route
+              path="scheduling"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <Scheduling />
                 </React.Suspense>
-              } 
+              }
             />
-            <Route 
-              path="manage-room" 
+            <Route
+              path="manage-room"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <ManageRoom />
                 </React.Suspense>
-              } 
+              }
             />
-            <Route 
-              path="manage-rack" 
+            <Route
+              path="manage-rack"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <ManageRack />
                 </React.Suspense>
-              } 
+              }
             />
-            <Route 
-              path="manage-activity" 
+            <Route
+              path="manage-activity"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <ManageActivity />
                 </React.Suspense>
-              } 
+              }
             />
-            <Route 
-              path="main-file" 
+            <Route
+              path="main-file"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <MainFile />
                 </React.Suspense>
-              } 
+              }
             />
-            <Route 
-              path="diary-section" 
+            <Route
+              path="diary-section"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <DiarySection />
                 </React.Suspense>
-              } 
+              }
             />
-            <Route 
-              path="despatch-section" 
+            <Route
+              path="despatch-section"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <Despatch />
                 </React.Suspense>
-              } 
+              }
             />
-            <Route 
-              path="system/setup/menu/init" 
+            <Route
+              path="system/setup/menu/init"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <LetterList />
                 </React.Suspense>
-              } 
+              }
+            />
+            <Route
+              path="add-to-file"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <AddToFile />
+                </React.Suspense>
+              }
             />
 
             {menuItems.map((menu) => {
-              
-              if (menu.menuURL === '#') {
-                
+              if (menu.menuURL === "#") {
                 if (menu.children?.length > 0) {
-                  return menu.children.map(child => {
-                    const Component = child.menuComponent ? lazyLoadComponent(child.menuComponent) : null;
-                    const path = child.menuURL; 
+                  return menu.children.map((child) => {
+                    const Component = child.menuComponent
+                      ? lazyLoadComponent(child.menuComponent)
+                      : null;
+                    const path = child.menuURL;
                     return (
                       <Route
                         key={child.menuId}
@@ -177,21 +178,24 @@ const Admin = () => {
                 return null;
               }
 
-              if (menu.menuURL === '/hierarchy' || 
-                  menu.menuURL === '/file' || 
-                  menu.menuURL === '/system/setup/menu/init' || 
-                  menu.menuURL === '/scheduling' || 
-                  menu.menuURL === '/manage-room' || 
-                  menu.menuURL === '/manage-rack' || 
-                  menu.menuURL === '/manage-activity' ||
-                  menu.menuURL === '/diary-section' ||
-                  menu.menuURL === '/despatch-section') {
+              if (
+                menu.menuURL === "/hierarchy" ||
+                menu.menuURL === "/file" ||
+                menu.menuURL === "/system/setup/menu/init" ||
+                menu.menuURL === "/scheduling" ||
+                menu.menuURL === "/manage-room" ||
+                menu.menuURL === "/manage-rack" ||
+                menu.menuURL === "/manage-activity" ||
+                menu.menuURL === "/diary-section" ||
+                menu.menuURL === "/despatch-section"
+              ) {
                 return null;
               }
 
-             
-              const Component = menu.menuComponent ? lazyLoadComponent(menu.menuComponent) : null;
-              const path = menu.menuURL; 
+              const Component = menu.menuComponent
+                ? lazyLoadComponent(menu.menuComponent)
+                : null;
+              const path = menu.menuURL;
               return (
                 <Route
                   key={menu.menuId}
@@ -209,13 +213,13 @@ const Admin = () => {
               );
             })}
 
-            <Route 
-              path="*" 
+            <Route
+              path="*"
               element={
                 <div className="not-found">
                   <h1>Page Not Found</h1>
                 </div>
-              } 
+              }
             />
           </Routes>
         </AdminMain>

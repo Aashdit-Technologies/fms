@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { FaPlus, FaMinus, FaRegEye } from "react-icons/fa";
-import "react-datepicker/dist/react-datepicker.css";
+import { FaPlus, FaMinus } from "react-icons/fa";
 import "../DiarySection/diarysection.css";
-import "react-toastify/dist/ReactToastify.css";
 import DataTable from "react-data-table-component";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
-import { toast } from "react-toastify";
+import {toast } from "react-toastify";
 import { FaToggleOn, FaToggleOff } from "react-icons/fa";
-import { Tabs, Tab, Dropdown, Modal} from "react-bootstrap";
+import { Tabs, Tab, Modal} from "react-bootstrap";
 import { FaPencilAlt } from "react-icons/fa";
-import { MdFileUpload } from "react-icons/md";
+import { MdFileUpload,MdPushPin } from "react-icons/md";
 import { BsSend } from "react-icons/bs";
 import "react-datepicker/dist/react-datepicker.css";
-
+import GetAppIcon from '@mui/icons-material/GetApp';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import DownloadIcon from '@mui/icons-material/Download';
 import { 
   TextField, 
   Button, 
@@ -24,7 +24,6 @@ import {
   IconButton, 
   Autocomplete, 
   MenuItem, 
-
   TableContainer, 
   Table, 
   TableHead, 
@@ -41,7 +40,6 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import SearchIcon from '@mui/icons-material/Search';
-
 import RemoveCircleOutline from '@mui/icons-material/RemoveCircleOutline';
 import Visibility from '@mui/icons-material/Visibility';
 
@@ -191,7 +189,8 @@ const DiarySection = () => {
     isUrgent: false,
     letterType: "",
     uploadedLetter:null,
-    documentMetaId: null 
+    documentMetaId: null, 
+
   });
 
   const [rows, setRows] = useState([
@@ -200,12 +199,14 @@ const DiarySection = () => {
       addresseeDesignation: "",
       addressee: "",
       memoNumber: "",
+      recipientId:null,
       addressList: [],
     },
   ]);
 
   const [enclosureRows, setEnclosureRows] = useState([
     {
+      enclosureId:null,
       enclosureType: "",
       enclosureName: "",
       file: null,
@@ -233,11 +234,9 @@ const DiarySection = () => {
   const [SentLetterData, setSentLetterData] = useState([]);
   const [filteredSentLetter, setfilteredSentLetter] = useState([]);
   const token = useAuthStore.getState().token;
-
   const [searchQueryNewLetter, setSearchQueryNewLetter] = useState("");
   const [searchQuerySentLetter, setSearchQuerySentLetter] = useState("");
   const [searchQuerySender, setSearchQuerySender] = useState("");
-
   const [showLetterModal, setShowLetterModal] = useState(false);
   const [selectedLetterDetails, setSelectedLetterDetails] = useState(null);
 
@@ -379,31 +378,47 @@ const DiarySection = () => {
     
       sortable: true,
     },
+   
     {
       name: "Attach Enclosure",
       cell: (row) => (
         <div className="d-flex align-items-center gap-2">
           <IconButton
             onClick={() => handleEncloserIconClick(row)}
+            // sx={{ 
+            //   bgcolor: '#ffc107',
+            //   '&:hover': {
+            //     bgcolor: '#e0a800',
+            //   },
+            // }}
+
             sx={{ 
-              bgcolor: '#ffc107',
+              color: '#ffc107',
+              bgcolor: 'rgba(32, 119, 133, 0.1)',
               '&:hover': {
-                bgcolor: '#e0a800',
+                bgcolor: 'rgba(32, 119, 133, 0.2)',
+                transform: 'scale(1.1)',
               },
-             
+              transition: 'all 0.2s ease-in-out',
+              padding: '8px',
+              borderRadius: '8px',
             }}
           >
             <MdFileUpload 
-              style={{
-                color: '#fff',
-                fontSize: '20px'
-              }}
+              // style={{
+              //   color: '#fff',
+              //   fontSize: '20px'
+              // }}
             />
           </IconButton>
+          
+          {row.enclosureUploaded && (
+            <AttachFileIcon style={{ color: '#4caf50', fontSize: '20px' }} />
+          )}
         </div>
       ),
-      
     },
+    
     {
       name: "Action",
       cell: (row) => (
@@ -488,7 +503,6 @@ const DiarySection = () => {
     {
       name: "Memo Number",
       selector: (row) => row.memoNo,
-      // width: "150px",
     },
     {
       name: "Addressee",
@@ -542,7 +556,6 @@ const DiarySection = () => {
           <Visibility sx={{ fontSize: '1.2rem' }} />
         </IconButton>
       ),
-      // width: "150px",
     },
   ];
 
@@ -577,9 +590,9 @@ const DiarySection = () => {
       case "mobile":
         const mobileRegex = /^\d{10}$/;
         return mobileRegex.test(value) ? "" : "Enter valid 10-digit mobile number";
-      case "email":
-        const emailRegex = /^[a-zA-Z0-9._-]+@gmail\..+$/;
-        return value ? (emailRegex.test(value) ? "" : "Enter valid gmail address") : "Email is required";
+        case "email":
+          const emailRegex = /^[a-zA-Z0-9._-]+@(gmail\.com|cag\.gov\.in|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/;
+          return value ? (emailRegex.test(value) ? "" : "Enter a valid email address") : "Email is required";        
       case "fax":
         return ""; 
       case "district":
@@ -672,25 +685,55 @@ const DiarySection = () => {
     }
   };
 
-  const handleInputmainChange = (e) => {
-    const { name, value } = e.target;
-    
-    if (name === 'senderDate') {
-      const selectedDate = new Date(value);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (selectedDate > today) {
-        toast.error("Future dates are not allowed!");
-        return;
-      }
-    }
-    
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); 
+    const day = String(today.getDate()).padStart(2, '0'); 
+  
+    return `${year}-${month}-${day}`; 
   };
+  
+  
+  const handleSenderDateChange = (e) => {
+    const { name, value } = e.target;
+    const today = getTodayDate(); 
+  
+    if (value > today) {
+      toast.error("Future dates are not allowed!");
+      return;
+    }
+  
+  setFormData((prevState) => ({
+    ...prevState,
+    senderDate: value,
+  }));
+}
+
+
+const handleLetterNumberChange = (e) => {
+  const { value } = e.target;
+  setFormData((prevState) => ({
+    ...prevState,
+    letterNumber: value,
+  }));
+};
+const handleSubjectChange = (e) => {
+  const { value } = e.target;
+  setFormData((prevState) => ({
+    ...prevState,
+    subject: value,
+  }));
+};
+
+const handleremarksChange = (e) => {
+  const { value } = e.target;
+  setFormData((prevState) => ({
+    ...prevState,
+    remarks: value,
+  }));
+};
+ 
 
   //Fetch sender data from the API
   const fetchSenderData = async () => {
@@ -774,25 +817,7 @@ const DiarySection = () => {
     }
   }, [searchTerm, allSenders, isSearchDisabled]);
 
-  const handleSenderClick = (selectedSender) => {
-    const senderId = selectedSender.split(" - ")[0];
-    setFormData((prevData) => ({
-      ...prevData,
-      senderAddbookIdHidden: senderId,
-    }));
-    setSearchTerm(selectedSender);
-    setFilteredSenders([]);
-    setIsSearchDisabled(true);
-  };
-
-  const handleInputChangesearch = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    if (value === "") {
-      setIsSearchDisabled(false);
-    }
-  };
-
+ 
   // All Sender List get api
   const fetchRecords = async () => {
     try {
@@ -918,21 +943,22 @@ const DiarySection = () => {
   const saveFormData = async (savensendValue) => {
     try {
       const formDataToSend = new FormData();
-  
+
       const empDeptDetailsVoList = rows.map((row) => ({
         departmentId: row.departmentName || null,
         designationId: row.addresseeDesignation || null,
         empId: row.addressee || null,
         memoNumber: row.memoNumber || null,
         documentReceipentId: null,
+        recipientId:row.recipientId || null,
       }));
-  
+
       const enclosureDetailsVoList = enclosureRows.map((row) => ({
         encTypeId: row.enclosureType || null,
         encName: row.enclosureName || null,
-        enclosureId: null,
+        enclosureId: row.enclosureId || null,
       }));
-  
+
       const payload = {
         senderAddbookIdHidden: formData.senderAddbookIdHidden || null,
         letterNumber: formData.letterNumber || null,
@@ -945,23 +971,23 @@ const DiarySection = () => {
         copyLetter: "NO",
         savensend: savensendValue,
         letterType: "E",
+        documentMetaId: formData.documentMetaId || null, 
         empDeptDetailsVoList,
         enclosureDetailsVoList,
-        documentMetaId: formData.documentMetaId || null 
       };
-  
+
       formDataToSend.append("dataObject", encryptPayload(payload));
-  
+
       if (formData.uploadedLetter) {
         formDataToSend.append("uploadedLetter", formData.uploadedLetter);
       }
-  
+
       enclosureRows.forEach((row, index) => {
         if (row.file) {
           formDataToSend.append("enclosureDocuments", row.file);
         }
       });
-  
+
       const response = await api.post(
         "diary-section/upload-letter",
         formDataToSend,
@@ -972,9 +998,12 @@ const DiarySection = () => {
           },
         }
       );
-  
+
       if (response.status === 200) {
         toast.success("Form saved successfully!", { autoClose: 3000 });
+        await Promise.all([NewLetter(), sentLetter()]);
+         
+         setOpenSection("LettersList");
         setFormData({
           senderAddbookIdHidden: "",
           letterNumber: "",
@@ -985,9 +1014,8 @@ const DiarySection = () => {
           isUrgent: false,
           letterType: "",
           uploadedLetter: null,
-          documentMetaId:  null
         });
-  
+
         setRows([
           {
             departmentName: "",
@@ -1003,6 +1031,31 @@ const DiarySection = () => {
             file: null,
           },
         ]);
+        setSenderDetails({
+          groupName: "",
+          name: "",
+          address: "",
+          mobile: "",
+          email: "",
+          fax: "",
+          district: "",
+        });
+        setShowTable(false);
+        setSearchTerm(""); 
+        setIsSearchDisabled(false);
+        setSelectedRow(null);
+        setSelectedRowShare(null);
+    
+        if (typeof setSelectedSender === "function") {
+          setSelectedSender(null);
+        }
+        if (typeof setSenderName === "function") {
+          setSenderName("");
+        }
+        if (typeof setSenderAddress === "function") {
+          setSenderAddress("");
+        }
+         
       } else {
         toast.error("Failed to save the form. Please try again.", {
           autoClose: 3000,
@@ -1021,6 +1074,7 @@ const DiarySection = () => {
       toast.warn("Please fill all required fields.", { autoClose: 3000 });
       return;
     }
+   
     saveFormData(savensendValue);
   };
 
@@ -1043,7 +1097,6 @@ const DiarySection = () => {
         setFilteredNewLetter(allnewletter);
       } else {
         console.error("Failed to fetch data. Unexpected response format.");
-        // toast.error("Failed to fetch data. Please try again later.");
       }
     } catch (error) {
       console.error("Error fetching records:", error);
@@ -1129,8 +1182,6 @@ const DiarySection = () => {
         encName: row.enclosureName || null,
         enclosureId: null,
       }));
-  
-      
       const payload = {
         docId: selectedRow?.documentMetaDataId ? Number(selectedRow.documentMetaDataId) : null,
       };
@@ -1146,10 +1197,7 @@ const DiarySection = () => {
           console.warn(`File missing at index ${index}`);
         }
       });
-  
-     
-  
-      // API call
+      
       const response = await api.post(
         "diary-section/upload-letter-enclosure",
         formDataToSend,
@@ -1161,11 +1209,24 @@ const DiarySection = () => {
         }
       );
   
-      // Handle response
       if (response.status === 200) {
         toast.success("Enclosures uploaded successfully!");
-        setEnclosureRows([{ enclosureType: "", enclosureName: "", file: null }]);
-        // handleCloseModalEncloser();
+        const resetRows = enclosureRowstable.map((row) => ({
+        enclosureType: "",
+        enclosureName: "",
+        file: null, 
+        hasEnclosure: !!row.file
+      }));
+
+      setEnclosureRowstable(resetRows); // Reset the table rows
+      setFormData({}); // Reset form data
+      
+        
+        if (selectedRow) {
+          await handleEncloserIconClick(selectedRow);
+        }
+      
+      
       } else {
         toast.error("Error uploading enclosures.");
       }
@@ -1174,7 +1235,6 @@ const DiarySection = () => {
       toast.error("Something went wrong!");
     }
   };
-
 
 const handleEncloserIconClick = async (row) => {
   if (!row || !row.documentMetaDataId) {
@@ -1248,11 +1308,11 @@ const handleSendButtonClick = async (event) => {
     });
 
     if (response.status === 200) {
-      toast.success("Letter sent successfully!");
-      setTimeout(() => {
-        setShowModalShare(false); // Close modal after success
-        setIsSending(false);
-      }, 500); // Slight delay for better UX
+      toast.success("Letter sent successfully!"); 
+      setShowModalShare(false); 
+      setActiveTab("sentLetter"); 
+      await NewLetter();
+      await sentLetter(); 
     } else {
       toast.error("Failed to send letter.");
     }
@@ -1264,6 +1324,150 @@ const handleSendButtonClick = async (event) => {
   }
 };
  
+// const handleEditButtonClick = async (row) => {
+//   if (!row || !row.documentMetaDataId) {
+//     console.error("Invalid row data: ", row);
+//     return;
+//   }
+
+//   const payload = {value: row.documentMetaDataId.toString()};
+//   console.log("edit pay load ",payload)
+//   try {
+//     const response = await api.post(
+//       "diary-section/get-data-for-edit-letter",
+//       { dataObject: encryptPayload(payload) }
+//     );
+
+  
+
+//     if (response.status === 200 && response.data.outcome) {
+//       const letterData = response.data.data;
+//       const editedList = letterData.EditedList[0];
+        
+//       console.log("Edit Letter Data:", letterData);
+//       console.log("Edit Letter :", editedList);
+
+//       // Extract sender details
+//       const senderAddressBook = editedList.sender_addressbook 
+//         ? editedList.sender_addressbook.trim().replace(/^"|"$/g, '')  
+//         : "";
+
+//       const senderParts = senderAddressBook.split("||");
+//       const senderId = senderParts[0] || "";
+//       const senderGroupName = senderParts[1] || "";
+//       const senderName = senderParts[2] || "";
+//       const senderDistrict = senderParts[3] || "";
+
+//       setFormData({
+//         ...formData,
+//         senderAddbookIdHidden: senderId,
+//         letterNumber: editedList.lnumber || "",
+//         senderDate: editedList.senderdate 
+//           ? editedList.senderdate.split('/').reverse().join('-') 
+//           : null,
+//         subject: editedList.subject || "",
+//         remarks: editedList.remarks || "",
+//         isConfidential: editedList.confi || false,
+//         isUrgent: editedList.urgent || false,
+//         letterType: editedList.docname || "",
+//         uploadedLetter:editedList.docname || "",
+//         addEnclosureChecked: editedList.enclosurelst?.length > 0, 
+//         documentMetaId: row.documentMetaDataId,
+//       });
+
+//       setSenderDetails({
+//         groupName: senderGroupName,
+//         name: senderName,
+//         address: editedList.addresee?.address || "",
+//         mobile: editedList.addresee?.mobile || "",
+//         email: editedList.addresee?.email || "",
+//         fax: editedList.addresee?.fax || "",
+//         district: senderDistrict
+//       });
+
+//       setSearchTerm(senderName);
+//       setIsSearchDisabled(true);
+
+//       // **Populate Department Data from DocumentRecipient**
+//       if (editedList.DocumentRecipient && editedList.DocumentRecipient.length > 0) {
+//         const formattedDepartmentList = editedList.DocumentRecipient.map(recipient => {
+//           // console.log("Processing Recipient: ", recipient);
+
+//           const departmentId = recipient.Department?.departmentId?.toString() || "";
+//           const designationId = recipient.Designation?.id?.toString() || "";
+          
+//           let addressee = "";
+//           if (recipient.Employee) {
+//             addressee = recipient.Employee.employeeId 
+//               ? `${recipient.Employee.firstName || ""} ${recipient.Employee.lastName || ""}`.trim()
+//               : "";
+//           }
+
+//           // console.log("Department:", departmentId, "Designation:", designationId, "Addressee:", addressee);
+
+//           return {
+//             departmentName: departmentId,
+//             addresseeDesignation: designationId,
+//             addressee: addressee || "", 
+//             memoNumber: recipient.MemoNo || "",
+//             addressList: []
+//           };
+//         });
+      
+      
+//         setRows(formattedDepartmentList);
+//       } else {
+//         setRows([{ departmentName: "", addresseeDesignation: "", addressee: "", memoNumber: "", addressList: [] }]);
+//       }
+      
+
+//       // **Handle Enclosures**
+//       const hasEnclosures = editedList.enclosurelst && editedList.enclosurelst.length > 0;
+//       setShowTable(hasEnclosures);
+      
+//       if (hasEnclosures) {
+        
+//         const formattedEnclosureList = editedList.enclosurelst.map(enc => ({
+          
+//           enclosureType: enc.enclosuretypeid?.toString() || "",
+//           enclosureName: enc.enclosureName || "",
+//           file: enc.docname || null, 
+//         }));
+//         setEnclosureRows(formattedEnclosureList);
+//         setIsUploadOpen(true);
+//       } else {
+//         setEnclosureRows([{ enclosureType: "", enclosureName: "", file: null }]);
+//       }
+      
+//       setErrors({
+//         groupName: "",
+//         name: "",
+//         address: "",
+//         mobile: "",
+//         email: "",
+//         fax: "",
+//         district: ""
+//       });
+
+//       if (!isUploadOpen) {
+//         toggleUploadAccordion();
+//       }
+
+//       // Scroll to form after data loads
+//       const formElement = document.getElementById("letterForm");
+//       if (formElement) {
+//         formElement.scrollIntoView({ behavior: "smooth" });
+//       }
+
+//       toast.success("Letter data loaded successfully");
+//     } else {
+//       toast.error(response.data.message || "Failed to fetch letter data");
+//     }
+//   } catch (error) {
+//     console.error("Error fetching data: ", error);
+//     toast.error("Failed to fetch letter data. Please try again.");
+//   }
+// };
 
 const handleEditButtonClick = async (row) => {
   if (!row || !row.documentMetaDataId) {
@@ -1272,6 +1476,7 @@ const handleEditButtonClick = async (row) => {
   }
 
   const payload = { value: row.documentMetaDataId.toString() };
+  console.log("Edit payload:", payload);
 
   try {
     const response = await api.post(
@@ -1279,15 +1484,14 @@ const handleEditButtonClick = async (row) => {
       { dataObject: encryptPayload(payload) }
     );
 
-    console.log("Edit data:", response.data);
-
     if (response.status === 200 && response.data.outcome) {
       const letterData = response.data.data;
       const editedList = letterData.EditedList[0];
 
-      console.log("Letter Data:", letterData);
+      console.log("Edit Letter Data:", letterData);
+      console.log("Edit Letter:", editedList);
 
-      
+      // Extract sender details
       const senderAddressBook = editedList.sender_addressbook 
         ? editedList.sender_addressbook.trim().replace(/^"|"$/g, '')  
         : "";
@@ -1299,7 +1503,7 @@ const handleEditButtonClick = async (row) => {
       const senderDistrict = senderParts[3] || "";
 
       setFormData({
-        ...formData,
+        // ...formData,
         senderAddbookIdHidden: senderId,
         letterNumber: editedList.lnumber || "",
         senderDate: editedList.senderdate 
@@ -1310,20 +1514,20 @@ const handleEditButtonClick = async (row) => {
         isConfidential: editedList.confi || false,
         isUrgent: editedList.urgent || false,
         letterType: editedList.docname || "",
-        uploadedLetter:editedList.docname || "",
-        addEnclosureChecked: editedList.enclosurelst?.length > 0 ,
-        documentMetaId: row.documentMetaDataId 
+        uploadedLetter: editedList.docname || "",
+        addEnclosureChecked: editedList.enclosurelst?.length > 0,
+        documentMetaId: row.documentMetaDataId,
       });
 
-      setSenderDetails({
-        groupName: senderGroupName,
-        name: senderName,
-        address: editedList.addresee?.address || "",
-        mobile: editedList.addresee?.mobile || "",
-        email: editedList.addresee?.email || "",
-        fax: editedList.addresee?.fax || "",
-        district: senderDistrict
-      });
+      // setSenderDetails({
+      //   groupName: senderGroupName,
+      //   name: senderName,
+      //   address: editedList.addresee?.address || "",
+      //   mobile: editedList.addresee?.mobile || "",
+      //   email: editedList.addresee?.email || "",
+      //   fax: editedList.addresee?.fax || "",
+      //   district: senderDistrict
+      // });
 
       setSearchTerm(senderName);
       setIsSearchDisabled(true);
@@ -1331,53 +1535,62 @@ const handleEditButtonClick = async (row) => {
       // **Populate Department Data from DocumentRecipient**
       if (editedList.DocumentRecipient && editedList.DocumentRecipient.length > 0) {
         const formattedDepartmentList = editedList.DocumentRecipient.map(recipient => {
-          console.log("Processing Recipient: ", recipient);
-
           const departmentId = recipient.Department?.departmentId?.toString() || "";
           const designationId = recipient.Designation?.id?.toString() || "";
-          
+          const recipientId = recipient.recipientId?.toString() || null; 
           let addressee = "";
-          if (recipient.Employee) {
-            addressee = recipient.Employee.employeeId 
-              ? `${recipient.Employee.firstName || ""} ${recipient.Employee.lastName || ""}`.trim()
-              : "";
+          let addressList = [];
+      
+          if (recipient.Employee?.employeeId) {
+            addressee = recipient.Employee.employeeId;
+            addressList.push({
+              id: recipient.Employee.employeeId,
+              name: `${recipient.Employee.firstName} ${recipient.Employee.lastName}`.trim()
+            });
           }
-
-          console.log("Department:", departmentId, "Designation:", designationId, "Addressee:", addressee);
-
+      
           return {
             departmentName: departmentId,
             addresseeDesignation: designationId,
-            addressee: addressee || "", 
+            addressee,
             memoNumber: recipient.MemoNo || "",
-            addressList: []
+            addressList,
+            recipientId,
           };
         });
-
-        console.log("Formatted Department List:", formattedDepartmentList);
+      
+        console.log("Formatted Department List:", formattedDepartmentList); // Debugging
+      
         setRows(formattedDepartmentList);
+      
+        setRows(prevRows => prevRows.map(row => ({
+          ...row,
+          addressee: row.addressList.some(a => a.id === row.addressee) ? row.addressee : ""
+        })));
+      
+        console.log("Final Rows After Processing: ", formattedDepartmentList);
       } else {
         setRows([{ departmentName: "", addresseeDesignation: "", addressee: "", memoNumber: "", addressList: [] }]);
       }
+      
 
       // **Handle Enclosures**
       const hasEnclosures = editedList.enclosurelst && editedList.enclosurelst.length > 0;
       setShowTable(hasEnclosures);
       
       if (hasEnclosures) {
-        
         const formattedEnclosureList = editedList.enclosurelst.map(enc => ({
-          
           enclosureType: enc.enclosuretypeid?.toString() || "",
           enclosureName: enc.enclosureName || "",
           file: enc.docname || null, 
+          enclosureId: enc.enclosureId?.toString() || null,
         }));
         setEnclosureRows(formattedEnclosureList);
         setIsUploadOpen(true);
       } else {
         setEnclosureRows([{ enclosureType: "", enclosureName: "", file: null }]);
       }
-      
+
       setErrors({
         groupName: "",
         name: "",
@@ -1409,9 +1622,6 @@ const handleEditButtonClick = async (row) => {
 };
 
 
-
-
-
   const handleViewLetterDetails = async (row) => {
     if (!row || !row.documentMetaDataId) {
       console.error("Invalid row data: ", row);
@@ -1441,8 +1651,6 @@ const handleEditButtonClick = async (row) => {
     }
   };
 
-
-  
   const handleFilterNewLetter = (e) => {
     const value = e.target.value;
     setSearchQueryNewLetter(value);
@@ -1500,11 +1708,9 @@ const handleEditButtonClick = async (row) => {
     }
   };
 
-  // departmentList  Table details
+ 
 
 // departement row table
-
-
   const handleRowChange = async (index, field, value) => {
     const updatedRows = [...rows];
     updatedRows[index][field] = value;
@@ -1628,9 +1834,6 @@ const handleEditButtonClick = async (row) => {
     );
   };
 
-
- 
-
 const handleFileUploadChangeencloser = (index, event) => {
   const file = event.target.files[0];
 
@@ -1667,11 +1870,6 @@ const handleFileUploadChangeencloser = (index, event) => {
     );
   };
 
- 
-
-
-
-
   const toggleHandler = (field) => {
     setFormData((prevData) => ({
       ...prevData,
@@ -1689,12 +1887,9 @@ const handleFileUploadChangeencloser = (index, event) => {
     setSelectedRow(null); 
   };
 
- 
-
   const handleOpenModal = (rowData, event) => {
-    event.stopPropagation(); // Stop event bubbling
-    event.preventDefault(); // Prevent default form submission
-
+    event.stopPropagation(); 
+    event.preventDefault(); 
     if (!rowData || !rowData.documentMetaDataId) {
       console.error("Invalid row data:", rowData);
       return;
@@ -1708,13 +1903,9 @@ const handleFileUploadChangeencloser = (index, event) => {
     setShowModalShare(true);
   };
 
-
-
- 
-
   return (
     <>
-     
+      
 
       {/* Upload Inward Letter Section */}
       <div className="diary-section-container">
@@ -1732,16 +1923,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                 <div className="col-md-4">
                   <div className="form-group">
                     <label>
-                      Sender 
-                      {/* (
-                      <span
-                        onClick={handleModalOpen}
-                        style={{ color: "blue", cursor: "pointer" }}
-                      >
-                        add New
-                      </span>
-                      ) */}
-                      :
+                      Sender :<span style={{ color: "red" }}>*</span>
                     </label>
                     <Autocomplete
                       disablePortal
@@ -1759,15 +1941,13 @@ const handleFileUploadChangeencloser = (index, event) => {
                       selectOnFocus
                       blurOnSelect
                       clearOnEscape
-                      onOpen={() => {
-                        // Show all options when opened
+                      onOpen={() => { 
                         setFilteredSenders(allSenders);
                         setSearchTerm('');
                       }}
                       onInputChange={(event, newInputValue) => {
                         if (!isSearchDisabled) {
                           setSearchTerm(newInputValue);
-                          // Filter options based on input
                           const filtered = allSenders.filter((sender) =>
                             sender.toLowerCase().includes(newInputValue.toLowerCase())
                           );
@@ -1775,10 +1955,8 @@ const handleFileUploadChangeencloser = (index, event) => {
                         }
                       }}
                       filterOptions={(options) => {
-                        // Remove any existing 'add_new' options first
-                        const filtered = options.filter(option => option !== 'add_new');
-                        // Add single 'add_new' option at the end
-                        if (filtered.length === 0 || searchTerm) {
+                    const filtered = options.filter(option => option !== 'add_new');
+                     if (filtered.length === 0 || searchTerm) {
                           filtered.push('add_new');
                         }
                         return filtered;
@@ -1786,7 +1964,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          placeholder="Enter sender"
+                          placeholder="Search Sender.."
                           size="small"
                           required
                           InputProps={{
@@ -1807,7 +1985,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                                     }}
                                     sx={{ mr: 1 }}
                                   >
-                                    <DeleteIcon fontSize="small" />
+                                    <DeleteIcon fontSize="small"  color="red"/>
                                   </IconButton>
                                 )}
                                 {params.InputProps.endAdornment}
@@ -1834,13 +2012,13 @@ const handleFileUploadChangeencloser = (index, event) => {
                 </div>
 
                 <div className="col-md-4">
-                  <label>Letter Number: *</label>
+                  <label>Letter Number:<span style={{ color: "red" }}>*</span></label>
                   <TextField
                     fullWidth
                     size="small"
                     name="letterNumber"
                     value={formData.letterNumber}
-                    onChange={handleInputmainChange}
+                    onChange={handleLetterNumberChange}
                     placeholder="Enter Letter Number"
                     required
                     sx={{
@@ -1859,10 +2037,9 @@ const handleFileUploadChangeencloser = (index, event) => {
                   />
                 </div>
  
-
-                <div className="col-md-4">
+             <div className="col-md-4">
                   <label style={{ display: "block", width: "100%" }}>
-                    Sender Date: *
+                    Sender Date: <span style={{ color: "red" }}>*</span>
                   </label>
                   <TextField
                     fullWidth
@@ -1870,10 +2047,10 @@ const handleFileUploadChangeencloser = (index, event) => {
                     type="date"
                     name="senderDate"
                     inputProps={{
-                      max: new Date().toISOString().split('T')[0]  // Today is maximum date, disabling future dates
+                      max:  getTodayDate(),
                     }}
-                    value={formData.senderDate}
-                    onChange={handleInputmainChange}
+                    value={formData.senderDate }
+                    onChange={handleSenderDateChange}
                     required
                     sx={{
                       '& .MuiOutlinedInput-root': {
@@ -1890,44 +2067,16 @@ const handleFileUploadChangeencloser = (index, event) => {
                     }}
                   />
                 </div>
-
-            {/* <div className="col-md-4">
-                  <label style={{ display: "block", width: "100%" }}>
-                    Sender Date: *
-                  </label>
-                  <DatePicker
-                    selected={
-                      formData.senderDate
-                        ? new Date(
-                            formData.senderDate.split("/").reverse().join("-")
-                          )
-                        : null
-                    }
-                    onChange={handleDateChange}
-                    className="form-control"
-                    dateFormat="dd/MM/yyyy"
-                    placeholderText="Select a date"
-                    isClearable
-                    style={{
-                      width: "100%",
-                    }}
-                  />
-                </div> */}
               </div>
-
-
-            
-
               {/* Subject */}
               <div className="row mb-3">
                 <div className="col-md-12">
-                  <label>Subject: *</label>
+                  <label>Subject: <span style={{ color: "red" }}>*</span></label>
                   <textarea
                     className="form-control"
                     name="subject"
-                    
                     value={formData.subject || ""}
-                    onChange={handleInputmainChange}
+                    onChange={handleSubjectChange}
                     placeholder="Enter subject"
                   />
                 </div>
@@ -1944,11 +2093,11 @@ const handleFileUploadChangeencloser = (index, event) => {
                   }}>
                     <thead>
                       <tr style={{ backgroundColor: '#f5f5f5' }}>
-                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Department Name *</th>
-                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Addressee Designation *</th>
-                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Addressee *</th>
+                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Department Name <span style={{ color: "red" }}>*</span></th>
+                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Addressee Designation <span style={{ color: "red" }}>*</span></th>
+                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Addressee <span style={{ color: "red" }}>*</span></th>
                         <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Memo Number</th>
-                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)', width: '80px' }}>
+                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)', width: '55px' }}>
                           <IconButton
                             onClick={handleAddRow}
                             size="small"
@@ -2048,7 +2197,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                               ))}
                             </TextField>
                           </td>
-                          <td style={{ padding: '8px' }}>
+                          {/* <td style={{ padding: '8px' }}>
                             <TextField
                               select
                               fullWidth
@@ -2092,7 +2241,43 @@ const handleFileUploadChangeencloser = (index, event) => {
                                 </MenuItem>
                               )}
                             </TextField>
-                          </td>
+                          </td> */}
+
+                      <td style={{ padding: '8px' }}>
+                      <TextField
+  select
+  fullWidth
+  size="small"
+  value={row.addressee || ""} // Ensure it's valid
+  onChange={(e) => handleRowChange(index, "addressee", e.target.value)}
+  sx={{
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': {
+        borderColor: '#ced4da',
+      },
+      '&:hover fieldset': {
+        borderColor: '#207785',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#207785',
+      },
+    },
+  }}
+>
+  <MenuItem value="">-- Select Addressee --</MenuItem>
+  {Array.isArray(row.addressList) && row.addressList.length > 0 ? (
+    row.addressList.map((addressee) => (
+      <MenuItem key={addressee.id} value={addressee.id}>
+        {addressee.name}
+      </MenuItem>
+    ))
+  ) : (
+    <MenuItem value="" disabled>No addressees available</MenuItem>
+  )}
+</TextField>
+
+                      </td>
+
                           <td style={{ padding: '8px' }}>
                             <TextField
                               fullWidth
@@ -2151,7 +2336,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                     className="form-control"
                     name="remarks"
                     value={formData.remarks || ""}
-                    onChange={handleInputmainChange}
+                    onChange={handleremarksChange}
                     placeholder="Enter remarks"
                   />
                 </div>
@@ -2235,15 +2420,6 @@ const handleFileUploadChangeencloser = (index, event) => {
                   </Typography>
                 </div>
 
-                {/* <div className="col-md-3 mt-4 d-flex gap-3 align-items-center">
-                  <input
-                    type="checkbox"
-                    className="form-check-input me-3"
-                    name="addEnclosure"
-                    onChange={handleCheckboxChange}
-                  />
-                  <label className="form-check-label">Add Enclosure</label>
-                </div> */}
                 <div className="col-md-3 mt-4 d-flex gap-3 align-items-center">
                   <input
                     type="checkbox"
@@ -2310,9 +2486,9 @@ const handleFileUploadChangeencloser = (index, event) => {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell>Enclosure Type</TableCell>
-                          <TableCell>Enclosure Name</TableCell>
-                          <TableCell>Upload File</TableCell>
+                          <TableCell>Enclosure Type<span style={{ color: "red" }}>*</span></TableCell>
+                          <TableCell>Enclosure Name<span style={{ color: "red" }}>*</span></TableCell>
+                          <TableCell>Upload File<span style={{ color: "red" }}>*</span></TableCell>
                           <TableCell align="right">
                             <IconButton
                               onClick={handleAddEnclosureRow}
@@ -2462,7 +2638,6 @@ const handleFileUploadChangeencloser = (index, event) => {
                       }
                     }}
                     onClick={() => {
-                      // Reset form data
                       setFormData({
                         senderAddbookIdHidden: "",
                         letterNumber: "",
@@ -2475,7 +2650,6 @@ const handleFileUploadChangeencloser = (index, event) => {
                         uploadedLetter: null,
                       });
 
-                      // Reset department rows
                       setRows([{
                         departmentName: "",
                         addresseeDesignation: "",
@@ -2483,19 +2657,16 @@ const handleFileUploadChangeencloser = (index, event) => {
                         memoNumber: "",
                       }]);
 
-                      // Reset enclosure rows
                       setEnclosureRows([{
                         enclosureType: "",
                         enclosureName: "",
                         file: null,
                       }]);
-
-                      // Reset file inputs
                       const fileInputs = document.querySelectorAll('input[type="file"]');
                       fileInputs.forEach(input => {
                         input.value = '';
                       });
-
+                     setShowTable(false);
                       // Reset sender selection and search
                       setSearchTerm("");
                       setIsSearchDisabled(false);
@@ -2519,8 +2690,6 @@ const handleFileUploadChangeencloser = (index, event) => {
                         fax: "",
                         district: "",
                       });
-
-                      // Reset any selected sender
                       if (typeof setSelectedSender === 'function') {
                         setSelectedSender(null);
                       }
@@ -2530,8 +2699,6 @@ const handleFileUploadChangeencloser = (index, event) => {
                       if (typeof setSenderAddress === 'function') {
                         setSenderAddress("");
                       }
-
-                      // Reset any open sections
                       setOpenSection(null);
 
                       toast.success("All fields have been reset successfully!");
@@ -2555,8 +2722,9 @@ const handleFileUploadChangeencloser = (index, event) => {
           role="dialog"
         >
           <div className="modal-dialog modal-xl">
-            <div className="modal-content">
-              <div className="modal-header">
+            <div className="diary-section-model-content
+             modal-content">
+              <div className="diary-section-model-header modal-header">
                 <h5 className="modal-title">Add Sender</h5>
                 <button
                   type="button"
@@ -2922,8 +3090,8 @@ const handleFileUploadChangeencloser = (index, event) => {
                 role="dialog"
               >
                 <div className="modal-dialog modal-lg" role="document">
-                  <div className="modal-content">
-                    <div className="modal-header">
+                  <div className="diary-section-model-content modal-content">
+                    <div className="diary-section-model-header modal-header">
                       <h5 className="modal-title">All Letter Recipients</h5>
                       <button
                         type="button"
@@ -3044,10 +3212,11 @@ const handleFileUploadChangeencloser = (index, event) => {
                         <TableCell>
                       <input
                           type="file"
+                          value={row.file ? undefined : ""}
                           className="form-control"
                           onChange={(e) => handleFileUploadChangeencloser(index, e)}
                         />
-                        
+                       
                       </TableCell>
                       <TableCell align="center">
                         <IconButton
@@ -3072,7 +3241,7 @@ const handleFileUploadChangeencloser = (index, event) => {
             </div>
 
             {/* Save & Cancel Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3, mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3, mb: 3 }}>
               <Button
                 variant="contained"
                 onClick={handleSaveEnclosures}
@@ -3104,7 +3273,7 @@ const handleFileUploadChangeencloser = (index, event) => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>#</TableCell>
+                    <TableCell>SI NO</TableCell>
                     <TableCell>Enclosure Type</TableCell>
                     <TableCell>Enclosure Name</TableCell>
                     <TableCell>Action</TableCell>
@@ -3119,15 +3288,15 @@ const handleFileUploadChangeencloser = (index, event) => {
                         <TableCell>{row.enclosureName}</TableCell>
                         <TableCell>
                           <IconButton
-                      onClick={() => handleViewEnclosure(row)}
+                            onClick={() => handleViewEnclosure(row)}
                             sx={{
-                        color: '#207785',
+                            color: '#207785',
                               '&:hover': {
                           backgroundColor: 'rgba(32, 119, 133, 0.04)'
                               },
                             }}
                           >
-                      <Visibility />
+                       <GetAppIcon/>
                           </IconButton>
                         </TableCell>
                       </TableRow>
@@ -3281,17 +3450,7 @@ const handleFileUploadChangeencloser = (index, event) => {
               >
                 Back
               </Button>
-              <a 
-                href="#" 
-                className="text-primary text-decoration-none"
-                onClick={() => {
-                  if (selectedLetterDetails?.metadata?.path) {
-                    window.open(selectedLetterDetails.metadata.path, '_blank');
-                  }
-                }}
-              >
-                Download Letter
-              </a>
+            
             </div>
           </div>
         </Modal.Header>
@@ -3377,19 +3536,26 @@ const handleFileUploadChangeencloser = (index, event) => {
 
                 {/* Right Side - PDF Preview */}
                 <div className="col-md-6 p-0">
-                  <div className="pdf-preview h-100">
-                    {selectedLetterDetails.letterPath ? (
-                      <iframe
-                        src={selectedLetterDetails.letterPath}
-                        className="w-100 h-100 border-0"
-                        title="Letter PDF Preview"
-                      />
-                    ) : (
-                      <div className="d-flex align-items-center justify-content-center h-100 bg-light">
-                        <p className="text-muted">No PDF preview available</p>
-                      </div>
-                    )}
-                  </div>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <Typography variant="subtitle1">PDF View</Typography>
+            <Box
+              sx={{
+                width: '100%',
+                height: 300,
+                bgcolor: '#e0e0e0',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Typography variant="body2" color="textSecondary">
+                PDF content will be displayed here
+              </Typography>
+            </Box>
+            <Button variant="contained" startIcon={<DownloadIcon />}>
+              Download PDF
+            </Button>
+          </Box>
                 </div>
               </div>
 
@@ -3397,17 +3563,58 @@ const handleFileUploadChangeencloser = (index, event) => {
               <div className="row mt-3">
                 {/* Bottom Left - Note */}
                 <div className="col-md-6 p-4">
-                  <h6 className="mb-3">Note</h6>
-                  <div className="p-3 bg-light rounded">
-                    {selectedLetterDetails.letterNotes?.length > 0 
-                      ? selectedLetterDetails.letterNotes.map((note, index) => (
-                          <div key={index} className="mb-2">
-                            {note.content}
-                          </div>
-                        ))
-                      : 'No notes available'}
-                  </div>
-                </div>
+        <Box>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            Note
+          </Typography>
+
+          {
+        Array.isArray(selectedLetterDetails?.letterNotesArrays) &&
+        selectedLetterDetails.letterNotesArrays.length > 0 ? (
+          selectedLetterDetails.letterNotesArrays.map((note, index) => (
+            <Paper key={index} elevation={2} sx={{ p: 2, mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center", borderRadius: 1 }}>
+              {/* Left Side Content */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                  Action taken by: {note?.actionTakenBy || "N/A"}
+                </Typography>
+                <Typography>
+                  <strong>Action:</strong> {note?.action || "N/A"}
+                </Typography>
+                <Typography variant="caption" display="block">
+                  <strong>Date:</strong> {note?.modifyDate || "N/A"}
+                </Typography>
+                <Typography>
+                  <strong>Note:</strong> {note?.note || "N/A"}
+                </Typography>
+              </Box>
+
+              {/* Right Side Numbering */}
+              <Box
+                sx={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: "50%",
+                  bgcolor: "#e0e0e0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "bold",
+                }}
+              >
+                {index + 1}
+              </Box>
+            </Paper>
+          ))
+        ) : (
+          <Typography variant="body2" color="textSecondary">
+            No notes available.
+          </Typography>
+        )
+      }
+                
+        </Box>
+               </div>
 
                 {/* Bottom Right - Enclosures Table */}
                 <div className="col-md-6 p-4">
@@ -3428,10 +3635,10 @@ const handleFileUploadChangeencloser = (index, event) => {
                           <tr key={index}>
                             <td>{index + 1}</td>
                             <td>{enclosure.enclosureName}</td>
-                            <td>{enclosure.enclosureType?.name}</td>
+                            <td>{enclosure.enclosureType}</td>
                             <td>{enclosure.enclosureUploadBy}</td>
                             <td>
-                            {enclosure.Date}
+                            {enclosure.enclosureUploadDate}
                             </td>
                           </tr>
                         ))}

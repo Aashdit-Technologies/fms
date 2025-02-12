@@ -12,16 +12,22 @@ import {
   TableRow,
   Paper,
   Box,
+  Tooltip, 
+  IconButton,
 } from '@mui/material';
-
+import VisibilityIcon from '@mui/icons-material/Visibility';
 const Enclosures = ({ open, onClose, enclosures = [] }) => {
+
+  const handleDownload = (enclosure) => {
+    if (enclosure.enclosurePath) {
+      window.open(enclosure.enclosurePath, '_blank'); 
+    } else {
+      console.error('No valid path for download');
+    }
+  };
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-    >
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle
         sx={{
           bgcolor: '#f5f5f5',
@@ -47,37 +53,36 @@ const Enclosures = ({ open, onClose, enclosures = [] }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {enclosures.map((enclosure, index) => (
-                <TableRow key={index}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{enclosure.type}</TableCell>
-                  <TableCell>{enclosure.name}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      onClick={() => console.log('Download:', enclosure)}
-                    >
-                      Download
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {enclosures.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} align="center">No enclosures found</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
+                {enclosures.map((enclosure, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{enclosure.enclosuretype || 'N/A'}</TableCell>
+                    <TableCell>{enclosure.enclosureName}</TableCell>
+                    <TableCell>
+                      <Tooltip title="View Enclosure">
+                       <IconButton size="small"  onClick={() => handleDownload(enclosure)}
+                          sx={{ 
+                            color: '#207785',
+                            bgcolor: 'rgba(32, 119, 133, 0.1)',
+                            '&:hover': {
+                              bgcolor: 'rgba(32, 119, 133, 0.2)',
+                              transform: 'scale(1.1)',
+                            },
+                            transition: 'all 0.2s ease-in-out',
+                            padding: '8px',
+                            borderRadius: '8px',
+                          }}>
+                            <VisibilityIcon/>
+                          </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
           </Table>
         </TableContainer>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            variant="contained"
-            color="warning"
-            onClick={onClose}
-          >
+          <Button variant="contained" color="warning" onClick={onClose}>
             Close
           </Button>
         </Box>

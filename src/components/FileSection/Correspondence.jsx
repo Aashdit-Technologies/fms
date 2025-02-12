@@ -12,7 +12,7 @@ import {
   FaCloudUploadAlt,
 } from "react-icons/fa";
 import styled from "@emotion/styled";
-// import { encryptPayload } from "../../utils/encrypt";
+import { encryptPayload } from "../../utils/encrypt";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import CreateDraftModal from "./CreateDraftModal";
@@ -94,6 +94,23 @@ const fetchOffices = async () => {
 
   return response.data;
 };
+// History Fetching API
+// const fetchHistoryData = async (draftNo, token) => {
+//   const encryptedData = encryptPayload({ draftNo: draftNo });
+
+//   const response = await api.post(
+//     "/file/file-corr-history",
+//     { dataObject: encryptedData },
+//     {
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//       },
+//     }
+//   );
+
+//   return response.data;
+// };
+
 
 const Correspondence = ({
   correspondence,
@@ -107,6 +124,7 @@ const Correspondence = ({
   const [modalOpen, setModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  // const [historyData, setHistoryData] = useState([]);
   const [filterText, setFilterText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [officeNames, setOfficeNames] = useState([]);
@@ -117,6 +135,19 @@ const Correspondence = ({
     cacheTime: 300000,
   });
 
+  // const { isLoading: historyLoading, data: history } = useQuery(
+  //   ["history", filteredData?.draftNo],
+  //   () => fetchHistoryData(filteredData?.draftNo, token),
+  //   {
+  //     enabled: !!filteredData?.draftNo,
+  //     onSuccess: (data) => {
+  //       console.log("History data fetched successfully", data);
+  //     },
+  //     onError: (error) => {
+  //       console.error("Error fetching history", error);
+  //     },
+  //   }
+  // );
   const download = async (row) => {
     if (!row || !row.correspondenceName || !row.correspondencePath) {
       console.error("Invalid row data for download");
@@ -172,6 +203,23 @@ const Correspondence = ({
     }
     setModalOpen(true);
   };
+  // const handleHistoryClick = async (row) => {
+  //   setIsLoadingHistory(true);
+  //   try {
+  //     const history = await fetchHistoryData(row.draftNo, token); 
+  //     setHistoryData(history); 
+  //     setHistoryModalOpen(true); 
+  //   } catch (error) {
+  //     console.error("Error fetching history", error);
+     
+  //   } finally {
+  //     setIsLoadingHistory(false);
+  //   }
+  // };
+
+  // const handleUploadClick = (row) => {
+  //   uploadMutation.mutate(row);
+  // };
 
   const columns = [
     {
@@ -237,14 +285,14 @@ const Correspondence = ({
               <StyledButton
                 variant="contained"
                 color="primary"
-                onClick={() => setUploadModalOpen(true)}
+                onClick={() => handleUploadClick(row)}
               >
                 <FaCloudUploadAlt size={16} />
               </StyledButton>
               <StyledButton
                 variant="contained"
                 color="secondary"
-                onClick={() => setHistoryModalOpen(true)}
+                onClick={() => handleHistoryClick(row)}
               >
                 <FaHistory size={16} />
               </StyledButton>
@@ -324,8 +372,16 @@ const Correspondence = ({
           striped
         />
       </TableContainer>
-      <UploadModal open={uploadModalOpen} onClose={() => setUploadModalOpen(false)} />
-      <HistoryModal open={historyModalOpen} onClose={() => setHistoryModalOpen(false)} />
+      <UploadModal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+      />
+      <HistoryModal
+        open={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
+        // historyData={historyData}
+        // isLoading={isLoadingHistory}
+      />
       <CreateDraftModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}

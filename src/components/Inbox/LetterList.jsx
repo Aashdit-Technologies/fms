@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useCallback, useRef } from 'react';
 import DataTable from 'react-data-table-component';
 import {
   Button,
@@ -11,7 +11,6 @@ import {
   AccordionSummary,
   AccordionDetails,
   Typography,
-  Pagination,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -25,9 +24,8 @@ const LetterList = () => {
   const [letters, setLetters] = useState([]);
   const [viewletters, setViewLetters] = useState([]);
   const [rowSize, setRowSize] = useState(10);
-  const [pageNo, setPageNo] = useState(0);
+  const [pageNo, setPageNo] = useState(1);
   const [totalRows, setTotalRows] = useState(0);
-  const [activeTab, setActiveTab] = useState('NEW_LETTER');
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [openLetterDetail, setOpenLetterDetail] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -115,15 +113,16 @@ const LetterList = () => {
     MOVE_FILE: 'MOVE_FILE'
   };
 
+  const [activeTab, setActiveTab] = useState(TAB_CODES.NEW_LETTER);
+
+ 
   const fetchLetters = async (tabCode) => {
     try {
-    
       const payload = {
-        rowsize: parseInt(rowSize),
+        rowsize: rowSize,
         tabCode: tabCode,
-        pageNo:pageNo,
+        pageNo: pageNo,
       };
-      
       const response = await api.post(
         "letter/manage-letter-receipents",
         { dataObject: encryptPayload(payload) },
@@ -133,81 +132,85 @@ const LetterList = () => {
           },
         }
       );
-      console.log(response.data.data);
-      const responseData = response.data?.data?.letterList || [];
+      console.log("Raw API Response:", JSON.stringify(response.data, null, 2)); 
+      const responseData = response.data?.data?.letterList || []
       setLetters(Array.isArray(responseData) ? responseData : []);
       setTotalRows(response.data?.data?.totalRows || 0);
     } catch (error) {
-      console.error('Error fetching letters:', error);
+      console.error("Error fetching letters:", error);
       setLetters([]);
-    } finally {
-      
     }
-  };
-
-  const handleViewLetterDetail = async (row, tabCode) => {
-    console.log("Row data:", row); // Debugging
-
-    if (!row. receiptId) {
-        console.error("Error: recipientId is missing in row data!");
-        return; // Prevent API call if recipientId is missing
-    }
-
-    try {
-        const payload = {
-            metadataId: row.metadataId,
-            receiptId: row.receiptId,
-            tabCode: tabCode,
-        };
-
-        console.log("Sending payload:", payload); // Debugging
-
-        const response = await api.post(
-            "letter/view-letter",
-            { dataObject: encryptPayload(payload) },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-
-        console.log("View letter response:", response.data.data);
-        const responseData = response.data?.data?.letterList || [];
-        setViewLetters(Array.isArray(responseData) ? responseData : []);
-        setTotalRows(response.data?.data?.totalRows || 0);
-        setSelectedLetter({ ...row, tabCode: activeTab });
-        setOpenLetterDetail(true);
-    } catch (error) {
-        console.error("Error fetching letters:", error);
-        setViewLetters([]);
-    }
-};
-
-
-
- 
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-    fetchLetters(newValue);
-  };
-
-  const handlePageChange = (event, page) => {
-    setPageNo(page);
-    fetchLetters(activeTab);
   };
   
 
+  useEffect(() => {
+    if (activeTab) {
+      fetchLetters(activeTab);
+    }
+  }, [activeTab, pageNo, rowSize]);
+  
+ 
+
+
+const handleViewLetterDetail = async (row, tabCode) => {
+
+  if (!row.receiptId) {
+    console.error("Error: receiptId is missing in row data!");
+    return;
+  }
+
+  try {
+    const payload = {
+      metadataId: row.metadataId,
+      receiptId: row.receiptId,
+      tabCode: tabCode,
+    };
+
+    console.log("Payload being sent:", payload); 
+
+    const response = await api.post(
+      "letter/view-letter",
+      { dataObject: encryptPayload(payload) },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    console.log("all view letter respone",response)
+
+    if (!response.data || !response.data.data) {
+      console.error("Error: API response is missing 'data'.", response.data);
+      return;
+    }
+    const responseData = response.data.data; 
+    setViewLetters([responseData]); 
+
+    setTotalRows(1); 
+    setSelectedLetter({ ...row, tabCode: tabCode });
+    setOpenLetterDetail(true);
+  } catch (error) {
+    console.error("Error fetching letters:", error);
+    setViewLetters([]);
+  }
+};
+
+
+const handleTabChange = (newTab) => {
+  setActiveTab(newTab);
+  setPageNo(1);
+
+  setRowSize(10);
+  setTimeout(() => {
+    fetchLetters(newTab);
+  }, 0); 
+};
+
   const handleRowsPerPageChange = (newRowSize) => {
     setRowSize(newRowSize);
-    setPageNo(1); 
-    fetchLetters(activeTab);
+    setPageNo(1);  
   };
-
-//   const handleViewLetterDetail = (row) => {
-//     setSelectedLetter({ ...row, tabCode: activeTab });
-//     setOpenLetterDetail(true);
-// };
+  
 
   const handleCloseLetterDetail = () => {
     setOpenLetterDetail(false);
@@ -226,168 +229,175 @@ const LetterList = () => {
     </Button>
 );
 
-  const NewLettercolumns = [
-    {
-      name: 'SI No',
-      cell: (row, index) => index + 1,
-      sortable: true,
-      width: '60px',
-    },
-    {
-      name: 'Diary Number',
-      selector: row => row.diaryNumber || '',
-      sortable: true,
-    },
-    {
-      name: 'Letter Number & Date',
-      selector: row => row.letterNumber || '',
-      sortable: true,
-    },
-    {
-      name: 'Letter Source',
-      selector: row => row.letterSource || '',
-      sortable: true,
-    },
-    {
-      name: 'Send Date',
-      selector: row => row.senderDate || '',
-      sortable: true,
-    },
-    {
-      name: 'Sender',
-      selector: row => row.sender || '',
-      sortable: true,
-    },
-    {
-      name: 'Updated DateTime',
-      selector: row => row.updatedDateTime || 'NA',
-      sortable: true,
-    },
-    {
-      name: 'Memo Number & Date',
-      selector: row => row.memoNo || '',
-      sortable: true,
-    },
-    {
-      name: 'Subject',
-      selector: row => row.subject || '',
-      sortable: true,
-      grow: 2,
-    },
-    {
-      name: 'Action',
-      cell: actionButton,
-      width: '120px',
-    },
-  ];
+const NewLettercolumns = [
+  {
+    name: 'SI No',
+    cell: (row, index) => index + 1,
+    sortable: true,
+    width: '60px',
+  },
+  {
+    name: 'Diary Number',
+    selector: row => row.diaryNumber || '',
+    sortable: true,
+    
+  },
+  {
+    name: 'Letter Number & Date',
+    selector: row => row.letterNumber || '',
+    sortable: true,
+    
+  },
+  {
+    name: 'Letter Source',
+    selector: row => row.letterSource || '',
+    sortable: true,
+    
+  },
+  {
+    name: 'Send Date',
+    selector: row => row.senderDate || '',
+    sortable: true,
+    
+  },
+  {
+    name: 'Sender',
+    selector: row => row.sender || '',
+    sortable: true,
+    
+  },
+  {
+    name: 'Updated DateTime',
+    selector: row => row.updatedDateTime || 'NA',
+    sortable: true,
+  
+  },
+  {
+    name: 'Memo Number & Date',
+    selector: row => row.memoNo || '',
+    sortable: true,
+   
+  },
+  {
+    name: 'Subject',
+    selector: row => row.subject || '',
+    sortable: true,
+    
+  },
+  {
+    name: 'Action',
+    cell: actionButton,
+   
+  },
+];
 
-  const SentLetterColumns = [
-    {
-      name: 'SI NO',
-      cell: (row, index) => index + 1,
-      sortable: true,
-      width: '60px',
-    },
-    {
-      name: 'Letter Number & Date',
-      selector: row => row.letterNumber || '',
-      sortable: true,
-    },
-    {
-      name: 'Updated DateTime',
-      selector: row => row.updatedDateTime || 'NA',
-      sortable: true,
-    },
-    {
-      name: 'Memo Number & Date',
-      selector: row => row.memoNo|| '',
-      sortable: true,
-    },
-    {
-      name: 'Send To',
-      selector: row => row.sendTo || '',
-      sortable: true,
-      grow: 2,
-    },
-    {
-      name: 'Subject',
-      selector: row => row.subject || '',
-      sortable: true,
-      grow: 2,
-    },
-    {
-      name: 'Send Date',
-      selector: row => row.senderDate|| '',
-      sortable: true,
-    },
-    {
-      name: 'Action',
-      cell: actionButton,
-      width: '120px',
-    },
-  ];
+const SentLetterColumns = [
+  {
+    name: 'SI NO',
+    cell: (row, index) => index + 1,
+    sortable: true,
+    width: '60px',
+  },
+  {
+    name: 'Letter Number & Date',
+    selector: row => row.letterNumber || '',
+    sortable: true,
+  },
+  {
+    name: 'Updated DateTime',
+    selector: row => row.updatedDateTime || 'NA',
+    sortable: true,
+  },
+  {
+    name: 'Memo Number & Date',
+    selector: row => row.memoNo|| '',
+    sortable: true,
+  },
+  {
+    name: 'Send To',
+    selector: row => row.sendTo || '',
+    sortable: true,
+   
+  },
+  {
+    name: 'Subject',
+    selector: row => row.subject || '',
+    sortable: true,
+   
+  },
+  {
+    name: 'Send Date',
+    selector: row => row.senderDate|| '',
+    sortable: true,
+  },
+  {
+    name: 'Action',
+    cell: actionButton,
+    width: '120px',
+  },
+];
 
-  const MovedToFileColumns = [
-    {
-      name: 'SI NO',
-      cell: (row, index) => index + 1,
-      sortable: true,
-      width: '60px',
-    },
-    {
-      name: 'Diary Number',
-      selector: row => row.diaryNumber || '',
-      sortable: true,
-    },
-    {
-      name: 'Letter Number & Date',
-      selector: row => row.letterNumber || '',
-      sortable: true,
-    },
-    {
-      name: 'Updated DateTime',
-      selector: row => row.updatedDateTime || 'NA',
-      sortable: true,
-    },
-    {
-      name: 'Memo Number & Date',
-      selector: row => row.memoNo || '',
-      sortable: true,
-    },
-    {
-      name: 'Subject',
-      selector: row => row.subject || '',
-      sortable: true,
-      grow: 2,
-    },
-    {
-      name: 'Status',
-      selector: row => row.status || '',
-      sortable: true,
-      cell: row => (
-        <span style={{ 
-          padding: '4px 8px', 
-          borderRadius: '4px',
-          backgroundColor: row.status === 'Moved' ? '#4caf50' : '#f44336',
-          color: 'white'
-        }}>
-          {row.status || 'N/A'}
-        </span>
-      )
-    },
-    {
-      name: 'Action',
-      cell: actionButton,
-      width: '120px',
-    },
-  ];
+const MovedToFileColumns = [
+  {
+    name: 'SI NO',
+    cell: (row, index) => index + 1,
+    sortable: true,
+    width: '60px',
+  },
+  {
+    name: 'Diary Number',
+    selector: row => row.diaryNumber || '',
+    sortable: true,
+  },
+  {
+    name: 'Letter Number & Date',
+    selector: row => row.letterNumber || '',
+    sortable: true,
+  },
+  {
+    name: 'Updated DateTime',
+    selector: row => row.updatedDateTime || 'NA',
+    sortable: true,
+  },
+  {
+    name: 'Memo Number & Date',
+    selector: row => row.memoNo || '',
+    sortable: true,
+  },
+  {
+    name: 'Subject',
+    selector: row => row.subject || '',
+    sortable: true,
+   
+  },
+  {
+    name: 'Status',
+    selector: row => row.status || '',
+    sortable: true,
+    cell: row => (
+      <span style={{ 
+        padding: '4px 8px', 
+        borderRadius: '4px',
+        backgroundColor: row.status === 'Moved' ? '#4caf50' : '#f44336',
+        color: 'white'
+      }}>
+        {row.status || 'N/A'}
+      </span>
+    )
+  },
+  {
+    name: 'Action',
+    cell: actionButton,
+    width: '120px',
+  },
+];
 
   const handleAccordionChange = () => {
     setExpanded(!expanded);
   };
 
   const getActiveColumns = () => {
-    switch(activeTab) {
+    switch (activeTab) {
       case TAB_CODES.NEW_LETTER:
         return NewLettercolumns;
       case TAB_CODES.SENT_LETTER:
@@ -399,32 +409,23 @@ const LetterList = () => {
     }
   };
 
-  useEffect(() => {
-    fetchLetters(activeTab);
-  }, []);
+ 
 
   return (
-    <div>
+    <div className="diary-section-container">
+      
       <Accordion 
         expanded={expanded} 
         onChange={handleAccordionChange}
         sx={{
           boxShadow: 'none',
           border: '1px solid #e0e0e0',
+          width: '100%',
+          maxWidth: '100%',  
+          overflow: 'hidden', 
           '&:before': {
             display: 'none',
           },
-          '& .MuiAccordionSummary-root': {
-            minHeight: '48px',
-            backgroundColor: '#f8f9fa',
-            borderBottom: expanded ? '1px solid #e0e0e0' : 'none',
-          },
-          '& .MuiAccordionSummary-content': {
-            margin: '0',
-          },
-          '& .MuiAccordionDetails-root': {
-            padding: '16px',
-          }
         }}
       >
         <AccordionSummary
@@ -447,7 +448,8 @@ const LetterList = () => {
           <Paper sx={{ width: '100%', mb: 2 }}>
             <Tabs
               value={activeTab}
-              onChange={handleTabChange}
+             onChange={(event, newValue) => handleTabChange(newValue)}
+             aria-label="letter tabs"
               sx={{
                 borderBottom: 1,
                 borderColor: 'divider',
@@ -455,10 +457,11 @@ const LetterList = () => {
                   textTransform: 'none',
                   minWidth: 120,
                   fontWeight: 500,
+                  flexShrink: 0, 
                 },
                 '& .Mui-selected': {
                   color: '#1976d2',
-                }
+                },
               }}
             >
               <Tab value="NEW_LETTER" label="New Letters" />
@@ -468,59 +471,51 @@ const LetterList = () => {
           </Paper>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          
             <TextField
-              type="number"
-              size="small"
-              value={rowSize}
-              onChange={(e) => handleRowsPerPageChange(parseInt(e.target.value))}
-              label="Records per page"
-              sx={{ width: 150 }}
-              inputProps={{ min: 1 }}
-            />
+            type="number"
+            size="small"
+            value={rowSize || 10} 
+            onChange={(e) => {
+              const value = parseInt(e.target.value, 10);
+              if (!isNaN(value) && value > 0) {
+                handleRowsPerPageChange(value);
+              }
+            }}
+            label="Records per page"
+            sx={{ width: 150 }}
+            inputProps={{ min: 1 }}
+/>
           </Box>
 
-          <Box sx={{ width: '100%' }}>
-            <DataTable
-              columns={getActiveColumns()}
-              data={letters}
-              customStyles={customStyles}
-              paginationServer
-              paginationTotalRows={totalRows}
-              paginationPerPage={rowSize}
-              paginationDefaultPage={pageNo}
-              onChangeRowsPerPage={handleRowsPerPageChange}
-            />
-           
-
-          </Box>
-          <Box sx={{ 
-            width: '100%',
-            display: 'flex', 
-            flexDirection: 'column', 
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '16px',
-            marginTop: '16px',
-            borderTop: '1px solid #e0e0e0',
-            backgroundColor: '#ffffff'
-          }}>
-            <Pagination
-              count={Math.ceil(totalRows / rowSize)}
-              page={pageNo}
-              onChange={(e, page) => handlePageChange(e, page)}
-              color="primary"
-              size="large"
-            />
-           </Box>
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+        
+          <DataTable
+            columns={getActiveColumns()}
+            data={letters}
+            pagination
+            paginationServer
+            paginationTotalRows={totalRows}
+            paginationPerPage={rowSize} 
+            paginationDefaultPage={pageNo}
+            onChangePage={(page) => setPageNo(page)}
+            onChangeRowsPerPage={(newRowSize) => {
+              setRowSize(newRowSize);
+              setPageNo(1);  
+            }}
+            customStyles={customStyles}
+            responsive
+          />     
+          </Box> 
         </AccordionDetails>
       </Accordion>
+    
 
-   
-<LetterDetail 
+   <LetterDetail 
     open={openLetterDetail}
     onClose={handleCloseLetterDetail}
-    letterData={selectedLetter}
-    letterDataView={viewletters} 
+    letterData={selectedLetter} 
+    letterDataView={viewletters[0]}
 />
 
     </div>
