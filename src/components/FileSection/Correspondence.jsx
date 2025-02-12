@@ -17,7 +17,7 @@ import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import CreateDraftModal from "./CreateDraftModal";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { UploadModal, HistoryModal } from "./Modal/AllIconModal";
+import {HistoryModal } from "./Modal/AllIconModal";
 
 const StyledButton = styled(Button)`
   margin: 0 4px;
@@ -107,7 +107,7 @@ const Correspondence = ({
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
   const [modalOpen, setModalOpen] = useState(false);
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  // const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyData, setHistoryData] = useState([]);
   const [filterText, setFilterText] = useState("");
@@ -253,12 +253,12 @@ const Correspondence = ({
       sortable: true,
       grow: 2,
     },
-    {
-      name: "Added By",
-      selector: (row) => row.addedBy,
-      sortable: true,
-      width: "180px",
-    },
+    // {
+    //   name: "Added By",
+    //   selector: (row) => row.addedBy,
+    //   sortable: true,
+    //   width: "180px",
+    // },
     {
       name: "Added Date",
       selector: (row) => row.addedDate,
@@ -275,6 +275,7 @@ const Correspondence = ({
                 variant="contained"
                 color="primary"
                 onClick={() => handleUploadClick(row)}
+                title="View Enclosure"
               >
                 <FaCloudUploadAlt size={16} />
               </StyledButton>
@@ -282,6 +283,7 @@ const Correspondence = ({
                 variant="contained"
                 color="secondary"
                 onClick={() => handleHistoryClick(row)}
+                title="View History"
               >
                 <FaHistory size={16} />
               </StyledButton>
@@ -289,6 +291,7 @@ const Correspondence = ({
                 variant="contained"
                 style={{ backgroundColor: "#28a745" }}
                 onClick={() => download(row)}
+                title="Download"
               >
                 <FaDownload size={16} />
               </StyledButton>
@@ -299,6 +302,7 @@ const Correspondence = ({
               variant="contained"
               style={{ backgroundColor: "#28a745" }}
               onClick={() => download(row)}
+              title="Download"
             >
               <FaDownload size={16} />
             </StyledButton>
@@ -309,6 +313,7 @@ const Correspondence = ({
                 variant="contained"
                 color="primary"
                 onClick={() => onView(row)}
+                title="Edit"
               >
                 <FaEdit size={16} />
               </StyledButton>
@@ -316,6 +321,7 @@ const Correspondence = ({
                 variant="contained"
                 style={{ backgroundColor: "#28a745" }}
                 onClick={() => download(row)}
+                title="Download"
               >
                 <FaDownload size={16} />
               </StyledButton>
@@ -361,10 +367,10 @@ const Correspondence = ({
           striped
         />
       </TableContainer>
-      <UploadModal
+      {/* <UploadModal
         open={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
-      />
+      /> */}
       <HistoryModal
         open={historyModalOpen}
         onClose={() => setHistoryModalOpen(false)}
