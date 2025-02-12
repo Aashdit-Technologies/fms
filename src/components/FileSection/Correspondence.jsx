@@ -132,6 +132,8 @@ const Correspondence = ({
         },
       }
     );
+    console.log("History Data:", response.data);
+    
     return response.data;
   };
   
