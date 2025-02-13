@@ -160,10 +160,20 @@ export const UploadModal = ({
   enclosuresData,
   allDetails,
   historyData,
+  uploadData,
 }) => {
+  console.log("Upload Modal Data:", {
+    uploadData,
+    enclosuresData,
+  });
+  
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
-  const data = Array.isArray(enclosuresData?.data) ? enclosuresData.data : [];
+  const data = Array.isArray(uploadData?.data.enclosureTypeList)
+    ? uploadData?.data.enclosureTypeList
+    : [];
+    console.log("data", data);
+    
   const [rows, setRows] = useState([
     { type: "", name: "", file: null, fileName: "" },
   ]);
@@ -203,7 +213,6 @@ export const UploadModal = ({
     },
   });
 
-  
   const handleSubmit = () => {
     mutation.mutate();
   };
@@ -293,8 +302,8 @@ export const UploadModal = ({
                         required
                       >
                         {data.map((option, idx) => (
-                          <MenuItem key={idx} value={option.value}>
-                            {option.label}
+                          <MenuItem key={idx} value={option.id}>
+                            {option.name}
                           </MenuItem>
                         ))}
                       </Select>
@@ -324,22 +333,17 @@ export const UploadModal = ({
                   </TableCell>
                 </TableRow>
               ))}
-              
             </TableBody>
           </Table>
         </TableContainer>
-                <Box mt={2} display="flex" justifyContent="center" gap={2}>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    onClick={handleSubmit}
-                  >
-                    Save
-                  </Button>
-                  <Button variant="outlined" onClick={handleCancel}>
-                    Cancel
-                  </Button>
-                </Box>
+        <Box mt={2} display="flex" justifyContent="center" gap={2}>
+          <Button variant="contained" color="success" onClick={handleSubmit}>
+            Save
+          </Button>
+          <Button variant="outlined" onClick={handleCancel}>
+            Cancel
+          </Button>
+        </Box>
       </Box>
     </Modal>
   );

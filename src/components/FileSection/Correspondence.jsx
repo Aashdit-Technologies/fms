@@ -110,6 +110,7 @@ const Correspondence = ({
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyData, setHistoryData] = useState([]);
   const [enclosuresData, setEnclosuresData] = useState([]);
+  const [uploadData, setUploadData] = useState(null);
   const [filterText, setFilterText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [officeNames, setOfficeNames] = useState([]);
@@ -161,6 +162,24 @@ const Correspondence = ({
         console.error("Error fetching enclosures", error);
       },
     });
+    const fetchUploadData = async () => {
+      const response = await api.get('common/enclousuretype-list', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Upload Data:", response.data);
+      return response.data;
+    };
+    const { mutate: fetchUpload, isLoading: isLoadingUpload } = useMutation({
+      mutationFn: fetchUploadData,
+      onSuccess: (data) => {
+        setUploadData(data);
+      },
+      onError: (error) => {
+        console.error("Error fetching upload data", error);
+      },
+    });
 
   const { mutate: fetchHistory, isLoading: isLoadingHistory } = useMutation({
     mutationFn: fetchHistoryData,
@@ -174,7 +193,15 @@ const Correspondence = ({
   });
 
   const handleUploadClick = (row) => {
-    fetchEnclosures(row.corrId);
+    fetchEnclosures(row.corrId, {
+      onSuccess: () => {
+        fetchUpload({
+          onSuccess: () => {
+            setUploadModalOpen(true);
+          },
+        });
+      },
+    });
   };
   const handleHistoryClick = (row) => {
     fetchHistory(row.draftNo);
@@ -398,6 +425,7 @@ const Correspondence = ({
         enclosuresData={enclosuresData}
         isLoading={isLoadingEnclosures}
         allDetails={allDetails}
+        uploadData={uploadData}
       />
       <HistoryModal
         open={historyModalOpen}
