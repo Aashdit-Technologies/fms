@@ -274,6 +274,13 @@ export const UploadModal = ({
     }
   };
 
+  // const handleDownload = (filePath, fileName) => {
+  //   const link = document.createElement("a");
+  //   link.href = filePath;
+  //   link.download = fileName;
+  //   link.click();
+  // };
+
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={modalStyle}>

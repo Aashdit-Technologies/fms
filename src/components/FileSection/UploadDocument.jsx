@@ -750,7 +750,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
             <tbody>
               {Array.isArray(apiResponseData) && apiResponseData.length > 0 ? (
                 apiResponseData.map((data, index) => {
-                  // Ensure employee name and role are extracted properly
                   const employeeName = data.empNameWithDesgAndDept || data.name;
                   const actionValue = data.empDeptRoleId || null;
 
