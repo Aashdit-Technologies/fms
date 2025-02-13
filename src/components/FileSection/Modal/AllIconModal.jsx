@@ -158,13 +158,13 @@ export const UploadModal = ({
   open,
   onClose,
   enclosuresData,
+  corrId,
   allDetails,
   historyData,
   uploadData,
 }) => {
   console.log("Upload Modal Data:", {
-    uploadData,
-    enclosuresData,
+    historyData,
   });
   
   const token =
@@ -172,7 +172,7 @@ export const UploadModal = ({
   const data = Array.isArray(uploadData?.data.enclosureTypeList)
     ? uploadData?.data.enclosureTypeList
     : [];
-    console.log("data", data);
+
     
   const [rows, setRows] = useState([
     { type: "", name: "", file: null, fileName: "" },
@@ -181,30 +181,44 @@ export const UploadModal = ({
   const mutation = useMutation({
     mutationFn: async (data) => {
       try {
+        console.log("Mutation function triggered with data:", data);
+  
         const encryptedDataObject = encryptPayload({
           fileId: allDetails.fileId,
-          filerecptId: allDetails.fileReceiptId,
-          letterNo: historyData.data.letterno,
-          correspondenceId: historyData.data.correspondenceid,
+          fileReceiptId: allDetails.fileReceiptId,
+          correspondenceId: corrId,
         });
-
-        const enclosureDatass = encryptPayload({ enclosures: data });
-
+  
+        const enclosureDatass = encryptPayload({
+          enclosures: rows.map((row) => ({
+            encTypeId: row.type, 
+            encName: row.name, 
+          })),
+        });
+  
         const formData = new FormData();
         formData.append("dataObject", encryptedDataObject);
         formData.append("enclosureData", enclosureDatass);
-
-        data.uploadedDocuments.forEach((file) => {
-          formData.append("uploadedDocuments", file);
+  
+        data.enclosureDocuments.forEach((file, index) => {
+          formData.append("enclosureDocuments", file);
         });
-
-        await api.post("/file/save-notesheet-and-documents", formData, {
+  
+        for (let [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
+  
+        const response = await api.post("/file/upload-file-correspondence-enclosures", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
         });
+  
+        console.log("API Response:", response);
+  
       } catch (error) {
+        console.error("API request failed:", error);
         if (error.response?.status === 401) {
           throw new Error("Session expired. Please login again.");
         }
@@ -212,10 +226,25 @@ export const UploadModal = ({
       }
     },
   });
+  
 
   const handleSubmit = () => {
-    mutation.mutate();
+    if (rows.length === 0 || rows.some(row => !row.type || !row.name || !row.file)) {
+      toast.error("Please fill in all required fields before submitting.");
+      return;
+    }
+  
+    // Prepare data
+    const requestData = {
+      enclosureDocuments: rows.map((row) => row.file),
+    };
+  
+    console.log("Submitting Data:", requestData);
+  
+    mutation.mutate(requestData);
   };
+  
+  
 
   const handleCancel = () => {
     setRows([{ type: "", name: "", file: null, fileName: "" }]);

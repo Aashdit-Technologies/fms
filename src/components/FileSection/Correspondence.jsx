@@ -105,12 +105,14 @@ const Correspondence = ({
 }) => {
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  
   const [modalOpen, setModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyData, setHistoryData] = useState([]);
   const [enclosuresData, setEnclosuresData] = useState([]);
   const [uploadData, setUploadData] = useState(null);
+  const [selectedCorrId, setSelectedCorrId] = useState(null);
   const [filterText, setFilterText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [officeNames, setOfficeNames] = useState([]);
@@ -193,11 +195,13 @@ const Correspondence = ({
   });
 
   const handleUploadClick = (row) => {
+    setSelectedCorrId(row.corrId); 
     fetchEnclosures(row.corrId, {
       onSuccess: () => {
-        fetchUpload({
+        fetchUpload(row.corrId,{
           onSuccess: () => {
             setUploadModalOpen(true);
+            // setRowss(row)
           },
         });
       },
@@ -425,7 +429,9 @@ const Correspondence = ({
         enclosuresData={enclosuresData}
         isLoading={isLoadingEnclosures}
         allDetails={allDetails}
+        historyData={historyData}
         uploadData={uploadData}
+        corrId={selectedCorrId}
       />
       <HistoryModal
         open={historyModalOpen}
