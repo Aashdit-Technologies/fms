@@ -1,227 +1,144 @@
 import { Box, Grid, Typography } from "@mui/material";
 import React, { useState } from "react";
-import { Button, Modal, Table } from "react-bootstrap";
+import { Button, Modal } from "react-bootstrap";
 import ReactSelect from "react-select";
+import { useMutation } from "@tanstack/react-query";
+import { encryptPayload } from "../../../utils/encrypt";
+import api from "../../../Api/Api";
 
-const UploadDocumentsModal = ({ open, onClose }) => {
-    const [isSendEnabled, setIsSendEnabled] = useState(false);
-      const [searchFilters, setSearchFilters] = useState({
-        department: "",
-        role: "",
-        name: "",
-        id: "",
-      });
-        const handleSearch = () => {
-          const filteredData = searchFilters.filter((data) => {
-            return (
-              (searchFilters.department === "" ||
-                data.department === searchFilters.department) &&
-              (searchFilters.role === "" || data.role === searchFilters.role) &&
-              (searchFilters.name === "" ||
-                data.empNameWithDesgAndDept.includes(searchFilters.name)) &&
-              (searchFilters.id === "" || data.id.includes(searchFilters.id))
-            );
-          });
-          setSearchFilters(filteredData);
-        };
-    const officeOptions = [
-        { value: "HO", label: "Head Office || HO" },
-        { value: "ANGUL", label: "Angul || ANGUL" },
-        { value: "BCoD-1", label: "Bhubaneswar Const.- I || BCoD-1" },
-        { value: "BCoD-2", label: "Bhubaneswar Const.- II || BCoD-2" },
-        { value: "BCoD-3", label: "Bhubaneswar Const.- III || BCoD-3" },
-        { value: "BHM", label: "Berhampur || BHM" },
-      ];
+const UploadDocumentsModal = ({ open, onClose, organizations }) => {
+  const [selectedValues, setSelectedValues] = useState({
+    organization: null,
+    company: null,
+    office: null,
+    department: null,
+    designation: null,
+  });
+
+  const [options, setOptions] = useState({
+    companies: [],
+    offices: [],
+    departments: [],
+    designations: [],
+  });
+
+  // Generic API Fetch Function
+  const fetchData = useMutation({
+    mutationFn: async ({ endpoint, payload }) => {
+      const encryptedData = encryptPayload(payload);
+      const response = await api.post(endpoint, { dataObject: encryptedData });
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      if (data.outcome) {
+        const { endpoint } = variables;
+        if (endpoint.includes("get-companies")) setOptions(prev => ({ ...prev, companies: data.data }));
+        if (endpoint.includes("get-offices")) setOptions(prev => ({ ...prev, offices: data.data }));
+        if (endpoint.includes("get-departments")) setOptions(prev => ({ ...prev, departments: data.data }));
+        if (endpoint.includes("get-designations")) setOptions(prev => ({ ...prev, designations: data.data }));
+      }
+    },
+  });
+
+  // Handle Organization Selection
+  const handleSelectionChange = (field, selectedOption) => {
+    setSelectedValues(prev => ({ ...prev, [field]: selectedOption }));
+
+    // Reset dependent fields
+    if (field === "organization") {
+      setOptions({ companies: [], offices: [], departments: [], designations: [] });
+      fetchData.mutate({ endpoint: "/level/get-companies", payload: { organizationId: selectedOption.value } });
+    } else if (field === "company") {
+      setOptions(prev => ({ ...prev, offices: [], departments: [], designations: [] }));
+      fetchData.mutate({ endpoint: "/level/get-offices", payload: { organizationId: selectedValues.organization.value, companyId: selectedOption.value } });
+    } else if (field === "office") {
+      setOptions(prev => ({ ...prev, departments: [], designations: [] }));
+      fetchData.mutate({ endpoint: "/level/get-departments", payload: { organizationId: selectedValues.organization.value, companyId: selectedValues.company.value, officeId: selectedOption.value } });
+    } else if (field === "department") {
+      setOptions(prev => ({ ...prev, designations: [] }));
+      fetchData.mutate({ endpoint: "/level/get-designations", payload: { organizationId: selectedValues.organization.value, companyId: selectedValues.company.value, officeId: selectedValues.office.value, departmentId: selectedOption.value } });
+    }
+  };
+
   return (
-    <div>
-      <Modal
-        open={open}
-        onClose={onClose}
-        aria-labelledby="send-to-modal"
-        aria-describedby="modal-to-send-file"
-      >
-        <Box
-          sx={{
-            bgcolor: "background.paper",
-            padding: 0,
-            borderRadius: 2,
-            maxWidth: "800px",
-            margin: "auto",
-            marginTop: "50px",
-            overflow: "auto",
-          }}
-        >
-          {/* Modal Heading with Background Color */}
-          <Box
-            sx={{
-              bgcolor: "#1976d2", // Blue background color
-              color: "white", // White text color
-              padding: 1,
-              borderRadius: "4px 4px 0 0", // Rounded corners at the top
-              width: "100%",
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h6">Send To</Typography>
-          </Box>
-          <div className="w-100 px-4 pb-3">
-            {/* Filter and Search Section */}
-            <Grid container spacing={2} sx={{ mb: 3, mt: 2 }}>
-              {/* Department Select Field */}
-              <Grid item xs={3}>
-                <label>Organization Name</label>
-                <ReactSelect
-                  options={officeOptions}
-                  value={officeOptions.find(
-                    (option) => option.value === searchFilters.office
-                  )}
-                  onChange={(selectedOption) =>
-                    setSearchFilters({
-                      ...searchFilters,
-                      office: selectedOption.value,
-                    })
-                  }
-                  isSearchable
-                />
-              </Grid>
+    <Modal open={open} onClose={onClose}>
+      <Box sx={{ bgcolor: "background.paper", padding: 3, borderRadius: 2, maxWidth: "800px", margin: "auto", marginTop: "50px" }}>
+        <Typography variant="h6" sx={{ textAlign: "center", bgcolor: "#1976d2", color: "white", padding: 1 }}>
+          Send To
+        </Typography>
 
-              <Grid item xs={3}>
-                <label>Company Name</label>
-                <ReactSelect
-                  options={officeOptions}
-                  value={officeOptions.find(
-                    (option) => option.value === searchFilters.office
-                  )}
-                  onChange={(selectedOption) =>
-                    setSearchFilters({
-                      ...searchFilters,
-                      office: selectedOption.value,
-                    })
-                  }
-                  isSearchable
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <label>Office Name</label>
-                <ReactSelect
-                  options={officeOptions}
-                  value={officeOptions.find(
-                    (option) => option.value === searchFilters.office
-                  )}
-                  onChange={(selectedOption) =>
-                    setSearchFilters({
-                      ...searchFilters,
-                      office: selectedOption.value,
-                    })
-                  }
-                  isSearchable
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <label>Department Name</label>
-                <ReactSelect
-                  options={officeOptions}
-                  value={officeOptions.find(
-                    (option) => option.value === searchFilters.office
-                  )}
-                  onChange={(selectedOption) =>
-                    setSearchFilters({
-                      ...searchFilters,
-                      office: selectedOption.value,
-                    })
-                  }
-                  isSearchable
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <label>Designation Name</label>
-                <ReactSelect
-                  options={officeOptions}
-                  value={officeOptions.find(
-                    (option) => option.value === searchFilters.office
-                  )}
-                  onChange={(selectedOption) =>
-                    setSearchFilters({
-                      ...searchFilters,
-                      office: selectedOption.value,
-                    })
-                  }
-                  isSearchable
-                />
-              </Grid>
-            </Grid>
+        {/* Organization Dropdown */}
+        <Grid container spacing={2} sx={{ mb: 3, mt: 2 }}>
+          <Grid item xs={6}>
+            <label>Organization</label>
+            <ReactSelect
+              options={organizations?.map(org => ({ value: org.organizationId, label: org.organizationName })) || []}
+              value={selectedValues.organization}
+              onChange={(option) => handleSelectionChange("organization", option)}
+              isSearchable
+            />
+          </Grid>
 
-            {/* Search Button */}
-            <div className="sendtomodl_btn w-100 text-center">
-              <Button
-                variant="contained"
-                color="primary"
-                sx={{ mb: 3 }}
-                // onClick={handleSearch}
-              >
-                Search
-              </Button>
-            </div>
+          {/* Company Dropdown */}
+          <Grid item xs={6}>
+            <label>Company</label>
+            <ReactSelect
+              options={options.companies?.map(comp => ({ value: comp.companyId, label: comp.companyName })) || []}
+              value={selectedValues.company}
+              onChange={(option) => handleSelectionChange("company", option)}
+              isSearchable
+              isDisabled={!selectedValues.organization}
+            />
+          </Grid>
 
-            {/* Table Section */}
-            <Table bordered>
-              <thead>
-                <tr>
-                  <th>Employee Name</th>
-                  <th>Department</th>
-                  <th>Role</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.isArray(searchFilters) && searchFilters.length > 0 ? (
-                  searchFilters.map((data, index) => (
-                    <tr key={index}>
-                      <td>{data.empNameWithDesgAndDept || data.name}</td>
-                      <td>{data.department || "N/A"}</td>
-                      <td>{data.role || "N/A"}</td>
-                      <td>
-                        <Radio
-                          checked={selectedRow === index}
-                          onChange={() => handleRadioButtonChange(index)}
-                          value={data.empDeptRoleId || null}
-                        />
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="4">No data available</td>
-                  </tr>
-                )}
-              </tbody>
-            </Table>
+          {/* Office Dropdown */}
+          <Grid item xs={6}>
+            <label>Office</label>
+            <ReactSelect
+              options={options.offices?.map(office => ({ value: office.officeId, label: office.officeName })) || []}
+              value={selectedValues.office}
+              onChange={(option) => handleSelectionChange("office", option)}
+              isSearchable
+              isDisabled={!selectedValues.company}
+            />
+          </Grid>
 
-            {/* Action Buttons */}
-            <div className="sendtomodl_btn w-100 text-center">
-              <Box sx={{ mt: 2 }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={!isSendEnabled}
-                  // onClick={handleSendToModal}
-                >
-                  Send
-                </Button>
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={() => setIsSendToModalOpen(false)}
-                  sx={{ ml: 2 }}
-                >
-                  Cancel
-                </Button>
-              </Box>
-            </div>
-          </div>
+          {/* Department Dropdown */}
+          <Grid item xs={6}>
+            <label>Department</label>
+            <ReactSelect
+              options={options.departments?.map(dept => ({ value: dept.departmentId, label: dept.departmentName })) || []}
+              value={selectedValues.department}
+              onChange={(option) => handleSelectionChange("department", option)}
+              isSearchable
+              isDisabled={!selectedValues.office}
+            />
+          </Grid>
+
+          {/* Designation Dropdown */}
+          <Grid item xs={6}>
+            <label>Designation</label>
+            <ReactSelect
+              options={options.designations?.map(desig => ({ value: desig.designationId, label: desig.designationName })) || []}
+              value={selectedValues.designation}
+              onChange={(option) => handleSelectionChange("designation", option)}
+              isSearchable
+              isDisabled={!selectedValues.department}
+            />
+          </Grid>
+        </Grid>
+
+        {/* Action Buttons */}
+        <Box sx={{ mt: 3, textAlign: "center" }}>
+          <Button variant="contained" color="primary" disabled={!selectedValues.designation}>
+            Send
+          </Button>
+          <Button variant="contained" color="error" onClick={onClose} sx={{ ml: 2 }}>
+            Cancel
+          </Button>
         </Box>
-      </Modal>
-    </div>
+      </Box>
+    </Modal>
   );
 };
 

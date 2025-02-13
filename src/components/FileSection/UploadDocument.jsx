@@ -77,10 +77,9 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   const [isSendEnabled, setIsSendEnabled] = useState(false);
   const [modalAction, setModalAction] = useState("");
   const [apiResponseData, setApiResponseData] = useState([]);
-
+  const [organizationsData, setOrganizationsData] = useState([]);
 
   const [receiverEmpRoleMap, setReceiverEmpRoleMap] = useState(null);
-  
 
   const handleRadioButtonChange = (index) => {
     setSelectedRow(index);
@@ -146,8 +145,19 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     setPendingConfidential(e.target.checked);
     setConfirmationModalOpen(true);
   };
-
-
+  const fetchOrganizations  = useMutation({
+    mutationFn: async () => {
+      const response = await api.get("/level/get-organizations");
+      if (response.status === 200 && response.data?.outcome) {
+        setOrganizationsData(response.data.data); 
+        setIsSendToModalOpen(true); 
+      }
+      return response.data;
+    },
+  });
+  const handleOpenModal = () => {
+    fetchOrganizations.mutate();
+  };
 
   const handleEndTask = () => {
     toast.warning("Task ended!");
@@ -432,10 +442,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                     </Grid>
 
                     <Grid item xs={2.4}>
-                      <FormControl
-                        fullWidth
-                        sx={{ height: "54px" }}
-                      >
+                      <FormControl fullWidth sx={{ height: "54px" }}>
                         <InputLabel>Type</InputLabel>
                         <Select
                           value={row.type}
@@ -467,7 +474,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                           )
                         }
                         sx={{ height: "54px" }}
-                        disabled={row.type !== "LETTER"} 
+                        disabled={row.type !== "LETTER"}
                       />
                     </Grid>
 
@@ -631,7 +638,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                   variant="contained"
                   color="primary"
                   startIcon={<FaPaperPlane />}
-                  onClick={() => setIsSendToModalOpen(true)}
+                  onClick={handleOpenModal}
                 >
                   Send To
                 </Button>
@@ -791,7 +798,11 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
           </Box>
         </Box>
       </Modal>
-      <UploadDocumentsModal open={isSendToModalOpen} onClose={() => setIsSendToModalOpen(false)}/>
+      <UploadDocumentsModal
+        open={isSendToModalOpen}
+        onClose={() => setIsSendToModalOpen(false)}
+        organizations={organizationsData}
+      />
     </Box>
   );
 };
