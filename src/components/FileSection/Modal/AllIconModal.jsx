@@ -390,9 +390,9 @@ export const UploadModal = ({
             <TableBody>
               {enclosuredatas.map((enc, idx) => (
                 <TableRow key={idx}>
-                  <TableCell>{enc.enclosuretype}</TableCell>
-                  <TableCell>{enc.enclosureName}</TableCell>
-                  <TableCell>
+                  <TableCell >{enc.enclosuretype}</TableCell>
+                  <TableCell >{enc.enclosureName}</TableCell>
+                  <TableCell >
                     <Button
                       variant="contained"
                       color="primary"
