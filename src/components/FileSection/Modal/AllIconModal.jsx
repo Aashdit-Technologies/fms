@@ -163,17 +163,19 @@ export const UploadModal = ({
   historyData,
   uploadData,
 }) => {
-  console.log("Upload Modal Data:", {
-    historyData,
-  });
   
+
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
   const data = Array.isArray(uploadData?.data.enclosureTypeList)
     ? uploadData?.data.enclosureTypeList
     : [];
-
-    
+  const enclosuredatas = Array.isArray(enclosuresData?.data)
+    ? enclosuresData?.data
+    : [];
+    console.log("dddd Modal Data:", {
+      enclosuredatas,
+    });
   const [rows, setRows] = useState([
     { type: "", name: "", file: null, fileName: "" },
   ]);
@@ -182,41 +184,44 @@ export const UploadModal = ({
     mutationFn: async (data) => {
       try {
         console.log("Mutation function triggered with data:", data);
-  
+
         const encryptedDataObject = encryptPayload({
           fileId: allDetails.fileId,
           fileReceiptId: allDetails.fileReceiptId,
           correspondenceId: corrId,
         });
-  
+
         const enclosureDatass = encryptPayload({
           enclosures: rows.map((row) => ({
-            encTypeId: row.type, 
-            encName: row.name, 
+            encTypeId: row.type,
+            encName: row.name,
           })),
         });
-  
+
         const formData = new FormData();
         formData.append("dataObject", encryptedDataObject);
         formData.append("enclosureData", enclosureDatass);
-  
+
         data.enclosureDocuments.forEach((file, index) => {
           formData.append("enclosureDocuments", file);
         });
-  
+
         for (let [key, value] of formData.entries()) {
           console.log(key, value);
         }
-  
-        const response = await api.post("/file/upload-file-correspondence-enclosures", formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        });
-  
+
+        const response = await api.post(
+          "/file/upload-file-correspondence-enclosures",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
         console.log("API Response:", response);
-  
       } catch (error) {
         console.error("API request failed:", error);
         if (error.response?.status === 401) {
@@ -226,25 +231,25 @@ export const UploadModal = ({
       }
     },
   });
-  
 
   const handleSubmit = () => {
-    if (rows.length === 0 || rows.some(row => !row.type || !row.name || !row.file)) {
+    if (
+      rows.length === 0 ||
+      rows.some((row) => !row.type || !row.name || !row.file)
+    ) {
       toast.error("Please fill in all required fields before submitting.");
       return;
     }
-  
+
     // Prepare data
     const requestData = {
       enclosureDocuments: rows.map((row) => row.file),
     };
-  
+
     console.log("Submitting Data:", requestData);
-  
+
     mutation.mutate(requestData);
   };
-  
-  
 
   const handleCancel = () => {
     setRows([{ type: "", name: "", file: null, fileName: "" }]);
@@ -373,6 +378,35 @@ export const UploadModal = ({
             Cancel
           </Button>
         </Box>
+        <TableContainer component={Paper} sx={{ mt: 2 }}>
+          <Table sx={{ minWidth: 650 }} aria-label="enclosures table">
+            <TableHead>
+              <TableRow>
+                <TableCell>Enclosure Type</TableCell>
+                <TableCell>Enclosure Name</TableCell>
+                <TableCell>Action</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {enclosuredatas.map((enc, idx) => (
+                <TableRow key={idx}>
+                  <TableCell>{enc.enclosuretype}</TableCell>
+                  <TableCell>{enc.enclosureName}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleDownload(enc.filePath, enc.fileName)}
+                      title="Download"
+                    >
+                      <FaDownload />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Box>
     </Modal>
   );
