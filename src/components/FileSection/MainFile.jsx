@@ -32,6 +32,7 @@ const MainFile = () => {
             <div className="main_correspondence w-50">
               <Correspondence 
                 correspondence={locationState.correspondence}
+                fileDetails={locationState.fileDetails}
                 onView={(row) => {
                   if (row.corrType === 'DOCUMENT') {
                     window.open(row.link, '_blank');

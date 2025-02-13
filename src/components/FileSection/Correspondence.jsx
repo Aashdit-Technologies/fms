@@ -96,6 +96,7 @@ const fetchOffices = async () => {
 };
 
 const Correspondence = ({
+  fileDetails,
   correspondence,
   onView,
   onHistory,
@@ -112,6 +113,7 @@ const Correspondence = ({
   const [filterText, setFilterText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [officeNames, setOfficeNames] = useState([]);
+  const allDetails = fileDetails?.data || {};
   const { data: offices, isLoading } = useQuery({
     queryKey: ["offices"],
     queryFn: fetchOffices,
@@ -395,6 +397,7 @@ const Correspondence = ({
         onClose={() => setUploadModalOpen(false)}
         enclosuresData={enclosuresData}
         isLoading={isLoadingEnclosures}
+        allDetails={allDetails}
       />
       <HistoryModal
         open={historyModalOpen}
