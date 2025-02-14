@@ -1,12 +1,35 @@
-import { Box, Grid, Typography, Button, Modal } from "@mui/material";
+import {
+  Box,
+  Grid,
+  Typography,
+  Button,
+  Modal,
+  TableContainer,
+  Table,
+  TableHead,
+  Paper,
+  TableRow,
+  TableCell,
+  TableBody,
+  TablePagination,
+  FormControl,
+  FormLabel,
+  FormControlLabel,
+  RadioGroup,
+  Radio,
+} from "@mui/material";
 import React, { useEffect, useState } from "react";
 import ReactSelect from "react-select";
 import { useMutation } from "@tanstack/react-query";
-import DataTable from "react-data-table-component";
 import { encryptPayload } from "../../../utils/encrypt";
 import api from "../../../Api/Api";
+import { toast } from "react-toastify";
+import useAuthStore from "../../../store/Store";
+import { IoIosSend } from "react-icons/io";
 
-const UploadDocumentsModal = ({ open, onClose, organizations }) => {
+const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additionalDetails }) => {
+  // console.log("fileDetails",fileDetails);
+  
   const [selectedValues, setSelectedValues] = useState({
     organization: null,
     company: null,
@@ -16,6 +39,8 @@ const UploadDocumentsModal = ({ open, onClose, organizations }) => {
   });
   const [tableData, setTableData] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const [options, setOptions] = useState({
     companies: [],
@@ -128,10 +153,14 @@ const UploadDocumentsModal = ({ open, onClose, organizations }) => {
         departmentId: selectedValues.department?.value || 0,
         designationId: selectedValues.designation?.value || 0,
       };
+      console.log("Payload before encryption:", payload);
+
       const encryptedPayload = encryptPayload(payload);
-      const response = await api.post("/level/search-users", {
+
+      const response = await api.post("file/get-send-to-list", {
         dataObject: encryptedPayload,
       });
+
       return response.data;
     },
     onSuccess: (data) => {
@@ -142,31 +171,82 @@ const UploadDocumentsModal = ({ open, onClose, organizations }) => {
   });
 
   const handleSearch = () => {
+    if (
+      !selectedValues.organization &&
+      !selectedValues.company &&
+      !selectedValues.office &&
+      !selectedValues.department &&
+      !selectedValues.designation
+    ) {
+      toast.error("Please select at least one field before searching!");
+      return;
+    }
     searchMutation.mutate();
   };
 
-  const columns = [
-    {
-      name: "Name",
-      selector: (row) => row.name || "N/A",
-      sortable: true,
+  const token =
+    useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+
+  const sendFileMutation = useMutation({
+    mutationFn: async (action) => {
+      try {
+        const payload = encryptPayload({
+          
+          actionTaken: action,
+          fileId: fileDetails.data.fileId,
+          note: additionalDetails.data.note,
+          filerecptId: fileDetails.data.fileReceiptId,
+          notesheetId: additionalDetails?.data?.prevNoteId,
+          receiverEmpRoleMap: selectedRow,
+        });
+        
+        const formData = new FormData();
+        formData.append("dataObject", payload);
+
+        const response = await api.post("/file/send-file", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.outcome) {
+          toast.success("File sent successfully!");
+          onSendSuccess(); // Callback to handle success
+        } else {
+          toast.error("Failed to send file!");
+        }
+      } catch (error) {
+        toast.error("Error sending file. Please try again.");
+      }
     },
-    {
-      name: "Action",
-      cell: (row, index) => (
-        <input
-          type="radio"
-          name="selectedEmployee"
-          checked={selectedRow === index}
-          onChange={() => setSelectedRow(index)}
-        />
-      ),
-      center: true,
-    },
-  ];
+  });
+
+  const handleSendFile = (action, selectedRow) => {
+    sendFileMutation.mutate(action, selectedRow);
+  };
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleSelectRow = (empDeptRoleId) => {
+    setSelectedRow(empDeptRoleId); 
+  };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal
+      open={open}
+      onClose={(event, reason) => {
+        if (reason && reason === "backdropClick") {
+          return;
+        }
+        onClose();
+      }}
+    >
       <Box
         sx={{
           bgcolor: "background.paper",
@@ -181,7 +261,7 @@ const UploadDocumentsModal = ({ open, onClose, organizations }) => {
           variant="h6"
           sx={{
             textAlign: "center",
-            bgcolor: "#1976d2",
+            bgcolor: "#0A3D62",
             color: "white",
             padding: 1,
           }}
@@ -287,25 +367,106 @@ const UploadDocumentsModal = ({ open, onClose, organizations }) => {
           </Grid>
         </Grid>
 
-        <DataTable
-          columns={columns}
-          data={tableData}
-          pagination
-          paginationPerPage={5} 
-          paginationRowsPerPageOptions={[5, 10, 20]} 
-          highlightOnHover
-          striped
-        //   selectableRows={false}
-        />
+        <TableContainer
+          component={Paper}
+          sx={{
+            maxHeight: 300,
+            overflow: "auto",
+            mt: 2,
+            border: "1px solid #ccc",
+            bgcolor: "#f5f5f5",
+          }}
+        >
+          <Table sx={{ width: "100%" }}>
+            <TableHead
+              sx={{ position: "sticky", top: 0, bgcolor: "#0A3D62", zIndex: 1 }}
+            >
+              <TableRow>
+                <TableCell
+                  style={{
+                    fontWeight: "bold",
+                    color: "#fff",
+                    borderRight: "1px solid #ddd",
+                  }}
+                >
+                  Name
+                </TableCell>
+                <TableCell
+                  style={{
+                    fontWeight: "bold",
+                    color: "#fff",
+                  }}
+                >
+                  Action
+                </TableCell>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {tableData
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map(
+                  (row, idx) => (
+                    (
+                      <TableRow
+                        key={idx}
+                        sx={{
+                          "&:hover": { backgroundColor: "#f5f5f5" }, // Highlight on hover
+                          backgroundColor:
+                            idx % 2 === 0 ? "#f9f9f9" : "transparent", // Striped rows
+                        }}
+                      >
+                        <TableCell>
+                          {row.empNameWithDesgAndDept
+                            ? row.empNameWithDesgAndDept
+                            : "N/A"}
+                        </TableCell>
+                        <TableCell>
+                          <FormControl>
+                            <RadioGroup
+                              aria-labelledby="demo-radio-buttons-group-label"
+                              value={
+                                selectedRow === row.empDeptRoleId
+                                  ? row.empDeptRoleId
+                                  : "N/A"
+                              } 
+                              onChange={() =>
+                                handleSelectRow(row.empDeptRoleId)
+                              } 
+                              name="radio-buttons-group"
+                            >
+                              <FormControlLabel
+                                value={row.empDeptRoleId} 
+                                control={<Radio />}
+                              />
+                            </RadioGroup>
+                          </FormControl>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  )
+                )}
+            </TableBody>
+          </Table>
+
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 20]}
+            component="div"
+            count={tableData.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </TableContainer>
 
         <Box sx={{ mt: 3, textAlign: "center" }}>
           <Button
             variant="contained"
             color="primary"
-            disabled={selectedRow === null}
-          >
-            Send
-          </Button>
+            startIcon={<IoIosSend />}
+            onClick={() => handleSendFile("SENDTO")}
+          ></Button>
           <Button
             variant="contained"
             color="error"

@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from "react";
 import {
-  Modal,
   Box,
-  Typography,
-  IconButton,
   Button,
-  TextField,
-  Select,
-  MenuItem,
   FormControl,
+  IconButton,
   InputLabel,
+  MenuItem,
+  Modal,
+  Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
+  TextField,
+  Typography,
+  TablePagination,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { FaDownload, FaMinus, FaPlus } from "react-icons/fa";
@@ -163,54 +164,45 @@ export const UploadModal = ({
   historyData,
   uploadData,
 }) => {
-  
-
-  const token =
-    useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const data = Array.isArray(uploadData?.data.enclosureTypeList)
     ? uploadData?.data.enclosureTypeList
     : [];
   const enclosuredatas = Array.isArray(enclosuresData?.data)
     ? enclosuresData?.data
     : [];
-    console.log("dddd Modal Data:", {
-      enclosuredatas,
-    });
+
   const [rows, setRows] = useState([
     { type: "", name: "", file: null, fileName: "" },
   ]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const mutation = useMutation({
     mutationFn: async (data) => {
       try {
-        console.log("Mutation function triggered with data:", data);
-
-        const encryptedDataObject = encryptPayload({
-          fileId: allDetails.fileId,
-          fileReceiptId: allDetails.fileReceiptId,
-          correspondenceId: corrId,
-        });
-
-        const enclosureDatass = encryptPayload({
-          enclosures: rows.map((row) => ({
-            encTypeId: row.type,
-            encName: row.name,
-          })),
-        });
-
         const formData = new FormData();
-        formData.append("dataObject", encryptedDataObject);
-        formData.append("enclosureData", enclosureDatass);
-
-        data.enclosureDocuments.forEach((file, index) => {
-          formData.append("enclosureDocuments", file);
-        });
-
-        for (let [key, value] of formData.entries()) {
-          console.log(key, value);
-        }
-
-        const response = await api.post(
+        formData.append(
+          "dataObject",
+          encryptPayload({
+            fileId: allDetails.fileId,
+            fileReceiptId: allDetails.fileReceiptId,
+            correspondenceId: corrId,
+          })
+        );
+        formData.append(
+          "enclosureData",
+          encryptPayload({
+            enclosures: rows.map((row) => ({
+              encTypeId: row.type,
+              encName: row.name,
+            })),
+          })
+        );
+        data.enclosureDocuments.forEach((file) =>
+          formData.append("enclosureDocuments", file)
+        );
+        await api.post(
           "/file/upload-file-correspondence-enclosures",
           formData,
           {
@@ -220,14 +212,9 @@ export const UploadModal = ({
             },
           }
         );
-
-        console.log("API Response:", response);
+        toast.success("Upload successful!");
       } catch (error) {
-        console.error("API request failed:", error);
-        if (error.response?.status === 401) {
-          throw new Error("Session expired. Please login again.");
-        }
-        throw error;
+        toast.error("Upload failed. Please try again.");
       }
     },
   });
@@ -237,18 +224,10 @@ export const UploadModal = ({
       rows.length === 0 ||
       rows.some((row) => !row.type || !row.name || !row.file)
     ) {
-      toast.error("Please fill in all required fields before submitting.");
+      toast.error("All fields are mandatory!");
       return;
     }
-
-    // Prepare data
-    const requestData = {
-      enclosureDocuments: rows.map((row) => row.file),
-    };
-
-    console.log("Submitting Data:", requestData);
-
-    mutation.mutate(requestData);
+    mutation.mutate({ enclosureDocuments: rows.map((row) => row.file) });
   };
 
   const handleCancel = () => {
@@ -256,34 +235,55 @@ export const UploadModal = ({
     toast.info("Form reset");
   };
 
-  const addRow = () =>
-    setRows([...rows, { type: "", name: "", file: null, fileName: "" }]);
-  const removeRow = (index) => setRows(rows.filter((_, i) => i !== index));
-
-  const handleChange = (index, field, value) => {
-    const updatedRows = [...rows];
-    updatedRows[index][field] = value;
-    setRows(updatedRows);
-  };
-
-  const handleFileChange = (index, event) => {
-    const file = event.target.files[0];
-    if (file) {
-      handleChange(index, "file", file);
-      handleChange(index, "fileName", file.name);
+  const addRow = () => {
+    if (rows.length >= 10) {
+      toast.error("You can upload a maximum of 10 files.");
+      return;
     }
+    setRows([...rows, { type: "", name: "", file: null, fileName: "" }]);
   };
 
-  // const handleDownload = (filePath, fileName) => {
-  //   const link = document.createElement("a");
-  //   link.href = filePath;
-  //   link.download = fileName;
-  //   link.click();
-  // };
+  const removeRow = (index) => setRows(rows.filter((_, i) => i !== index));
+  const handleChange = (index, field, value) =>
+    setRows(
+      rows.map((row, i) => (i === index ? { ...row, [field]: value } : row))
+    );
+    const handleFileChange = (index, event) => {
+      const file = event.target.files[0];
+      console.log(file);
+      
+      if (file && file.type !== "application/pdf") {
+        toast.error("Only PDF files are allowed.");
+        return;
+      }
+      if (file) {
+        handleChange(index, "file", file);
+        handleChange(index, "fileName", file.name);
+        toast.success(`File uploaded: ${file.name}`);
+      }
+    };
+    
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <Box sx={modalStyle}>
+    <Modal
+      open={open}
+      onClose={(event, reason) => {
+        if (reason && reason === "backdropClick") {
+          return;
+        }
+        onClose();
+      }}
+    >
+      <Box
+        sx={{
+          width: "800px",
+          padding: "20px",
+          background: "#fff",
+          borderRadius: "10px",
+          margin: "auto",
+          mt: "5vh",
+        }}
+      >
         <Box
           display="flex"
           justifyContent="space-between"
@@ -291,42 +291,72 @@ export const UploadModal = ({
           mb={2}
         >
           <Typography variant="h6">Upload Enclosure</Typography>
-          <Box>
-            <Button
-              onClick={addRow}
-              color="success"
-              variant="contained"
-              className="mx-2"
-            >
-              <FaPlus />
-            </Button>
-            {rows.length > 1 && (
-              <Button
-                onClick={() => removeRow(rows.length - 1)}
-                color="error"
-                variant="contained"
-              >
-                <FaMinus />
-              </Button>
-            )}
-            <IconButton
-              aria-label="close"
-              onClick={onClose}
-              sx={{ color: "grey", ml: 1 }}
-              variant="contained"
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
+          <IconButton onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
         </Box>
 
-        <TableContainer component={Paper}>
-          <Table sx={{ minWidth: 650 }} aria-label="upload table">
-            <TableHead>
+        <Box display="flex" justifyContent="flex-end" gap={1} mb={2}>
+          <Button
+            onClick={addRow}
+            color="success"
+            variant="contained"
+            startIcon={<FaPlus />}
+          >
+            
+          </Button>
+          {rows.length > 1 && (
+            <Button
+              onClick={() => removeRow(rows.length - 1)}
+              color="error"
+              variant="contained"
+              startIcon={<FaMinus />}
+            >
+              
+            </Button>
+          )}
+        </Box>
+
+        <TableContainer
+          component={Paper}
+          sx={{
+            maxHeight: 300,
+            overflow: "auto",
+            mt: 2,
+            border: "1px solid #ccc",
+            bgcolor: "#f5f5f5",
+          }}
+        >
+          <Table sx={{ width: "100%" }}>
+            <TableHead sx={{ position: "sticky", top: 0, bgcolor: "#0A3D62" , zIndex: 1 }}>
               <TableRow>
-                <TableCell>Enclosure Type *</TableCell>
-                <TableCell>Enclosure Name *</TableCell>
-                <TableCell>File *</TableCell>
+                <TableCell
+                  style={{
+                    fontWeight: "bold",
+                    color: "#fff",
+                    borderRight: "1px solid #ddd",
+                  }}
+                >
+                  Type *
+                </TableCell>
+                <TableCell
+                  style={{
+                    fontWeight: "bold",
+                    color: "#fff",
+                    borderRight: "1px solid #ddd",
+                  }}
+                >
+                  Name *
+                </TableCell>
+                <TableCell
+                  style={{
+                    fontWeight: "bold",
+                    color: "#fff",
+                    borderRight: "1px solid #ddd",
+                  }}
+                >
+                  File *
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -334,35 +364,44 @@ export const UploadModal = ({
                 <TableRow key={index}>
                   <TableCell>
                     <FormControl fullWidth>
-                      <InputLabel>Enclosure Type</InputLabel>
-                      <Select
+                      <TextField
+                        select
+                        style={{ width: "190px" }}
+                        variant="outlined"
+                        label="Enclosure Type"
                         value={row.type}
                         onChange={(e) =>
                           handleChange(index, "type", e.target.value)
                         }
-                        required
                       >
-                        {data.map((option, idx) => (
-                          <MenuItem key={idx} value={option.id}>
-                            {option.name}
+                        {data.map((opt) => (
+                          <MenuItem key={opt.id} value={opt.id}>
+                            {opt.name}
                           </MenuItem>
                         ))}
-                      </Select>
+                      </TextField>
                     </FormControl>
                   </TableCell>
                   <TableCell>
-                    <TextField
-                      fullWidth
-                      label="Enclosure Name"
-                      value={row.name}
-                      onChange={(e) =>
-                        handleChange(index, "name", e.target.value)
-                      }
-                      required
-                    />
+                    <FormControl fullWidth>
+                      <TextField
+                        variant="outlined"
+                        label="Name"
+                        fullWidth
+                        value={row.name}
+                        onChange={(e) =>
+                          handleChange(index, "name", e.target.value)
+                        }
+                      />
+                    </FormControl>
                   </TableCell>
                   <TableCell>
-                    <Button variant="contained" component="label">
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      sx={{ backgroundColor: "primary" }}
+                      component="label"
+                    >
                       Choose File
                       <input
                         type="file"
@@ -370,13 +409,14 @@ export const UploadModal = ({
                         onChange={(e) => handleFileChange(index, e)}
                       />
                     </Button>
-                    {row.fileName && <Typography>{row.fileName}</Typography>}
+                      {/* {row.fileName && <Typography variant="body2" color="textSecondary">{row.fileName}</Typography>} */}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
+
         <Box mt={2} display="flex" justifyContent="center" gap={2}>
           <Button variant="contained" color="success" onClick={handleSubmit}>
             Save
@@ -385,34 +425,79 @@ export const UploadModal = ({
             Cancel
           </Button>
         </Box>
-        <TableContainer component={Paper} sx={{ mt: 2 }}>
-          <Table sx={{ minWidth: 650 }} aria-label="enclosures table">
-            <TableHead>
+
+        <TableContainer
+          component={Paper}
+          sx={{
+            maxHeight: 300,
+            overflow: "auto",
+            mt: 2,
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            bgcolor: "#f9f9f9",
+          }}
+        >
+          <Table>
+            <TableHead sx={{position: "sticky", top: 0, bgcolor: "#0A3D62" , zIndex: 1 }}>
               <TableRow>
-                <TableCell>Enclosure Type</TableCell>
-                <TableCell>Enclosure Name</TableCell>
-                <TableCell>Action</TableCell>
+                <TableCell
+                  style={{
+                    fontWeight: "bold",
+                    color: "#fff",
+                    borderRight: "1px solid #ddd",
+                  }}
+                >
+                  Type
+                </TableCell>
+                <TableCell
+                  style={{
+                    fontWeight: "bold",
+                    color: "#fff",
+                    borderRight: "1px solid #ddd",
+                  }}
+                >
+                  Name
+                </TableCell>
+                <TableCell
+                  style={{
+                    fontWeight: "bold",
+                    color: "#fff",
+                    borderRight: "1px solid #ddd",
+                  }}
+                >
+                  Action
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {enclosuredatas.map((enc, idx) => (
-                <TableRow key={idx}>
-                  <TableCell >{enc.enclosuretype}</TableCell>
-                  <TableCell >{enc.enclosureName}</TableCell>
-                  <TableCell >
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => handleDownload(enc.filePath, enc.fileName)}
-                      title="Download"
-                    >
-                      <FaDownload />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {enclosuredatas
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((enc, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell>{enc.enclosuretype}</TableCell>
+                    <TableCell>{enc.enclosureName}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<FaDownload style={{margin: "0 !important"}}/>}
+                        sx={{
+                          fontWeight: "light",
+                        }}
+                      ></Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
+          <TablePagination
+            rowsPerPageOptions={[5]}
+            component="div"
+            count={enclosuredatas.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(_, newPage) => setPage(newPage)}
+          />
         </TableContainer>
       </Box>
     </Modal>

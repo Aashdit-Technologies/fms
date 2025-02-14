@@ -20,10 +20,9 @@ const CreateDraftModal = ({ open, onClose, officeNames }) => {
     addedBy: "",
     content: "",
     office: "",
-    tempType: "", 
+    tempType: "",
   });
 
-  
   useEffect(() => {
     if (officeNames && officeNames.data) {
       setData(officeNames.data);
@@ -35,21 +34,21 @@ const CreateDraftModal = ({ open, onClose, officeNames }) => {
     }
   }, [open]);
   useEffect(() => {
-      setFormData({
-        subject: "",
-        referenceNo: "",
-        addedBy: "",
-        content: "",
-        office: "",
-        tempType: "",
-      });
+    setFormData({
+      subject: "",
+      referenceNo: "",
+      addedBy: "",
+      content: "",
+      office: "",
+      tempType: "",
+    });
   }, []);
 
   const officeOptions = Array.isArray(data)
     ? data.map((item) => ({
-        label: item.tempType, 
-        value: item.templateId, 
-        tempContent: item.tempContent, 
+        label: item.tempType,
+        value: item.templateId,
+        tempContent: item.tempContent,
       }))
     : [];
 
@@ -58,14 +57,22 @@ const CreateDraftModal = ({ open, onClose, officeNames }) => {
       setFormData((prev) => ({
         ...prev,
         office: selectedOption.value,
-        tempType: selectedOption.label, 
+        tempType: selectedOption.label,
         content: selectedOption.tempContent,
       }));
     }
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal
+      open={open}
+      onClose={(event, reason) => {
+        if (reason && reason === "backdropClick") {
+          return;
+        }
+        onClose();
+      }}
+    >
       <Box
         sx={{
           width: 1000,
@@ -77,8 +84,8 @@ const CreateDraftModal = ({ open, onClose, officeNames }) => {
           left: "50%",
           transform: "translate(-50%, -50%)",
           boxShadow: 24,
-          maxHeight: "100vh",
-          overflowY: "auto",
+          height: "80vh",
+          overflow: "auto",
         }}
       >
         <Box

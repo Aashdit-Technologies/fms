@@ -801,6 +801,8 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
         open={isSendToModalOpen}
         onClose={() => setIsSendToModalOpen(false)}
         organizations={organizationsData}
+        fileDetails={fileDetails}
+        additionalDetails={additionalDetails}
       />
     </Box>
   );
