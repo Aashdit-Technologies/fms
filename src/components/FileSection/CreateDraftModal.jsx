@@ -6,10 +6,15 @@ import {
   Button,
   Typography,
   Grid,
+  FormControl,
+  MenuItem,
+  Select,
+  InputLabel,
 } from "@mui/material";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import CorrespondenceEditor from "./CorrespondenceEditor";
 import ReactSelect from "react-select";
+import { Textarea } from "@mui/joy";
 
 const CreateDraftModal = ({ open, onClose, officeNames }) => {
   const [data, setData] = useState([]);
@@ -113,6 +118,90 @@ const CreateDraftModal = ({ open, onClose, officeNames }) => {
                 onChange={handleOfficeChange}
                 isSearchable
               />
+            </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={3}>
+                <Textarea size="lg" name="Size" placeholder="Large" />
+              </Grid>
+              <Grid item xs={3}>
+                <FormControl fullWidth>
+                  <InputLabel id="demo-simple-select-label">
+                    Company
+                  </InputLabel>
+                  <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select-company"
+                    label="Company"
+                  >
+                    <MenuItem value={10}>Ten</MenuItem>
+                    <MenuItem value={20}>Twenty</MenuItem>
+                    <MenuItem value={30}>Thirty</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={3}>
+                <FormControl fullWidth>
+                  <InputLabel id="demo-simple-select-label">
+                    Office
+                  </InputLabel>
+                  <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select-office"
+                    label="Office"
+                  >
+                    <MenuItem value={10}>Ten</MenuItem>
+                    <MenuItem value={20}>Twenty</MenuItem>
+                    <MenuItem value={30}>Thirty</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={3}>
+                <FormControl fullWidth>
+                  <InputLabel id="demo-simple-select-label">
+                    Department
+                  </InputLabel>
+                  <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select-department"
+                    label="Department"
+                  >
+                    <MenuItem value={10}>Ten</MenuItem>
+                    <MenuItem value={20}>Twenty</MenuItem>
+                    <MenuItem value={30}>Thirty</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={3}>
+                <FormControl fullWidth>
+                  <InputLabel id="demo-simple-select-label">
+                    Designation
+                  </InputLabel>
+                  <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select-designation"
+                    label="Designation"
+                  >
+                    <MenuItem value={10}>Ten</MenuItem>
+                    <MenuItem value={20}>Twenty</MenuItem>
+                    <MenuItem value={30}>Thirty</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={3}>
+                <FormControl fullWidth>
+                  <InputLabel id="demo-simple-select-label">
+                  Approving Authority:                  </InputLabel>
+                  <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select-authority"
+                    label="Approving Authority"
+                  >
+                    <MenuItem value={10}>Ten</MenuItem>
+                    <MenuItem value={20}>Twenty</MenuItem>
+                    <MenuItem value={30}>Thirty</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
             </Grid>
           </Box>
         )}

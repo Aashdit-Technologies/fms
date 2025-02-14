@@ -26,9 +26,10 @@ import api from "../../../Api/Api";
 import { toast } from "react-toastify";
 import useAuthStore from "../../../store/Store";
 import { IoIosSend } from "react-icons/io";
+import {  useNavigate } from "react-router-dom";
 
 const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additionalDetails }) => {
-  // console.log("fileDetails",fileDetails);
+  const navigate = useNavigate();
   
   const [selectedValues, setSelectedValues] = useState({
     organization: null,
@@ -210,13 +211,13 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
         });
 
         if (response.data.outcome) {
-          toast.success("File sent successfully!");
-          onSendSuccess(); // Callback to handle success
+          toast.success(response.data.message || "File sent successfully!");
+          navigate("/file");
         } else {
-          toast.error("Failed to send file!");
+          toast.error(response.data.message || "Failed to send file!");
         }
       } catch (error) {
-        toast.error("Error sending file. Please try again.");
+        toast.error(error.message || "Something went wrong!");
       }
     },
   });
