@@ -313,7 +313,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
         const formData = new FormData();
         formData.append("dataObject", encryptedDataObject);
 
-        // Make the API call
+        
         const response = await api.post(
           "/file/get-mark-up-or-mark-down",
           formData,
@@ -394,7 +394,58 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     triggerMarkAction(action);
     setIsModalOpen(true);
   };
+  const approveFileMutation = useMutation({
+    mutationFn: async (data) => {
+      if (!fileDetails || !additionalDetails) {
+        toast.error("File details or additional details are missing.");
+        return;
+      }
 
+      const sendfilepayload = {
+        actionTaken: data.action, 
+        fileId: fileDetails.data.fileId,
+        note: additionalDetails.data.note,
+        filerecptId: fileDetails.data.fileReceiptId,
+        notesheetId: additionalDetails?.data?.prevNoteId,
+      };
+      console.log("Payload before encryption:", sendfilepayload);
+      
+      const encryptedDataObject = encryptPayload(sendfilepayload);
+  
+      const formData = new FormData();
+      formData.append("dataObject", encryptedDataObject);
+  
+      const response = await api.post("/file/approve-file", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Operation successful!");
+      if (data.outcome === true) {
+        navigate("/file");
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || "API call failed!");
+    },
+  });
+  
+  const handleApprove = (action) => {
+    const data = { action };  
+    approveFileMutation.mutate(data);
+  };
+  const isFieldFilled = (row) => {
+    return (
+      row.subject ||
+      row.type ||
+      row.letterNumber ||
+      row.date ||
+      row.document
+    );
+  };
   return (
     <Box
       sx={{ p: 3, maxWidth: 1200, margin: "auto", marginTop: "20px" }}
@@ -646,7 +697,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                   variant="contained"
                   color="secondary"
                   startIcon={<FaCheckCircle />}
-                  onClick={handleEndTask}
+                  onClick={() => handleApprove("APPROVED")}
                 >
                   End-Task
                 </Button>

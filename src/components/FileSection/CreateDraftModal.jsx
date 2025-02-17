@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Modal,
   Box,
@@ -6,19 +6,39 @@ import {
   Button,
   Typography,
   Grid,
-  FormControl,
-  MenuItem,
-  Select,
-  InputLabel,
 } from "@mui/material";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import CorrespondenceEditor from "./CorrespondenceEditor";
 import ReactSelect from "react-select";
-import { Textarea } from "@mui/joy";
+import { encryptPayload } from "../../utils/encrypt";
+import api from "../../Api/Api";
+import { toast } from "react-toastify";
+// import useAuthStore from "../../../store/Store";
+import { useMutation } from "@tanstack/react-query";
 
-const CreateDraftModal = ({ open, onClose, officeNames }) => {
+const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspondence,allDetails }) => {
+  console.log("allDetails",allDetails);
+  console.log("correspondence",correspondence);
+  
+  
   const [data, setData] = useState([]);
   const [showForm, setShowForm] = useState(false);
+
+  const [selectedValues, setSelectedValues] = useState({
+    organization: null,
+    company: null,
+    office: null,
+    department: null,
+    designation: null,
+    authorities: null,
+  });
+  const [options, setOptions] = useState({
+    companies: [],
+    offices: [],
+    departments: [],
+    designations: [],
+    authorities: [],
+  });
   const [formData, setFormData] = useState({
     subject: "",
     referenceNo: "",
@@ -27,7 +47,7 @@ const CreateDraftModal = ({ open, onClose, officeNames }) => {
     office: "",
     tempType: "",
   });
-
+  const editorContentRef = useRef(formData.content);
   useEffect(() => {
     if (officeNames && officeNames.data) {
       setData(officeNames.data);
@@ -36,6 +56,7 @@ const CreateDraftModal = ({ open, onClose, officeNames }) => {
   useEffect(() => {
     if (open) {
       setShowForm(false);
+      resetForm();
     }
   }, [open]);
   useEffect(() => {
@@ -48,6 +69,194 @@ const CreateDraftModal = ({ open, onClose, officeNames }) => {
       tempType: "",
     });
   }, []);
+
+  const resetForm = () => {
+    setSelectedValues({
+      organization: null,
+      company: null,
+      office: null,
+      department: null,
+      designation: null,
+      authorities: null,
+    });
+    setOptions({
+      companies: [],
+      offices: [],
+      departments: [],
+      designations: [],
+      authorities: [],
+    });
+    editorContentRef.current = ""; 
+    // setTableData([]);
+  };
+  const fetchData = useMutation({
+    mutationFn: async ({ endpoint, payload }) => {
+      const encryptedData = encryptPayload(payload);
+      const response = await api.post(endpoint, { dataObject: encryptedData });
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      if (data.outcome) {
+        const { endpoint } = variables;
+        if (endpoint.includes("get-companies"))
+          setOptions((prev) => ({ ...prev, companies: data.data }));
+        if (endpoint.includes("get-offices"))
+          setOptions((prev) => ({ ...prev, offices: data.data }));
+        if (endpoint.includes("get-departments"))
+          setOptions((prev) => ({ ...prev, departments: data.data }));
+        if (endpoint.includes("get-designations"))
+          setOptions((prev) => ({ ...prev, designations: data.data }));
+        if (endpoint.includes("get-send-to-list")) {
+          const mappedAuthorities = data.data.map((authority) => ({
+            value: authority.empDeptRoleId,
+            label: authority.empNameWithDesgAndDept,
+          }));
+          setOptions((prev) => ({ ...prev, authorities: mappedAuthorities }));
+        }
+      }
+    },
+  });
+  const handleSelectionChange = (field, selectedOption) => {
+    setSelectedValues((prev) => ({ ...prev, [field]: selectedOption }));
+
+    if (field === "organization") {
+      setOptions({
+        companies: [],
+        offices: [],
+        departments: [],
+        designations: [],
+      });
+      fetchData.mutate({
+        endpoint: "/level/get-companies",
+        payload: { organizationId: selectedOption.value },
+      });
+      fetchData.mutate({
+        endpoint: "/file/get-send-to-list",
+        payload: {
+          organizationId: selectedValues.organization?.value || 0,
+          companyId: selectedValues.company?.value || 0,
+          officeId: selectedValues.office?.value || 0,
+          departmentId: selectedValues.department?.value || 0,
+          designationId: selectedValues.designation?.value || 0,
+        },
+      });
+    } else if (field === "company") {
+      setOptions((prev) => ({
+        ...prev,
+        offices: [],
+        departments: [],
+        designations: [],
+        authorities: [],
+      }));
+      fetchData.mutate({
+        endpoint: "/level/get-offices",
+        payload: {
+          organizationId: selectedValues.organization.value,
+          companyId: selectedOption.value,
+        },
+      });
+    } else if (field === "office") {
+      setOptions((prev) => ({
+        ...prev,
+        departments: [],
+        designations: [],
+        authorities: [],
+      }));
+      fetchData.mutate({
+        endpoint: "/level/get-departments",
+        payload: {
+          organizationId: selectedValues.organization.value,
+          companyId: selectedValues.company.value,
+          officeId: selectedOption.value,
+        },
+      });
+    } else if (field === "department") {
+      setOptions((prev) => ({ ...prev, designations: [], authorities: [] }));
+      fetchData.mutate({
+        endpoint: "/level/get-designations",
+        payload: {
+          organizationId: selectedValues.organization.value,
+          companyId: selectedValues.company.value,
+          officeId: selectedValues.office.value,
+          departmentId: selectedOption.value,
+        },
+      });
+    } else if (field === "designation") {
+      fetchData.mutate({
+        endpoint: "/file/get-send-to-list",
+        payload: {
+          organizationId: selectedValues.organization?.value || 0,
+          companyId: selectedValues.company?.value || 0,
+          officeId: selectedValues.office?.value || 0,
+          departmentId: selectedValues.department?.value || 0,
+          designationId: selectedValues.designation?.value || 0,
+        },
+      });
+    }
+  };
+  const searchMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        correspondenceId:null,
+        fileId:allDetails?.data?.fileId,
+        fileReceiptId:allDetails?.data?.fileReceiptId,
+        subject: formData.subject,
+        approverEmpRoleMapId: selectedValues.authorities?.value || null,
+        draftNo:correspondence?.data?.draftNo,
+        letterContent: formData.content,
+      }
+      console.log("Payload before encryption:", payload);
+      
+      const payloadtwo = {
+        letterNo:null,
+        correspondenceDate:null,
+        displayType:null,
+        currEmpDeptMapId:null,
+        organizationId: selectedValues.organization?.value || 0,
+        companyId: selectedValues.company?.value || 0,
+        officeId: selectedValues.office?.value || 0,
+        departmentId: selectedValues.department?.value || 0,
+        designationId: selectedValues.designation?.value || 0,
+        // sectionId: selectedValues.sectionId?.value || 0,
+      };
+      console.log("Payload before encryption:", payload);
+
+      const encryptedPayload = encryptPayload(payloadtwo);
+
+      const response = await api.post("/file/create-draft-in-file", {
+        dataObject: encryptedPayload,
+      });
+
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.outcome) {
+        setTableData(data.data);
+      }
+    },
+  });
+  const handleSave = () => {
+    setFormData((prev) => ({
+      ...prev,
+      content: editorContentRef.current,
+    }));
+
+    console.log("Form Data:", {
+      ...formData,
+      content: editorContentRef.current, 
+    });
+    if (
+      !selectedValues.organization &&
+      !selectedValues.company &&
+      !selectedValues.office &&
+      !selectedValues.department &&
+      !selectedValues.designation
+    ) {
+      toast.error("Please select at least one field before searching!");
+      return;
+    }
+    searchMutation.mutate();
+  };
 
   const officeOptions = Array.isArray(data)
     ? data.map((item) => ({
@@ -65,6 +274,7 @@ const CreateDraftModal = ({ open, onClose, officeNames }) => {
         tempType: selectedOption.label,
         content: selectedOption.tempContent,
       }));
+      editorContentRef.current = selectedOption.tempContent;
     }
   };
 
@@ -121,110 +331,153 @@ const CreateDraftModal = ({ open, onClose, officeNames }) => {
             </Grid>
             <Grid container spacing={2}>
               <Grid item xs={3}>
-                <Textarea size="lg" name="Size" placeholder="Large" />
+                <label htmlFor="subject">Subject:</label>
+                <textarea
+                  id="subject"
+                  value={formData.content}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      content: e.target.value,
+                    }))
+                  }
+                  rows={1}
+                  placeholder="Enter content..."
+                  style={{ width: "100%", padding: "8px" }}
+                />
               </Grid>
-              <Grid item xs={3}>
-                <FormControl fullWidth>
-                  <InputLabel id="demo-simple-select-label">
-                    Company
-                  </InputLabel>
-                  <Select
-                    labelId="demo-simple-select-label"
-                    id="demo-simple-select-company"
-                    label="Company"
-                  >
-                    <MenuItem value={10}>Ten</MenuItem>
-                    <MenuItem value={20}>Twenty</MenuItem>
-                    <MenuItem value={30}>Thirty</MenuItem>
-                  </Select>
-                </FormControl>
+              <Grid item xs={6}>
+                <label>Organization</label>
+                <ReactSelect
+                  options={
+                    organizations?.map((org) => ({
+                      value: org.organizationId,
+                      label: org.organizationName,
+                    })) || []
+                  }
+                  value={selectedValues.organization}
+                  onChange={(option) =>
+                    handleSelectionChange("organization", option)
+                  }
+                  isSearchable
+                />
               </Grid>
-              <Grid item xs={3}>
-                <FormControl fullWidth>
-                  <InputLabel id="demo-simple-select-label">
-                    Office
-                  </InputLabel>
-                  <Select
-                    labelId="demo-simple-select-label"
-                    id="demo-simple-select-office"
-                    label="Office"
-                  >
-                    <MenuItem value={10}>Ten</MenuItem>
-                    <MenuItem value={20}>Twenty</MenuItem>
-                    <MenuItem value={30}>Thirty</MenuItem>
-                  </Select>
-                </FormControl>
+
+              <Grid item xs={6}>
+                <label>Company</label>
+                <ReactSelect
+                  options={
+                    options.companies?.map((comp) => ({
+                      value: comp.companyId,
+                      label: comp.name,
+                    })) || []
+                  }
+                  value={selectedValues.company}
+                  onChange={(option) =>
+                    handleSelectionChange("company", option)
+                  }
+                  isSearchable
+                  isDisabled={!selectedValues.organization}
+                />
               </Grid>
-              <Grid item xs={3}>
-                <FormControl fullWidth>
-                  <InputLabel id="demo-simple-select-label">
-                    Department
-                  </InputLabel>
-                  <Select
-                    labelId="demo-simple-select-label"
-                    id="demo-simple-select-department"
-                    label="Department"
-                  >
-                    <MenuItem value={10}>Ten</MenuItem>
-                    <MenuItem value={20}>Twenty</MenuItem>
-                    <MenuItem value={30}>Thirty</MenuItem>
-                  </Select>
-                </FormControl>
+
+              <Grid item xs={6}>
+                <label>Office</label>
+                <ReactSelect
+                  options={
+                    options.offices?.map((office) => ({
+                      value: office.officeId,
+                      label: office.officeName,
+                    })) || []
+                  }
+                  value={selectedValues.office}
+                  onChange={(option) => handleSelectionChange("office", option)}
+                  isSearchable
+                  isDisabled={!selectedValues.company}
+                />
               </Grid>
-              <Grid item xs={3}>
-                <FormControl fullWidth>
-                  <InputLabel id="demo-simple-select-label">
-                    Designation
-                  </InputLabel>
-                  <Select
-                    labelId="demo-simple-select-label"
-                    id="demo-simple-select-designation"
-                    label="Designation"
-                  >
-                    <MenuItem value={10}>Ten</MenuItem>
-                    <MenuItem value={20}>Twenty</MenuItem>
-                    <MenuItem value={30}>Thirty</MenuItem>
-                  </Select>
-                </FormControl>
+
+              <Grid item xs={6}>
+                <label>Department</label>
+                <ReactSelect
+                  options={
+                    options.departments?.map((dept) => ({
+                      value: dept.departmentId,
+                      label: dept.departmentName,
+                    })) || []
+                  }
+                  value={selectedValues.department}
+                  onChange={(option) =>
+                    handleSelectionChange("department", option)
+                  }
+                  isSearchable
+                  isDisabled={!selectedValues.office}
+                />
               </Grid>
-              <Grid item xs={3}>
-                <FormControl fullWidth>
-                  <InputLabel id="demo-simple-select-label">
-                  Approving Authority:                  </InputLabel>
-                  <Select
-                    labelId="demo-simple-select-label"
-                    id="demo-simple-select-authority"
-                    label="Approving Authority"
-                  >
-                    <MenuItem value={10}>Ten</MenuItem>
-                    <MenuItem value={20}>Twenty</MenuItem>
-                    <MenuItem value={30}>Thirty</MenuItem>
-                  </Select>
-                </FormControl>
+
+              <Grid item xs={6}>
+                <label>Designation</label>
+                <ReactSelect
+                  options={
+                    options.designations?.map((desig) => ({
+                      value: desig.id,
+                      label: desig.name,
+                    })) || []
+                  }
+                  value={selectedValues.designation}
+                  onChange={(option) =>
+                    handleSelectionChange("designation", option)
+                  }
+                  isSearchable
+                  isDisabled={!selectedValues.department}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <label>Approving Authority</label>
+                <ReactSelect
+                  options={options.authorities}
+                  value={selectedValues.authority}
+                  onChange={(option) =>
+                    setSelectedValues((prev) => ({
+                      ...prev,
+                      authority: option,
+                    }))
+                  }
+                  isSearchable
+                  isDisabled={
+                    !selectedValues.designation &&
+                    !selectedValues.organization &&
+                    !selectedValues.company &&
+                    !selectedValues.office &&
+                    !selectedValues.department
+                  }
+                />
               </Grid>
             </Grid>
           </Box>
         )}
 
         <Box sx={{ mt: 2 }} className="editor-containers">
-          <CorrespondenceEditor
-            content={formData.content}
-            onContentChange={(value) =>
-              setFormData((prev) => ({ ...prev, content: value }))
-            }
-          />
+            <CorrespondenceEditor
+              initialContent={formData.content} // Pass initial content
+              onContentChange={(value) => {
+                editorContentRef.current = value; // Update the ref with the latest content
+              }}
+            />
         </Box>
 
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}
         >
-          <Button variant="contained" color="success">
+          <Button variant="contained" color="success" onClick={handleSave}>
             Save
           </Button>
           <Button
             variant="contained"
             color="warning"
-            onClick={() =>
+            // onClick={resetForm}
+
+            onClick={() => {
               setFormData({
                 subject: "",
                 referenceNo: "",
@@ -232,8 +485,10 @@ const CreateDraftModal = ({ open, onClose, officeNames }) => {
                 content: "",
                 office: "",
                 tempType: "",
-              })
-            }
+              });
+              editorContentRef.current = "";
+              resetForm();
+            }}
           >
             Reset
           </Button>

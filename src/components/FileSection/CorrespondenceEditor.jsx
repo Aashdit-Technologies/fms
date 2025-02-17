@@ -1,23 +1,26 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import JoditEditor from "jodit-react";
 
-const CorrespondenceEditor = ({ content, onContentChange }) => {
-  const editor = useRef(null);
-
+const CorrespondenceEditor = ({ initialContent, onContentChange }) => {
   const handleEditorChange = (newContent) => {
     onContentChange?.(newContent);
   };
 
+  const handleEditorFocus = () => {
+    // Editor has focus and should be ready for interaction
+  };
+
   return (
     <JoditEditor
-      ref={editor}
-      value={content}
-      config={{ readonly: false, placeholder: "Start typing..." }}
-      onChange={handleEditorChange} 
-      key={content} 
+      value={initialContent || ""} // Controlled value
+      config={{
+        readonly: false,
+        placeholder: "Start typing...",
+      }}
+      onChange={handleEditorChange}
+      onFocus={handleEditorFocus} // Ensure editor is focused and ready for actions
     />
   );
 };
 
-export default CorrespondenceEditor;
-
+export default React.memo(CorrespondenceEditor);  // Prevent unnecessary re-renders

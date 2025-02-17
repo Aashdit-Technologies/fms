@@ -90,7 +90,6 @@ const customStyles = {
 };
 const fetchOffices = async () => {
   const response = await api.get("file/letter-content");
-  console.log("officedata", response.data);
 
   return response.data;
 };
@@ -105,7 +104,7 @@ const Correspondence = ({
 }) => {
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
-  
+
   const [modalOpen, setModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -117,7 +116,13 @@ const Correspondence = ({
   const [filteredData, setFilteredData] = useState([]);
   const [officeNames, setOfficeNames] = useState([]);
   const allDetails = fileDetails?.data || {};
-  const { data: offices, isLoading } = useQuery({
+  const [organizationsData, setOrganizationsData] = useState([]);
+  
+  const {
+    data: offices,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["offices"],
     queryFn: fetchOffices,
     staleTime: 60000,
@@ -140,7 +145,7 @@ const Correspondence = ({
     return response.data;
   };
   const fetchEnclosuresData = async (corrId) => {
-    const encryptedData = encryptPayload({ corrId:corrId });
+    const encryptedData = encryptPayload({ corrId: corrId });
     const response = await api.post(
       "file/get-file-correspondence-enclosures",
       { dataObject: encryptedData },
@@ -164,24 +169,24 @@ const Correspondence = ({
         console.error("Error fetching enclosures", error);
       },
     });
-    const fetchUploadData = async () => {
-      const response = await api.get('common/enclousuretype-list', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("Upload Data:", response.data);
-      return response.data;
-    };
-    const { mutate: fetchUpload, isLoading: isLoadingUpload } = useMutation({
-      mutationFn: fetchUploadData,
-      onSuccess: (data) => {
-        setUploadData(data);
-      },
-      onError: (error) => {
-        console.error("Error fetching upload data", error);
+  const fetchUploadData = async () => {
+    const response = await api.get("common/enclousuretype-list", {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
     });
+    console.log("Upload Data:", response.data);
+    return response.data;
+  };
+  const { mutate: fetchUpload, isLoading: isLoadingUpload } = useMutation({
+    mutationFn: fetchUploadData,
+    onSuccess: (data) => {
+      setUploadData(data);
+    },
+    onError: (error) => {
+      console.error("Error fetching upload data", error);
+    },
+  });
 
   const { mutate: fetchHistory, isLoading: isLoadingHistory } = useMutation({
     mutationFn: fetchHistoryData,
@@ -195,10 +200,10 @@ const Correspondence = ({
   });
 
   const handleUploadClick = (row) => {
-    setSelectedCorrId(row.corrId); 
+    setSelectedCorrId(row.corrId);
     fetchEnclosures(row.corrId, {
       onSuccess: () => {
-        fetchUpload(row.corrId,{
+        fetchUpload(row.corrId, {
           onSuccess: () => {
             setUploadModalOpen(true);
             // setRowss(row)
@@ -259,13 +264,67 @@ const Correspondence = ({
     setFilteredData(correspondence?.data || []);
   }, [correspondence]);
 
-  const handleCreateDraft = () => {
+  const EditDraftMutation = useMutation({
+    mutationFn: async (data) => {
+      try {
+      
+        const encryptedDataObject = encryptPayload({
+          fileId: fileDetails.data.fileId,
+          correspondenceId: data.correspondenceId,
+          receiptId: fileDetails.data.fileReceiptId,
+        });
+  
+       
+        const formData = new FormData();
+        formData.append("dataObject", encryptedDataObject);
+  
+       
+        const response = await api.post("/file/edit-draft-in-file", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        return response.data;
+      } catch (error) {
+        if (error.response?.status === 401) {
+          throw new Error("Session expired. Please login again.");
+        }
+        throw error;
+      }
+    },
+  });
+
+  const handleEditDraft = async (data) => {
+    try {
+      await EditDraftMutation.mutateAsync(data);
+      setModalOpen(true);
+      toast.success("Draft edited successfully!");
+    } catch (error) {
+      console.error("Error editing draft:", error);
+      toast.error("Failed to edit draft. Please try again.");
+    }
+  };
+  
+  const fetchOrganizations = useMutation({
+    mutationFn: async () => {
+      const response = await api.get("/level/get-organizations");
+      if (response.status === 200 && response.data?.outcome) {
+        setOrganizationsData(response.data.data);
+      }
+      return response.data;
+    },
+  });
+
+  const handleCreateDraft = async () => {
+    await refetch();
     if (offices) {
       setOfficeNames(offices);
     }
+
+    fetchOrganizations.mutate();
     setModalOpen(true);
   };
-
   const columns = [
     {
       name: "SI.#",
@@ -368,7 +427,7 @@ const Correspondence = ({
               <StyledButton
                 variant="contained"
                 color="primary"
-                onClick={() => onView(row)}
+                onClick={() => handleEditDraft(row)}
                 title="Edit"
               >
                 <FaEdit size={16} />
@@ -443,6 +502,9 @@ const Correspondence = ({
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         officeNames={officeNames}
+        organizations={organizationsData}
+        correspondence={correspondence}
+        allDetails={allDetails}
       />
     </>
   );
