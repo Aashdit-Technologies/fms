@@ -23,6 +23,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
   
   const [data, setData] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [content, setContent] = useState('');
 
   const [selectedValues, setSelectedValues] = useState({
     organization: null,
@@ -64,10 +65,12 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
       subject: "",
       referenceNo: "",
       addedBy: "",
-      content: "",
       office: "",
+      content: "",
       tempType: "",
     });
+    editorContentRef.current = "";
+    setContent("");
   }, []);
 
   const resetForm = () => {
@@ -87,6 +90,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
       authorities: [],
     });
     editorContentRef.current = ""; 
+    setContent("");
     // setTableData([]);
   };
   const fetchData = useMutation({
@@ -111,7 +115,10 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
             value: authority.empDeptRoleId,
             label: authority.empNameWithDesgAndDept,
           }));
+          console.log("Mapped Authorities:", mappedAuthorities);
           setOptions((prev) => ({ ...prev, authorities: mappedAuthorities }));
+          console.log("Options after setting authorities:", options);
+          
         }
       }
     },
@@ -195,23 +202,9 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
     }
   };
   const searchMutation = useMutation({
-    mutationFn: async () => {
-      const payload = {
-        correspondenceId:null,
-        fileId:allDetails?.data?.fileId,
-        fileReceiptId:allDetails?.data?.fileReceiptId,
-        subject: formData.subject,
-        approverEmpRoleMapId: selectedValues.authorities?.value || null,
-        draftNo:correspondence?.data?.draftNo,
-        letterContent: formData.content,
-      }
-      console.log("Payload before encryption:", payload);
-      
+    mutationFn: async (data) => {
+
       const payloadtwo = {
-        letterNo:null,
-        correspondenceDate:null,
-        displayType:null,
-        currEmpDeptMapId:null,
         organizationId: selectedValues.organization?.value || 0,
         companyId: selectedValues.company?.value || 0,
         officeId: selectedValues.office?.value || 0,
@@ -219,14 +212,29 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
         designationId: selectedValues.designation?.value || 0,
         // sectionId: selectedValues.sectionId?.value || 0,
       };
+      const payload = {
+        correspondenceId: null,
+        fileId: allDetails?.data?.fileId,
+        fileReceiptId: allDetails?.data?.fileReceiptId,
+        subject: formData.subject,
+        approverEmpRoleMapId: selectedValues.authorities?.value,
+        draftNo: correspondence?.data?.draftNo,
+        letterContent: formData.content,
+        letterNo: null,
+        correspondenceDate: null,
+        displayType: null,
+        currEmpDeptMapId: null,
+        employeeDeptMapVo:payloadtwo
+
+      };
       console.log("Payload before encryption:", payload);
-
-      const encryptedPayload = encryptPayload(payloadtwo);
-
-      const response = await api.post("/file/create-draft-in-file", {
-        dataObject: encryptedPayload,
-      });
-
+  
+      // const encryptedPayload = encryptPayload({payload});
+  
+      // const response = await api.post("/file/create-draft-in-file", {
+      //   dataObject: encryptedPayload,
+      // });
+  
       return response.data;
     },
     onSuccess: (data) => {
@@ -235,15 +243,16 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
       }
     },
   });
+  
   const handleSave = () => {
     setFormData((prev) => ({
       ...prev,
       content: editorContentRef.current,
     }));
-
+  
     console.log("Form Data:", {
       ...formData,
-      content: editorContentRef.current, 
+      content: editorContentRef.current,
     });
     if (
       !selectedValues.organization &&
@@ -334,9 +343,9 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
                 <label htmlFor="subject">Subject:</label>
                 <textarea
                   id="subject"
-                  value={formData.content}
+                  value={content.content}
                   onChange={(e) =>
-                    setFormData((prev) => ({
+                    setContent((prev) => ({
                       ...prev,
                       content: e.target.value,
                     }))
