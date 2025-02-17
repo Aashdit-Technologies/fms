@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
-import { Box, Button, TextField } from "@mui/material";
+import { Box, Button, TextField, Tooltip, Typography } from "@mui/material";
 import {
   FaEye,
   FaDownload,
@@ -10,6 +10,7 @@ import {
   FaPlus,
   FaTimes,
   FaCloudUploadAlt,
+  FaEdit,
 } from "react-icons/fa";
 import styled from "@emotion/styled";
 import { encryptPayload } from "../../utils/encrypt";
@@ -18,6 +19,7 @@ import useAuthStore from "../../store/Store";
 import CreateDraftModal from "./CreateDraftModal";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { HistoryModal, UploadModal } from "./Modal/AllIconModal";
+import { toast } from "react-toastify";
 
 const StyledButton = styled(Button)`
   margin: 0 4px;
@@ -117,6 +119,8 @@ const Correspondence = ({
   const [officeNames, setOfficeNames] = useState([]);
   const allDetails = fileDetails?.data || {};
   const [organizationsData, setOrganizationsData] = useState([]);
+  const [editMalady, setEditMalady] = useState({});
+  console.log("editMalady", editMalady);
   
   const {
     data: offices,
@@ -259,6 +263,7 @@ const Correspondence = ({
       );
     }
   };
+console.log("Filtered Data:", filteredData);
 
   useEffect(() => {
     setFilteredData(correspondence?.data || []);
@@ -270,8 +275,8 @@ const Correspondence = ({
       
         const encryptedDataObject = encryptPayload({
           fileId: fileDetails.data.fileId,
-          correspondenceId: data.correspondenceId,
-          receiptId: fileDetails.data.fileReceiptId,
+          correspondenceId: data.corrId,
+          fileReceiptId: fileDetails.data.fileReceiptId,
         });
   
        
@@ -284,7 +289,7 @@ const Correspondence = ({
             Authorization: `Bearer ${token}`,
           },
         });
-  
+        setEditMalady(response.data.data);
         return response.data;
       } catch (error) {
         if (error.response?.status === 401) {
@@ -294,6 +299,8 @@ const Correspondence = ({
       }
     },
   });
+
+  
 
   const handleEditDraft = async (data) => {
     try {
@@ -342,7 +349,7 @@ const Correspondence = ({
                 row.corrType === "DOCUMENT"
                   ? "#6f42c1"
                   : row.corrType === "DRAFT"
-                  ? "yellow"
+                  ? "#F3B431"
                   : "#28a745",
               color: "white",
               padding: "4px 10px",
@@ -364,9 +371,17 @@ const Correspondence = ({
     },
     {
       name: "Subject",
-      selector: (row) => row.subject,
+      // selector: (row) => row.subject,
+      selector: (row) => (
+        <Tooltip title={row.subject} arrow >
+          <Typography variant="body2" style={{ width: '80px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {row.subject}
+          </Typography>
+        </Tooltip>
+      ),
       sortable: true,
       grow: 2,
+      
     },
     // {
     //   name: "Added By",
@@ -377,6 +392,7 @@ const Correspondence = ({
     {
       name: "Added Date",
       selector: (row) => row.addedDate,
+      
       sortable: true,
       width: "140px",
     },
@@ -505,6 +521,7 @@ const Correspondence = ({
         organizations={organizationsData}
         correspondence={correspondence}
         allDetails={allDetails}
+        editMalady={editMalady}
       />
     </>
   );

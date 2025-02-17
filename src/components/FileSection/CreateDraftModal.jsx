@@ -16,14 +16,11 @@ import { toast } from "react-toastify";
 // import useAuthStore from "../../../store/Store";
 import { useMutation } from "@tanstack/react-query";
 
-const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspondence,allDetails }) => {
-  console.log("allDetails",allDetails);
-  console.log("correspondence",correspondence);
-  
-  
+const CreateDraftModal = ({ open, onClose, officeNames, organizations,allDetails,editMalady }) => {
+    
   const [data, setData] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [content, setContent] = useState('');
+  const [contents, setContents] = useState('');
 
   const [selectedValues, setSelectedValues] = useState({
     organization: null,
@@ -38,7 +35,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
     offices: [],
     departments: [],
     designations: [],
-    authorities: [],
+    // authorities: [],
   });
   const [formData, setFormData] = useState({
     subject: "",
@@ -48,6 +45,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
     office: "",
     tempType: "",
   });
+  
   const editorContentRef = useRef(formData.content);
   useEffect(() => {
     if (officeNames && officeNames.data) {
@@ -70,9 +68,10 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
       tempType: "",
     });
     editorContentRef.current = "";
-    setContent("");
+    setContents("");
   }, []);
 
+  
   const resetForm = () => {
     setSelectedValues({
       organization: null,
@@ -90,7 +89,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
       authorities: [],
     });
     editorContentRef.current = ""; 
-    setContent("");
+    setContents("");
     // setTableData([]);
   };
   const fetchData = useMutation({
@@ -202,38 +201,35 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
     }
   };
   const searchMutation = useMutation({
-    mutationFn: async (data) => {
 
-      const payloadtwo = {
-        organizationId: selectedValues.organization?.value || 0,
-        companyId: selectedValues.company?.value || 0,
-        officeId: selectedValues.office?.value || 0,
-        departmentId: selectedValues.department?.value || 0,
-        designationId: selectedValues.designation?.value || 0,
-        // sectionId: selectedValues.sectionId?.value || 0,
-      };
+    mutationFn: async () => {
       const payload = {
         correspondenceId: null,
-        fileId: allDetails?.data?.fileId,
-        fileReceiptId: allDetails?.data?.fileReceiptId,
-        subject: formData.subject,
-        approverEmpRoleMapId: selectedValues.authorities?.value,
-        draftNo: correspondence?.data?.draftNo,
+        fileId: allDetails?.fileId,
+        fileReceiptId: allDetails?.fileReceiptId,
+        subject: contents,
+        approverEmpRoleMapId: selectedValues.authorities?.value || null,
         letterContent: formData.content,
         letterNo: null,
         correspondenceDate: null,
         displayType: null,
         currEmpDeptMapId: null,
-        employeeDeptMapVo:payloadtwo
-
+        employeeDeptMapVo: {
+          organizationId: selectedValues.organization?.value || 0,
+          companyId: selectedValues.company?.value || 0,
+          officeId: selectedValues.office?.value || 0,
+          departmentId: selectedValues.department?.value || 0,
+          designationId: selectedValues.designation?.value || 0,
+        },
       };
+     
       console.log("Payload before encryption:", payload);
   
-      // const encryptedPayload = encryptPayload({payload});
+      const encryptedPayload = encryptPayload(payload);
   
-      // const response = await api.post("/file/create-draft-in-file", {
-      //   dataObject: encryptedPayload,
-      // });
+      const response = await api.post("/file/create-draft-in-file", {
+        dataObject: encryptedPayload,
+      });
   
       return response.data;
     },
@@ -343,13 +339,8 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
                 <label htmlFor="subject">Subject:</label>
                 <textarea
                   id="subject"
-                  value={content.content}
-                  onChange={(e) =>
-                    setContent((prev) => ({
-                      ...prev,
-                      content: e.target.value,
-                    }))
-                  }
+                  value={contents}
+                  onChange={(e) => setContents(e.target.value)}
                   rows={1}
                   placeholder="Enter content..."
                   style={{ width: "100%", padding: "8px" }}
@@ -445,11 +436,11 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,correspond
                 <label>Approving Authority</label>
                 <ReactSelect
                   options={options.authorities}
-                  value={selectedValues.authority}
+                  value={selectedValues.authorities}
                   onChange={(option) =>
                     setSelectedValues((prev) => ({
                       ...prev,
-                      authority: option,
+                      authorities: option,
                     }))
                   }
                   isSearchable
