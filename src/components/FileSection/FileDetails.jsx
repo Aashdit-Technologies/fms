@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Accordion } from "react-bootstrap";
+import { Accordion, Overlay } from "react-bootstrap";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import "./FileDetails.css";
 import { Modal, Box, Typography, Button, Grid } from "@mui/material";
@@ -84,8 +84,8 @@ const FileDetails = ({ fileDetails }) => {
       </div>
 
       {/* Modal to Show File Details */}
-      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <Box sx={modalStyle}>
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} >
+        <Box sx={modalStyle} style={{width: "100%", maxWidth: "1200px", maxHeight: "90vh", overflowY: "auto", margin: "auto"}}>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, textAlign: "center", color: "#1976d2", borderBottom: "2px solid #1976d2" }}>
             File Details: {allDetails.fileNo || "N/A"}
           </Typography>

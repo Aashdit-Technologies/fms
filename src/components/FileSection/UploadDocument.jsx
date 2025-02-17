@@ -54,7 +54,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   const [rows, setRows] = useState([
     {
       subject: "",
-      type: "LETTER",
+      type: "SELECT",
       letterNumber: "",
       date: null,
       document: null,
@@ -104,7 +104,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       ...prevRows,
       {
         subject: "",
-        type: "LETTER",
+        type: "SELECT",
         letterNumber: "",
         date: null,
         document: null,
@@ -119,9 +119,38 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     }
   };
 
+  const isAnyFieldFilled = (row) => {
+    return (
+      row.subject ||
+      row.type ||
+      row.letterNumber ||
+      row.date ||
+      row.document
+    );
+  };
+
+  const getMissingFields = (row) => {
+    const missingFields = [];
+    if (!row.subject) missingFields.push("Subject");
+    if (!row.type) missingFields.push("Type");
+    if (!row.letterNumber) missingFields.push("Letter Number");
+    if (!row.date) missingFields.push("Date");
+    if (!row.document) missingFields.push("Document");
+    return missingFields;
+  };
+
   const handleInputChange = (index, field, value) => {
     const newRows = [...rows];
     newRows[index][field] = value;
+
+    // Check if any field in this row is filled
+    if (isAnyFieldFilled(newRows[index])) {
+      const missingFields = getMissingFields(newRows[index]);
+      if (missingFields.length > 0) {
+        toast.warning(`Please fill the following mandatory fields: ${missingFields.join(", ")}`);
+      }
+    }
+
     setRows(newRows);
   };
 
@@ -134,6 +163,15 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     ) {
       const newRows = [...rows];
       newRows[index].document = file;
+
+      // Check other mandatory fields after file upload
+      if (isAnyFieldFilled(newRows[index])) {
+        const missingFields = getMissingFields(newRows[index]);
+        if (missingFields.length > 0) {
+          toast.warning(`Please fill the following mandatory fields: ${missingFields.join(", ")}`);
+        }
+      }
+
       setRows(newRows);
       toast.success("File uploaded successfully!");
     } else {
@@ -145,16 +183,18 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     setPendingConfidential(e.target.checked);
     setConfirmationModalOpen(true);
   };
-  const fetchOrganizations  = useMutation({
+
+  const fetchOrganizations = useMutation({
     mutationFn: async () => {
       const response = await api.get("/level/get-organizations");
       if (response.status === 200 && response.data?.outcome) {
-        setOrganizationsData(response.data.data); 
-        setIsSendToModalOpen(true); 
+        setOrganizationsData(response.data.data);
+        setIsSendToModalOpen(true);
       }
       return response.data;
     },
   });
+
   const handleOpenModal = () => {
     fetchOrganizations.mutate();
   };
@@ -172,9 +212,87 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     return dayjs(date).format("DD/MM/YYYY");
   };
 
+  const validateAllFields = (rowData) => {
+    // Check if any field is filled in any row
+    const isAnyFieldFilled = rowData.some(row => 
+      row.subject || 
+      row.type || 
+      row.letterNumber || 
+      row.date || 
+      row.document
+    );
+
+    // If any field is filled, all fields must be filled
+    if (isAnyFieldFilled) {
+      return rowData.every(row => 
+        row.subject && 
+        row.type && 
+        row.letterNumber && 
+        row.date && 
+        row.document
+      );
+    }
+
+    // If no fields are filled, that's okay
+    return true;
+  };
+
+  const handleSubmit = () => {
+    // Check if any row has partially filled fields
+    const hasPartiallyFilledRows = rows.some(row => {
+      const filledFields = [
+        row.subject,
+        row.type,
+        row.letterNumber,
+        row.date,
+        row.document
+      ].filter(Boolean).length;
+      
+      return filledFields > 0 && filledFields < 5;
+    });
+
+    if (hasPartiallyFilledRows) {
+      const missingFields = rows.map((row, index) => {
+        const missing = getMissingFields(row);
+        return missing.length > 0 ? `Row ${index + 1}: ${missing.join(', ')}` : null;
+      }).filter(Boolean);
+      
+      toast.error(`Please fill all mandatory fields:\n${missingFields.join('\n')}`);
+      return;
+    }
+
+    // If validation passes, proceed with mutation
+    const documents = rows.map((row) => ({
+      subject: row.subject,
+      type: row.type,
+      letterNumber: row.letterNumber,
+      date: row.date,
+    }));
+
+    const uploadedDocuments = rows.map((row) => row.document).filter(Boolean);
+
+    mutation.mutate({
+      documents,
+      uploadedDocuments,
+      filePriority,
+      isConfidential,
+    });
+  };
+
   const mutation = useMutation({
     mutationFn: async (data) => {
       try {
+        // Additional validation before API call
+        if (!validateAllFields(rows)) {
+          const missingFields = rows.map((row, index) => {
+            const missing = getMissingFields(row);
+            return missing.length > 0 ? `Row ${index + 1}: ${missing.join(', ')}` : null;
+          }).filter(Boolean);
+          
+          toast.error(`Please fill all mandatory fields:\n${missingFields.join('\n')}`);
+          throw new Error('All fields are mandatory');
+        }
+
         const encryptedDataObject = encryptPayload({
           fileId: fileDetails.data.fileId,
           note: editorContent || null,
@@ -199,7 +317,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
           formData.append("uploadedDocuments", file);
         });
 
-        const Response = await api.post(
+        const response = await api.post(
           "/file/save-notesheet-and-documents",
           formData,
           {
@@ -209,22 +327,30 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
             },
           }
         );
-        if (Response.status === 200) {
-          const payload2 = encryptPayload({ fileId: fileDetails.data.fileId });
-          return api.post(
-            "/file/get-draft-notesheet",
-            { dataObject: payload2 },
+
+        if (response.data && response.data.outcome === true) {
+          // Reset form after successful submission
+          setRows([
             {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+              subject: "",
+              type: "SELECT",
+              letterNumber: "",
+              date: null,
+              document: null,
+            },
+          ]);
+          setEditorContent("");
+          setFilePriority("Normal");
+          setIsConfidential(false);
+          toast.success("Document uploaded successfully!");
+        } else {
+          throw new Error(response.data?.message || "Upload failed");
         }
+
+        return response.data;
       } catch (error) {
-        if (error.response?.status === 401) {
-          throw new Error("Session expired. Please login again.");
-        }
+        console.error("Upload error:", error);
+        toast.error(error.message || "Upload failed. Please try again.");
         throw error;
       }
     },
@@ -238,69 +364,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     }
   }, [isError, error]);
 
-  const handleSubmit = async () => {
-    if (!fileDetails) {
-      toast.error("File details are missing");
-      return;
-    }
-
-    const fileId = fileDetails?.data?.fileId || fileDetails.id;
-    if (!fileId) {
-      toast.error("File ID is missing");
-      return;
-    }
-
-    const filerecptId =
-      fileDetails?.data?.fileReceiptId ||
-      fileDetails.fileReceiptId ||
-      fileDetails.fileReceiptId;
-    if (!filerecptId) {
-      toast.error("File Receipt ID is missing");
-      return;
-    }
-
-    const data = {
-      fileId: fileId,
-      filerecptId: filerecptId,
-      filePriority,
-      isConfidential,
-      documents: rows.map((row) => ({
-        docSubject: row.subject || "",
-        letterType: row.type || "LETTER",
-        letterNumber: row.letterNumber || "",
-        letterDate: formatDateToString(row.date),
-        content: editorContent,
-      })),
-      uploadedDocuments: rows.map((row) => row.document).filter(Boolean),
-    };
-
-    try {
-      mutate(data, {
-        onSuccess: async (response) => {
-          console.log("API success:", response);
-          toast.success("Document uploaded successfully!");
-          setRows([
-            {
-              subject: "",
-              type: "LETTER",
-              letterNumber: "",
-              date: null,
-              document: null,
-            },
-          ]);
-          setEditorContent("");
-        },
-        onError: (error) => {
-          console.error("API error:", error);
-          toast.error(error.message || "Submission failed");
-        },
-      });
-    } catch (error) {
-      console.error("Submission error:", error);
-      toast.error(error.message || "Submission failed");
-    }
-  };
-
   const markActionMutation = useMutation({
     mutationFn: async (action) => {
       try {
@@ -313,7 +376,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
         const formData = new FormData();
         formData.append("dataObject", encryptedDataObject);
 
-        
         const response = await api.post(
           "/file/get-mark-up-or-mark-down",
           formData,
@@ -394,6 +456,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     triggerMarkAction(action);
     setIsModalOpen(true);
   };
+
   const approveFileMutation = useMutation({
     mutationFn: async (data) => {
       if (!fileDetails || !additionalDetails) {
@@ -402,19 +465,19 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       }
 
       const sendfilepayload = {
-        actionTaken: data.action, 
+        actionTaken: data.action,
         fileId: fileDetails.data.fileId,
         note: additionalDetails.data.note,
         filerecptId: fileDetails.data.fileReceiptId,
         notesheetId: additionalDetails?.data?.prevNoteId,
       };
       console.log("Payload before encryption:", sendfilepayload);
-      
+
       const encryptedDataObject = encryptPayload(sendfilepayload);
-  
+
       const formData = new FormData();
       formData.append("dataObject", encryptedDataObject);
-  
+
       const response = await api.post("/file/approve-file", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -432,11 +495,12 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       toast.error(error.message || "API call failed!");
     },
   });
-  
+
   const handleApprove = (action) => {
-    const data = { action };  
+    const data = { action };
     approveFileMutation.mutate(data);
   };
+
   const isFieldFilled = (row) => {
     return (
       row.subject ||
@@ -446,6 +510,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       row.document
     );
   };
+
   return (
     <Box
       sx={{ p: 3, maxWidth: 1200, margin: "auto", marginTop: "20px" }}
@@ -493,22 +558,35 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
                     </Grid>
 
                     <Grid item xs={2.4}>
-                      <FormControl fullWidth sx={{ height: "54px" }}>
-                        <InputLabel>Type</InputLabel>
-                        <Select
+                      <FormControl fullWidth>
+                        <TextField
+                          select
+                          label="Type"
                           value={row.type}
                           onChange={(e) =>
                             handleInputChange(index, "type", e.target.value)
                           }
-                          label="Type"
+                          sx={{ height: "54px" }}
+                          SelectProps={{
+                            displayEmpty: true,
+                            renderValue: (value) => {
+                              if (value === "") {
+                                return <em style={{ color: 'gray' }}>Select Letter Type</em>;
+                              }
+                              return value;
+                            }
+                          }}
                         >
+                          <MenuItem value="" disabled>
+                            <em>Select Letter Type</em>
+                          </MenuItem>
                           <MenuItem value="LETTER">LETTER</MenuItem>
                           <MenuItem value="DOCUMENT">DOCUMENT</MenuItem>
                           <MenuItem value="DRAWING">DRAWING</MenuItem>
                           <MenuItem value="MAP">MAP</MenuItem>
                           <MenuItem value="SKETCH">MAP</MenuItem>
                           <MenuItem value="OTHER">OTHER</MenuItem>
-                        </Select>
+                        </TextField>
                       </FormControl>
                     </Grid>
 

@@ -18,9 +18,6 @@ import GlobalStyleFont from "./Fonts/GlobalStyleFont";
 
 const LoginPage = React.lazy(() => import("./components/LoginPage/LoginPage"));
 const AdminPanel = React.lazy(() => import("./components/Admin/Admin"));
-const AllWriteNote = React.lazy(() =>
-  import("./components/FileSection/AllWriteNote")
-);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,14 +64,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminPanel />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/write-note"
-              element={
-                <ProtectedRoute>
-                  <AllWriteNote />
                 </ProtectedRoute>
               }
             />

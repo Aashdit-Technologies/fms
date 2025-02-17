@@ -16,7 +16,7 @@ import { toast } from "react-toastify";
 // import useAuthStore from "../../../store/Store";
 import { useMutation } from "@tanstack/react-query";
 
-const CreateDraftModal = ({ open, onClose, officeNames, organizations,allDetails,editMalady }) => {
+const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetails, editMalady }) => {
     
   const [data, setData] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -71,7 +71,102 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,allDetails
     setContents("");
   }, []);
 
-  
+  useEffect(() => {
+    if (editMalady && open) {
+      // Set form data
+      setFormData({
+        subject: editMalady.subject || "",
+        content: editMalady.content || "",
+        office: editMalady.office?.id || "",
+        tempType: editMalady.tempType || "",
+      });
+
+      // Set editor content
+      editorContentRef.current = editMalady.content || "";
+      setContents(editMalady.subject || "");
+      setShowForm(true);
+
+      // Set selected values for dropdowns
+      const newSelectedValues = {
+        organization: editMalady.organization ? {
+          value: editMalady.organization.id,
+          label: editMalady.organization.name
+        } : null,
+        company: editMalady.company ? {
+          value: editMalady.company.id,
+          label: editMalady.company.name
+        } : null,
+        office: editMalady.office ? {
+          value: editMalady.office.id,
+          label: editMalady.office.name
+        } : null,
+        department: editMalady.department ? {
+          value: editMalady.department.id,
+          label: editMalady.department.name
+        } : null,
+        designation: editMalady.designation ? {
+          value: editMalady.designation.id,
+          label: editMalady.designation.name
+        } : null,
+        authorities: editMalady.authorities ? {
+          value: editMalady.authorities.id,
+          label: editMalady.authorities.name
+        } : null
+      };
+      setSelectedValues(newSelectedValues);
+
+      // Fetch dependent data for dropdowns
+      if (editMalady.organization) {
+        fetchData.mutate({
+          endpoint: "/level/get-companies",
+          payload: { organizationId: editMalady.organization.id }
+        });
+      }
+      if (editMalady.company) {
+        fetchData.mutate({
+          endpoint: "/level/get-offices",
+          payload: {
+            organizationId: editMalady.organization.id,
+            companyId: editMalady.company.id
+          }
+        });
+      }
+      if (editMalady.office) {
+        fetchData.mutate({
+          endpoint: "/level/get-departments",
+          payload: {
+            organizationId: editMalady.organization.id,
+            companyId: editMalady.company.id,
+            officeId: editMalady.office.id
+          }
+        });
+      }
+      if (editMalady.department) {
+        fetchData.mutate({
+          endpoint: "/level/get-designations",
+          payload: {
+            organizationId: editMalady.organization.id,
+            companyId: editMalady.company.id,
+            officeId: editMalady.office.id,
+            departmentId: editMalady.department.id
+          }
+        });
+      }
+      if (editMalady.designation) {
+        fetchData.mutate({
+          endpoint: "/file/get-send-to-list",
+          payload: {
+            organizationId: editMalady.organization.id,
+            companyId: editMalady.company.id,
+            officeId: editMalady.office.id,
+            departmentId: editMalady.department.id,
+            designationId: editMalady.designation.id
+          }
+        });
+      }
+    }
+  }, [editMalady, open]);
+
   const resetForm = () => {
     setSelectedValues({
       organization: null,
@@ -240,27 +335,45 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations,allDetails
     },
   });
   
-  const handleSave = () => {
-    setFormData((prev) => ({
-      ...prev,
-      content: editorContentRef.current,
-    }));
-  
-    console.log("Form Data:", {
-      ...formData,
-      content: editorContentRef.current,
-    });
-    if (
-      !selectedValues.organization &&
-      !selectedValues.company &&
-      !selectedValues.office &&
-      !selectedValues.department &&
-      !selectedValues.designation
-    ) {
-      toast.error("Please select at least one field before searching!");
-      return;
+  const handleSave = async () => {
+    const payload = {
+      correspondenceId: editMalady?.id || null,
+      fileId: allDetails?.fileId,
+      fileReceiptId: allDetails?.fileReceiptId,
+      subject: contents,
+      approverEmpRoleMapId: selectedValues.authorities?.value || null,
+      letterContent: editorContentRef.current,
+      letterNo: null,
+      correspondenceDate: null,
+      displayType: null,
+      currEmpDeptMapId: null,
+      employeeDeptMapVo: {
+        organizationId: selectedValues.organization?.value || 0,
+        companyId: selectedValues.company?.value || 0,
+        officeId: selectedValues.office?.value || 0,
+        departmentId: selectedValues.department?.value || 0,
+        designationId: selectedValues.designation?.value || 0,
+      },
+    };
+
+    try {
+      const encryptedPayload = encryptPayload(payload);
+      const endpoint = editMalady ? "/file/create-draft-in-file" : "/file/create-draft-in-file";
+      
+      const response = await api.post(endpoint, {
+        dataObject: encryptedPayload,
+      });
+
+      if (response.data.outcome) {
+        toast.success(editMalady ? "Draft updated successfully!" : "Draft created successfully!");
+        onClose();
+      } else {
+        toast.error(response.data.message || "Operation failed");
+      }
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      toast.error("Failed to save draft");
     }
-    searchMutation.mutate();
   };
 
   const officeOptions = Array.isArray(data)

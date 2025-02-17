@@ -79,9 +79,29 @@ const tableCustomStyles = {
   },
 };
 
-const handleDownload = (filePath, fileName) => {
-  // Implement the download functionality here
-  console.log(`Downloading ${fileName} from ${filePath}`);
+const handleDownload = async (enclosureId) => {
+  try {
+    const response = await api.post(
+      "/file/download-file-correspondence-enclosure",
+      { dataObject: encryptPayload({ enclosureId }) },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      }
+    );
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `enclosure_${enclosureId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    toast.error("Download failed. Please try again.");
+    console.error("Download error:", error);
+  }
 };
 
 const columns = [
@@ -177,6 +197,17 @@ export const UploadModal = ({
   ]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const refreshEnclosureData = useMutation({
+    mutationFn: async () => {
+      const response = await api.post("/file/get-file-correspondence-enclosures",
+        { dataObject: encryptPayload({ correspondenceId: corrId }) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
+    }
+  });
 
   const mutation = useMutation({
     mutationFn: async (data) => {
@@ -202,7 +233,7 @@ export const UploadModal = ({
         data.enclosureDocuments.forEach((file) =>
           formData.append("enclosureDocuments", file)
         );
-        await api.post(
+        const response = await api.post(
           "/file/upload-file-correspondence-enclosures",
           formData,
           {
@@ -212,21 +243,41 @@ export const UploadModal = ({
             },
           }
         );
+        
+        // Only refresh data, don't reset form
+        await refreshEnclosureData.mutateAsync();
         toast.success("Upload successful!");
       } catch (error) {
         toast.error("Upload failed. Please try again.");
+        console.error("Upload error:", error);
       }
     },
   });
 
   const handleSubmit = () => {
-    if (
-      rows.length === 0 ||
-      rows.some((row) => !row.type || !row.name || !row.file)
-    ) {
-      toast.error("All fields are mandatory!");
+    console.log("Rows on submit:", rows);
+    
+    // Check if there are any rows
+    if (rows.length === 0) {
+      toast.error("Please add at least one file!");
       return;
     }
+
+    // Validate all required fields
+    const invalidRows = rows.filter(row => !row.type || !row.name || !row.file);
+    if (invalidRows.length > 0) {
+      toast.error("Please fill all required fields (Type, Name, and File) for each row!");
+      return;
+    }
+
+    // Check if files are selected and are PDFs
+    const invalidFiles = rows.filter(row => !row.file || row.file.type !== "application/pdf");
+    if (invalidFiles.length > 0) {
+      toast.error("Please ensure all selected files are PDFs!");
+      return;
+    }
+
+    console.log("Submitting files:", rows.map((row) => row.file));
     mutation.mutate({ enclosureDocuments: rows.map((row) => row.file) });
   };
 
@@ -250,19 +301,37 @@ export const UploadModal = ({
     );
     const handleFileChange = (index, event) => {
       const file = event.target.files[0];
-      console.log(file);
+      console.log("Selected file:", file);
       
-      if (file && file.type !== "application/pdf") {
-        toast.error("Only PDF files are allowed.");
+      if (!file) {
+        toast.error("No file selected");
         return;
       }
-      if (file) {
-        handleChange(index, "file", file);
-        handleChange(index, "fileName", file.name);
-        toast.success(`File uploaded: ${file.name}`);
+
+      if (file.type !== "application/pdf") {
+        toast.error("Only PDF files are allowed.");
+        event.target.value = ''; // Clear the file input
+        return;
       }
+
+      setRows(rows.map((row, i) => {
+        if (i === index) {
+          return {
+            ...row,
+            file: file,
+            fileName: file.name
+          };
+        }
+        return row;
+      }));
+      
+      toast.success(`File selected: ${file.name}`);
     };
     
+
+  useEffect(() => {
+    refreshEnclosureData.mutate();
+  }, [refreshTrigger]);
 
   return (
     <Modal
@@ -328,7 +397,7 @@ export const UploadModal = ({
           }}
         >
           <Table sx={{ width: "100%" }}>
-            <TableHead sx={{ position: "sticky", top: 0, bgcolor: "#0A3D62" , zIndex: 1 }}>
+            <TableHead sx={{position: "sticky", top: 0, bgcolor: "#0A3D62" , zIndex: 1 }}>
               <TableRow>
                 <TableCell
                   style={{
@@ -481,10 +550,13 @@ export const UploadModal = ({
                         variant="contained"
                         color="primary"
                         startIcon={<FaDownload style={{margin: "0 !important"}}/>}
+                        onClick={() => handleDownload(enc.enclosureId)}
                         sx={{
                           fontWeight: "light",
                         }}
-                      ></Button>
+                      >
+                        Download
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
