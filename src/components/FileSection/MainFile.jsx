@@ -1,15 +1,15 @@
 import { useLocation } from 'react-router-dom';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Ckeditor from './Ckeditor'
 import Correspondence from './Correspondence'
 import FileDetails from './FileDetails'
 import NoteSheet from './NoteSheet'
-// import ScheduledMeetingDetails from './ScheduledMeetingDetails'
 
 
 
 const MainFile = () => {
   const location = useLocation();
+  const [sharedEditorContent, setSharedEditorContent] = useState('');
   
   const locationState = useMemo(() => {
     const state = location.state || {};
@@ -20,14 +20,30 @@ const MainFile = () => {
       noteSheets: state.noteSheets
     };
   }, [location.state]);
+
+  // Initialize content from additionalDetails if available
+  useEffect(() => {
+    if (locationState.additionalDetails?.data?.note) {
+      setSharedEditorContent(locationState.additionalDetails.data.note);
+    }
+  }, [locationState.additionalDetails]);
+
+  const handleEditorContentChange = (newContent) => {
+    console.log('Editor content changed:', newContent);
+    setSharedEditorContent(newContent);
+  };
   
   return (
     <>
         <FileDetails fileDetails={locationState.fileDetails} />
-        {/* <ScheduledMeetingDetails /> */}
           <div className="d-flex justify-content-between gap-2">
             <div className="main_note w-50">
-              <NoteSheet noteSheets={locationState.noteSheets} additionalDetails={locationState.additionalDetails}/>
+              <NoteSheet 
+                noteSheets={locationState.noteSheets} 
+                additionalDetails={locationState.additionalDetails}
+                content={sharedEditorContent}
+                onContentChange={handleEditorContentChange}
+              />
             </div>
             <div className="main_correspondence w-50">
               <Correspondence 
@@ -49,7 +65,12 @@ const MainFile = () => {
               />
             </div>
           </div>
-        <Ckeditor additionalDetails={locationState.additionalDetails} fileDetails={locationState.fileDetails}/>
+        <Ckeditor 
+          additionalDetails={locationState.additionalDetails} 
+          fileDetails={locationState.fileDetails}
+          content={sharedEditorContent}
+          onContentChange={handleEditorContentChange}
+        />
         
     </>
   )

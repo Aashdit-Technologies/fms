@@ -264,11 +264,13 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     }
 
     const documents = rows.map((row) => ({
-      subject: row.subject,
-      type: row.type,
+      docSubject: row.subject,
+      letterType: row.type,
       letterNumber: row.type === "LETTER" ? row.letterNumber : null,
-      date: row.date,
+      letterDate: row.date,
     }));
+    console.log(documents);
+    
 
     const uploadedDocuments = rows.map((row) => row.document).filter(Boolean);
 

@@ -16,6 +16,7 @@ import {
   IconButton,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import {toast } from "react-toastify";
 const Enclosures = ({ open, onClose, enclosures = [] }) => {
 
   const handleDownload = (enclosure) => {

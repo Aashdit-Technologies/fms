@@ -90,10 +90,29 @@ const customStyles = {
     },
   },
 };
-const fetchOffices = async () => {
-  const response = await api.get("file/letter-content");
 
-  return response.data;
+// Fetch letter content with better error handling
+const fetchOffices = async () => {
+  try {
+    const token = sessionStorage.getItem("token");
+    const response = await api.get("file/letter-content", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    console.log('Letter Content API Response:', response.data);
+    
+    if (!response.data?.data) {
+      console.error('Invalid letter content response:', response.data);
+      throw new Error('Invalid letter content response');
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching letter content:', error);
+    throw error;
+  }
 };
 
 const Correspondence = ({
@@ -121,16 +140,48 @@ const Correspondence = ({
   const [organizationsData, setOrganizationsData] = useState([]);
   const [editMalady, setEditMalady] = useState(null);
   
+  // Configure letter content query
   const {
     data: offices,
     isLoading,
     refetch,
+    error
   } = useQuery({
     queryKey: ["offices"],
     queryFn: fetchOffices,
     staleTime: 60000,
     cacheTime: 300000,
+    enabled: true,
+    refetchOnWindowFocus: false,
+    retry: 2,
+    onSuccess: (data) => {
+      if (data?.data) {
+        console.log('Setting office names:', data);
+        setOfficeNames(data);
+      }
+    },
+    onError: (error) => {
+      console.error('Error loading letter content:', error);
+      toast.error('Failed to load letter templates');
+    }
   });
+
+  // Fetch letter content on mount
+  useEffect(() => {
+    refetch().then(response => {
+      console.log('Initial letter content fetch:', response);
+    }).catch(error => {
+      console.error('Error in initial fetch:', error);
+    });
+  }, []);
+
+  // Update officeNames when offices data changes
+  useEffect(() => {
+    if (offices?.data) {
+      console.log('Updating office names from query data:', offices);
+      setOfficeNames(offices);
+    }
+  }, [offices]);
 
   const fetchHistoryData = async (draftNo, token) => {
     const encryptedData = encryptPayload({ draftNo: draftNo });
@@ -147,8 +198,10 @@ const Correspondence = ({
 
     return response.data;
   };
+
   const fetchEnclosuresData = async (corrId) => {
     const encryptedData = encryptPayload({ corrId: corrId });
+  
     const response = await api.post(
       "file/get-file-correspondence-enclosures",
       { dataObject: encryptedData },
@@ -158,20 +211,22 @@ const Correspondence = ({
         },
       }
     );
+  
     console.log("Enclosures Data:", response.data);
     return response.data;
   };
-  const { mutate: fetchEnclosures, isLoading: isLoadingEnclosures } =
-    useMutation({
-      mutationFn: fetchEnclosuresData,
-      onSuccess: (data) => {
-        setUploadModalOpen(true);
-        setEnclosuresData(data);
-      },
-      onError: (error) => {
-        console.error("Error fetching enclosures", error);
-      },
-    });
+
+  const { mutate: fetchEnclosures, isLoading: isLoadingEnclosures } = useMutation({
+    mutationFn: fetchEnclosuresData,
+    onSuccess: (data) => {
+      setEnclosuresData(data);
+    },
+    onError: (error) => {
+      console.error("Error fetching enclosures", error);
+      toast.error("Failed to fetch enclosures");
+    },
+  });
+
   const fetchUploadData = async () => {
     const response = await api.get("common/enclousuretype-list", {
       headers: {
@@ -181,6 +236,7 @@ const Correspondence = ({
     console.log("Upload Data:", response.data);
     return response.data;
   };
+
   const { mutate: fetchUpload, isLoading: isLoadingUpload } = useMutation({
     mutationFn: fetchUploadData,
     onSuccess: (data) => {
@@ -204,20 +260,26 @@ const Correspondence = ({
 
   const handleUploadClick = (row) => {
     setSelectedCorrId(row.corrId);
+  
     fetchEnclosures(row.corrId, {
       onSuccess: () => {
         fetchUpload(row.corrId, {
           onSuccess: () => {
             setUploadModalOpen(true);
-            // setRowss(row)
           },
         });
       },
+      onError: (error) => {
+        console.error('Error fetching enclosures on button click', error);
+        toast.error("Failed to fetch enclosures");
+      },
     });
   };
+  
   const handleHistoryClick = (row) => {
     fetchHistory(row.draftNo);
   };
+
   const download = async (row) => {
     if (!row || !row.correspondenceName || !row.correspondencePath) {
       console.error("Invalid row data for download");
@@ -238,10 +300,9 @@ const Correspondence = ({
             Authorization: `Bearer ${token}`,
           },
           responseType: 'blob'
-        },
-        
-        
+        }
       );
+
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -265,17 +326,24 @@ const Correspondence = ({
 
   const handleCreateDraft = async () => {
     try {
-      // Fetch office names
-      await refetch();
-      if (offices?.data) {
-        setOfficeNames(offices.data);
+      // Ensure we have the latest data
+      const [officesResponse, orgResponse] = await Promise.all([
+        refetch(),
+        fetchOrganizations.mutateAsync()
+      ]);
+
+      if (officesResponse.data?.data) {
+        console.log('Setting office names from create:', officesResponse.data);
+        setOfficeNames(officesResponse.data);
       }
 
-      // Fetch organizations
-      const orgResponse = await fetchOrganizations.mutateAsync();
       if (orgResponse?.data) {
         setOrganizationsData(orgResponse.data);
       }
+
+      // Add debug logs
+      console.log('Offices Data:', officesResponse.data);
+      console.log('Organizations Data:', orgResponse?.data);
       
       setModalOpen(true);
     } catch (error) {
@@ -286,40 +354,44 @@ const Correspondence = ({
 
   const handleEdit = async (row) => {
     try {
-      // Fetch required data before opening edit modal
-      await refetch();
-      if (offices?.data) {
-        setOfficeNames(offices.data);
+      // First fetch the draft data
+      const draftResponse = await EditDraftMutation.mutateAsync({
+        corrId: row.corrId,
+        fileId: fileDetails.data.fileId,
+        fileReceiptId: fileDetails.data.fileReceiptId
+      });
+
+      // Then fetch required dropdown data in parallel
+      const [officesResponse, orgResponse] = await Promise.all([
+        refetch(),
+        fetchOrganizations.mutateAsync()
+      ]);
+
+      // Set office names
+      if (officesResponse.data) {
+        console.log('Setting office names from edit:', officesResponse.data);
+        setOfficeNames(officesResponse.data);
       }
 
-      // Fetch organizations
-      const orgResponse = await fetchOrganizations.mutateAsync();
+      // Set organizations
       if (orgResponse?.data) {
         setOrganizationsData(orgResponse.data);
       }
 
-      // Ensure we have all required data before setting edit state
-      if (row) {
-        const editData = {
-          ...row,
-          correspondenceId: row.correspondenceId || null,
-          currEmpDeptMapId: row.currEmpDeptMapId || null,
-          employeeDeptMapVo: row.employeeDeptMapVo || {},
-          letterContent: row.letterContent || "",
-          subject: row.subject || "",
-          organizationName: row.organizationName || "",
-          companyName: row.companyName || "",
-          officeName: row.officeName || "",
-          departmentName: row.departmentName || "",
-          designationName: row.designationName || "",
-          approverName: row.approverName || "",
-        };
-        setEditMalady(editData);
+      // Add debug logs
+      console.log('Draft Data:', draftResponse.data);
+      console.log('Offices Data:', officesResponse.data);
+      console.log('Organizations Data:', orgResponse?.data);
+
+      // Only open modal if we have all required data
+      if (draftResponse.data && officesResponse.data && orgResponse?.data) {
         setModalOpen(true);
+      } else {
+        throw new Error("Failed to load all required data");
       }
     } catch (error) {
       console.error("Error preparing edit mode:", error);
-      toast.error("Failed to load required data for editing");
+      toast.error(error.message || "Failed to load draft data for editing");
     }
   };
 
@@ -344,35 +416,36 @@ const Correspondence = ({
 
   const EditDraftMutation = useMutation({
     mutationFn: async (data) => {
-      try {
-        const encryptedDataObject = encryptPayload({
-          fileId: fileDetails.data.fileId,
-          correspondenceId: data.corrId,
-          fileReceiptId: fileDetails.data.fileReceiptId,
-        });
-  
-        const response = await api.post("/file/edit-draft-in-file", 
-          { dataObject: encryptedDataObject },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        
-        if (response.data.outcome) {
-          setEditMalady(response.data.data);
-        } else {
-          throw new Error(response.data.message || "Failed to fetch draft data");
+      const encryptedDataObject = encryptPayload({
+        fileId: data.fileId,
+        correspondenceId: data.corrId,
+        fileReceiptId: data.fileReceiptId,
+      });
+
+      const response = await api.post("/file/edit-draft-in-file", 
+        { dataObject: encryptedDataObject },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-        return response.data;
-      } catch (error) {
-        if (error.response?.status === 401) {
-          throw new Error("Session expired. Please login again.");
-        }
-        throw error;
+      );
+      
+      if (response.data.outcome) {
+        setEditMalady(response.data.data);
+      } else {
+        throw new Error(response.data.message || "Failed to fetch draft data");
       }
+      return response.data;
     },
+    onError: (error) => {
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+      } else {
+        toast.error(error.message || "Failed to fetch draft data");
+      }
+      throw error;
+    }
   });
 
   const handleEditDraft = async (data) => {
@@ -425,7 +498,6 @@ const Correspondence = ({
     },
     {
       name: "Subject",
-      // selector: (row) => row.subject,
       selector: (row) => (
         <Tooltip title={row.subject} arrow >
           <Typography variant="body2" style={{ width: '80px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -435,18 +507,10 @@ const Correspondence = ({
       ),
       sortable: true,
       grow: 2,
-      
     },
-    // {
-    //   name: "Added By",
-    //   selector: (row) => row.addedBy,
-    //   sortable: true,
-    //   width: "180px",
-    // },
     {
       name: "Added Date",
       selector: (row) => row.addedDate,
-      
       sortable: true,
       width: "140px",
     },

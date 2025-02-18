@@ -9,12 +9,13 @@ import {toast } from "react-toastify";
 import { FaToggleOn, FaToggleOff } from "react-icons/fa";
 import { Tabs, Tab, Modal} from "react-bootstrap";
 import { FaPencilAlt } from "react-icons/fa";
-import { MdFileUpload,MdPushPin } from "react-icons/md";
+import { MdFileUpload} from "react-icons/md";
 import { BsSend } from "react-icons/bs";
 import "react-datepicker/dist/react-datepicker.css";
 import GetAppIcon from '@mui/icons-material/GetApp';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import DownloadIcon from '@mui/icons-material/Download';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import { 
   TextField, 
   Button, 
@@ -34,7 +35,8 @@ import {
   FormControl,
   Select,
   Chip,
-  InputAdornment
+  InputAdornment,
+ 
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -150,8 +152,9 @@ const customStyles = {
 };
 
 const DiarySection = () => {
+  const [errorsdep, setErrorsdep] = useState([]);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [openSection, setOpenSection] = useState(null);
+  const [openSection, setOpenSection] = useState("LettersList");
   const [showTable, setShowTable] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isSearchDisabled, setIsSearchDisabled] = useState(false);
@@ -178,7 +181,17 @@ const DiarySection = () => {
     fax: "",
     district: "",
   });
-
+  const validateRows = () => {
+    const newErrors = rows.map((row) => {
+      const error = {};
+      if (!row.departmentName) error.departmentName = "Department Name is required";
+      if (!row.addresseeDesignation) error.addresseeDesignation = "Addressee Designation is required";
+      if (!row.addressee) error.addressee = "Addressee is required";
+      return error;
+    });
+    setErrorsdep(newErrors);
+    return newErrors.every((error) => Object.keys(error).length === 0);
+  };
   const [formData, setFormData] = useState({
     senderAddbookIdHidden: "",
     letterNumber: "",
@@ -190,7 +203,8 @@ const DiarySection = () => {
     letterType: "",
     uploadedLetter:null,
     documentMetaId: null, 
-
+    fileName:"",
+    filePath:"",
   });
 
   const [rows, setRows] = useState([
@@ -210,12 +224,16 @@ const DiarySection = () => {
       enclosureType: "",
       enclosureName: "",
       file: null,
+      fileName:"",
+      filePath:"",
     },
   ]);
 
   const [enclosureRowstable, setEnclosureRowstable] = useState([
     { enclosureType: "", enclosureName: "", file: null },
   ]);
+
+
 
   const [records, setRecords] = useState([]);
   const [filteredRecords, setFilteredRecords] = useState([]);
@@ -295,38 +313,46 @@ const DiarySection = () => {
     {
       name: "SI NO",
       selector: (row, index) => index + 1,
-      width: "70px",
+      width: "100px",
       sortable: true,
     },
     {
       name: "Sender Details",
       selector: (row) => row?.sender || "N/A",
       sortable: true,
-      
+      width: "250px",
     },
     {
-      name: "Letter Number / Date",
+      name: "Letter Number/Date",
       cell: (row) => (
         <div>
-          {`${row?.lnumber || "N/A"} / ${row?.senderDate || "N/A"}`}
+          {`${row?.lnumber || "N/A"} / ${row?.senderDate || "N/A"}`} <br/>
           {row?.isUrget && (
-            <Chip
-              label="Urgent"
-              size="small"
-              color="error"
-              sx={{
-                bgcolor: '#d32f2f',
-                color: 'white',
-                '& .MuiChip-label': {
-                  fontWeight: 500,
-                },
-              }}
-            />
+           <Box sx={{ display: "flex", justifyContent: "center", marginTop: 1 }}>
+           <Chip
+             label="Urgent"
+             size="small"
+             color="error"
+             sx={{
+               bgcolor: "#d32f2f",
+               color: "white",
+               padding: "5px 10px", 
+               fontSize: "10px", 
+               height: "23px", 
+               "& .MuiChip-label": {
+                 fontWeight: 500,
+                 padding: "0  8px", 
+               },
+             }}
+           />
+         </Box>
+         
+          
           )}
         </div>
       ),
       sortable: true,
-    
+      width: "200px",
     },
     {
       name: "Addressee",
@@ -369,55 +395,59 @@ const DiarySection = () => {
         />
       ),
       sortable: true,
-     
+      
     },
     {
       name: "Remarks",
       selector: (row) => row?.remarks || "N/A",
       wrap: true,
-    
+      width: "150px",
       sortable: true,
     },
    
     {
       name: "Attach Enclosure",
       cell: (row) => (
-        <div className="d-flex align-items-center gap-2">
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between", 
+            gap: 2,
+            width: "120px", 
+          }}
+        >
+          {/* Upload Icon */}
           <IconButton
             onClick={() => handleEncloserIconClick(row)}
-            // sx={{ 
-            //   bgcolor: '#ffc107',
-            //   '&:hover': {
-            //     bgcolor: '#e0a800',
-            //   },
-            // }}
-
-            sx={{ 
-              color: '#ffc107',
-              bgcolor: 'rgba(32, 119, 133, 0.1)',
-              '&:hover': {
-                bgcolor: 'rgba(32, 119, 133, 0.2)',
-                transform: 'scale(1.1)',
+            sx={{
+              color: "#ffc107",
+              bgcolor: "rgba(32, 119, 133, 0.1)",
+              "&:hover": {
+                bgcolor: "rgba(32, 119, 133, 0.2)",
+                transform: "scale(1.1)",
               },
-              transition: 'all 0.2s ease-in-out',
-              padding: '8px',
-              borderRadius: '8px',
+              transition: "all 0.2s ease-in-out",
+              padding: "6px",
+              borderRadius: "6px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              width: "36px", 
+              height: "36px",
             }}
           >
-            <MdFileUpload 
-              // style={{
-              //   color: '#fff',
-              //   fontSize: '20px'
-              // }}
-            />
+            <MdFileUpload size={20} />
           </IconButton>
-          
+    
           {row.enclosureUploaded && (
-            <AttachFileIcon style={{ color: '#4caf50', fontSize: '20px' }} />
+            <AttachFileIcon sx={{ color: "#4caf50", fontSize: 20, width: "36px", textAlign: "center" }} />
           )}
-        </div>
+        </Box>
       ),
     },
+    
+    
     
     {
       name: "Action",
@@ -482,20 +512,26 @@ const DiarySection = () => {
       name: "Letter Number/Date",
       cell: (row) => (
         <div>
-          {`${row?.lnumber || "N/A"} / ${row?.senderDate || "N/A"}`}
+          {`${row?.lnumber || "N/A"} / ${row?.senderDate || "N/A"}`}  <br/>
           {row?.isUrget && (
+             <Box sx={{ display: "flex", justifyContent: "center", marginTop: 1 }}>
             <Chip
               label="Urgent"
               size="small"
               color="error"
               sx={{
-                bgcolor: '#d32f2f',
-                color: 'white',
-                '& .MuiChip-label': {
+                bgcolor: "#d32f2f",
+                color: "white",
+                padding: "5px 10px", 
+                fontSize: "10px", 
+                height: "23px", 
+                "& .MuiChip-label": {
                   fontWeight: 500,
+                  padding: "0  8px", 
                 },
               }}
             />
+            </Box>
           )}
         </div>
       ),
@@ -579,6 +615,22 @@ const DiarySection = () => {
     setOpenSection(null); 
   };
 
+ 
+  const fileName = newLetterDataEncloser?.[0]?.fileName;
+   const filePath = newLetterDataEncloser?.[0]?.filePath;
+//  console.log("file name checking pdf",fileName );
+//  console.log("file path checking pdf",filePath);
+
+   const fileNames = selectedLetterDetails?.fileName;
+   const filePaths= selectedLetterDetails?.filePath;
+   const letterViews= selectedLetterDetails?.base64Path;
+  //  console.log("file names checking pdf",fileNames);
+  //  console.log("file paths checking pdf",filePaths);
+  //  console.log("file base64 checking pdf",letterViews);
+  
+
+   
+
   const validateField = (name, value) => {
     switch (name) {
       case "groupName":
@@ -651,7 +703,7 @@ const DiarySection = () => {
         }
       );
 
-      toast.success("Data saved successfully!");
+      toast.success(response.data.message);
       setSenderDetails({
         groupName: "",
         name: "",
@@ -795,16 +847,30 @@ const handleremarksChange = (e) => {
     return options;
   };
 
+  // const renderOption = (props, option) => {
+  //   if (option === 'add_new') {
+  //     return (
+  //       <li {...props} style={{ fontWeight: 'bold', color: '#207785' }}>
+  //         <FaPlus style={{ marginRight: '8px' }} /> Add New Sender
+  //       </li>
+  //     );
+  //   }
+  //   return <li {...props}>{option}</li>;
+  // };
   const renderOption = (props, option) => {
+    const { key, ...restProps } = props; 
+
     if (option === 'add_new') {
       return (
-        <li {...props} style={{ fontWeight: 'bold', color: '#207785' }}>
+        <li key={key} {...restProps} style={{ fontWeight: 'bold', color: '#207785' }}>
           <FaPlus style={{ marginRight: '8px' }} /> Add New Sender
         </li>
       );
     }
-    return <li {...props}>{option}</li>;
-  };
+    
+    return <li key={key} {...restProps}>{option}</li>;
+};
+
 
   useEffect(() => {
     if (!isSearchDisabled && searchTerm) {
@@ -957,6 +1023,7 @@ const handleremarksChange = (e) => {
         encTypeId: row.enclosureType || null,
         encName: row.enclosureName || null,
         enclosureId: row.enclosureId || null,
+       
       }));
 
       const payload = {
@@ -1000,10 +1067,10 @@ const handleremarksChange = (e) => {
       );
 
       if (response.status === 200) {
-        toast.success("Form saved successfully!", { autoClose: 3000 });
+        toast.success("Form have been saved successfully", { autoClose: 3000 });
         await Promise.all([NewLetter(), sentLetter()]);
          
-         setOpenSection("LettersList");
+        setOpenSection("LettersList");
         setFormData({
           senderAddbookIdHidden: "",
           letterNumber: "",
@@ -1074,9 +1141,31 @@ const handleremarksChange = (e) => {
       toast.warn("Please fill all required fields.", { autoClose: 3000 });
       return;
     }
-   
+    
+  const incompleteRows = rows.some(row => !row.departmentName || !row.addresseeDesignation || !row.addressee);
+  if (incompleteRows) {
+    toast.warn("Please fill all required fields in each row before saving.");
+    return;
+  }
+  if (!formData.uploadedLetter) {
+    toast.warn("Please upload a letter before saving.");
+    return;
+  }
+
+  if (showTable) {
+    for (const row of enclosureRows) {
+      if (!row.enclosureType || !row.enclosureName || !row.file) {
+        toast.warn("Please fill all required fields before saving.");
+        return;
+      }
+    }
+  }
+
+  
+
     saveFormData(savensendValue);
   };
+
 
   // NewLetter
   const NewLetter = async () => {
@@ -1175,6 +1264,12 @@ const handleremarksChange = (e) => {
   };
 
   const handleSaveEnclosures = async () => {
+    for (const row of enclosureRowstable) {
+      if (!row.enclosureType || !row.enclosureName || !row.file) {
+        toast.warn("Please fill all required fields before saving.");
+        return;
+      }
+    }
     try {
 
       const enclosureData = enclosureRowstable.map((row, index) => ({
@@ -1210,7 +1305,7 @@ const handleremarksChange = (e) => {
       );
   
       if (response.status === 200) {
-        toast.success("Enclosures uploaded successfully!");
+        toast.success(response.data.data);
         const resetRows = enclosureRowstable.map((row) => ({
         enclosureType: "",
         enclosureName: "",
@@ -1218,8 +1313,8 @@ const handleremarksChange = (e) => {
         hasEnclosure: !!row.file
       }));
 
-      setEnclosureRowstable(resetRows); // Reset the table rows
-      setFormData({}); // Reset form data
+      setEnclosureRowstable(resetRows);
+      setFormData({}); 
       
         
         if (selectedRow) {
@@ -1324,150 +1419,6 @@ const handleSendButtonClick = async (event) => {
   }
 };
  
-// const handleEditButtonClick = async (row) => {
-//   if (!row || !row.documentMetaDataId) {
-//     console.error("Invalid row data: ", row);
-//     return;
-//   }
-
-//   const payload = {value: row.documentMetaDataId.toString()};
-//   console.log("edit pay load ",payload)
-//   try {
-//     const response = await api.post(
-//       "diary-section/get-data-for-edit-letter",
-//       { dataObject: encryptPayload(payload) }
-//     );
-
-  
-
-//     if (response.status === 200 && response.data.outcome) {
-//       const letterData = response.data.data;
-//       const editedList = letterData.EditedList[0];
-        
-//       console.log("Edit Letter Data:", letterData);
-//       console.log("Edit Letter :", editedList);
-
-//       // Extract sender details
-//       const senderAddressBook = editedList.sender_addressbook 
-//         ? editedList.sender_addressbook.trim().replace(/^"|"$/g, '')  
-//         : "";
-
-//       const senderParts = senderAddressBook.split("||");
-//       const senderId = senderParts[0] || "";
-//       const senderGroupName = senderParts[1] || "";
-//       const senderName = senderParts[2] || "";
-//       const senderDistrict = senderParts[3] || "";
-
-//       setFormData({
-//         ...formData,
-//         senderAddbookIdHidden: senderId,
-//         letterNumber: editedList.lnumber || "",
-//         senderDate: editedList.senderdate 
-//           ? editedList.senderdate.split('/').reverse().join('-') 
-//           : null,
-//         subject: editedList.subject || "",
-//         remarks: editedList.remarks || "",
-//         isConfidential: editedList.confi || false,
-//         isUrgent: editedList.urgent || false,
-//         letterType: editedList.docname || "",
-//         uploadedLetter:editedList.docname || "",
-//         addEnclosureChecked: editedList.enclosurelst?.length > 0, 
-//         documentMetaId: row.documentMetaDataId,
-//       });
-
-//       setSenderDetails({
-//         groupName: senderGroupName,
-//         name: senderName,
-//         address: editedList.addresee?.address || "",
-//         mobile: editedList.addresee?.mobile || "",
-//         email: editedList.addresee?.email || "",
-//         fax: editedList.addresee?.fax || "",
-//         district: senderDistrict
-//       });
-
-//       setSearchTerm(senderName);
-//       setIsSearchDisabled(true);
-
-//       // **Populate Department Data from DocumentRecipient**
-//       if (editedList.DocumentRecipient && editedList.DocumentRecipient.length > 0) {
-//         const formattedDepartmentList = editedList.DocumentRecipient.map(recipient => {
-//           // console.log("Processing Recipient: ", recipient);
-
-//           const departmentId = recipient.Department?.departmentId?.toString() || "";
-//           const designationId = recipient.Designation?.id?.toString() || "";
-          
-//           let addressee = "";
-//           if (recipient.Employee) {
-//             addressee = recipient.Employee.employeeId 
-//               ? `${recipient.Employee.firstName || ""} ${recipient.Employee.lastName || ""}`.trim()
-//               : "";
-//           }
-
-//           // console.log("Department:", departmentId, "Designation:", designationId, "Addressee:", addressee);
-
-//           return {
-//             departmentName: departmentId,
-//             addresseeDesignation: designationId,
-//             addressee: addressee || "", 
-//             memoNumber: recipient.MemoNo || "",
-//             addressList: []
-//           };
-//         });
-      
-      
-//         setRows(formattedDepartmentList);
-//       } else {
-//         setRows([{ departmentName: "", addresseeDesignation: "", addressee: "", memoNumber: "", addressList: [] }]);
-//       }
-      
-
-//       // **Handle Enclosures**
-//       const hasEnclosures = editedList.enclosurelst && editedList.enclosurelst.length > 0;
-//       setShowTable(hasEnclosures);
-      
-//       if (hasEnclosures) {
-        
-//         const formattedEnclosureList = editedList.enclosurelst.map(enc => ({
-          
-//           enclosureType: enc.enclosuretypeid?.toString() || "",
-//           enclosureName: enc.enclosureName || "",
-//           file: enc.docname || null, 
-//         }));
-//         setEnclosureRows(formattedEnclosureList);
-//         setIsUploadOpen(true);
-//       } else {
-//         setEnclosureRows([{ enclosureType: "", enclosureName: "", file: null }]);
-//       }
-      
-//       setErrors({
-//         groupName: "",
-//         name: "",
-//         address: "",
-//         mobile: "",
-//         email: "",
-//         fax: "",
-//         district: ""
-//       });
-
-//       if (!isUploadOpen) {
-//         toggleUploadAccordion();
-//       }
-
-//       // Scroll to form after data loads
-//       const formElement = document.getElementById("letterForm");
-//       if (formElement) {
-//         formElement.scrollIntoView({ behavior: "smooth" });
-//       }
-
-//       toast.success("Letter data loaded successfully");
-//     } else {
-//       toast.error(response.data.message || "Failed to fetch letter data");
-//     }
-//   } catch (error) {
-//     console.error("Error fetching data: ", error);
-//     toast.error("Failed to fetch letter data. Please try again.");
-//   }
-// };
 
 const handleEditButtonClick = async (row) => {
   if (!row || !row.documentMetaDataId) {
@@ -1514,9 +1465,11 @@ const handleEditButtonClick = async (row) => {
         isConfidential: editedList.confi || false,
         isUrgent: editedList.urgent || false,
         letterType: editedList.docname || "",
-        uploadedLetter: editedList.docname || "",
+        uploadedLetter: editedList.fileName || "",
         addEnclosureChecked: editedList.enclosurelst?.length > 0,
         documentMetaId: row.documentMetaDataId,
+        fileName:editedList.fileName,
+        filePath:editedList.filePath,
       });
 
       // setSenderDetails({
@@ -1582,8 +1535,10 @@ const handleEditButtonClick = async (row) => {
         const formattedEnclosureList = editedList.enclosurelst.map(enc => ({
           enclosureType: enc.enclosuretypeid?.toString() || "",
           enclosureName: enc.enclosureName || "",
-          file: enc.docname || null, 
+          file: enc.fileName || null, 
           enclosureId: enc.enclosureId?.toString() || null,
+          fileName:enc.fileName || null,
+          filePath:enc.filePath || null
         }));
         setEnclosureRows(formattedEnclosureList);
         setIsUploadOpen(true);
@@ -1605,7 +1560,7 @@ const handleEditButtonClick = async (row) => {
         toggleUploadAccordion();
       }
 
-      // Scroll to form after data loads
+     
       const formElement = document.getElementById("letterForm");
       if (formElement) {
         formElement.scrollIntoView({ behavior: "smooth" });
@@ -1708,72 +1663,164 @@ const handleEditButtonClick = async (row) => {
     }
   };
 
- 
+  const isDuplicateAddressee = (addressee, currentIndex) => {
+    return rows.some((row, index) => index !== currentIndex && row.addressee === addressee);
+  };
+
 
 // departement row table
+  
+
+  // const handleRowChange = async (index, field, value) => {
+  //   const updatedRows = [...rows];
+  //   updatedRows[index][field] = value;
+  
+    
+  //   if (field === "addressee" && index !== 0 && isDuplicateAddressee(value, index)) {
+  //     toast.error("Duplicate addressee is not allowed.");
+  //     return;
+  //   }
+  
+  //   const { departmentName, addresseeDesignation } = updatedRows[index];
+  
+  //   if (field === "departmentName" || field === "addresseeDesignation") {
+  //     if (departmentName && addresseeDesignation) {
+  //       try {
+  //         const response = await api.get(
+  //           `/diary-section/get-employee-details-by-deptId-and-desigId?deptId=${departmentName}&degId=${addresseeDesignation}`,
+  //           {
+  //             headers: { Authorization: `Bearer ${token}` },
+  //           }
+  //         );
+  
+  //         const employees = response?.data?.data?.Employee;
+  
+  //         console.log("Employees:", employees);
+  
+  //         if (
+  //           response.status === 200 &&
+  //           Array.isArray(employees) &&
+  //           employees.length > 0
+  //         ) {
+  //           updatedRows[index].addressList = employees.map((employee) => ({
+  //             id: employee.employeeId,
+  //             name: `${employee.firstName} ${employee.lastName || ""}`.trim(),
+  //           }));
+  //         } else {
+  //           updatedRows[index].addressList = [];
+  //           toast.warn(
+  //             "No Addressees found for the selected Department and Designation."
+  //           );
+  //         }
+  //       } catch (error) {
+  //         console.error("Error fetching Addressee data:", error);
+  //         updatedRows[index].addressList = [];
+  //         toast.error(
+  //           error.response?.data?.message ||
+  //             "Failed to fetch Addressee data. Please try again."
+  //         );
+  //       }
+  //     } else {
+  //       updatedRows[index].addressList = [];
+  //     }
+  //   }
+  
+  //   setRows(updatedRows);
+  //   validateRows(); 
+  // };
+
   const handleRowChange = async (index, field, value) => {
     const updatedRows = [...rows];
     updatedRows[index][field] = value;
-
+  
+    if (field === "addressee" && index !== 0 && isDuplicateAddressee(value, index)) {
+      toast.error("Duplicate addressee is not allowed.");
+      return;
+    }
+  
     const { departmentName, addresseeDesignation } = updatedRows[index];
-
+  
     if (field === "departmentName" || field === "addresseeDesignation") {
       if (departmentName && addresseeDesignation) {
         try {
           const response = await api.get(
             `/diary-section/get-employee-details-by-deptId-and-desigId?deptId=${departmentName}&degId=${addresseeDesignation}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
+            { headers: { Authorization: `Bearer ${token}` } }
           );
-
+  
           const employees = response?.data?.data?.Employee;
-
-          console.log("Employees:", employees);
-
-          if (
-            response.status === 200 &&
-            Array.isArray(employees) &&
-            employees.length > 0
-          ) {
-            updatedRows[index].addressList = employees.map((employee) => ({
-              id: employee.employeeId,
-              name: `${employee.firstName} ${employee.lastName || ""}`.trim(),
+  
+          if (response.status === 200 && Array.isArray(employees) && employees.length > 0) {
+            updatedRows[index].addressList = employees.map(emp => ({
+              id: emp.employeeId,
+              name: `${emp.firstName} ${emp.lastName || ""}`.trim(),
             }));
           } else {
             updatedRows[index].addressList = [];
-            toast.warn(
-              "No Addressees found for the selected Department and Designation."
-            );
+            toast.warn("No Addressees found for the selected Department and Designation.");
           }
         } catch (error) {
           console.error("Error fetching Addressee data:", error);
           updatedRows[index].addressList = [];
-          toast.error(
-            error.response?.data?.message ||
-              "Failed to fetch Addressee data. Please try again."
-          );
+          toast.error("Failed to fetch Addressee data. Please try again.");
         }
       } else {
         updatedRows[index].addressList = [];
       }
     }
-
+  
     setRows(updatedRows);
   };
+  
+
+
+
+  // const handleAddRow = () => {
+  //   if (rows.length === 0) {
+     
+  //     setRows([...rows, { departmentName: "", addresseeDesignation: "", addressee: "", memoNumber: "", addressList: [] }]);
+  //   } else {
+      
+  //     const firstRow = rows[0];
+  //     if (!firstRow.departmentName || !firstRow.addresseeDesignation || !firstRow.addressee) {
+  //       alert("Please fill the first record before adding another.");
+  //       return;
+  //     }
+  
+      
+  //     const newAddressee = rows[rows.length - 1].addressee; 
+  //     if (rows.length > 1 && isDuplicateAddressee(newAddressee, rows.length - 1)) {
+  //       alert("Duplicate addressee is not allowed.");
+  //       return;
+  //     }
+  
+     
+  //     setRows([...rows, { departmentName: "", addresseeDesignation: "", addressee: "", memoNumber: "", addressList: [] }]);
+  //   }
+  // };
+
 
   const handleAddRow = () => {
-    setRows([
-      ...rows,
-      {
-        departmentName: "",
-        addresseeDesignation: "",
-        addressee: "",
-        memoNumber: "",
-        addressList: [],
-      },
-    ]);
+    if (rows.length === 0) {
+      setRows([...rows, { departmentName: "", addresseeDesignation: "", addressee: "", memoNumber: "", addressList: [] }]);
+    } else {
+      // Validate the last row before adding a new one
+      const lastRow = rows[rows.length - 1];
+      if (!lastRow.departmentName || !lastRow.addresseeDesignation || !lastRow.addressee) {
+        toast.warn("Please complete the current row before adding a new one.");
+        return;
+      }
+  
+      // Check for duplicate addressee
+      if (isDuplicateAddressee(lastRow.addressee, rows.length - 1)) {
+        toast.warn("Duplicate addressee is not allowed.");
+        return;
+      }
+  
+      setRows([...rows, { departmentName: "", addresseeDesignation: "", addressee: "", memoNumber: "", addressList: [] }]);
+    }
   };
+  
 
   const handleRemoveRow = (index) => {
     if (rows.length > 1) {
@@ -1787,39 +1834,100 @@ const handleEditButtonClick = async (row) => {
 
   // EnclosureTypes table Details
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setFormData((prevData) => ({
-      ...prevData,
+  // const handleFileChange = (e) => {
+  //   const file = e.target.files[0];
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     uploadedLetter: file,
+  //   }));
+  // };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+  
+    if (!file) {
+      toast.warn("Please select a file before proceeding.");
+      return;
+    }
+  
+    if (file.type !== "application/pdf") {
+      toast.error("Sorry! only PDF format is  Allowed.");
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
       uploadedLetter: file,
     }));
   };
+  
+
+  
+
+  // const handleFileUploadChange = (index, event) => {
+  //   const file = event.target.files[0];
+  //   if (file) {
+  //     setEnclosureRows((prevRows) =>
+  //       prevRows.map((row, rowIndex) =>
+  //         rowIndex === index
+  //           ? {
+  //               ...row,
+  //               file,
+  //               fileName: file.name, 
+  //             }
+  //           : row
+  //       )
+  //     );
+  //   }
+  // };
+
 
   const handleFileUploadChange = (index, event) => {
     const file = event.target.files[0];
-    if (file) {
-      setEnclosureRows((prevRows) =>
-        prevRows.map((row, rowIndex) =>
-          rowIndex === index
-            ? {
-                ...row,
-                file,
-              }
-            : row
-        )
-      );
+  
+    if (!file) {
+      toast.warn("Please select a file before proceeding.");
+      return;
     }
+  
+    // Validate file type (PDF only)
+    if (file.type !== "application/pdf") {
+      toast.error("Sorry! only PDF format is  Allowed.");
+      return;
+    }
+  
+    // Update the specific row with file details
+    const updatedRows = [...enclosureRows];
+    updatedRows[index] = { ...updatedRows[index], file, fileName: file.name };
+    setEnclosureRows(updatedRows);
   };
 
   const handleCheckboxChange = (e) => {
     setShowTable(e.target.checked);
   };
 
-  const handleAddEnclosureRow = (e) => {
-    e.preventDefault();
-    setEnclosureRows((prevRows) => [
-      ...prevRows,
-      { enclosureType: "", enclosureName: "", file: null },
+  // const handleAddEnclosureRow = (e) => {
+  //   e.preventDefault();
+  //   setEnclosureRows((prevRows) => [
+  //     ...prevRows,
+  //     { enclosureType: "", enclosureName: "", file: null },
+  //   ]);
+  // };
+
+  const handleAddEnclosureRow = () => {
+    // Validate the last row before adding a new one
+    if (enclosureRows.length > 0) {
+      const lastRow = enclosureRows[enclosureRows.length - 1];
+      if (!lastRow.enclosureType || !lastRow.enclosureName || !lastRow.file) {
+        toast.warn("Please complete the current row before adding a new one.");
+        return;
+      }
+    }
+  
+    // Add a new empty row
+    setEnclosureRows([
+      ...enclosureRows,
+      { enclosureType: "", enclosureName: "", file: null, fileName: "" },
     ]);
   };
 
@@ -1834,25 +1942,63 @@ const handleEditButtonClick = async (row) => {
     );
   };
 
+// const handleFileUploadChangeencloser = (index, event) => {
+//   const file = event.target.files[0];
+
+//   if (file) {
+//       setEnclosureRowstable((prevRows) =>
+//           prevRows.map((row, rowIndex) =>
+//               rowIndex === index ? { ...row, file } : row
+//           )
+//       );
+//   } else {
+//       console.warn(`No file selected at index ${index}`);
+//   }
+// };
+
 const handleFileUploadChangeencloser = (index, event) => {
   const file = event.target.files[0];
 
-  if (file) {
-      setEnclosureRowstable((prevRows) =>
-          prevRows.map((row, rowIndex) =>
-              rowIndex === index ? { ...row, file } : row
-          )
-      );
-  } else {
-      console.warn(`No file selected at index ${index}`);
+  if (!file) {
+    toast.warn("Please select a file before proceeding.");
+    return;
   }
+
+  
+  if (file.type !== "application/pdf") {
+    toast.error("Sorry! only PDF format is  Allowed.");
+    return;
+  }
+
+  
+  const updatedRows = [...enclosureRowstable];
+  updatedRows[index] = { ...updatedRows[index], file, fileName: file.name };
+  setEnclosureRowstable(updatedRows);
 };
 
-  const handleAddTableEnclosureRow = (e) => {
-    e.preventDefault();
-    setEnclosureRowstable((prevRows) => [
-      ...prevRows,
-      { enclosureType: "", enclosureName: "", file: null },
+
+  // const handleAddTableEnclosureRow = (e) => {
+  //   e.preventDefault();
+  //   setEnclosureRowstable((prevRows) => [
+  //     ...prevRows,
+  //     { enclosureType: "", enclosureName: "", file: null },
+  //   ]);
+  // };
+
+  const handleAddTableEnclosureRow = () => {
+    // Prevent adding a new row if the last row is incomplete
+    if (enclosureRowstable.length > 0) {
+      const lastRow = enclosureRowstable[enclosureRowstable.length - 1];
+      if (!lastRow.enclosureType || !lastRow.enclosureName || !lastRow.file) {
+        toast.warn("Please complete the current row before adding a new one.");
+        return;
+      }
+    }
+  
+    // Add a new empty row
+    setEnclosureRowstable([
+      ...enclosureRowstable,
+      { enclosureType: "", enclosureName: "", file: null, fileName: "" },
     ]);
   };
 
@@ -1903,7 +2049,177 @@ const handleFileUploadChangeencloser = (index, event) => {
     setShowModalShare(true);
   };
 
-  return (
+
+  const handleDownload = async () => {
+    try {
+    const payload = {
+    documentName: fileName,
+    documentPath: filePath,
+    };
+    
+    const encryptedPayload = encryptPayload(payload);
+    
+    const response = await api.post(
+    'download/download-document',
+    { dataObject: encryptedPayload },
+    {
+    headers: {
+    Authorization: `Bearer ${token}`,
+    },
+    responseType: 'blob', 
+    }
+    );
+    
+    if (response.status === 200) {
+    console.log('Full PDF Response:', response.data);
+    
+    // Create a download link and trigger download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${fileName}`); 
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    
+    }
+    } catch (error) {
+    console.error("Error downloading PDF:", error);
+    alert("Failed to download PDF. Please try again.");
+    }
+    };
+    
+    const handleDownloadletter = async () => {
+      try {
+      const payload = {
+      documentName: fileNames,
+      documentPath:filePaths,
+      };
+      
+      const encryptedPayload = encryptPayload(payload);
+      
+      const response = await api.post(
+      'download/download-document',
+      { dataObject: encryptedPayload },
+      {
+      headers: {
+      Authorization: `Bearer ${token}`,
+      },
+      responseType: 'blob', 
+      }
+      );
+      
+      if (response.status === 200) {
+      console.log('Full PDF Response:', response.data);
+      
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${fileNames}`); 
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      
+      }
+      } catch (error) {
+      console.error("Error downloading PDF:", error);
+      alert("Failed to download PDF. Please try again.");
+      }
+      };
+
+
+      const handleDocumentView = async () => {
+        try {
+          if (!formData.fileName || !formData.filePath) {
+            alert("No document available to view.");
+            return;
+          }
+      
+          const payload = {
+            documentName: formData.fileName,
+            documentPath: formData.filePath,
+          };
+      
+          const encryptedPayload = encryptPayload(payload);
+          console.log("Checking payloads", encryptedPayload);
+      
+          const response = await api.post(
+            'download/view-document',
+            { dataObject: encryptedPayload },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          console.log(response);
+          if (response.data && response.data.data) {
+            const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
+            const byteCharacters = atob(base64String);
+            const byteNumbers = new Uint8Array([...byteCharacters].map(char => char.charCodeAt(0)));
+            const blob = new Blob([byteNumbers], { type: "application/pdf" });
+          
+            const url = URL.createObjectURL(blob);
+            window.open(url, "_blank");
+          } else {
+            alert("Failed to load PDF.");
+          }
+        } catch (error) {
+          console.error("Error fetching PDF:", error);
+          alert("Failed to fetch PDF. Please try again.");
+        }
+      };
+     
+
+
+      const handleDocumentViewenclosuer = async (fileName, filePath) => {
+        try {
+          if (!fileName || !filePath) {
+            alert("No document available to view.");
+            return;
+          }
+      
+          const payload = {
+            documentName: fileName,
+            documentPath: filePath,
+          };
+      
+          const encryptedPayload = encryptPayload(payload);
+          console.log("Checking payloads", encryptedPayload);
+      
+          const response = await api.post(
+            'download/view-document',
+            { dataObject: encryptedPayload },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+      
+          if (response.data && response.data.data) {
+            const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
+            const byteCharacters = atob(base64String);
+            const byteNumbers = new Uint8Array([...byteCharacters].map(char => char.charCodeAt(0)));
+            const blob = new Blob([byteNumbers], { type: "application/pdf" });
+      
+            const url = URL.createObjectURL(blob);
+            window.open(url, "_blank"); // Open PDF in a new tab
+          } else {
+            alert("Failed to load PDF.");
+          }
+        } catch (error) {
+          console.error("Error fetching PDF:", error);
+          alert("Failed to fetch PDF. Please try again.");
+        }
+      };
+  
+      return (
     <>
       
 
@@ -2021,6 +2337,16 @@ const handleFileUploadChangeencloser = (index, event) => {
                     onChange={handleLetterNumberChange}
                     placeholder="Enter Letter Number"
                     required
+                     autoComplete="off"
+                    inputProps={{
+                      maxLength: 20,
+                      pattern: "[^ ]*", 
+                      onKeyDown: (e) => {
+                        if (e.key === " ") {
+                          e.preventDefault(); 
+                        }
+                      },
+                    }}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         '& fieldset': {
@@ -2078,6 +2404,8 @@ const handleFileUploadChangeencloser = (index, event) => {
                     value={formData.subject || ""}
                     onChange={handleSubjectChange}
                     placeholder="Enter subject"
+                    required
+                    maxLength={250}
                   />
                 </div>
               </div>
@@ -2098,7 +2426,8 @@ const handleFileUploadChangeencloser = (index, event) => {
                         <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Addressee <span style={{ color: "red" }}>*</span></th>
                         <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Memo Number</th>
                         <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)', width: '55px' }}>
-                          <IconButton
+                         
+                          {/* <IconButton
                             onClick={handleAddRow}
                             size="small"
                             sx={{ 
@@ -2108,222 +2437,170 @@ const handleFileUploadChangeencloser = (index, event) => {
                                 bgcolor: '#388e3c',
                               },
                             }}
+                            disabled={rows.length > 0 && (!rows[0].departmentName || !rows[0].addresseeDesignation || !rows[0].addressee)}
                           >
                             <FaPlus size={12} />
-                          </IconButton>
+                          </IconButton> */}
+
+                            <IconButton
+                              onClick={handleAddRow}
+                              size="small"
+                              sx={{ 
+                                bgcolor: '#4caf50',
+                                color: 'white',
+                                '&:hover': { bgcolor: '#388e3c' },
+                              }}
+                              disabled={rows.some(row => !row.departmentName || !row.addresseeDesignation || !row.addressee)}
+                            >
+                              <FaPlus size={12} />
+                            </IconButton>
+
                         </th>
                       </tr>
                     </thead>
+        
                     <tbody>
-                      {rows.map((row, index) => (
-                        <tr key={index} style={{ borderBottom: '1px solid rgba(224, 224, 224, 1)' }}>
-                          <td style={{ padding: '8px' }}>
-                            <TextField
-                              select
-                              fullWidth
-                              size="small"
-                              value={row.departmentName}
-                              onChange={(e) =>
-                                handleRowChange(
-                                  index,
-                                  "departmentName",
-                                  e.target.value
-                                )
-                              }
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  '& fieldset': {
-                                    borderColor: '#ced4da',
-                                  },
-                                  '&:hover fieldset': {
-                                    borderColor: '#207785',
-                                  },
-                                  '&.Mui-focused fieldset': {
-                                    borderColor: '#207785',
-                                  },
-                                },
-                              }}
-                            >
-                              <MenuItem value="" >
-                                -- Select Department --
-                              </MenuItem>
-                              {departmentList.map((department) => (
-                                <MenuItem
-                                  key={department.departmentId}
-                                  value={department.departmentId}
-                                >
-                                  {department.departmentName}
-                                </MenuItem>
-                              ))}
-                            </TextField>
-                          </td>
-                          <td style={{ padding: '8px' }}>
-                            <TextField
-                              select
-                              fullWidth
-                              size="small"
-                              value={row.addresseeDesignation}
-                              onChange={(e) =>
-                                handleRowChange(
-                                  index,
-                                  "addresseeDesignation",
-                                  e.target.value
-                                )
-                              }
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  '& fieldset': {
-                                    borderColor: '#ced4da',
-                                  },
-                                  '&:hover fieldset': {
-                                    borderColor: '#207785',
-                                  },
-                                  '&.Mui-focused fieldset': {
-                                    borderColor: '#207785',
-                                  },
-                                },
-                              }}
-                            >
-                              <MenuItem value="" >
-                                -- Select Designation --
-                              </MenuItem>
-                              {designationList.map((designation) => (
-                                <MenuItem
-                                  key={designation.id}
-                                  value={designation.id}
-                                >
-                                  {designation.name}
-                                </MenuItem>
-                              ))}
-                            </TextField>
-                          </td>
-                          {/* <td style={{ padding: '8px' }}>
-                            <TextField
-                              select
-                              fullWidth
-                              size="small"
-                              value={row.addressee}
-                              onChange={(e) =>
-                                handleRowChange(
-                                  index,
-                                  "addressee",
-                                  e.target.value
-                                )
-                              }
-                             
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  '& fieldset': {
-                                    borderColor: '#ced4da',
-                                  },
-                                  '&:hover fieldset': {
-                                    borderColor: '#207785',
-                                  },
-                                  '&.Mui-focused fieldset': {
-                                    borderColor: '#207785',
-                                  },
-                                },
-                              }}
-                            >
-                              <MenuItem value="" >
-                                -- Select Addressee --
-                              </MenuItem>
-                              {Array.isArray(row.addressList) &&
-                              row.addressList.length > 0 ? (
-                                row.addressList.map((addressee) => (
-                                  <MenuItem key={addressee.id} value={addressee.id}>
-                                    {addressee.name}
-                                  </MenuItem>
-                                ))
-                              ) : (
-                                <MenuItem value="" disabled>
-                                  No addressees available
-                                </MenuItem>
-                              )}
-                            </TextField>
-                          </td> */}
+  {rows.map((row, index) => (
+    <tr key={index} style={{ borderBottom: '1px solid rgba(224, 224, 224, 1)' }}>
+      <td style={{ padding: '8px' }}>
+        <TextField
+          select
+          fullWidth
+          size="small"
+          value={row.departmentName}
+          onChange={(e) => handleRowChange(index, "departmentName", e.target.value)}
+          error={!!errorsdep[index]?.departmentName}
+          helperText={errorsdep[index]?.departmentName}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: '#ced4da',
+              },
+              '&:hover fieldset': {
+                borderColor: '#207785',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#207785',
+              },
+            },
+          }}
+        >
+          <MenuItem value="">-- Select Department --</MenuItem>
+          {departmentList.map((department) => (
+            <MenuItem key={department.departmentId} value={department.departmentId}>
+              {department.departmentName}
+            </MenuItem>
+          ))}
+        </TextField>
+      </td>
+      <td style={{ padding: '8px' }}>
+        <TextField
+          select
+          fullWidth
+          size="small"
+          value={row.addresseeDesignation}
+          onChange={(e) => handleRowChange(index, "addresseeDesignation", e.target.value)}
+          error={!!errorsdep[index]?.addresseeDesignation}
+          helperText={errorsdep[index]?.addresseeDesignation}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: '#ced4da',
+              },
+              '&:hover fieldset': {
+                borderColor: '#207785',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#207785',
+              },
+            },
+          }}
+        >
+          <MenuItem value="">-- Select Designation --</MenuItem>
+          {designationList.map((designation) => (
+            <MenuItem key={designation.id} value={designation.id}>
+              {designation.name}
+            </MenuItem>
+          ))}
+        </TextField>
+      </td>
+      <td style={{ padding: '8px' }}>
+        <TextField
+          select
+          fullWidth
+          size="small"
+          value={row.addressee || ""}
+          onChange={(e) => handleRowChange(index, "addressee", e.target.value)}
+          error={!!errorsdep[index]?.addressee}
+          helperText={errorsdep[index]?.addressee}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: '#ced4da',
+              },
+              '&:hover fieldset': {
+                borderColor: '#207785',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#207785',
+              },
+            },
+          }}
+        >
+          <MenuItem value="">-- Select Addressee --</MenuItem>
+          {Array.isArray(row.addressList) && row.addressList.length > 0 ? (
+            row.addressList.map((addressee) => (
+              <MenuItem key={addressee.id} value={addressee.id}>
+                {addressee.name}
+              </MenuItem>
+            ))
+          ) : (
+            <MenuItem value="" disabled>No addressees available</MenuItem>
+          )}
+        </TextField>
+      </td>
+      <td style={{ padding: '8px' }}>
+        <TextField
+          fullWidth
+          size="small"
+          value={row.memoNumber}
+          onChange={(e) => handleRowChange(index, "memoNumber", e.target.value)}
+          placeholder="Enter memo number"
+          inputProps={{ maxLength: 20 }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: '#ced4da',
+              },
+              '&:hover fieldset': {
+                borderColor: '#207785',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#207785',
+              },
+            },
+          }}
+        />
+      </td>
+      <td style={{ padding: '8px', textAlign: 'center' }}>
+        <IconButton
+          onClick={() => handleRemoveRow(index)}
+          size="small"
+          sx={{
+            bgcolor: '#f44336',
+            color: 'white',
+            '&:hover': {
+              bgcolor: '#d32f2f',
+            },
+          }}
+        >
+          <FaMinus size={12} />
+        </IconButton>
+      </td>
+    </tr>
+  ))}
+</tbody>
 
-                      <td style={{ padding: '8px' }}>
-                      <TextField
-  select
-  fullWidth
-  size="small"
-  value={row.addressee || ""} // Ensure it's valid
-  onChange={(e) => handleRowChange(index, "addressee", e.target.value)}
-  sx={{
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': {
-        borderColor: '#ced4da',
-      },
-      '&:hover fieldset': {
-        borderColor: '#207785',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#207785',
-      },
-    },
-  }}
->
-  <MenuItem value="">-- Select Addressee --</MenuItem>
-  {Array.isArray(row.addressList) && row.addressList.length > 0 ? (
-    row.addressList.map((addressee) => (
-      <MenuItem key={addressee.id} value={addressee.id}>
-        {addressee.name}
-      </MenuItem>
-    ))
-  ) : (
-    <MenuItem value="" disabled>No addressees available</MenuItem>
-  )}
-</TextField>
-
-                      </td>
-
-                          <td style={{ padding: '8px' }}>
-                            <TextField
-                              fullWidth
-                              size="small"
-                              value={row.memoNumber}
-                              onChange={(e) =>
-                                handleRowChange(
-                                  index,
-                                  "memoNumber",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Enter memo number"
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  '& fieldset': {
-                                    borderColor: '#ced4da',
-                                  },
-                                  '&:hover fieldset': {
-                                    borderColor: '#207785',
-                                  },
-                                  '&.Mui-focused fieldset': {
-                                    borderColor: '#207785',
-                                  },
-                                },
-                              }}
-                            />
-                          </td>
-                          <td style={{ padding: '8px', textAlign: 'center' }}>
-                            <IconButton
-                              onClick={() => handleRemoveRow(index)}
-                              size="small"
-                              sx={{
-                                bgcolor: '#f44336',
-                                color: 'white',
-                                '&:hover': {
-                                  bgcolor: '#d32f2f',
-                                },
-                              }}
-                            >
-                              <FaMinus size={12} />
-                            </IconButton>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
                   </table>
                 </Box>
               </div>
@@ -2338,6 +2615,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                     value={formData.remarks || ""}
                     onChange={handleremarksChange}
                     placeholder="Enter remarks"
+                    maxLength={250}
                   />
                 </div>
               </div>
@@ -2346,7 +2624,7 @@ const handleFileUploadChangeencloser = (index, event) => {
               <div className="row mb-3">
                 <div className="col-md-3">
                   <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                    Upload Letter
+                    Upload Letter:<span style={{ color: "red" }}>*</span>
                   </Typography>
                   <Box sx={{ 
                     border: '1px dashed #ccc',
@@ -2380,38 +2658,45 @@ const handleFileUploadChangeencloser = (index, event) => {
                         Choose File
                       </Button>
                     </label>
+                
                     {formData.uploadedLetter && (
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center',
-                        gap: 1,
-                        mt: 1,
-                        bgcolor: 'white',
-                        p: 1,
-                        borderRadius: 1
-                      }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mt: 1,
+                          bgcolor: "white",
+                          p: 1,
+                          borderRadius: 1,
+                        }}
+                      >
                         <InsertDriveFileIcon color="primary" />
-                        <Typography variant="body2" sx={{ flex: 1 }}>
-                          {formData.uploadedLetter.name}
-                        </Typography>
-                        <IconButton
-                          onClick={() => {
-                            setFormData((prev) => ({
-                              ...prev,
-                              uploadedLetter: null,
-                            }));
-                            document.getElementById('uploadedLetter').value = '';
-                          }}
-                          size="small"
-                          color="error"
+                        <Typography variant="body2"
+                        sx={{
+                          flex: 1,
+                          whiteSpace: "nowrap",    
+                          overflow: "hidden",      
+                          textOverflow: "ellipsis", 
+                          maxWidth: "100%",        
+                          display: "inline-block",  
+                        }}
                         >
-                          <DeleteIcon />
+                      {typeof formData.uploadedLetter === "string" ? formData.uploadedLetter : formData.uploadedLetter?.name || "No file selected"}
+                    </Typography>
+                        <IconButton
+                          onClick={handleDocumentView} 
+                          size="small"
+                          color="primary"
+                        >
+                          <VisibilityIcon/>
                         </IconButton>
                       </Box>
                     )}
+
                     {!formData.uploadedLetter && (
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        No file chosen (Max size: 5MB)
+                        No file chosen (Max size: 2MB)
                       </Typography>
                     )}
                   </Box>
@@ -2545,6 +2830,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                                 size="small"
                                 value={row.enclosureName}
                                 onChange={(e) => handleEnclosureRowChange(index, "enclosureName", e.target.value)}
+                                inputProps={{ maxLength: 30 }}
                                 sx={{
                                   '& .MuiOutlinedInput-root': {
                                     '& fieldset': {
@@ -2557,6 +2843,8 @@ const handleFileUploadChangeencloser = (index, event) => {
                                 }}
                               />
                             </TableCell>
+                          
+                        
                             <TableCell>
                               <TextField
                                 type="file"
@@ -2574,9 +2862,27 @@ const handleFileUploadChangeencloser = (index, event) => {
                                       },
                                     },
                                   },
+                                  endAdornment: row.fileName && ( // Show eye icon only if file exists
+                                    <InputAdornment position="end">
+                                      <IconButton
+                                        onClick={() => handleDocumentView(row.fileName, row.filePath)}
+                                        size="small"
+                                        color="primary"
+                                        edge="end"
+                                      >
+                                        <VisibilityIcon />
+                                      </IconButton>
+                                    </InputAdornment>
+                                  ),
                                 }}
                               />
+                              {row.fileName && ( // Display the file name below the input field
+                                <Typography variant="body2" sx={{ mt: 1 }}>
+                                  Uploaded File: {row.fileName}
+                                </Typography>
+                              )}
                             </TableCell>
+
                             <TableCell>
                               <IconButton
                                 onClick={(e) => handleRemoveEnclosureRow(index,e)}
@@ -2992,8 +3298,9 @@ const handleFileUploadChangeencloser = (index, event) => {
         ></div>
       )}
 
+
       {/* Letters List tab section */}
-      <div className="diary-section-container">
+      <div className="diary-section-container mt-4">
         <div className="accordion-header" onClick={toggleLettersList}>
           <span className="accordion-title">Letters List</span>
           <span className="accordion-icon">
@@ -3288,7 +3595,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                         <TableCell>{row.enclosureName}</TableCell>
                         <TableCell>
                           <IconButton
-                            onClick={() => handleViewEnclosure(row)}
+                            onClick={() => handleDownload (row)}
                             sx={{
                             color: '#207785',
                               '&:hover': {
@@ -3325,7 +3632,7 @@ const handleFileUploadChangeencloser = (index, event) => {
  {/* new letter table share data data */}
     <Modal
         show={showModalShare}
-        onHide={() => (!isSending ? setShowModalShare(false) : null)} // Prevent closing while sending
+        onHide={() => (!isSending ? setShowModalShare(false) : null)} 
         backdrop="static"
         keyboard={false}
         centered
@@ -3346,6 +3653,7 @@ const handleFileUploadChangeencloser = (index, event) => {
           </Button>
         </Modal.Footer>
       </Modal>
+
 
       <Modal
         show={showModalShare}
@@ -3535,27 +3843,43 @@ const handleFileUploadChangeencloser = (index, event) => {
                 </div>
 
                 {/* Right Side - PDF Preview */}
-                <div className="col-md-6 p-0">
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <Typography variant="subtitle1">PDF View</Typography>
-            <Box
-              sx={{
-                width: '100%',
-                height: 300,
-                bgcolor: '#e0e0e0',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <Typography variant="body2" color="textSecondary">
-                PDF content will be displayed here
-              </Typography>
-            </Box>
-            <Button variant="contained" startIcon={<DownloadIcon />}>
-              Download PDF
-            </Button>
-          </Box>
+                <div className="col-md-6 p-0 " >
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 3 }}>
+    
+
+     
+    {/* <Card sx={{ width: "100%", boxShadow: 3, borderRadius: 2 }}>
+      <CardContent sx={{ p: 2 }}> */}
+        <iframe
+          src={letterViews}
+          style={{
+            width: "100%",
+            height: "500px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+          }}
+          title="PDF Viewer"
+        />
+      {/* </CardContent>
+    </Card> */}
+
+    
+    <Button
+      variant="contained"
+      startIcon={<DownloadIcon />}
+      onClick={handleDownloadletter}
+      sx={{
+        mt: 2,
+        px: 3,
+        py: 1,
+        borderRadius: "8px",
+        backgroundColor: "#1976d2",
+        "&:hover": { backgroundColor: "#1565c0" },
+      }}
+    >
+      Download PDF
+    </Button>
+  </Box>
                 </div>
               </div>
 
@@ -3634,7 +3958,21 @@ const handleFileUploadChangeencloser = (index, event) => {
                         {selectedLetterDetails.letterEnclosureArrays?.map((enclosure, index) => (
                           <tr key={index}>
                             <td>{index + 1}</td>
-                            <td>{enclosure.enclosureName}</td>
+                           <td>
+                            <button
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: "#007bff",
+                                textDecoration: "underline",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => handleDownloadletter(enclosure.enclosureName, enclosure.enclosurePath)}
+                            >
+                              {enclosure.enclosureName}
+                            </button>
+                          </td>
+
                             <td>{enclosure.enclosureType}</td>
                             <td>{enclosure.enclosureUploadBy}</td>
                             <td>

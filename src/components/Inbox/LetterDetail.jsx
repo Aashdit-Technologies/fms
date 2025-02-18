@@ -24,24 +24,28 @@ import {
   Select,
   MenuItem,
   Grid,
+  Card,
+  CardContent,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
 import api from '../../Api/Api';
-import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer, toast } from "react-toastify";
+import {toast } from "react-toastify";
 import { Checkbox } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-
+import "@react-pdf-viewer/core/lib/styles/index.css";
 const LetterDetail = ({ open, onClose, letterData ,letterDataView}) => {
   const navigate = useNavigate()
-console.log("letterData check", letterData)
-console.log("letterDataview check", letterDataView)
+
+const fileName =  letterDataView?.fileName;
+const filePath =  letterDataView?.filePath;
+const viewdocument =  letterDataView?.base64Path;
+const encloserFileName = letterDataView?.letterEnclosureArrays?.[0]?.fileName || "No File Available";
+const encloserFilePath = letterDataView?.letterEnclosureArrays?.[0]?.filePath || "No File Available";
 
   const token = useAuthStore.getState().token; 
-
   const [isUrgent, setIsUrgent] = useState(letterDataView?.isUrgent || false);
   const [pendingUrgency, setPendingUrgency] = useState(null);
   const [openUrgentModal, setOpenUrgentModal] = useState(false);
@@ -73,10 +77,9 @@ console.log("letterDataview check", letterDataView)
    const [officeId, setOfficeId] = useState(null);
    const [departmentId, setDepartmentId] = useState(null);
    const [selectedRows, setSelectedRows] = useState([]);
-   const [selectedRowsmarks, setSelectedRowsmarks] = useState([]);
-
+   
    const [selectedRowsfrequ, setSelectedRowsfrequ] = useState([]);
-   const [selectedRowsmarksfreq, setSelectedRowsmarksfreq] = useState([]);
+  
 
   const handleCloseModal = () => {
     setOpenModalotherbutton(false);
@@ -137,27 +140,6 @@ console.log("letterDataview check", letterDataView)
   };
   
 
-  const handleCheckboxChangemarks = (event, mark) => {
-    if (event.target.checked) {
-     
-      setSelectedRowsmarks((prev) => [...prev, mark]);
-    } else {
-      
-      setSelectedRowsmarks((prev) => prev.filter((row) => row !== mark));
-    }
-  };
-
-  const handleCheckboxChangemarksfreq = (event, mark) => {
-    if (event.target.checked) {
-     
-      setSelectedRowsmarksfreq((prev) => [...prev, mark]);
-    } else {
-      
-      setSelectedRowsmarksfreq((prev) => prev.filter((row) => row !== mark));
-    }
-  };
-
-
   const handleUrgencyToggle = () => {
     setPendingUrgency(!isUrgent); 
     setOpenUrgentModal(true); 
@@ -178,23 +160,22 @@ const handleCancelConfidential = () => {
 };
 
 
+
+
 useEffect(() => {
-  if (letterDataView?.isUrgent !== undefined) {
+  if (!letterDataView) return;
+
+  if (letterDataView.isUrgent !== undefined) {
     setIsUrgent(letterDataView.isUrgent);
   }
-}, [letterDataView]);
-
-useEffect(() => {
-  if (letterDataView?.isConfidential !== undefined) {
+  if (letterDataView.isConfidential !== undefined) {
     setIsConfidential(letterDataView.isConfidential);
   }
-}, [letterDataView]);
-
-useEffect(() => {
-  if (letterDataView?.darftNote !== undefined) {
+  if (letterDataView.darftNote !== undefined) {
     setMarginalNote(letterDataView.darftNote);
   }
 }, [letterDataView]);
+
 
   const handleSaveClick = () => {
     if (!marginalNote.trim()) {
@@ -268,10 +249,7 @@ const handleConfirmUrgent = async () => {
           toast.warning(response.data.message || "Urgency status unchanged.");
           setIsConfidential(!pendingConfidential);
       }
-      } //else {
-      //   console.error("Unexpected API Response:", response.data.message);
-    
-      //   setIsConfidential(!pendingConfidential);  }
+      } 
     } catch (error) {
       console.error("Error updating confidentiality:", error);
       setIsConfidential(!pendingConfidential);
@@ -305,8 +283,9 @@ const handleConfirmUrgent = async () => {
       );
   
       if (response.data.outcome) {
-        // setMarginalNote("");
+        
         setOpenConfirmModal(false); 
+        onClose();
         toast.success(response.data.message);
       } else {
         setErrorMessage(response.data.message || "An error occurred!");
@@ -364,7 +343,7 @@ const handleConfirmUrgent = async () => {
         console.log('Filtered Offices:', filteredOffices);
   
 
-      // Set default values for office and department
+     
       if (filteredOffices.length > 0) {
         setOfficeName(filteredOffices[0].officeName);
         setOfficeId(filteredOffices[0].officeId);
@@ -390,8 +369,6 @@ const handleConfirmUrgent = async () => {
       console.error('Error calling APIs:', error);
     }
   };
-
-
   useEffect(() => {
     if (officeId && departmentId) {
       fetchEmployeeData();
@@ -450,13 +427,19 @@ const handleConfirmUrgent = async () => {
     }
   };
 
+
   const handleSend = async () => {
+    if (selectedRows.length === 0) {
+      toast.warning("Please select at least one record before sending.");
+      return;
+    }
+  
     try {
       const payload = {
         metadataId,
         letterReceiptId: letterRecptId,
-        noteSendid:noteId, 
-        noteSendto: marginalNote, 
+        noteSendid: noteId,
+        noteSendto: marginalNote,
         chkSendTo: selectedRows.map(Number),
       };
   
@@ -465,34 +448,43 @@ const handleConfirmUrgent = async () => {
       console.log("Encrypted Payload:", encryptedPayload);
       console.log("Selected Rows:", selectedRows);
   
-  
-  
       const response = await api.post(
         "letter/send-letter-sendto",
-        
-        {
-          dataObject: encryptedPayload,
-        },
+        { dataObject: encryptedPayload },
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
       if (response.status === 200 && response.data.outcome) {
         console.log("Data sent successfully:", response.data);
-        alert("Data sent successfully!");
+  
+        
+        toast.success(response.data.message);
+  
+       
         setSelectedRows([]);
+        setOpenModalotherbutton(false);
+        onClose();
+      
       } else {
         console.error("Unexpected API Response:", response.data.message);
-        alert("Failed to send data.");
+        toast.error("Failed to send data.");
       }
     } catch (error) {
       console.error("Error sending data:", error);
-      console.log("Server response:", error.response?.data); 
-      alert("An error occurred while sending data.");
+      console.log("Server response:", error.response?.data);
+      toast.error("An error occurred while sending data.");
     }
   };
+  
 
   const handlefrequentlymarks = async () => {
     try {
+      
+      if (selectedRowsfrequ.length === 0) {
+        toast.warning("Please select at least one record to send."); 
+        return; 
+      }
+
       const payload = {
         letterrecptid:letterRecptId, 
         notefrequent:marginalNote,
@@ -511,41 +503,19 @@ const handleConfirmUrgent = async () => {
       );
 
       if (response.status === 200) {
-        alert("Data sent successfully!");
+        
+        toast.success(response.data.message);
         setSelectedRowsfrequ([]); 
+        onClose();
       } else {
-        alert("Failed to send data.");
+        toast.error("Failed to send data.");
       }
     } catch (error) {
       console.error("Error sending data:", error);
-      alert("An error occurred while sending data.");
+      toast.error("An error occurred while sending data.");
     }
   };
 
-
-  // const handleAddToFile = async () => {
-  //   try {
-  //     const payload = {
-  //       letterReceiptId:letterRecptId
-  //     };
-  //     const encryptedPayload = encryptPayload(payload);
-  //     const response = await api.post('letter/letter-tag-to-file', 
-  //       {
-  //         dataObject: encryptedPayload,
-          
-  //       },
-  //       { headers: { Authorization: `Bearer ${token}` } }
-  //     );
-  //     if (response.status === 200) {
-  //      console.log("addfile response",response.data.data);
-       
-  //       const fetchedData = response.data.data;
-  //       navigate('/add-to-file',{ state: { data: fetchedData } });
-  //     }
-  //   } catch (error) {
-  //     console.error('Error adding to file:', error);
-  //   }
-  // };
 
   const handleAddToFile = async () => {
     try {
@@ -562,13 +532,13 @@ const handleConfirmUrgent = async () => {
       if (response.status === 200) {
         console.log('Full API Response:', response.data);
   
-        const fetchedData = response.data.data; // Extract nested 'data' object
+        const fetchedData = response.data.data; 
         console.log('Raw letterDetails:', fetchedData.letterDetails);
   
-        // Check if letterDetails is already an object
+       
         if (typeof fetchedData.letterDetails === 'string') {
           try {
-            const parsedLetterDetails = JSON.parse(fetchedData.letterDetails); // Try parsing
+            const parsedLetterDetails = JSON.parse(fetchedData.letterDetails); 
             console.log('Parsed letterDetails:', parsedLetterDetails);
   
             const formattedData = {
@@ -582,7 +552,7 @@ const handleConfirmUrgent = async () => {
             console.error('Error parsing letterDetails:', parseError);
           }
         } else if (typeof fetchedData.letterDetails === 'object') {
-          // If it's already an object, use it directly
+          
           const formattedData = {
             letterReceiptId: fetchedData.letterReceiptId,
             ...fetchedData.letterDetails,
@@ -598,23 +568,99 @@ const handleConfirmUrgent = async () => {
     }
   };
   
-  
-  
-  const showAllDetails = letterData?.tabCode === 'NEW_LETTER' || letterData?.tabCode === 'SENT_LETTER';
 
+  const handleDownload = async () => {
+    try {
+    const payload = {
+    documentName: fileName,
+    documentPath: filePath,
+    };
+    
+    const encryptedPayload = encryptPayload(payload);
+    
+    const response = await api.post(
+    'download/download-document',
+    { dataObject: encryptedPayload },
+    {
+    headers: {
+    Authorization: `Bearer ${token}`,
+    },
+    responseType: 'blob', 
+    }
+    );
+    
+    if (response.status === 200) {
+    console.log('Full PDF Response:', response.data);
+    
+    // Create a download link and trigger download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${fileName}`); 
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    
+    }
+    } catch (error) {
+    console.error("Error downloading PDF:", error);
+    alert("Failed to download PDF. Please try again.");
+    }
+    };
+
+    const handleDownloadenclosure = async () => {
+      try {
+      const payload = {
+      documentName: encloserFileName,
+      documentPath: encloserFilePath,
+      };
+      
+      const encryptedPayload = encryptPayload(payload);
+      
+      const response = await api.post(
+      'download/download-document',
+      { dataObject: encryptedPayload },
+      {
+      headers: {
+      Authorization: `Bearer ${token}`,
+      },
+      responseType: 'blob', 
+      }
+      );
+      
+      if (response.status === 200) {
+      console.log('Full PDF Response:', response.data);
+      toast.success("PDF successfully downloaded");
+      // Create a download link and trigger download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${encloserFileName}`); 
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      
+      }
+      } catch (error) {
+      console.error("Error downloading PDF:", error);
+      alert("Failed to download PDF. Please try again.");
+      }
+      };
+  
+    
+  const showAllDetails = letterData?.tabCode === 'NEW_LETTER' || letterData?.tabCode === 'SENT_LETTER';
+  const isNewLetter = letterData?.tabCode === 'NEW_LETTER';
   return (
     <>
-    <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+   
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ m: 0, p: 2, bgcolor: '#f5f5f5' }}>
         <Typography variant="h6"   component="span" sx={{ fontWeight: 500, color: '#666' }}>Letter Detail</Typography>
@@ -632,6 +678,7 @@ const handleConfirmUrgent = async () => {
         </IconButton>
       </DialogTitle>
       <DialogContent>
+         {/* Top Section */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 2 }}>
           {/* Top Left: Letter Details */}
           <Box>
@@ -654,15 +701,15 @@ const handleConfirmUrgent = async () => {
                   Marginal Instructions
                 </Typography>
                 <TextField
-        fullWidth
-        multiline
-        rows={3}
-        value={marginalNote}
-        onChange={(e) => setMarginalNote(e.target.value)}
-        variant="outlined"
-        size="small"
-        sx={{ mb: 3 }}
-      />
+                  fullWidth
+                  multiline
+                  rows={3}
+                  value={marginalNote}
+                  onChange={(e) => setMarginalNote(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  sx={{ mb: 3 }}
+                />
                           </>
                         )}
         
@@ -676,7 +723,6 @@ const handleConfirmUrgent = async () => {
              <TableHead>
               <TableRow sx={{ bgcolor: '#f5f5f5' }}>
             <TableCell>Action</TableCell>
-             
               <TableCell>Name</TableCell>
               <TableCell>Department</TableCell>
               <TableCell>Office</TableCell>
@@ -689,7 +735,7 @@ const handleConfirmUrgent = async () => {
               <TableRow key={mark.empDeptMapId}>
                 <TableCell>
              <Checkbox
-            checked={selectedRowsfrequ.includes(mark.empDeptMapId)} // Use a unique field like `empId`
+            checked={selectedRowsfrequ.includes(mark.empDeptMapId)} 
             onChange={(event) => handleCheckboxfrequientlyChange(event, mark.empDeptMapId)}
           />
                 </TableCell>
@@ -729,9 +775,9 @@ const handleConfirmUrgent = async () => {
             )}
           
         
-       {showAllDetails && (
+       {showAllDetails  && (
       <Box sx={{ display: "flex", gap: 4, mb: 3 }}>
-        
+         {isNewLetter && ( 
         <FormControlLabel
           control={
             <Switch
@@ -742,7 +788,7 @@ const handleConfirmUrgent = async () => {
           }
           label={isUrgent ? "Urgent" : "Non-Urgent"}
         />
-
+        )}
         <FormControlLabel
           control={
             <Switch
@@ -758,16 +804,28 @@ const handleConfirmUrgent = async () => {
 
             {showAllDetails && (
               <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-              <Button variant="contained" color="primary" onClick={handleSaveClick}>
-                Save
-              </Button>
-                <Button variant="contained" color="secondary" onClick={handlefrequentlymarks}>
+                  
+              {isNewLetter && (
+            <Button variant="contained" color="primary" onClick={handleSaveClick}>
+              Save
+            </Button>
+          )}
+               
+               <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handlefrequentlymarks}
+                  disabled={!letterDataView?.letterFrequentlyMarkObj || letterDataView.letterFrequentlyMarkObj.length === 0} // Check if array is undefined or empty
+                >
                   Send
                 </Button>
-                <Button variant="contained" color="success" onClick={handleAddToFile}>
-                 Add to File
-               </Button>
-                <Button variant="outlined" color="error">
+
+                {isNewLetter && ( 
+                      <Button variant="contained" color="success" onClick={handleAddToFile}>
+                        Add to File
+                      </Button>
+                    )}
+                <Button variant="outlined" color="error" onClick={onClose}>
                   Cancel
                 </Button>
               </Box>
@@ -775,32 +833,46 @@ const handleConfirmUrgent = async () => {
           </Box>
 
           {/* Top Right: PDF View */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <Typography variant="subtitle1">PDF View</Typography>
-            <Box
-              sx={{
-                width: '100%',
-                height: 300,
-                bgcolor: '#e0e0e0',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <Typography variant="body2" color="textSecondary">
-                PDF content will be displayed here
-              </Typography>
-            </Box>
-            <Button variant="contained" startIcon={<DownloadIcon />}>
-              Download PDF
-            </Button>
+
+     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 3 }}>
+    
+      <Card sx={{ width: "100%", boxShadow: 3, borderRadius: 2 }}>
+        <CardContent sx={{ p: 2 }}>
+          <iframe
+            src={viewdocument}
+            style={{
+              width: "100%",
+              height: "500px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+            }}
+            title="PDF Viewer"
+          />
+        </CardContent>
+      </Card>
+
+      
+      <Button
+        variant="contained"
+        startIcon={<DownloadIcon />}
+        onClick={handleDownload}
+        sx={{
+          mt: 2,
+          px: 3,
+          py: 1,
+          borderRadius: "8px",
+          backgroundColor: "#1976d2",
+          "&:hover": { backgroundColor: "#1565c0" },
+        }}
+      >
+        Download PDF
+      </Button>
+    </Box>
           </Box>
-        </Box>
 
         {/* Bottom Section */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mt: 3 }}>
-          {/* Bottom Left: Note */}
-        
+          {/* Bottom Left: Note */}  
      <Box>
       <Typography variant="subtitle1" sx={{ mb: 1 }}>
         Note
@@ -875,7 +947,20 @@ const handleConfirmUrgent = async () => {
                   {letterDataView?.letterEnclosureArrays?.map((enclosure, index) => (
                     <TableRow key={index}>
                       <TableCell>{index + 1}</TableCell>
-                      <TableCell>{enclosure.enclosureName}</TableCell>
+                      <TableCell>
+                            <button
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: "#007bff",
+                                textDecoration: "underline",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => handleDownloadenclosure(enclosure.enclosureName, enclosure.enclosurePath)}
+                            >
+                              {enclosure.enclosureName}
+                            </button>
+                            </TableCell>
                       <TableCell>{enclosure.enclosureType}</TableCell>
                       <TableCell>{enclosure.enclosureUploadBy}</TableCell>
                       <TableCell>{enclosure.enclosureUploadDate}</TableCell>
@@ -889,33 +974,64 @@ const handleConfirmUrgent = async () => {
       </DialogContent>
 
 
+
          <Dialog open={openUrgentModal} onClose={handleCancelUrgent}>
-      <DialogTitle>{pendingUrgency ? "Set as URGENT" : "Set as NON-URGENT"}</DialogTitle>
-      <DialogContent>
+      <DialogTitle
+        sx={{ 
+          backgroundColor: "#207785", 
+          color: "white", 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center" 
+        }}>
+          {pendingUrgency ? "Set As URGENT" : "Set As NON-URGENT"}</DialogTitle>
+          <IconButton onClick={handleCancelUrgent} sx={{ color: "white" }}>
+          <CloseIcon/>
+        </IconButton>
+       <DialogContent>
         Do you want to make the letter {pendingUrgency ? "Urgent" : "Non-Urgent"}?
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCancelUrgent} color="secondary">No</Button>
-        <Button onClick={handleConfirmUrgent} color="primary">Yes</Button>
+        <Button onClick={handleCancelUrgent} variant="contained" color="error">No</Button>
+        <Button onClick={handleConfirmUrgent} variant="contained"  color="primary">Yes</Button>
       </DialogActions>
-    </Dialog>
+          </Dialog>
 
 
-   <Dialog open={openConfidentialModal} onClose={handleCancelConfidential}>
-      <DialogTitle>{pendingConfidential ? "Set as CONFIDENTIAL" : "Set as NON-CONFIDENTIAL"}</DialogTitle>
+        <Dialog open={openConfidentialModal} onClose={handleCancelConfidential}>
+      <DialogTitle
+         sx={{ 
+          backgroundColor: "#207785", 
+          color: "white", 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center" 
+        }}
+        >{pendingConfidential ? "Set As CONFIDENTIAL" : "Set As NON-CONFIDENTIAL"}</DialogTitle>
       <DialogContent>
         Do you want to make the letter {pendingConfidential ? "Confidential" : "Non-Confidential"}?
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCancelConfidential} color="secondary">No</Button>
-        <Button onClick={handleConfirmConfidential} color="primary">Yes</Button>
+        <Button onClick={handleCancelConfidential} variant="contained" color="error">No</Button>
+        <Button onClick={handleConfirmConfidential} variant="contained" color="primary">Yes</Button>
       </DialogActions>
-    </Dialog>
+         </Dialog>
 
 
       <Dialog open={openConfirmModal} onClose={() => setOpenConfirmModal(false)}>
-        <DialogTitle sx={{ backgroundColor: "#1976d2", color: "#fff", fontWeight: "bold", p: 2 }}>
-          Save
+        <DialogTitle
+          sx={{ 
+            backgroundColor: "#207785", 
+            color: "white", 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center" 
+          }}
+         >
+         Confirm Save
+         <IconButton onClick={() => setOpenConfirmModal(false)} sx={{ color: "white" }}>
+      <CloseIcon />
+    </IconButton>
         </DialogTitle>
         <DialogContent>
           <Typography>Do you want to proceed?</Typography>
@@ -929,124 +1045,165 @@ const handleConfirmUrgent = async () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog open={openWarningModal} onClose={() => setOpenWarningModal(false)}>
-        <DialogTitle> Warning</DialogTitle>
-        <DialogContent>
-          <Typography>Please write marginal instructions!</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenWarningModal(false)} variant="contained" color="primary">
-            OK
-          </Button>
-        </DialogActions>
-      </Dialog>
 
-      <Modal open={openModalotherbutton} onClose={handleCloseModal}>
-  <Box
-    sx={{
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: 1000,
-      bgcolor: 'background.paper',
-      boxShadow: 24,
-      p: 4,
+    
+
+
+
+<Dialog open={openWarningModal} onClose={() => setOpenWarningModal(false)}>
+  
+  <DialogTitle 
+    sx={{ 
+      backgroundColor: "#207785", 
+      color: "white", 
+      display: "flex", 
+      justifyContent: "space-between", 
+      alignItems: "center" 
     }}
   >
-    <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-      Recipient
-    </Typography>
-    <Grid container spacing={2} sx={{ mb: 2 }}>
-      {/* Office Name Dropdown */}
-      <Grid item xs={6}>
-        <FormControl fullWidth>
-          <InputLabel id="office-name-label">Office Name *</InputLabel>
-          <Select
-            labelId="office-name-label"
-            id="office-name"
-            value={officeName}
-            label="Office Name *"
-            onChange={handleOfficeNameChange}
+    Warning
+    <IconButton onClick={() => setOpenWarningModal(false)} sx={{ color: "white" }}>
+      <CloseIcon />
+    </IconButton>
+  </DialogTitle>
+
+ 
+  <DialogContent>
+    <Typography>Please write marginal instructions!</Typography>
+  </DialogContent>
+
+
+  <DialogActions>
+    <Button onClick={() => setOpenWarningModal(false)} variant="contained" color="error">
+      OK
+    </Button>
+  </DialogActions>
+</Dialog>
+
+
+
+  
+        <Modal open={openModalotherbutton} onClose={handleCloseModal}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 1000,
+              bgcolor: "background.paper",
+              boxShadow: 24,
+              borderRadius:3,
+            }}
           >
-            {Array.isArray(officeList) &&
-              officeList.map((office) => (
-                <MenuItem key={office.officeId} value={office.officeName}>
-                  {office.officeName}
-                </MenuItem>
-              ))}
-          </Select>
-        </FormControl>
-      </Grid>
+          
+            <Box
+              sx={{
+                bgcolor: "#207785",
+                color: "white",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderTopLeftRadius:3,
+                borderTopRightRadius:3,
+                p: 2,
+                mb: 2,
+              }}
+            >
+              <Typography variant="h6" component="h2">
+                Recipient
+              </Typography>
+              <IconButton onClick={handleCloseModal} sx={{ color: "white" }}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
 
-      {/* Department Name Dropdown */}
-      <Grid item xs={6}>
-        <FormControl fullWidth>
-          <InputLabel id="department-name-label">Department Name *</InputLabel>
-          <Select
-            labelId="department-name-label"
-            id="department-name"
-            value={departmentName}
-            label="Department Name *"
-            onChange={handleDepartmentNameChange}
-          >
-            {Array.isArray(departmentList) &&
-              departmentList.map((dept) => (
-                <MenuItem key={dept.departmentId} value={dept.departmentName}>
-                  {dept.departmentName}
-                </MenuItem>
-              ))}
-          </Select>
-        </FormControl>
-      </Grid>
-    </Grid>
+            <Grid container spacing={2} sx={{ mb: 2, p:3 }}>
+              {/* Office Name Dropdown */}
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel id="office-name-label">Office Name *</InputLabel>
+                  <Select
+                    labelId="office-name-label"
+                    id="office-name"
+                    value={officeName}
+                    label="Office Name *"
+                    onChange={handleOfficeNameChange}
+                  >
+                    {Array.isArray(officeList) &&
+                      officeList.map((office) => (
+                        <MenuItem key={office.officeId} value={office.officeName}>
+                          {office.officeName}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-    {/* Table inside the modal */}
-    <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
-      <Table size="small">
-        <TableHead>
-          <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-            <TableCell>Check</TableCell>
-            {/* <TableCell>SINo.</TableCell> */}
-            <TableCell>Designation</TableCell>
-            <TableCell>Section</TableCell>
-            <TableCell>User</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-  {Array.isArray(tableData) &&
-    tableData.map((row) => (
-      <TableRow key={row.empOfcDeptMapId}> {/* Use a unique field like `empId` */}
-        <TableCell>
-          <Checkbox
-            checked={selectedRows.includes(row.empOfcDeptMapId)} // Use a unique field like `empId`
-            onChange={(event) => handleCheckboxChange(event, row.empOfcDeptMapId)}
-          />
-        </TableCell>
-        {/* <TableCell>{row.empId}</TableCell> Display unique ID for debugging */}
-        <TableCell>{row.designation}</TableCell>
-        <TableCell>{row.sectionname || "NA"}</TableCell>
-        <TableCell>{row.name}</TableCell>
-      </TableRow>
-    ))}
-</TableBody>
-      </Table>
-    </TableContainer>
+              {/* Department Name Dropdown */}
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel id="department-name-label">Department Name *</InputLabel>
+                  <Select
+                    labelId="department-name-label"
+                    id="department-name"
+                    value={departmentName}
+                    label="Department Name *"
+                    onChange={handleDepartmentNameChange}
+                  >
+                    {Array.isArray(departmentList) &&
+                      departmentList.map((dept) => (
+                        <MenuItem key={dept.departmentId} value={dept.departmentName}>
+                          {dept.departmentName}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
 
-    {/* Buttons */}
-    <Box sx={{ display: 'flex', justifyContent: 'end', mt: 3, gap: 4 }}>
-    <Button variant="outlined" size="small" onClick={() => setSelectedRows([])}>
-  Clear All
-</Button>
-      <Button variant="contained" size="small" onClick={handleCloseModal}>
-        Close
-      </Button>
-      <Button variant="contained" size="small" color="primary" onClick={handleSend}>
-            Send
-          </Button>
-    </Box>
-  </Box>
-     </Modal>
+            {/* Table inside the modal */}
+            <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 ,p:1 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+                    <TableCell>Check</TableCell>
+                    <TableCell>Designation</TableCell>
+                    <TableCell>Section</TableCell>
+                    <TableCell>User</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Array.isArray(tableData) &&
+                    tableData.map((row) => (
+                      <TableRow key={row.empOfcDeptMapId}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedRows.includes(row.empOfcDeptMapId)}
+                            onChange={(event) => handleCheckboxChange(event, row.empOfcDeptMapId)}
+                          />
+                        </TableCell>
+                        <TableCell>{row.designation}</TableCell>
+                        <TableCell>{row.sectionname || "NA"}</TableCell>
+                        <TableCell>{row.name}</TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {/* Buttons */}
+            <Box sx={{ display: "flex", justifyContent: "end", mt: 3, gap: 2, p:3 }}>
+              <Button variant="contained" size="small" color="error" onClick={() => setSelectedRows([])}>
+                Clear All
+              </Button>
+              <Button variant="contained" size="small" color="primary" onClick={handleSend}>
+                Send
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
+
 
     </Dialog>
     </>

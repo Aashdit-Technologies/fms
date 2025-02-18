@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
-  TextField,
   Paper,
   IconButton,
   Typography,
@@ -11,7 +10,7 @@ import {
   AccordionDetails,
 } from '@mui/material';
 import DataTable from 'react-data-table-component';
-import { Visibility, Download } from '@mui/icons-material';
+import { Visibility} from '@mui/icons-material';
 import UploadLetter from './components/UploadLetter';
 import Enclosures from './components/Enclosures';
 import api from "../../Api/Api";
@@ -20,7 +19,7 @@ import { encryptPayload } from "../../utils/encrypt";
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { MdFileUpload } from "react-icons/md";
-
+import {toast } from "react-toastify";
 
 const customStyles = {
   table: {
@@ -134,7 +133,7 @@ const Despatch = () => {
   const [isEnclosuresOpen, setIsEnclosuresOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
    const [dispatchdata, setDispatchData] = useState([]);
-  const [expanded, setExpanded] = useState(false); 
+  const [expanded, setExpanded] = useState(true); 
    const token = useAuthStore.getState().token;
   const handleTabChange = (tab) => {
   setActiveTab(tab === 'newLetter' ? 'NEW_LETTER' : 'SENT_LETTER');
@@ -250,11 +249,11 @@ const Despatch = () => {
   };
 
   const newLetterColumns = [
-    { name: 'SI NO', selector: (row, index) => index + 1, sortable: true, width: '80px' },
+    { name: 'SI NO', selector: (row, index) => index + 1, sortable: true, width: '100px' },
     { name: 'Letter Number', selector: (row) => row.letterNo || '', sortable: true, width: '200px' },
     { name: 'Ending Memo Number', selector: (row) => row.memoNo || '', sortable: true, width: '250px' },
     { name: 'Subject', selector: (row) => row.subject, sortable: true, wrap: true, grow: 2 },
-    { name: 'From', selector: (row) => row.from, sortable: true, wrap: true, grow: 1 },
+    { name: 'From', selector: (row) => row.from, sortable: true, wrap: true, grow: 1 ,width:"200px"},
     { name: 'Date', selector: (row) => row.date, sortable: true, width: '120px' },
     {
       name: "View",
@@ -279,11 +278,15 @@ const Despatch = () => {
   size="small" 
   onClick={() => handleDownload(row)}
   sx={{ 
-    bgcolor: '#ffc107',
-    color:"#fff",
+    color: '#207785',
+    bgcolor: 'rgba(32, 119, 133, 0.1)',
     '&:hover': {
-      bgcolor: '#e0a800',
+      bgcolor: 'rgba(32, 119, 133, 0.2)',
+      transform: 'scale(1.1)',
     },
+    transition: 'all 0.2s ease-in-out',
+    padding: '8px',
+    borderRadius: '8px',
   }}
 >
   <MdFileUpload style={{ fontSize: '28px' }} />
@@ -324,19 +327,60 @@ const Despatch = () => {
     { name: 'Subject', selector: (row) => row.subject, sortable: true, wrap: true, grow: 2 },
     { name: 'From', selector: (row) => row.from, sortable: true, wrap: true, grow: 1 },
     { name: 'Date', selector: (row) => row.date, sortable: true, width: '120px' },
+    // {
+    //   name: "View",
+    //   cell: (row) => (
+    //     <Box sx={{ display: "flex", gap: 1 }}>
+    //       <IconButton size="small" onClick={() => handleView(row)} sx={{ color: "primary.main" }}>
+    //         <Visibility />
+    //       </IconButton>
+    //     </Box>
+    //   ),
+    //   width: "150px",
+    //   center: true,
+    // },
     {
       name: "View",
       cell: (row) => (
         <Box sx={{ display: "flex", gap: 1 }}>
-          <IconButton size="small" onClick={() => handleView(row)} sx={{ color: "primary.main" }}>
+          <IconButton size="small" onClick={() => handleView(row)} 
+          sx={{ 
+            color: '#207785',
+            bgcolor: 'rgba(32, 119, 133, 0.1)',
+            '&:hover': {
+              bgcolor: 'rgba(32, 119, 133, 0.2)',
+              transform: 'scale(1.1)',
+            },
+            transition: 'all 0.2s ease-in-out',
+            padding: '8px',
+            borderRadius: '8px',
+          }}>
             <Visibility />
           </IconButton>
+          
+    <IconButton 
+  size="small" 
+  onClick={() => handleDownload(row)}
+  sx={{ 
+    color: '#207785',
+    bgcolor: 'rgba(32, 119, 133, 0.1)',
+    '&:hover': {
+      bgcolor: 'rgba(32, 119, 133, 0.2)',
+      transform: 'scale(1.1)',
+    },
+    transition: 'all 0.2s ease-in-out',
+    padding: '8px',
+    borderRadius: '8px',
+  }}
+>
+  <MdFileUpload style={{ fontSize: '28px' }} />
+</IconButton>
+
         </Box>
       ),
       width: "150px",
       center: true,
     },
-    
    
   ];
   const NoDataComponent = () => (
@@ -350,36 +394,41 @@ const Despatch = () => {
     expanded={expanded} 
     onChange={handleAccordionChange}
     sx={{
-      boxShadow: 'none',
-      border: '1px solid #e0e0e0',
-      width: '100%',
-      maxWidth: '100%',  
-      overflow: 'hidden', 
-      '&:before': {
-        display: 'none',
-      },
+      boxShadow:"3",
+       backgroundColor: '#f5f8fa'
     }}
   >
     <AccordionSummary
-      expandIcon={expanded ? <RemoveIcon /> : <AddIcon />}
+      expandIcon={
+        <IconButton 
+        sx={{
+          backgroundColor: "#1a5f6a",
+          color: "#fff",
+          width: 30, 
+          height: 30, 
+          "&:hover": {
+            backgroundColor: "#207785",
+          },
+        }}>
+          {expanded ? <RemoveIcon /> : <AddIcon />}
+        </IconButton>
+      }
+      aria-controls="panel1a-content"
+      id="panel1a-header"
       sx={{
-        '& .MuiAccordionSummary-expandIconWrapper': {
-          transform: 'none',
-          '&.Mui-expanded': {
-            transform: 'none',
-          }
-        }
+        backgroundColor: "#e9ecef",
+        borderBottom: "1px solid #1a5f6a",
       }}
     >
-      <Typography sx={{ fontWeight: 500, color: '#666' }}>
+      <Typography variant="h6" >
         Letter List
       </Typography>
     </AccordionSummary>
-      <AccordionDetails>
+      <AccordionDetails sx={{ backgroundColor: '#fafafa', p: 2, borderRadius: '0 0 10px 10px' }}>
       <Box sx={{ p: 3 }}>
       {/* Tabs */}
       <Box sx={{ mb: 2 }}>
-        <Button variant={activeTab === 'NEW_LETTER' ? 'contained' : 'outlined'} onClick={() => handleTabChange('newLetter')} sx={{ mr: 1 }}>
+        <Button  variant={activeTab === 'NEW_LETTER' ? 'contained' : 'outlined'} onClick={() => handleTabChange('newLetter')} sx={{ mr: 1, }}>
           New Letter
         </Button>
         <Button variant={activeTab === 'SENT_LETTER' ? 'contained' : 'outlined'} onClick={() => handleTabChange('sentLetter')}>

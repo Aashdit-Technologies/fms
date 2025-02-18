@@ -6,8 +6,12 @@ import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt.js";
 import { useLocation, useNavigate } from "react-router-dom";
 import DataTable from "react-data-table-component"; 
-import { Autocomplete, TextField, Button, Modal } from "@mui/material"; 
 import { MdOutlineMoveDown } from "react-icons/md";
+import {toast, ToastContainer } from "react-toastify";
+import CloseIcon from "@mui/icons-material/Close";
+import useLetterStore from "../Inbox/useLetterStore.js";
+
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography,Autocomplete, TextField, IconButton  } from "@mui/material";
 const customStyles = {
   table: {
     style: {
@@ -36,7 +40,7 @@ const customStyles = {
       padding: "16px",
       justifyContent: "center",
       "&:not(:last-of-type)": {
-        borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+        // borderRight: "1px solid rgba(255, 255, 255, 0.1)",
       },
     },
   },
@@ -48,7 +52,7 @@ const customStyles = {
       backgroundColor: "#ffffff",
       minHeight: "48px",
       "&:not(:last-of-type)": {
-        borderBottom: "1px solid #e0e0e0",
+        // borderBottom: "1px solid #e0e0e0",
       },
       "&:hover": {
         backgroundColor: "#f5f9fa",
@@ -138,7 +142,8 @@ const ExistingFile = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
-  const Navigate = useNavigate();
+  const [isConfirming, setIsConfirming] = useState(false);
+  const navigate = useNavigate();
 
   const location = useLocation();
   const fetchedData = location.state?.data; 
@@ -412,43 +417,54 @@ const ExistingFile = () => {
   };
 
 
+  const handleSave = () => {
+    if (selectedRows.length === 0) {
+      setModalMessage("Please select a file to tag letter or create a new file");
+      setShowModal(true);
+      setIsConfirming(false); 
+      return;
+    }
 
-  const handleSave = async () => {
+    setModalMessage("Do you want to tag letter to this file?");
+    setShowModal(true);
+    setIsConfirming(true); 
+  };
+
+  const handleConfirm = async () => {
+    setShowModal(false); 
+
+    if (!isConfirming) {
+      return; 
+    }
+
     try {
-      
       const payload = {
-        metadataId: metadataId,
-        letterReceiptId: letterReceiptId,
-        fileRecId: selectedRows.map(Number), 
+        metadataId,
+        letterReceiptId,
+        fileRecId: selectedRows.map(Number),
       };
 
-     
       const encryptedPayload = encryptPayload(payload);
 
-      
       const response = await api.post(
         "letter/add-letter-to-file",
-        {
-          dataObject: encryptedPayload,
-        },
+        { dataObject: encryptedPayload },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.status === 200) {
-        alert("Data sent successfully!");
-        setSelectedRows([]); 
+        useLetterStore.getState().setSuccessMessage(response.data.message);
+        toast.success(response.data.message); 
+        setSelectedRows([]);
+        navigate("/system/setup/menu/init");
       } else {
-        alert("Failed to send data.");
+        toast.error("Failed to send data.");
       }
     } catch (error) {
       console.error("Error sending data:", error);
-      alert("An error occurred while sending data.");
+      toast.error("An error occurred while sending data.");
     }
   };
-
-
-
-
 
   const handleCheckboxChange = (fileReceiptId) => {
     setSelectedRows((prevSelected) => {
@@ -478,7 +494,7 @@ const ExistingFile = () => {
       width: "100px",
     },
     {
-      name: "SL",
+      name: "SL NO",
       selector: (row, index) => index + 1,
       sortable: true,
     },
@@ -487,19 +503,21 @@ const ExistingFile = () => {
       selector: (row) => row.fileNo, 
       cell: (row) => (
         <div style={{ display: "flex", flexDirection:"column", alignItems: "start", gap: "8px" }}>
-          <a href="#" onClick={() => handleFileDetailsClick(row)}>
+          <a href="#" onClick={() => handleFileDetailsClick(row)} className="text-success">
             {row.fileNo}
           </a>
           <span className="bg-primary rounded text-white p-1">{row.priority}</span>
         </div>
       ),
       sortable: true,
+      width:"200px"
     },
     
     {
       name: "File Name",
       selector: (row) => row.fileName,
       sortable: true,
+      width:"200px"
     },
     {
       name: "From",
@@ -524,6 +542,7 @@ const ExistingFile = () => {
     },
     {
       name: "Action",
+      width:"250px",
       cell: (row) => (
         <>
           <Button
@@ -558,12 +577,12 @@ const ExistingFile = () => {
     },
   ];
 
-  const handleClose = () => {
-    setShowModal(false);
-  };
+
 
   return (
+    
     <div>
+       <ToastContainer position="top-right" autoClose={1000} hideProgressBar={false} />
       <div className="row">
         <div className="form-group col-md-3">
           
@@ -625,14 +644,73 @@ const ExistingFile = () => {
             />
           </div>
           <div className="mt-3 d-flex align-items-center justify-content-center">
-        <button className="btn btn-primary me-2" onClick={handleSave} >
-          Save
-        </button>
-        <button className="btn btn-secondary" >
+          <Button variant="contained" color="success" onClick={handleSave}>
+            Save
+          </Button>
+          <Button  className=" ms-2" variant="contained" color="error" onClick={() => navigate("/system/setup/menu/init")}>
           Cancel
-        </button>
+      </Button>
+       
+    
+
       </div>
         </div>
+     
+
+        <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="md" fullWidth>
+  
+  {/* Dialog Title with Close Icon */}
+  <DialogTitle
+    sx={{
+      bgcolor: "#207785",
+      color: "white",
+      fontWeight: "bold",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between", // Ensures title & close button are aligned
+    }}
+  >
+    Confirmation
+    <IconButton onClick={() => setShowModal(false)} sx={{ color: "white" }}>
+      <CloseIcon />
+    </IconButton>
+  </DialogTitle>
+
+  {/* Dialog Content */}
+  <DialogContent>
+    <Typography variant="body1" sx={{ p: 2, color: "#1a5f6a" }}>
+      {modalMessage}
+    </Typography>
+  </DialogContent>
+
+  {/* Dialog Actions */}
+  <DialogActions sx={{ justifyContent: "center", pb: 2 }}>
+    <Button
+      onClick={() => setShowModal(false)}
+      variant="contained"
+      sx={{
+        borderRadius: "8px",
+        px: 3,
+        color: "#fff",
+        background: "red",
+      }}
+    >
+      Cancel
+    </Button>
+    <Button
+      onClick={handleConfirm}
+      variant="contained"
+      sx={{
+        borderRadius: "8px",
+        px: 3,
+        bgcolor: "#1b5e20",
+      }}
+    >
+      OK
+    </Button>
+  </DialogActions>
+
+       </Dialog>
       </div>
 
 

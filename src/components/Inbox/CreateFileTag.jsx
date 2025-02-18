@@ -4,9 +4,9 @@ import api from "../../Api/Api";
 import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
 import { toast } from "react-toastify";
-import { Autocomplete, TextField, Button } from "@mui/material";
-import { useLocation } from "react-router-dom";
-
+import { Autocomplete, TextField, Button, MenuItem } from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
+// const navigate = useNavigate();
 
 const ManageFile = () => {
   const location = useLocation();
@@ -106,21 +106,85 @@ const ManageFile = () => {
   
 
 
+  // const handleSubmit = async (event) => {
+  //   event.preventDefault();
+  //   setIsSubmitting(true);
+  //   // setSubmitError("");
+
+  //   if (!formTitle || !selectedRack || !selectedRoom) {
+  //     alert("Please fill out all required fields.");
+  //     setIsSubmitting(false);
+  //     return;
+  //   }
+
+  //   const payload = {
+  //     metadataId:metadataId,
+  //     letterReceiptId:letterReceiptId,
+  //     empOfficeMapIdascustodian:employeeDeptMapId,
+  //     rackId: selectedRack,
+  //     roomId: selectedRoom,
+  //     noOfCell: selectedCell,
+  //     departmentId: selectedDepartment,
+  //     activityType: selectedActivity,
+  //     custodian: selectedCustodian,
+  //     fileModuleId: selectedFileModule,
+  //     fileRelatedToId: selectedFileRTL,
+  //     officeUniverId: selectedOffice,
+  //     title: formTitle,
+  //     keyword: formKeyword,
+  //     fileName: formFileName,
+  //     subject: formSubject,
+  //   };
+
+  //   try {
+      
+  //     const token = useAuthStore.getState().token;
+  //     const encryptedMessage = encryptPayload(payload);
+
+  //     const response = await api.post(
+  //       "letter/create-file-add-letter",
+  //       { dataObject: encryptedMessage },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+      
+  //     if(response.status == 200){
+  //         toast.success(response.data);
+  //       }
+  //       else{
+  //         toast.error(response.data);
+  //         fetchFilteredData();
+  //       }
+      
+  //   } catch (error) {
+  //     console.error("Error saving data:", error);
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
-    // setSubmitError("");
-
-    if (!formTitle || !selectedRack || !selectedRoom) {
-      alert("Please fill out all required fields.");
-      setIsSubmitting(false);
-      return;
-    }
-
+  
+    // Form Validation
+    if (!selectedOffice) return toast.error("Please select an office.");
+    if (!selectedDepartment) return toast.error("Please select a department.");
+    if (!selectedFileRTL) return toast.error("Please select a file related to.");
+    if (!formTitle.trim()) return toast.error("Please enter a title.");
+    if (!formSubject.trim()) return toast.error("Please enter a subject.");
+    if (!formFileName.trim()) return toast.error("Please enter a file name.");
+    if (!selectedCustodian) return toast.error("Please select a custodian.");
+    if (!selectedFileModule) return toast.error("Please select a file module.");
+  
     const payload = {
-      metadataId:metadataId,
-      letterReceiptId:letterReceiptId,
-      empOfficeMapIdascustodian:employeeDeptMapId,
+      metadataId,
+      letterReceiptId,
+      empOfficeMapIdascustodian: employeeDeptMapId,
       rackId: selectedRack,
       roomId: selectedRoom,
       noOfCell: selectedCell,
@@ -135,12 +199,11 @@ const ManageFile = () => {
       fileName: formFileName,
       subject: formSubject,
     };
-
+  
     try {
-      
       const token = useAuthStore.getState().token;
       const encryptedMessage = encryptPayload(payload);
-
+  
       const response = await api.post(
         "letter/create-file-add-letter",
         { dataObject: encryptedMessage },
@@ -150,25 +213,48 @@ const ManageFile = () => {
           },
         }
       );
-      
-      if(response.status == 200){
-          toast.success(response.data);
-        }
-        else{
-          toast.error(response.data);
-          fetchFilteredData();
-        }
-      
+  
+      if (response.status === 200) {
+        toast.success("Form submitted successfully!");
+        // navigate("/system/setup/menu/init");
+        resetForm(); // Reset form fields
+      } else {
+        toast.error("An error occurred while submitting the form.");
+      }
     } catch (error) {
       console.error("Error saving data:", error);
+      toast.error(error.response?.data?.message || "An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
     }
   };
+  
+  // Function to Reset Form Fields
+  const resetForm = () => {
+    setSelectedOffice(null);
+    setSelectedDepartment(null);
+    setSelectedFileRTL(null);
+    setFormTitle("");
+    setFormSubject("");
+    setFormFileName("");
+    setFormKeyword("");
+    setSelectedCustodian(null);
+    setSelectedFileModule(null);
+    setSelectedRack(null);
+    setSelectedRoom(null);
+    setSelectedCell(null);
+    setSelectedActivity(null);
+  };
+  
+
+
+  // const handleSelectChange = (event) => {
+  //   setSelectedActivity(event.target.value);
+  // };
+
   const handleSelectChange = (setter, event) => {
     setter(event.target.value); 
   };
-
   useEffect(() => {
     const selectedActivityObj = activities.find(
       (activity) => String(activity.activityId) === selectedActivity
@@ -185,8 +271,8 @@ const ManageFile = () => {
   
   return (
     <div className="manageFile-section-container">
-    
-          <form className="row" onSubmit={handleSubmit}>
+  
+          {/* <form className="row" onSubmit={handleSubmit}>
               <div className="form-group col-md-3">
                 <Autocomplete
                   id="officeSelect"
@@ -380,7 +466,216 @@ const ManageFile = () => {
                Create file & tag Letter to file
               </Button>
             </div>
-          </form>
+          </form>   */}
+
+ <form className="row" onSubmit={handleSubmit}>
+      
+      <div className="form-group col-md-3">
+        <Autocomplete
+          id="officeSelect"
+          options={office}
+          getOptionLabel={(option) => option.officeOrgName}
+          value={office.find((o) => o.officeOrgId === selectedOffice) || null}
+          onChange={(event, newValue) => setSelectedOffice(newValue ? newValue.officeOrgId : "")}
+          renderInput={(params) => (
+            <TextField {...params} label="Select Office" variant="outlined" fullWidth />
+          )}
+        />
+      </div>
+
+     
+      <div className="form-group col-md-3">
+        <Autocomplete
+          id="departmentSelect"
+          options={departments}
+          getOptionLabel={(option) => option.departmentName}
+          value={departments.find((d) => d.departmentId === selectedDepartment) || null}
+          onChange={(event, newValue) => setSelectedDepartment(newValue ? newValue.departmentId : "")}
+          renderInput={(params) => (
+            <TextField {...params} label="Select Department" variant="outlined" fullWidth />
+          )}
+        />
+      </div>
+
+     
+      <div className="form-group col-md-3">
+        <Autocomplete
+          id="fileRTLSelect"
+          options={fileRelatedToList}
+          getOptionLabel={(option) => option.fileRelatedName}
+          value={fileRelatedToList.find((f) => f.fileRelatedId === selectedFileRTL) || null}
+          onChange={(event, newValue) => setSelectedFileRTL(newValue ? newValue.fileRelatedId : "")}
+          renderInput={(params) => (
+            <TextField {...params} label="Select File Related To" variant="outlined" fullWidth />
+          )}
+        />
+      </div>
+
+     
+      <div className="form-group col-md-3">
+        <TextField
+          id="titleInput"
+          label="Title"
+          variant="outlined"
+          fullWidth
+          value={formTitle}
+          onChange={(e) => setFormTitle(e.target.value)}
+        />
+      </div>
+
+      <div className="form-group col-md-3 mt-3">
+        <TextField
+          id="subjectInput"
+          label="Subject"
+          variant="outlined"
+          fullWidth
+          value={formSubject}
+          onChange={(e) => setFormSubject(e.target.value)}
+        />
+      </div>
+
+           {/* <div className="form-group col-md-3 mt-3">
+          <TextField
+              id="activitySelect"
+              select
+              label="Select Activity"
+              value={selectedActivity || ""} 
+              onChange={handleSelectChange}
+              variant="outlined"
+              fullWidth
+            >
+              <MenuItem value="" disabled>
+                Select Activity
+              </MenuItem>
+              {activities.map((activity) => (
+                <MenuItem key={activity.activityId} value={activity.activityId}>
+                  {activity.activityName}
+                </MenuItem>
+              ))}
+            </TextField>
+
+              </div>  */}
+
+             <div className="form-group col-md-3">
+              <label htmlFor="activitySelect">Select Activity</label>
+              <select
+                id="activitySelect"
+                className="form-control form-select"
+                value={selectedActivity}
+                onChange={(e) => handleSelectChange(setSelectedActivity, e)}
+              >
+                <option value="" disabled>
+                  Select Activity
+                </option>
+                {activities.map((activity) => (
+                  <option key={activity.activityId} value={activity.activityId}>
+                    {activity.activityName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group col-md-3 mt-3">
+             
+             <TextField
+               id="keywordInput"
+               variant="outlined"
+               label="Keyword"
+               fullWidth
+               value={formKeyword}
+               onChange={(e) => setFormKeyword(e.target.value)}
+             />
+           </div>
+
+
+      
+      <div className="form-group col-md-3 mt-3">
+        <TextField
+          id="fileNameInput"
+          variant="outlined"
+          label="File Name"
+          fullWidth
+          value={formFileName}
+          onChange={(e) => setFormFileName(e.target.value)}
+        />
+      </div>
+
+     
+      <div className="form-group col-md-3 mt-3">
+        <Autocomplete
+          id="custodianSelect"
+          options={custodians}
+          getOptionLabel={(option) => `${option.employee.firstName} ${option.employee.middleName || ""} ${option.employee.lastName} (${option.office.officeName} / ${option.department.departmentName})`}
+          value={custodians.find((c) => c.employeeDeptMapId === selectedCustodian) || null}
+          onChange={(event, newValue) => setSelectedCustodian(newValue ? newValue.employeeDeptMapId : "")}
+          renderInput={(params) => (
+            <TextField {...params} label="Select Custodian" variant="outlined" fullWidth />
+          )}
+        />
+      </div>
+
+      <div className="form-group col-md-3 mt-3 mt-3">
+            
+            <Autocomplete
+              id="roomSelect"
+              options={roomData}
+              getOptionLabel={(option) => option.roomNumber}
+              value={roomData.find((r) => r.docRoomId === selectedRoom) || null}
+              onChange={(event, newValue) => setSelectedRoom(newValue ? newValue.docRoomId : "")}
+              renderInput={(params) => (
+                <TextField {...params} label="Select Room" variant="outlined" fullWidth />
+              )}
+            />
+          </div>
+
+          <div className="form-group col-md-3 mt-3">
+                <Autocomplete
+                  id="rackSelect"
+                  options={rackData}
+                  getOptionLabel={(option) => option.rackNumber}
+                  value={rackData.find((r) => r.rackId === selectedRack) || null}
+                  onChange={(event, newValue) => setSelectedRack(newValue ? newValue.rackId : "")}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Select Rack" variant="outlined" fullWidth />
+                  )}
+                />
+              </div>
+
+              <div className="form-group col-md-3 mt-3">
+               
+                <Autocomplete
+                  id="cellSelect"
+                  options={[1, 2, 3, 4, 5]}
+                  getOptionLabel={(option) => option.toString()}
+                  value={selectedCell || null}
+                  onChange={(event, newValue) => setSelectedCell(newValue || "")}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Select Cell" variant="outlined" fullWidth />
+                  )}
+                />
+              </div>
+
+   
+      <div className="form-group col-md-3 mt-3">
+        <Autocomplete
+          id="fileModuleSelect"
+          options={fileModules}
+          getOptionLabel={(option) => option.moduleName}
+          value={fileModules.find((f) => f.moduleId === selectedFileModule) || null}
+          onChange={(event, newValue) => setSelectedFileModule(newValue ? newValue.moduleId : "")}
+          renderInput={(params) => (
+            <TextField {...params} label="Select File Module" variant="outlined" fullWidth />
+          )}
+        />
+      </div>
+
+     
+      <div className="col-md-12 text-center">
+        <Button type="submit" variant="contained" color="primary" sx={{ mt: 3 }}>
+          Create file & tag Letter to file
+        </Button>
+      </div>
+    </form> 
     </div>
   );
 };

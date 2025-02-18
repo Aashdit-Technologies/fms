@@ -17,6 +17,7 @@ import ManageActivity from "../ManageActivity/ManageActivity";
 import ManageFile from "../ManageFile/ManageFile";
 import Welcome from "../Welcome/Welcome";
 import AddToFile from "../Inbox/AddToFile";
+import EmployeeMaster from "../EmployeeMaster/EmployeeMaster";
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -150,6 +151,15 @@ const Admin = () => {
               }
             />
 
+             <Route
+              path="employee-master"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <EmployeeMaster/>
+                </React.Suspense>
+              }
+            />
+
             {menuItems.map((menu) => {
               if (menu.menuURL === "#") {
                 if (menu.children?.length > 0) {
@@ -187,7 +197,8 @@ const Admin = () => {
                 menu.menuURL === "/manage-rack" ||
                 menu.menuURL === "/manage-activity" ||
                 menu.menuURL === "/diary-section" ||
-                menu.menuURL === "/despatch-section"
+                menu.menuURL === "/despatch-section"||
+                menu.menuURL === "/employee-master"
               ) {
                 return null;
               }

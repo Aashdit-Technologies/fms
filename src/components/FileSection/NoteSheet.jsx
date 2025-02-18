@@ -11,20 +11,17 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
   const [editorContent, setEditorContent] = useState(content || '');
   const [showPreview, setShowPreview] = useState(false);
 
-  // Update content when props change
+  // Update editor content when props change
   useEffect(() => {
-    if (content !== undefined) {
-      setEditorContent(content);
-    }
-  }, [content]);
-
-  // Update content when additionalDetails change
-  useEffect(() => {
-    if (additionalDetails?.data?.note) {
-      setEditorContent(additionalDetails.data.note);
+    const newContent = content || additionalDetails?.data?.note || '';
+    console.log('NoteSheet updating content:', newContent);
+    setEditorContent(newContent);
+    
+    // Only notify parent if content is from additionalDetails
+    if (additionalDetails?.data?.note && !content) {
       onContentChange?.(additionalDetails.data.note);
     }
-  }, [additionalDetails?.data?.note, onContentChange]);
+  }, [content, additionalDetails, onContentChange]);
 
   // Update notes when noteSheets change
   useEffect(() => {
@@ -36,6 +33,7 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
   }, [noteSheets]);
 
   const handleEditorChange = (newContent) => {
+    console.log('NoteSheet content changed:', newContent);
     setEditorContent(newContent);
     onContentChange?.(newContent);
   };
@@ -73,6 +71,7 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
                     variant="contained"
                     color="error"
                     className="me-2"
+                    onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
                     onClick={() => setWriteNote(false)}
                   >
                     Close View
@@ -82,6 +81,7 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
                     variant="contained"
                     color="success"
                     className="me-2"
+                    onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
                     onClick={() => setWriteNote(true)}
                   >
                     Write Note
@@ -93,6 +93,7 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
                     variant="contained"
                     color="primary"
                     className="me-2"
+                    onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
                     onClick={() => setZoomIn(!zoomIn)}
                   >
                     {zoomIn ? "Zoom Out" : "Zoom In"}
@@ -105,6 +106,7 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
               variant="contained"
               color="secondary"
               className="me-2"
+              onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
               onClick={togglePreview}
               disabled={!editorContent}
             >

@@ -13,8 +13,8 @@ import { Close as CloseIcon } from '@mui/icons-material';
 import useAuthStore from "../../../store/Store";
 import { encryptPayload } from "../../../utils/encrypt";
 import api from '../../../Api/Api';
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import {toast } from "react-toastify";
+
 const UploadLetter = ({ open, onClose,   dispatchData}) => {
   
   const correspondenceId = dispatchData?.length > 0 ? dispatchData[0].correspondenceId : null;

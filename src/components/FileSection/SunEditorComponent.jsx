@@ -5,24 +5,31 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNot
   const editor = useRef(null);
   const [editorContent, setEditorContent] = useState(content || '');
 
-  // Update editor content when content prop changes
+  // Update editor content when props change, but maintain focus
   useEffect(() => {
-    setEditorContent(content);
-  }, [content]);
-
-  // Update editor content when additionalDetails changes
-  useEffect(() => {
-    if (additionalDetails?.data?.note) {
-      setEditorContent(additionalDetails.data.note);
+    const newContent = content || additionalDetails?.data?.note || selectedNote?.note || '';
+    console.log('Updating editor content:', newContent);
+    
+    if (newContent !== editorContent) {
+      setEditorContent(newContent);
+      
+      // Force update the editor's value while preserving focus
+      if (editor.current?.editor) {
+        const wasFocused = editor.current.editor.selection?.isFocused();
+        const cursorPosition = editor.current.editor.selection?.range?.startOffset;
+        
+        editor.current.editor.value = newContent;
+        
+        // Restore focus and cursor position
+        if (wasFocused) {
+          editor.current.editor.selection?.focus();
+          if (cursorPosition !== undefined) {
+            editor.current.editor.selection?.createRange().setStart(editor.current.editor.editor, cursorPosition);
+          }
+        }
+      }
     }
-  }, [additionalDetails]);
-
-  // Update editor content when selectedNote changes
-  useEffect(() => {
-    if (selectedNote?.note) {
-      setEditorContent(selectedNote.note);
-    }
-  }, [selectedNote]);
+  }, [content, additionalDetails, selectedNote, editorContent]);
 
   const config = useMemo(
     () => ({
@@ -30,6 +37,9 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNot
       placeholder: !editorContent ? placeholder : '',
       height: '500px',
       toolbarButtonSize: 'medium',
+      enableDragAndDropFileToEditor: false,
+      uploader: { insertImageAsBase64URI: true },
+      useSearch: false,
       buttons: [
         'bold', 'italic', 'underline', 'strikethrough', '|',
         'font', 'fontsize', 'brush', 'paragraph', '|',
@@ -48,8 +58,16 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNot
   );
 
   const handleContentChange = useCallback((newContent) => {
+    console.log('Editor content changed:', newContent);
     setEditorContent(newContent);
+    
+    // Notify parent of change
     onContentChange?.(newContent);
+    
+    // Force update the editor's value to ensure sync
+    if (editor.current?.editor && editor.current.editor.value !== newContent) {
+      editor.current.editor.value = newContent;
+    }
   }, [onContentChange]);
 
   return (

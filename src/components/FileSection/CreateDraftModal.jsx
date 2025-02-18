@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
   Modal,
   Box,
@@ -15,7 +15,6 @@ import api from "../../Api/Api";
 import { toast } from "react-toastify";
 import useAuthStore from "../../store/Store";
 import { useMutation } from "@tanstack/react-query";
-import { act } from "react";
 
 const CreateDraftModal = ({
   open,
@@ -61,10 +60,27 @@ const CreateDraftModal = ({
   const editorContentRef = useRef(formData.content);
 
   useEffect(() => {
-    if (officeNames && officeNames.data) {
+    if (officeNames?.data) {
+      // Set the data for letter content dropdown
       setData(officeNames.data);
+      
+      // If editing, find and set the selected template
+      if (editMalady && editMalady.tempType) {
+        const selectedTemplate = officeNames.data.find(
+          template => template.tempType === editMalady.tempType
+        );
+        if (selectedTemplate) {
+          setFormData(prev => ({
+            ...prev,
+            office: selectedTemplate.templateId,
+            tempType: selectedTemplate.tempType,
+            content: selectedTemplate.tempContent || editMalady.letterContent || "",
+          }));
+          editorContentRef.current = selectedTemplate.tempContent || editMalady.letterContent || "";
+        }
+      }
     }
-  }, [officeNames]);
+  }, [officeNames, editMalady]);
 
   useEffect(() => {
     if (open) {
@@ -106,8 +122,9 @@ const CreateDraftModal = ({
     setContents("");
   };
 
-  const populateEditData = () => {
+  const populateEditData = async () => {
     if (editMalady) {
+      // Set basic form data
       setFormData({
         subject: editMalady.subject || "",
         referenceNo: editMalady.referenceNo || "",
@@ -119,23 +136,151 @@ const CreateDraftModal = ({
       editorContentRef.current = editMalady.letterContent || "";
       setContents(editMalady.subject || "");
 
-      // Find organization in organizations array
-      const organization = organizations?.find(
-        (org) =>
-          org.organizationId === editMalady.employeeDeptMapVo?.organizationId
-      );
-      if (organization) {
-        const orgOption = {
-          value: organization.organizationId,
-          label: organization.organizationName,
-        };
-        setSelectedValues((prev) => ({ ...prev, organization: orgOption }));
+      const empDeptMapVo = editMalady.employeeDeptMapVo || {};
 
-        // Fetch companies for this organization
-        fetchData.mutate({
-          endpoint: "/level/get-companies",
-          payload: { organizationId: organization.organizationId },
-        });
+      // Set organization and fetch companies
+      if (empDeptMapVo.organizationId) {
+        const organization = organizations?.find(
+          (org) => org.organizationId === empDeptMapVo.organizationId
+        );
+        if (organization) {
+          const orgOption = {
+            value: organization.organizationId,
+            label: organization.organizationName,
+          };
+          setSelectedValues((prev) => ({ ...prev, organization: orgOption }));
+
+          // Fetch companies
+          const companiesResponse = await fetchData.mutateAsync({
+            endpoint: "/level/get-companies",
+            payload: { organizationId: organization.organizationId },
+          });
+
+          // Set company and fetch offices
+          if (companiesResponse.outcome && empDeptMapVo.companyId) {
+            const company = companiesResponse.data.find(
+              (comp) => comp.companyId === empDeptMapVo.companyId
+            );
+            if (company) {
+              const companyOption = {
+                value: company.companyId,
+                label: company.name,
+              };
+              setSelectedValues((prev) => ({ ...prev, company: companyOption }));
+
+              // Fetch offices
+              const officesResponse = await fetchData.mutateAsync({
+                endpoint: "/level/get-offices",
+                payload: {
+                  organizationId: organization.organizationId,
+                  companyId: company.companyId,
+                },
+              });
+
+              // Set office and fetch departments
+              if (officesResponse.outcome && empDeptMapVo.officeId) {
+                const office = officesResponse.data.find(
+                  (off) => off.officeId === empDeptMapVo.officeId
+                );
+                if (office) {
+                  const officeOption = {
+                    value: office.officeId,
+                    label: office.officeName,
+                  };
+                  setSelectedValues((prev) => ({ ...prev, office: officeOption }));
+
+                  // Fetch departments
+                  const departmentsResponse = await fetchData.mutateAsync({
+                    endpoint: "/level/get-departments",
+                    payload: {
+                      organizationId: organization.organizationId,
+                      companyId: company.companyId,
+                      officeId: office.officeId,
+                    },
+                  });
+
+                  // Set department and fetch designations
+                  if (departmentsResponse.outcome && empDeptMapVo.departmentId) {
+                    const department = departmentsResponse.data.find(
+                      (dept) => dept.departmentId === empDeptMapVo.departmentId
+                    );
+                    if (department) {
+                      const departmentOption = {
+                        value: department.departmentId,
+                        label: department.departmentName,
+                      };
+                      setSelectedValues((prev) => ({
+                        ...prev,
+                        department: departmentOption,
+                      }));
+
+                      // Fetch designations
+                      const designationsResponse = await fetchData.mutateAsync({
+                        endpoint: "/level/get-designations",
+                        payload: {
+                          organizationId: organization.organizationId,
+                          companyId: company.companyId,
+                          officeId: office.officeId,
+                          departmentId: department.departmentId,
+                        },
+                      });
+
+                      // Set designation and fetch authorities
+                      if (
+                        designationsResponse.outcome &&
+                        empDeptMapVo.designationId
+                      ) {
+                        const designation = designationsResponse.data.find(
+                          (desig) => desig.id === empDeptMapVo.designationId
+                        );
+                        if (designation) {
+                          const designationOption = {
+                            value: designation.id,
+                            label: designation.name,
+                          };
+                          setSelectedValues((prev) => ({
+                            ...prev,
+                            designation: designationOption,
+                          }));
+
+                          // Fetch authorities
+                          const authoritiesResponse = await fetchData.mutateAsync({
+                            endpoint: "/file/get-send-to-list",
+                            payload: {
+                              organizationId: organization.organizationId,
+                              companyId: company.companyId,
+                              officeId: office.officeId,
+                              departmentId: department.departmentId,
+                              designationId: designation.id,
+                              action: "DRAFT",
+                            },
+                          });
+
+                          // Set authority if it exists in the response
+                          if (authoritiesResponse.outcome && editMalady.approverEmpRoleMapId) {
+                            const authority = authoritiesResponse.data.find(
+                              (auth) => auth.empDeptRoleId === editMalady.approverEmpRoleMapId
+                            );
+                            if (authority) {
+                              const authorityOption = {
+                                value: authority.empDeptRoleId,
+                                label: authority.empNameWithDesgAndDept,
+                              };
+                              setSelectedValues((prev) => ({
+                                ...prev,
+                                authorities: authorityOption,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   };
@@ -181,6 +326,17 @@ const CreateDraftModal = ({
       fetchData.mutate({
         endpoint: "/level/get-companies",
         payload: { organizationId: selectedOption.value },
+      });
+      fetchData.mutate({
+        endpoint: "/file/get-send-to-list",
+        payload: {
+          organizationId: selectedOption?.value || 0,
+          companyId: selectedValues.company?.value || 0,
+          officeId: selectedValues.office?.value || 0,
+          departmentId: selectedValues.department?.value || 0,
+          designationId: selectedValues.designation?.value || 0,
+          action:"DRAFT",
+        },
       });
     } else if (field === "company") {
       setOptions((prev) => ({
@@ -231,7 +387,7 @@ const CreateDraftModal = ({
           companyId: selectedValues.company?.value || 0,
           officeId: selectedValues.office?.value || 0,
           departmentId: selectedValues.department?.value || 0,
-          designationId: selectedValues.designation?.value || 0,
+          designationId: selectedOption?.value || 0,
           action:"DRAFT",
         },
       });
@@ -246,7 +402,7 @@ const CreateDraftModal = ({
       subject: contents,
       approverEmpRoleMapId: selectedValues.authorities?.value || null,
       letterContent: editorContentRef.current,
-      letterNo: null,
+      letterNo: formData.office || null,
       correspondenceDate: null,
       displayType: null,
       currEmpDeptMapId: editMalady?.currEmpDeptMapId || null,
@@ -258,6 +414,14 @@ const CreateDraftModal = ({
         designationId: selectedValues.designation?.value || 0,
       },
     };
+
+    // Debug log
+    console.log('Save/Approve Payload:', {
+      ...payload,
+      action,
+      isApproveEnabled: editMalady?.approverEmpRoleMapId === editMalady?.currEmpDeptMapId,
+      currentFormData: formData
+    });
 
     try {
       const encryptedPayload = encryptPayload(payload);
@@ -291,23 +455,51 @@ const CreateDraftModal = ({
     }
   };
 
-  const officeOptions = Array.isArray(data)
-    ? data.map((item) => ({
-        label: item.tempType,
-        value: item.templateId,
-        tempContent: item.tempContent,
-      }))
-    : [];
+  const officeOptions = useMemo(() => {
+    if (!Array.isArray(data)) {
+      return [];
+    }
+    
+    return data.map((item) => ({
+      label: item.tempType,
+      value: item.templateId,
+      tempContent: item.tempContent,
+    }));
+  }, [data]);
+
+  // Debug log to check data
+  useEffect(() => {
+    console.log('Letter Content Options:', officeOptions);
+    console.log('Selected Template:', formData.office);
+  }, [officeOptions, formData.office]);
 
   const handleOfficeChange = (selectedOption) => {
     if (selectedOption) {
+      const content = selectedOption.tempContent || "";
+      
+      // Update form data
       setFormData((prev) => ({
         ...prev,
         office: selectedOption.value,
         tempType: selectedOption.label,
-        content: selectedOption.tempContent,
+        content: content,
       }));
-      editorContentRef.current = selectedOption.tempContent;
+      
+      // Update editor content
+      editorContentRef.current = content;
+      
+      // Force update the editor content
+      setTimeout(() => {
+        const editor = document.querySelector('.jodit-wysiwyg');
+        if (editor) {
+          editor.innerHTML = content;
+          
+          // Also update the editor's internal value
+          if (editor.jodit) {
+            editor.jodit.value = content;
+          }
+        }
+      }, 100); // Increased timeout to ensure editor is ready
     }
   };
 
@@ -503,9 +695,14 @@ const CreateDraftModal = ({
             Save
           </Button>
                    
-          {editMalady && editMalady.correspondenceId && 
-           (editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId) && (
-            <Button variant="contained" color="success" onClick={() => handleSave("APPROVE")}>
+          {editMalady?.correspondenceId && 
+           editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId && (
+            <Button 
+              variant="contained" 
+              color="success" 
+              onClick={() => handleSave("APPROVE")}
+              title="Approve Draft"
+            >
               Approve
             </Button>
           )}

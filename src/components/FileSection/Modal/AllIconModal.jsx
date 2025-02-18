@@ -206,6 +206,14 @@ export const UploadModal = ({
         { headers: { Authorization: `Bearer ${token}` } }
       );
       return response.data;
+    },
+    onSuccess: (data) => {
+      // Handle the refreshed data
+      console.log("Enclosure data refreshed:", data);
+    },
+    onError: (error) => {
+      console.error("Error refreshing enclosure data:", error);
+      toast.error("Failed to refresh enclosure data");
     }
   });
 
@@ -213,26 +221,34 @@ export const UploadModal = ({
     mutationFn: async (data) => {
       try {
         const formData = new FormData();
-        formData.append(
-          "dataObject",
-          encryptPayload({
-            fileId: allDetails.fileId,
-            fileReceiptId: allDetails.fileReceiptId,
-            correspondenceId: corrId,
-          })
-        );
-        formData.append(
-          "enclosureData",
-          encryptPayload({
-            enclosures: rows.map((row) => ({
-              encTypeId: row.type,
-              encName: row.name,
-            })),
-          })
-        );
-        data.enclosureDocuments.forEach((file) =>
-          formData.append("enclosureDocuments", file)
-        );
+        
+        // First, prepare the enclosures data
+        const enclosuresPayload = {
+          enclosures: rows.map((row) => ({
+            encTypeId: row.type,  // This is the type ID from the dropdown
+            encName: row.name,
+          })),
+        };
+        
+        console.log("Enclosures payload:", enclosuresPayload); // Debug log
+        
+        // Prepare and append the main data object
+        const dataObject = {
+          fileId: allDetails.fileId,
+          fileReceiptId: allDetails.fileReceiptId,
+          correspondenceId: corrId,
+        };
+        
+        formData.append("dataObject", encryptPayload(dataObject));
+        formData.append("enclosureData", encryptPayload(enclosuresPayload));
+        
+        // Append each file to the formData
+        data.enclosureDocuments.forEach((file, index) => {
+          formData.append(`enclosureDocuments`, file);
+        });
+
+        console.log("Submitting form data with types:", rows.map(r => ({ type: r.type, name: r.name }))); // Debug log
+        
         const response = await api.post(
           "/file/upload-file-correspondence-enclosures",
           formData,
@@ -244,18 +260,24 @@ export const UploadModal = ({
           }
         );
         
-        // Only refresh data, don't reset form
-        await refreshEnclosureData.mutateAsync();
-        toast.success("Upload successful!");
+        if (response.data) {
+          await refreshEnclosureData.mutateAsync();
+          toast.success("Upload successful!");
+          return response.data;
+        } else {
+          throw new Error("Upload failed: No response data");
+        }
       } catch (error) {
-        toast.error("Upload failed. Please try again.");
-        console.error("Upload error:", error);
+        console.error("Upload error details:", error);
+        toast.error(error.message || "Upload failed. Please try again.");
+        throw error;
       }
     },
   });
 
   const handleSubmit = () => {
-    console.log("Rows on submit:", rows);
+    // Log the current state of rows for debugging
+    console.log("Current rows state:", rows);
     
     // Check if there are any rows
     if (rows.length === 0) {
@@ -264,7 +286,11 @@ export const UploadModal = ({
     }
 
     // Validate all required fields
-    const invalidRows = rows.filter(row => !row.type || !row.name || !row.file);
+    const invalidRows = rows.filter(row => {
+      console.log("Validating row:", row); // Debug log
+      return !row.type || !row.name || !row.file;
+    });
+    
     if (invalidRows.length > 0) {
       toast.error("Please fill all required fields (Type, Name, and File) for each row!");
       return;
@@ -277,8 +303,10 @@ export const UploadModal = ({
       return;
     }
 
-    console.log("Submitting files:", rows.map((row) => row.file));
-    mutation.mutate({ enclosureDocuments: rows.map((row) => row.file) });
+    // If all validation passes, submit the form
+    mutation.mutate({ 
+      enclosureDocuments: rows.map((row) => row.file)
+    });
   };
 
   const handleCancel = () => {
@@ -295,43 +323,48 @@ export const UploadModal = ({
   };
 
   const removeRow = (index) => setRows(rows.filter((_, i) => i !== index));
-  const handleChange = (index, field, value) =>
+  const handleChange = (index, field, value) => {
+    console.log(`Changing ${field} at index ${index} to:`, value); // Debug log
     setRows(
       rows.map((row, i) => (i === index ? { ...row, [field]: value } : row))
     );
-    const handleFileChange = (index, event) => {
-      const file = event.target.files[0];
-      console.log("Selected file:", file);
-      
-      if (!file) {
-        toast.error("No file selected");
-        return;
-      }
+  };
+  const handleFileChange = (index, event) => {
+    const file = event.target.files[0];
+    console.log("Selected file:", file);
+    
+    if (!file) {
+      toast.error("No file selected");
+      return;
+    }
 
-      if (file.type !== "application/pdf") {
-        toast.error("Only PDF files are allowed.");
-        event.target.value = ''; // Clear the file input
-        return;
-      }
+    if (file.type !== "application/pdf") {
+      toast.error("Only PDF files are allowed.");
+      event.target.value = ''; // Clear the file input
+      return;
+    }
 
-      setRows(rows.map((row, i) => {
-        if (i === index) {
-          return {
-            ...row,
-            file: file,
-            fileName: file.name
-          };
-        }
-        return row;
-      }));
-      
-      toast.success(`File selected: ${file.name}`);
-    };
+    setRows(rows.map((row, i) => {
+      if (i === index) {
+        return {
+          ...row,
+          file: file,
+          fileName: file.name
+        };
+      }
+      return row;
+    }));
+    
+    toast.success(`File selected: ${file.name}`);
+  };
     
 
+  // Reset form when modal closes
   useEffect(() => {
-    refreshEnclosureData.mutate();
-  }, [refreshTrigger]);
+    if (!open) {
+      setRows([{ type: "", name: "", file: null, fileName: "" }]);
+    }
+  }, [open]);
 
   return (
     <Modal

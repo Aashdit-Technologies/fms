@@ -18,21 +18,12 @@ const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange }) 
     "Noting No-5",
   ];
 
-  // Update editor content when content prop changes
- // Sync when content prop changes
-useEffect(() => {
-  if (content !== undefined) {
-    setEditorContent(content);
-  }
-}, [content]);
-
-// Sync when additionalDetails changes
-useEffect(() => {
-  if (additionalDetails?.data?.note) {
-    setEditorContent(additionalDetails.data.note);
-    onContentChange?.(additionalDetails.data.note);
-  }
-}, [additionalDetails?.data?.note, onContentChange]);
+  // Update editor content when props change
+  useEffect(() => {
+    const newContent = content || additionalDetails?.data?.note || '';
+    console.log('Ckeditor updating content:', newContent);
+    setEditorContent(newContent);
+  }, [content, additionalDetails]);
 
   const handleSelectChange = useCallback((event) => {
     const value = event.target.value;
@@ -41,12 +32,14 @@ useEffect(() => {
     if (value) {
       const linkHTML = `<a href="https://example.com/${value.replace(" ", "-").toLowerCase()}" target="_blank">${value}</a>`;
       const newContent = `${editorContent}<br/>${linkHTML}<br/>`;
+      console.log('Adding link to content:', newContent);
       setEditorContent(newContent);
       onContentChange?.(newContent);
     }
   }, [editorContent, onContentChange]);
 
   const handleEditorChange = useCallback((newContent) => {
+    console.log('Ckeditor content changed:', newContent);
     setEditorContent(newContent);
     onContentChange?.(newContent);
   }, [onContentChange]);
@@ -60,13 +53,34 @@ useEffect(() => {
       <div className="editor-container">
         <Accordion defaultActiveKey="0" className="custom-accordion">
           <Accordion.Item eventKey="0">
-            <Accordion.Header onClick={toggleAccordion}>
+            <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100">
                 <h5>Task Action</h5>
-                <div className="d-flex align-items-center" onClick={(e) => e.stopPropagation()}>
+                <div 
+                  className="d-flex align-items-center" 
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // Prevent focus loss
+                    e.stopPropagation(); // Prevent accordion toggle
+                  }}
+                >
                   <Select
                     value={selectedItem}
                     onChange={handleSelectChange}
+                    onMouseDown={(e) => {
+                      e.preventDefault(); // Prevent focus loss
+                      e.stopPropagation(); // Prevent accordion toggle
+                    }}
+                    MenuProps={{
+                      anchorOrigin: {
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                      },
+                      transformOrigin: {
+                        vertical: 'top',
+                        horizontal: 'left',
+                      },
+                      getContentAnchorEl: null,
+                    }}
                     displayEmpty
                     size="small"
                     style={{ minWidth: 200, marginRight: '10px' }}
@@ -76,7 +90,14 @@ useEffect(() => {
                       <MenuItem key={index} value={option}>{option}</MenuItem>
                     ))}
                   </Select>
-                  <span className="toggle-icon">
+                  <span 
+                    className="toggle-icon"
+                    onMouseDown={(e) => {
+                      e.preventDefault(); // Prevent focus loss
+                      e.stopPropagation(); // Prevent accordion toggle
+                    }}
+                    onClick={toggleAccordion}
+                  >
                     {isOpen ? <FaPlus /> : <FaMinus />}
                   </span>
                 </div>

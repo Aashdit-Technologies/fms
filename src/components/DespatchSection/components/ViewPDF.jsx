@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Box, CircularProgress } from '@mui/material';
-
+import {toast } from "react-toastify";
 const ViewPDF = () => {
   useEffect(() => {
     // Get the PDF URL from the URL parameters
