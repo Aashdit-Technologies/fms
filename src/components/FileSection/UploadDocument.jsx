@@ -231,7 +231,8 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   };
 
   const handleCancel = () => {
-    toast.error("Operation cancelled!");
+    navigate("/file");
+    toast.warning("Task cancelled!");
   };
 
   const formatDateToString = (date) => {
@@ -254,6 +255,8 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
         }
       }
     });
+    
+
 
     return isValid;
   };
@@ -262,14 +265,19 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     if (!validateForm()) {
       return;
     }
-
+    const isEditorEmpty = !editorContent?.trim();
+    const areAllRowsEmpty = rows.every((row) => isRowEmpty(row));
+  
+    if (isEditorEmpty && areAllRowsEmpty) {
+      toast.error("Either editor content or at least one row must be filled.");
+      return;
+    }
     const documents = rows.map((row) => ({
       docSubject: row.subject,
       letterType: row.type,
       letterNumber: row.type === "LETTER" ? row.letterNumber : null,
       letterDate: row.date,
     }));
-    console.log(documents);
     
 
     const uploadedDocuments = rows.map((row) => row.document).filter(Boolean);
@@ -279,6 +287,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       uploadedDocuments,
       filePriority,
       isConfidential,
+      editorContent,
     });
   };
 

@@ -37,6 +37,10 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
     setEditorContent(newContent);
     onContentChange?.(newContent);
   };
+  const handleEditorBlur = () => {
+    console.log('Editor blurred, saving content:', editorContent);
+    onContentChange?.(editorContent); // Notify parent about the content change when editor loses focus
+  };
 
   const togglePreview = () => {
     if (showPreview) {
@@ -108,7 +112,6 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
               className="me-2"
               onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
               onClick={togglePreview}
-              disabled={!editorContent}
             >
               {showPreview ? "Close Preview" : "Preview"}
             </Button>
@@ -162,6 +165,7 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
                   placeholder="Enter your task action here..."
                   onContentChange={handleEditorChange}
                   additionalDetails={additionalDetails}
+                  onBlur={handleEditorBlur}
                 />
               )}
             </div>
