@@ -238,29 +238,48 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   };
 
   const handleSubmit = () => {
-    // Check if any row has partially filled fields
     const hasPartiallyFilledRows = rows.some(row => {
       const filledFields = [
         row.subject,
         row.type,
         row.letterNumber,
         row.date,
-        row.document
+        row.document,
       ].filter(Boolean).length;
-      
+  
       return filledFields > 0 && filledFields < 5;
     });
-
+  
     if (hasPartiallyFilledRows) {
       const missingFields = rows.map((row, index) => {
         const missing = getMissingFields(row);
         return missing.length > 0 ? `Row ${index + 1}: ${missing.join(', ')}` : null;
       }).filter(Boolean);
-      
+  
       toast.error(`Please fill all mandatory fields:\n${missingFields.join('\n')}`);
       return;
     }
-
+  
+    // If no fields are filled, proceed with save API
+    const isAnyFieldFilled = rows.some(row => 
+      row.subject || 
+      row.type || 
+      row.letterNumber || 
+      row.date || 
+      row.document
+    );
+  
+    if (!isAnyFieldFilled) {
+      // Call save API
+      mutation.mutate({
+        documents: [],
+        uploadedDocuments: [],
+        filePriority,
+        isConfidential,
+      });
+      return;
+    }
+  
     // If validation passes, proceed with mutation
     const documents = rows.map((row) => ({
       subject: row.subject,
@@ -268,9 +287,9 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       letterNumber: row.letterNumber,
       date: row.date,
     }));
-
+  
     const uploadedDocuments = rows.map((row) => row.document).filter(Boolean);
-
+  
     mutation.mutate({
       documents,
       uploadedDocuments,

@@ -16,12 +16,20 @@ import { toast } from "react-toastify";
 import useAuthStore from "../../store/Store";
 import { useMutation } from "@tanstack/react-query";
 
-const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetails, editMalady }) => {
-  const token = useAuthStore((state) => state.token) || sessionStorage.getItem("token");
-    
+const CreateDraftModal = ({
+  open,
+  onClose,
+  officeNames,
+  organizations,
+  allDetails,
+  editMalady,
+}) => {
+  const token =
+    useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+
   const [data, setData] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [contents, setContents] = useState('');
+  const [contents, setContents] = useState("");
 
   const [selectedValues, setSelectedValues] = useState({
     organization: null,
@@ -46,7 +54,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
     office: "",
     tempType: "",
   });
-  
+
   const editorContentRef = useRef(formData.content);
   useEffect(() => {
     if (officeNames && officeNames.data) {
@@ -63,22 +71,20 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
       }
     }
   }, [open, editMalady]);
-  useEffect(() => {
-    if (!editMalady) {
-      setFormData({
-        subject: "",
-        referenceNo: "",
-        addedBy: "",
-        office: "",
-        content: "",
-        tempType: "",
-      });
-      editorContentRef.current = "";
-      setContents("");
-    }
-  }, [editMalady]);
-
- 
+  // useEffect(() => {
+  //   if (!editMalady) {
+  //     setFormData({
+  //       subject: "",
+  //       referenceNo: "",
+  //       addedBy: "",
+  //       office: "",
+  //       content: "",
+  //       tempType: "",
+  //     });
+  //     editorContentRef.current = "";
+  //     setContents("");
+  //   }
+  // }, [editMalady]);
 
   const resetForm = () => {
     setSelectedValues({
@@ -96,7 +102,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
       designations: [],
       authorities: [],
     });
-    editorContentRef.current = ""; 
+    editorContentRef.current = "";
     setContents("");
     // setTableData([]);
   };
@@ -125,7 +131,6 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
           console.log("Mapped Authorities:", mappedAuthorities);
           setOptions((prev) => ({ ...prev, authorities: mappedAuthorities }));
           console.log("Options after setting authorities:", options);
-          
         }
       }
     },
@@ -208,8 +213,8 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
       });
     }
   };
-  
-  const handleSave = async () => {
+
+  const handleSave = async (action) => {
     const payload = {
       correspondenceId: editMalady?.correspondenceId || null,
       fileId: allDetails?.fileId,
@@ -232,18 +237,26 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
 
     try {
       const encryptedPayload = encryptPayload(payload);
-      const endpoint = "/file/create-draft-in-file";
-      
-      const response = await api.post(endpoint, {
-        dataObject: encryptedPayload,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const endpoint = action === "APPROVE" ? "/file/approve-draft" : "/file/create-draft-in-file";
+
+      const response = await api.post(
+        endpoint,
+        {
+          dataObject: encryptedPayload,
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.data.outcome) {
-        toast.success(editMalady ? "Draft updated successfully!" : "Draft created successfully!");
+        toast.success(
+          editMalady
+            ? "Draft updated successfully!"
+            : "Draft created successfully!"
+        );
         onClose();
       } else {
         toast.error(response.data.message || "Operation failed");
@@ -273,7 +286,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
       editorContentRef.current = selectedOption.tempContent;
     }
   };
-  
+
   useEffect(() => {
     if (open && editMalady) {
       setShowForm(true);
@@ -289,14 +302,17 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
       setContents(editMalady.subject || "");
 
       // Find organization in organizations array
-      const organization = organizations?.find(org => org.organizationId === editMalady.employeeDeptMapVo?.organizationId);
+      const organization = organizations?.find(
+        (org) =>
+          org.organizationId === editMalady.employeeDeptMapVo?.organizationId
+      );
       if (organization) {
         const orgOption = {
           value: organization.organizationId,
-          label: organization.organizationName
+          label: organization.organizationName,
         };
-        setSelectedValues(prev => ({ ...prev, organization: orgOption }));
-        
+        setSelectedValues((prev) => ({ ...prev, organization: orgOption }));
+
         // Fetch companies for this organization
         fetchData.mutate({
           endpoint: "/level/get-companies",
@@ -308,14 +324,19 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
 
   // Handle company data load and fetch offices
   useEffect(() => {
-    if (editMalady?.employeeDeptMapVo?.companyId && options.companies.length > 0) {
-      const company = options.companies.find(comp => comp.companyId === editMalady.employeeDeptMapVo.companyId);
+    if (
+      editMalady?.employeeDeptMapVo?.companyId &&
+      options.companies.length > 0
+    ) {
+      const company = options.companies.find(
+        (comp) => comp.companyId === editMalady.employeeDeptMapVo.companyId
+      );
       if (company) {
         const companyOption = {
           value: company.companyId,
-          label: company.name
+          label: company.name,
         };
-        setSelectedValues(prev => ({ ...prev, company: companyOption }));
+        setSelectedValues((prev) => ({ ...prev, company: companyOption }));
 
         // Fetch offices
         fetchData.mutate({
@@ -332,13 +353,15 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
   // Handle office data load and fetch departments
   useEffect(() => {
     if (editMalady?.employeeDeptMapVo?.officeId && options.offices.length > 0) {
-      const office = options.offices.find(off => off.officeId === editMalady.employeeDeptMapVo.officeId);
+      const office = options.offices.find(
+        (off) => off.officeId === editMalady.employeeDeptMapVo.officeId
+      );
       if (office) {
         const officeOption = {
           value: office.officeId,
-          label: office.officeName
+          label: office.officeName,
         };
-        setSelectedValues(prev => ({ ...prev, office: officeOption }));
+        setSelectedValues((prev) => ({ ...prev, office: officeOption }));
 
         // Fetch departments
         fetchData.mutate({
@@ -355,14 +378,23 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
 
   // Handle department data load and fetch designations
   useEffect(() => {
-    if (editMalady?.employeeDeptMapVo?.departmentId && options.departments.length > 0) {
-      const department = options.departments.find(dept => dept.departmentId === editMalady.employeeDeptMapVo.departmentId);
+    if (
+      editMalady?.employeeDeptMapVo?.departmentId &&
+      options.departments.length > 0
+    ) {
+      const department = options.departments.find(
+        (dept) =>
+          dept.departmentId === editMalady.employeeDeptMapVo.departmentId
+      );
       if (department) {
         const departmentOption = {
           value: department.departmentId,
-          label: department.departmentName
+          label: department.departmentName,
         };
-        setSelectedValues(prev => ({ ...prev, department: departmentOption }));
+        setSelectedValues((prev) => ({
+          ...prev,
+          department: departmentOption,
+        }));
 
         // Fetch designations
         fetchData.mutate({
@@ -380,14 +412,22 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
 
   // Handle designation data load and fetch authorities
   useEffect(() => {
-    if (editMalady?.employeeDeptMapVo?.designationId && options.designations.length > 0) {
-      const designation = options.designations.find(des => des.id === editMalady.employeeDeptMapVo.designationId);
+    if (
+      editMalady?.employeeDeptMapVo?.designationId &&
+      options.designations.length > 0
+    ) {
+      const designation = options.designations.find(
+        (des) => des.id === editMalady.employeeDeptMapVo.designationId
+      );
       if (designation) {
         const designationOption = {
           value: designation.id,
-          label: designation.name
+          label: designation.name,
         };
-        setSelectedValues(prev => ({ ...prev, designation: designationOption }));
+        setSelectedValues((prev) => ({
+          ...prev,
+          designation: designationOption,
+        }));
 
         // Fetch authorities
         fetchData.mutate({
@@ -407,13 +447,14 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
   // Handle authorities data load
   useEffect(() => {
     if (editMalady?.approverEmpRoleMapId && options.authorities?.length > 0) {
-      const authority = options.authorities.find(auth => auth.value === editMalady.approverEmpRoleMapId);
+      const authority = options.authorities.find(
+        (auth) => auth.value === editMalady.approverEmpRoleMapId
+      );
       if (authority) {
-        setSelectedValues(prev => ({ ...prev, authorities: authority }));
+        setSelectedValues((prev) => ({ ...prev, authorities: authority }));
       }
     }
   }, [editMalady, options.authorities]);
-  
 
   return (
     <Modal
@@ -447,7 +488,9 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
             alignItems: "center",
           }}
         >
-          <Typography variant="h6">{editMalady ? "Edit Draft" : "Create Draft"}</Typography>
+          <Typography variant="h6">
+            {editMalady ? "Edit Draft" : "Create Draft"}
+          </Typography>
           <IconButton onClick={() => setShowForm(!showForm)} color="primary">
             {showForm ? <FaMinus /> : <FaPlus />}
           </IconButton>
@@ -590,20 +633,25 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
         )}
 
         <Box sx={{ mt: 2 }} className="editor-containers">
-            <CorrespondenceEditor
-              initialContent={formData.content} 
-              onContentChange={(value) => {
-                editorContentRef.current = value; 
-              }}
-            />
+          <CorrespondenceEditor
+            initialContent={formData.content}
+            onContentChange={(value) => {
+              editorContentRef.current = value;
+            }}
+          />
         </Box>
 
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}
         >
-          <Button variant="contained" color="success" onClick={handleSave}>
+          <Button variant="contained" color="success" onClick={() => handleSave("SAVE")}>
             Save
           </Button>
+                   
+          {editMalady.correspondenceId != null && (editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId) ? <Button variant="contained" color="success" onClick={() => handleSave("APPROVE")}>
+            Approve
+          </Button> : "" }
+          
           <Button
             variant="contained"
             color="warning"
@@ -624,7 +672,15 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
           >
             Reset
           </Button>
-          <Button variant="contained" color="error" onClick={onClose}>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => {
+              editorContentRef.current = "";
+              resetForm();
+              onClose();
+            }}
+          >
             Cancel
           </Button>
         </Box>
