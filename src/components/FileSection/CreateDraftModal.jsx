@@ -302,7 +302,34 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
     }
   };
   
- 
+  useEffect(() => {
+    if (open && editMalady) {
+      setShowForm(true);
+      setFormData({
+        subject: editMalady.subject || "",
+        referenceNo: editMalady.referenceNo || "",
+        addedBy: editMalady.addedBy || "",
+        office: editMalady.office || "",
+        content: editMalady.content || "",
+        tempType: editMalady.tempType || "",
+      });
+      editorContentRef.current = editMalady.content || "";
+      setContents(editMalady.subject || "");
+  
+      // Safeguard against undefined objects/arrays
+      const findInArray = (array, key, value) => array && Array.isArray(array) ? array.find(item => item[key] === value) : null;
+  
+      setSelectedValues({
+        organization: findInArray(organizations, 'organizationId', editMalady.organizationId) || null,
+        company: findInArray(options.companies, 'companyId', editMalady.companyId) || null,
+        office: findInArray(options.offices, 'officeId', editMalady.officeId) || null,
+        department: findInArray(options.departments, 'departmentId', editMalady.departmentId) || null,
+        designation: findInArray(options.designations, 'id', editMalady.designationId) || null,
+        authorities: findInArray(options.authorities, 'value', editMalady.approverEmpRoleMapId) || null,
+      });
+    }
+  }, [open, editMalady, organizations, options]);
+  
 
   return (
     <Modal
