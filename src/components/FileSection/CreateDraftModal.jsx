@@ -71,101 +71,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
     setContents("");
   }, []);
 
-  useEffect(() => {
-    if (editMalady && open) {
-      // Set form data
-      setFormData({
-        subject: editMalady.subject || "",
-        content: editMalady.content || "",
-        office: editMalady.office?.id || "",
-        tempType: editMalady.tempType || "",
-      });
-
-      // Set editor content
-      editorContentRef.current = editMalady.content || "";
-      setContents(editMalady.subject || "");
-      setShowForm(true);
-
-      // Set selected values for dropdowns
-      const newSelectedValues = {
-        organization: editMalady.organization ? {
-          value: editMalady.organization.id,
-          label: editMalady.organization.name
-        } : null,
-        company: editMalady.company ? {
-          value: editMalady.company.id,
-          label: editMalady.company.name
-        } : null,
-        office: editMalady.office ? {
-          value: editMalady.office.id,
-          label: editMalady.office.name
-        } : null,
-        department: editMalady.department ? {
-          value: editMalady.department.id,
-          label: editMalady.department.name
-        } : null,
-        designation: editMalady.designation ? {
-          value: editMalady.designation.id,
-          label: editMalady.designation.name
-        } : null,
-        authorities: editMalady.authorities ? {
-          value: editMalady.authorities.id,
-          label: editMalady.authorities.name
-        } : null
-      };
-      setSelectedValues(newSelectedValues);
-
-      // Fetch dependent data for dropdowns
-      if (editMalady.organization) {
-        fetchData.mutate({
-          endpoint: "/level/get-companies",
-          payload: { organizationId: editMalady.organization.id }
-        });
-      }
-      if (editMalady.company) {
-        fetchData.mutate({
-          endpoint: "/level/get-offices",
-          payload: {
-            organizationId: editMalady.organization.id,
-            companyId: editMalady.company.id
-          }
-        });
-      }
-      if (editMalady.office) {
-        fetchData.mutate({
-          endpoint: "/level/get-departments",
-          payload: {
-            organizationId: editMalady.organization.id,
-            companyId: editMalady.company.id,
-            officeId: editMalady.office.id
-          }
-        });
-      }
-      if (editMalady.department) {
-        fetchData.mutate({
-          endpoint: "/level/get-designations",
-          payload: {
-            organizationId: editMalady.organization.id,
-            companyId: editMalady.company.id,
-            officeId: editMalady.office.id,
-            departmentId: editMalady.department.id
-          }
-        });
-      }
-      if (editMalady.designation) {
-        fetchData.mutate({
-          endpoint: "/file/get-send-to-list",
-          payload: {
-            organizationId: editMalady.organization.id,
-            companyId: editMalady.company.id,
-            officeId: editMalady.office.id,
-            departmentId: editMalady.department.id,
-            designationId: editMalady.designation.id
-          }
-        });
-      }
-    }
-  }, [editMalady, open]);
+ 
 
   const resetForm = () => {
     setSelectedValues({
@@ -395,6 +301,8 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
       editorContentRef.current = selectedOption.tempContent;
     }
   };
+  
+ 
 
   return (
     <Modal
@@ -437,7 +345,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
         {showForm && (
           <Box sx={{ mt: 2, display: "grid", gap: 2 }}>
             <Grid item xs={12}>
-              <label>Office Name</label>
+              <label>Letter Content</label>
               <ReactSelect
                 options={officeOptions}
                 value={officeOptions.find(
