@@ -13,10 +13,11 @@ import ReactSelect from "react-select";
 import { encryptPayload } from "../../utils/encrypt";
 import api from "../../Api/Api";
 import { toast } from "react-toastify";
-// import useAuthStore from "../../../store/Store";
+import useAuthStore from "../../store/Store";
 import { useMutation } from "@tanstack/react-query";
 
 const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetails, editMalady }) => {
+  const token = useAuthStore((state) => state.token) || sessionStorage.getItem("token");
     
   const [data, setData] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -54,22 +55,28 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
   }, [officeNames]);
   useEffect(() => {
     if (open) {
-      setShowForm(false);
-      resetForm();
+      if (editMalady) {
+        setShowForm(true);
+      } else {
+        setShowForm(false);
+        resetForm();
+      }
     }
-  }, [open]);
+  }, [open, editMalady]);
   useEffect(() => {
-    setFormData({
-      subject: "",
-      referenceNo: "",
-      addedBy: "",
-      office: "",
-      content: "",
-      tempType: "",
-    });
-    editorContentRef.current = "";
-    setContents("");
-  }, []);
+    if (!editMalady) {
+      setFormData({
+        subject: "",
+        referenceNo: "",
+        addedBy: "",
+        office: "",
+        content: "",
+        tempType: "",
+      });
+      editorContentRef.current = "";
+      setContents("");
+    }
+  }, [editMalady]);
 
  
 
@@ -201,49 +208,10 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
       });
     }
   };
-  const searchMutation = useMutation({
-
-    mutationFn: async () => {
-      const payload = {
-        correspondenceId: null,
-        fileId: allDetails?.fileId,
-        fileReceiptId: allDetails?.fileReceiptId,
-        subject: contents,
-        approverEmpRoleMapId: selectedValues.authorities?.value || null,
-        letterContent: formData.content,
-        letterNo: null,
-        correspondenceDate: null,
-        displayType: null,
-        currEmpDeptMapId: null,
-        employeeDeptMapVo: {
-          organizationId: selectedValues.organization?.value || 0,
-          companyId: selectedValues.company?.value || 0,
-          officeId: selectedValues.office?.value || 0,
-          departmentId: selectedValues.department?.value || 0,
-          designationId: selectedValues.designation?.value || 0,
-        },
-      };
-     
-      console.log("Payload before encryption:", payload);
-  
-      const encryptedPayload = encryptPayload(payload);
-  
-      const response = await api.post("/file/create-draft-in-file", {
-        dataObject: encryptedPayload,
-      });
-  
-      return response.data;
-    },
-    onSuccess: (data) => {
-      if (data.outcome) {
-        setTableData(data.data);
-      }
-    },
-  });
   
   const handleSave = async () => {
     const payload = {
-      correspondenceId: editMalady?.id || null,
+      correspondenceId: editMalady?.correspondenceId || null,
       fileId: allDetails?.fileId,
       fileReceiptId: allDetails?.fileReceiptId,
       subject: contents,
@@ -252,7 +220,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
       letterNo: null,
       correspondenceDate: null,
       displayType: null,
-      currEmpDeptMapId: null,
+      currEmpDeptMapId: editMalady?.currEmpDeptMapId || null,
       employeeDeptMapVo: {
         organizationId: selectedValues.organization?.value || 0,
         companyId: selectedValues.company?.value || 0,
@@ -264,10 +232,14 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
 
     try {
       const encryptedPayload = encryptPayload(payload);
-      const endpoint = editMalady ? "/file/create-draft-in-file" : "/file/create-draft-in-file";
+      const endpoint = "/file/create-draft-in-file";
       
       const response = await api.post(endpoint, {
         dataObject: encryptedPayload,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.data.outcome) {
@@ -310,25 +282,137 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
         referenceNo: editMalady.referenceNo || "",
         addedBy: editMalady.addedBy || "",
         office: editMalady.office || "",
-        content: editMalady.content || "",
+        content: editMalady.letterContent || "",
         tempType: editMalady.tempType || "",
       });
-      editorContentRef.current = editMalady.content || "";
+      editorContentRef.current = editMalady.letterContent || "";
       setContents(editMalady.subject || "");
-  
-      // Safeguard against undefined objects/arrays
-      const findInArray = (array, key, value) => array && Array.isArray(array) ? array.find(item => item[key] === value) : null;
-  
-      setSelectedValues({
-        organization: findInArray(organizations, 'organizationId', editMalady.organizationId) || null,
-        company: findInArray(options.companies, 'companyId', editMalady.companyId) || null,
-        office: findInArray(options.offices, 'officeId', editMalady.officeId) || null,
-        department: findInArray(options.departments, 'departmentId', editMalady.departmentId) || null,
-        designation: findInArray(options.designations, 'id', editMalady.designationId) || null,
-        authorities: findInArray(options.authorities, 'value', editMalady.approverEmpRoleMapId) || null,
-      });
+
+      // Find organization in organizations array
+      const organization = organizations?.find(org => org.organizationId === editMalady.employeeDeptMapVo?.organizationId);
+      if (organization) {
+        const orgOption = {
+          value: organization.organizationId,
+          label: organization.organizationName
+        };
+        setSelectedValues(prev => ({ ...prev, organization: orgOption }));
+        
+        // Fetch companies for this organization
+        fetchData.mutate({
+          endpoint: "/level/get-companies",
+          payload: { organizationId: organization.organizationId },
+        });
+      }
     }
-  }, [open, editMalady, organizations, options]);
+  }, [open, editMalady, organizations]);
+
+  // Handle company data load and fetch offices
+  useEffect(() => {
+    if (editMalady?.employeeDeptMapVo?.companyId && options.companies.length > 0) {
+      const company = options.companies.find(comp => comp.companyId === editMalady.employeeDeptMapVo.companyId);
+      if (company) {
+        const companyOption = {
+          value: company.companyId,
+          label: company.name
+        };
+        setSelectedValues(prev => ({ ...prev, company: companyOption }));
+
+        // Fetch offices
+        fetchData.mutate({
+          endpoint: "/level/get-offices",
+          payload: {
+            organizationId: editMalady.employeeDeptMapVo.organizationId,
+            companyId: company.companyId,
+          },
+        });
+      }
+    }
+  }, [editMalady, options.companies]);
+
+  // Handle office data load and fetch departments
+  useEffect(() => {
+    if (editMalady?.employeeDeptMapVo?.officeId && options.offices.length > 0) {
+      const office = options.offices.find(off => off.officeId === editMalady.employeeDeptMapVo.officeId);
+      if (office) {
+        const officeOption = {
+          value: office.officeId,
+          label: office.officeName
+        };
+        setSelectedValues(prev => ({ ...prev, office: officeOption }));
+
+        // Fetch departments
+        fetchData.mutate({
+          endpoint: "/level/get-departments",
+          payload: {
+            organizationId: editMalady.employeeDeptMapVo.organizationId,
+            companyId: editMalady.employeeDeptMapVo.companyId,
+            officeId: office.officeId,
+          },
+        });
+      }
+    }
+  }, [editMalady, options.offices]);
+
+  // Handle department data load and fetch designations
+  useEffect(() => {
+    if (editMalady?.employeeDeptMapVo?.departmentId && options.departments.length > 0) {
+      const department = options.departments.find(dept => dept.departmentId === editMalady.employeeDeptMapVo.departmentId);
+      if (department) {
+        const departmentOption = {
+          value: department.departmentId,
+          label: department.departmentName
+        };
+        setSelectedValues(prev => ({ ...prev, department: departmentOption }));
+
+        // Fetch designations
+        fetchData.mutate({
+          endpoint: "/level/get-designations",
+          payload: {
+            organizationId: editMalady.employeeDeptMapVo.organizationId,
+            companyId: editMalady.employeeDeptMapVo.companyId,
+            officeId: editMalady.employeeDeptMapVo.officeId,
+            departmentId: department.departmentId,
+          },
+        });
+      }
+    }
+  }, [editMalady, options.departments]);
+
+  // Handle designation data load and fetch authorities
+  useEffect(() => {
+    if (editMalady?.employeeDeptMapVo?.designationId && options.designations.length > 0) {
+      const designation = options.designations.find(des => des.id === editMalady.employeeDeptMapVo.designationId);
+      if (designation) {
+        const designationOption = {
+          value: designation.id,
+          label: designation.name
+        };
+        setSelectedValues(prev => ({ ...prev, designation: designationOption }));
+
+        // Fetch authorities
+        fetchData.mutate({
+          endpoint: "/file/get-send-to-list",
+          payload: {
+            organizationId: editMalady.employeeDeptMapVo.organizationId,
+            companyId: editMalady.employeeDeptMapVo.companyId,
+            officeId: editMalady.employeeDeptMapVo.officeId,
+            departmentId: editMalady.employeeDeptMapVo.departmentId,
+            designationId: designation.id,
+          },
+        });
+      }
+    }
+  }, [editMalady, options.designations]);
+
+  // Handle authorities data load
+  useEffect(() => {
+    if (editMalady?.approverEmpRoleMapId && options.authorities?.length > 0) {
+      const authority = options.authorities.find(auth => auth.value === editMalady.approverEmpRoleMapId);
+      if (authority) {
+        setSelectedValues(prev => ({ ...prev, authorities: authority }));
+      }
+    }
+  }, [editMalady, options.authorities]);
   
 
   return (
@@ -363,7 +447,7 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
             alignItems: "center",
           }}
         >
-          <Typography variant="h6">Create Draft</Typography>
+          <Typography variant="h6">{editMalady ? "Edit Draft" : "Create Draft"}</Typography>
           <IconButton onClick={() => setShowForm(!showForm)} color="primary">
             {showForm ? <FaMinus /> : <FaPlus />}
           </IconButton>
@@ -507,9 +591,9 @@ const CreateDraftModal = ({ open, onClose, officeNames, organizations, allDetail
 
         <Box sx={{ mt: 2 }} className="editor-containers">
             <CorrespondenceEditor
-              initialContent={formData.content} // Pass initial content
+              initialContent={formData.content} 
               onContentChange={(value) => {
-                editorContentRef.current = value; // Update the ref with the latest content
+                editorContentRef.current = value; 
               }}
             />
         </Box>

@@ -272,24 +272,26 @@ console.log("Filtered Data:", filteredData);
   const EditDraftMutation = useMutation({
     mutationFn: async (data) => {
       try {
-      
         const encryptedDataObject = encryptPayload({
           fileId: fileDetails.data.fileId,
           correspondenceId: data.corrId,
           fileReceiptId: fileDetails.data.fileReceiptId,
         });
   
-       
-        const formData = new FormData();
-        formData.append("dataObject", encryptedDataObject);
-  
-       
-        const response = await api.post("/file/edit-draft-in-file", formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setEditMalady(response.data.data);
+        const response = await api.post("/file/edit-draft-in-file", 
+          { dataObject: encryptedDataObject },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        
+        if (response.data.outcome) {
+          setEditMalady(response.data.data);
+        } else {
+          throw new Error(response.data.message || "Failed to fetch draft data");
+        }
         return response.data;
       } catch (error) {
         if (error.response?.status === 401) {
