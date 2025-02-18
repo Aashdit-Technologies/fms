@@ -2,88 +2,119 @@ import React, { useEffect, useState } from "react";
 import { Card } from "react-bootstrap";
 import { Button } from "@mui/material";
 import { MdNote } from "react-icons/md";
-import SunEditorComponent from "./SunEditorComponent"; // Import the SunEditorComponent
+import SunEditorComponent from "./SunEditorComponent";
 
-const NoteSheet = ({ noteSheets }) => {
+const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) => {
   const [notes, setNotes] = useState([]);
-  const [zoomIn, setZoomIn] = useState(false); // State to handle zoom-in mode
-  const [writeNote, setWriteNote] = useState(false); // State to handle write note mode
-  const [editorContent, setEditorContent] = useState(""); // State to handle editor content
+  const [zoomIn, setZoomIn] = useState(false);
+  const [writeNote, setWriteNote] = useState(false);
+  const [editorContent, setEditorContent] = useState(content || '');
+  const [showPreview, setShowPreview] = useState(false);
 
+  // Update content when props change
   useEffect(() => {
-    // Check if noteSheets is an array before setting it
+    if (content !== undefined) {
+      setEditorContent(content);
+    }
+  }, [content]);
+
+  // Update content when additionalDetails change
+  useEffect(() => {
+    if (additionalDetails?.data?.note) {
+      setEditorContent(additionalDetails.data.note);
+      onContentChange?.(additionalDetails.data.note);
+    }
+  }, [additionalDetails?.data?.note, onContentChange]);
+
+  // Update notes when noteSheets change
+  useEffect(() => {
     if (noteSheets && Array.isArray(noteSheets.data)) {
       setNotes(noteSheets.data);
     } else {
-      setNotes([]); // Fallback to an empty array
+      setNotes([]);
     }
   }, [noteSheets]);
 
+  const handleEditorChange = (newContent) => {
+    setEditorContent(newContent);
+    onContentChange?.(newContent);
+  };
+
+  const togglePreview = () => {
+    if (showPreview) {
+      setShowPreview(false);
+      setWriteNote(true);
+    } else {
+      setShowPreview(true);
+      setWriteNote(false);
+    }
+  };
+
   const convertHTMLToText = (htmlContent) => {
+    if (!htmlContent) return '';
     const doc = new DOMParser().parseFromString(htmlContent, "text/html");
-    return doc.body.textContent || doc.body.innerText;
+    return doc.body.textContent || doc.body.innerText || '';
   };
 
   const badgeColors = ["#ff5733", "#1e90ff", "#28a745", "#ffcc00"];
 
   return (
-    <div
-      className={`note-sheet-container ${zoomIn || writeNote ? "zoom-in" : ""}`}
-    >
+    <div className={`note-sheet-container ${zoomIn || writeNote || showPreview ? "zoom-in" : ""}`}>
       <Card className="p-4 mb-4 shadow-lg note-card">
-        {/* Header */}
         <div className="d-flex justify-content-between align-items-center note-header">
           <h5 className="fw-bold text-uppercase text-dark d-flex align-items-center">
             <MdNote className="text-success me-2" size={28} /> Note Sheet
           </h5>
           <div>
-            {/* Conditional buttons for Write Note and Zoom In/Out */}
-            {writeNote ? (
-              <Button
-                variant="contained"
-                color="error"
-                className="me-2"
-                onClick={() => setWriteNote(false)} // Close write note mode
-              >
-                Close View
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                color="success"
-                className="me-2"
-                onClick={() => setWriteNote(true)} // Open write note mode
-              >
-                Write Note
-              </Button>
-            )}
+            {!showPreview && (
+              <>
+                {writeNote ? (
+                  <Button
+                    variant="contained"
+                    color="error"
+                    className="me-2"
+                    onClick={() => setWriteNote(false)}
+                  >
+                    Close View
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    color="success"
+                    className="me-2"
+                    onClick={() => setWriteNote(true)}
+                  >
+                    Write Note
+                  </Button>
+                )}
 
-            {/* Only show Zoom In/Out button if writeNote is false */}
-            {!writeNote && (
-              <Button
-                variant="contained"
-                color="primary"
-                className="me-2"
-                onClick={() => setZoomIn(!zoomIn)} // Toggle zoom-in state
-              >
-                {zoomIn ? "Zoom Out" : "Zoom In"}
-              </Button>
+                {!writeNote && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    className="me-2"
+                    onClick={() => setZoomIn(!zoomIn)}
+                  >
+                    {zoomIn ? "Zoom Out" : "Zoom In"}
+                  </Button>
+                )}
+              </>
             )}
-            {/* Always show Preview button */}
-            <Button variant="contained" color="secondary" className="me-2">
-              Preview
+            
+            <Button
+              variant="contained"
+              color="secondary"
+              className="me-2"
+              onClick={togglePreview}
+              disabled={!editorContent}
+            >
+              {showPreview ? "Close Preview" : "Preview"}
             </Button>
           </div>
         </div>
 
-        {/* Notes List and Editor */}
         <div className="d-flex">
-          {/* Left Side: Notes List */}
-          <div
-            className={`notes-container ${
-              writeNote && !zoomIn ? "half-width" : "full-width"
-            }`}
-          >
+          <div className={`notes-container ${(writeNote || showPreview) && !zoomIn ? "half-width" : "full-width"}`}>
             {notes.length > 0 ? (
               notes.map((note, index) => (
                 <Card.Body
@@ -91,9 +122,7 @@ const NoteSheet = ({ noteSheets }) => {
                   className="note-card-body"
                   style={{
                     background: index % 2 === 0 ? "#ffffff" : "#f8f9fa",
-                    borderLeft: `6px solid ${
-                      badgeColors[index % badgeColors.length]
-                    }`,
+                    borderLeft: `6px solid ${badgeColors[index % badgeColors.length]}`,
                   }}
                 >
                   <div
@@ -106,8 +135,7 @@ const NoteSheet = ({ noteSheets }) => {
                   </div>
                   <p className="note-author">
                     <strong>Noting By:</strong>{" "}
-                    <span className="text-primary">{note.senderName}</span> (
-                    {note.senderDesignation})
+                    <span className="text-primary">{note.senderName}</span> ({note.senderDesignation})
                   </p>
                   <p className="note-content">{convertHTMLToText(note.note)}</p>
                   <p className="note-date">
@@ -116,24 +144,29 @@ const NoteSheet = ({ noteSheets }) => {
                 </Card.Body>
               ))
             ) : (
-              <p>No notes available</p> // Fallback message
+              <p>No notes available</p>
             )}
           </div>
 
-          {/* Right Side: SunEditorComponent */}
-          {writeNote && (
+          {(writeNote || showPreview) && (
             <div className="editor-container half-width">
-              <SunEditorComponent
-                content={editorContent}
-                onContentChange={(content) => setEditorContent(content)}
-                placeholder="Write your note here..."
-              />
+              {showPreview ? (
+                <div className="preview-content">
+                  <div dangerouslySetInnerHTML={{ __html: editorContent || '' }} />
+                </div>
+              ) : (
+                <SunEditorComponent
+                  content={editorContent}
+                  placeholder="Enter your task action here..."
+                  onContentChange={handleEditorChange}
+                  additionalDetails={additionalDetails}
+                />
+              )}
             </div>
           )}
         </div>
       </Card>
 
-      {/* CSS Styles */}
       <style>{`
         .note-sheet-container {
           display: flex;
@@ -175,7 +208,7 @@ const NoteSheet = ({ noteSheets }) => {
         }
         .note-sheet-container.zoom-in .notes-container {
           max-height: calc(100vh - 100px);
-          overflow-y: scroll;
+          overflow-y: auto;
         }
         .note-card-body {
           position: relative;
@@ -212,32 +245,35 @@ const NoteSheet = ({ noteSheets }) => {
         }
         .half-width {
           width: 50%;
-          overflow-y: scroll;
+          overflow-y: auto;
         }
         .full-width {
           width: 100%;
         }
-        .editor-container {
+        .preview-content {
           padding: 20px;
+          background: white;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          min-height: 500px;
+          overflow-y: auto;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
           width: 10px;
-          height: 8px; 
+          height: 8px;
         }
-
         ::-webkit-scrollbar-track {
-          background: #f1f1f1; 
+          background: #f1f1f1;
           border-radius: 5px;
         }
-
         ::-webkit-scrollbar-thumb {
-          background: #1565C0; 
+          background: #1565C0;
           border-radius: 5px;
         }
-
         ::-webkit-scrollbar-thumb:hover {
-          background: #1565C0; 
+          background: #1565C0;
         }
       `}</style>
     </div>

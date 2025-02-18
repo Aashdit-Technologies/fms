@@ -119,8 +119,7 @@ const Correspondence = ({
   const [officeNames, setOfficeNames] = useState([]);
   const allDetails = fileDetails?.data || {};
   const [organizationsData, setOrganizationsData] = useState([]);
-  const [editMalady, setEditMalady] = useState({});
-  console.log("editMalady", editMalady);
+  const [editMalady, setEditMalady] = useState(null);
   
   const {
     data: offices,
@@ -226,22 +225,23 @@ const Correspondence = ({
     }
 
     try {
-      const encryptedDload = {
+      const encryptedDload = encryptPayload({
         documentName: row.correspondenceName,
         documentPath: row.correspondencePath,
-      };
+      });
 
       const response = await api.post(
         "/download/download-document",
-        encryptedDload,
+        { dataObject: encryptedDload },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
-        }
+          responseType: 'blob'
+        },
+        
+        
       );
-
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -256,18 +256,91 @@ const Correspondence = ({
         console.error("Failed to download the document");
       }
     } catch (error) {
-      // Enhanced error handling
       console.error("Error downloading the document", error);
       alert(
         "An error occurred while downloading the document. Please try again."
       );
     }
   };
-console.log("Filtered Data:", filteredData);
 
-  useEffect(() => {
-    setFilteredData(correspondence?.data || []);
-  }, [correspondence]);
+  const handleCreateDraft = async () => {
+    try {
+      // Fetch office names
+      await refetch();
+      if (offices?.data) {
+        setOfficeNames(offices.data);
+      }
+
+      // Fetch organizations
+      const orgResponse = await fetchOrganizations.mutateAsync();
+      if (orgResponse?.data) {
+        setOrganizationsData(orgResponse.data);
+      }
+      
+      setModalOpen(true);
+    } catch (error) {
+      console.error("Error preparing draft creation:", error);
+      toast.error("Failed to load required data");
+    }
+  };
+
+  const handleEdit = async (row) => {
+    try {
+      // Fetch required data before opening edit modal
+      await refetch();
+      if (offices?.data) {
+        setOfficeNames(offices.data);
+      }
+
+      // Fetch organizations
+      const orgResponse = await fetchOrganizations.mutateAsync();
+      if (orgResponse?.data) {
+        setOrganizationsData(orgResponse.data);
+      }
+
+      // Ensure we have all required data before setting edit state
+      if (row) {
+        const editData = {
+          ...row,
+          correspondenceId: row.correspondenceId || null,
+          currEmpDeptMapId: row.currEmpDeptMapId || null,
+          employeeDeptMapVo: row.employeeDeptMapVo || {},
+          letterContent: row.letterContent || "",
+          subject: row.subject || "",
+          organizationName: row.organizationName || "",
+          companyName: row.companyName || "",
+          officeName: row.officeName || "",
+          departmentName: row.departmentName || "",
+          designationName: row.designationName || "",
+          approverName: row.approverName || "",
+        };
+        setEditMalady(editData);
+        setModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Error preparing edit mode:", error);
+      toast.error("Failed to load required data for editing");
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setEditMalady(null); // Clear edit data when modal closes
+  };
+
+  const fetchOrganizations = useMutation({
+    mutationFn: async () => {
+      const response = await api.get("/level/get-organizations", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.data?.data) {
+        setOrganizationsData(response.data.data);
+      }
+      return response.data;
+    },
+  });
 
   const EditDraftMutation = useMutation({
     mutationFn: async (data) => {
@@ -302,8 +375,6 @@ console.log("Filtered Data:", filteredData);
     },
   });
 
-  
-
   const handleEditDraft = async (data) => {
     try {
       await EditDraftMutation.mutateAsync(data);
@@ -314,26 +385,7 @@ console.log("Filtered Data:", filteredData);
       toast.error("Failed to edit draft. Please try again.");
     }
   };
-  
-  const fetchOrganizations = useMutation({
-    mutationFn: async () => {
-      const response = await api.get("/level/get-organizations");
-      if (response.status === 200 && response.data?.outcome) {
-        setOrganizationsData(response.data.data);
-      }
-      return response.data;
-    },
-  });
 
-  const handleCreateDraft = async () => {
-    await refetch();
-    if (offices) {
-      setOfficeNames(offices);
-    }
-
-    fetchOrganizations.mutate();
-    setModalOpen(true);
-  };
   const columns = [
     {
       name: "SI.#",
@@ -445,7 +497,7 @@ console.log("Filtered Data:", filteredData);
               <StyledButton
                 variant="contained"
                 color="primary"
-                onClick={() => handleEditDraft(row)}
+                onClick={() => handleEdit(row)}
                 title="Edit"
               >
                 <FaEdit size={16} />
@@ -467,15 +519,18 @@ console.log("Filtered Data:", filteredData);
     },
   ];
 
+  useEffect(() => {
+    setFilteredData(correspondence?.data || []);
+  }, [correspondence]);
+
   return (
     <>
       <TableContainer>
         <TopSection>
           <Title>Correspondence</Title>
           <ActionButton
-            variant="contained"
+            startIcon={<FaPlus />}
             onClick={handleCreateDraft}
-            title="Click to create a new draft"
           >
             Create Draft
           </ActionButton>
@@ -518,7 +573,7 @@ console.log("Filtered Data:", filteredData);
       />
       <CreateDraftModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={handleCloseModal}
         officeNames={officeNames}
         organizations={organizationsData}
         correspondence={correspondence}

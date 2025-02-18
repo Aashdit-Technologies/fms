@@ -153,6 +153,7 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
         officeId: selectedValues.office?.value || 0,
         departmentId: selectedValues.department?.value || 0,
         designationId: selectedValues.designation?.value || 0,
+        action:"SENDTO",
       };
       console.log("Payload before encryption:", payload);
 
@@ -465,9 +466,9 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
           <Button
             variant="contained"
             color="primary"
-            startIcon={<IoIosSend />}
+            // startIcon={<IoIosSend />}
             onClick={() => handleSendFile("SENDTO")}
-          ></Button>
+          >SEND</Button>
           <Button
             variant="contained"
             color="error"

@@ -15,6 +15,7 @@ import api from "../../Api/Api";
 import { toast } from "react-toastify";
 import useAuthStore from "../../store/Store";
 import { useMutation } from "@tanstack/react-query";
+import { act } from "react";
 
 const CreateDraftModal = ({
   open,
@@ -39,13 +40,15 @@ const CreateDraftModal = ({
     designation: null,
     authorities: null,
   });
+
   const [options, setOptions] = useState({
     companies: [],
     offices: [],
     departments: [],
     designations: [],
-    // authorities: [],
+    authorities: [],
   });
+
   const [formData, setFormData] = useState({
     subject: "",
     referenceNo: "",
@@ -56,35 +59,24 @@ const CreateDraftModal = ({
   });
 
   const editorContentRef = useRef(formData.content);
+
   useEffect(() => {
     if (officeNames && officeNames.data) {
       setData(officeNames.data);
     }
   }, [officeNames]);
+
   useEffect(() => {
     if (open) {
       if (editMalady) {
         setShowForm(true);
+        populateEditData();
       } else {
         setShowForm(false);
         resetForm();
       }
     }
   }, [open, editMalady]);
-  // useEffect(() => {
-  //   if (!editMalady) {
-  //     setFormData({
-  //       subject: "",
-  //       referenceNo: "",
-  //       addedBy: "",
-  //       office: "",
-  //       content: "",
-  //       tempType: "",
-  //     });
-  //     editorContentRef.current = "";
-  //     setContents("");
-  //   }
-  // }, [editMalady]);
 
   const resetForm = () => {
     setSelectedValues({
@@ -102,10 +94,52 @@ const CreateDraftModal = ({
       designations: [],
       authorities: [],
     });
+    setFormData({
+      subject: "",
+      referenceNo: "",
+      addedBy: "",
+      content: "",
+      office: "",
+      tempType: "",
+    });
     editorContentRef.current = "";
     setContents("");
-    // setTableData([]);
   };
+
+  const populateEditData = () => {
+    if (editMalady) {
+      setFormData({
+        subject: editMalady.subject || "",
+        referenceNo: editMalady.referenceNo || "",
+        addedBy: editMalady.addedBy || "",
+        office: editMalady.office || "",
+        content: editMalady.letterContent || "",
+        tempType: editMalady.tempType || "",
+      });
+      editorContentRef.current = editMalady.letterContent || "";
+      setContents(editMalady.subject || "");
+
+      // Find organization in organizations array
+      const organization = organizations?.find(
+        (org) =>
+          org.organizationId === editMalady.employeeDeptMapVo?.organizationId
+      );
+      if (organization) {
+        const orgOption = {
+          value: organization.organizationId,
+          label: organization.organizationName,
+        };
+        setSelectedValues((prev) => ({ ...prev, organization: orgOption }));
+
+        // Fetch companies for this organization
+        fetchData.mutate({
+          endpoint: "/level/get-companies",
+          payload: { organizationId: organization.organizationId },
+        });
+      }
+    }
+  };
+
   const fetchData = useMutation({
     mutationFn: async ({ endpoint, payload }) => {
       const encryptedData = encryptPayload(payload);
@@ -128,13 +162,12 @@ const CreateDraftModal = ({
             value: authority.empDeptRoleId,
             label: authority.empNameWithDesgAndDept,
           }));
-          console.log("Mapped Authorities:", mappedAuthorities);
           setOptions((prev) => ({ ...prev, authorities: mappedAuthorities }));
-          console.log("Options after setting authorities:", options);
         }
       }
     },
   });
+
   const handleSelectionChange = (field, selectedOption) => {
     setSelectedValues((prev) => ({ ...prev, [field]: selectedOption }));
 
@@ -148,16 +181,6 @@ const CreateDraftModal = ({
       fetchData.mutate({
         endpoint: "/level/get-companies",
         payload: { organizationId: selectedOption.value },
-      });
-      fetchData.mutate({
-        endpoint: "/file/get-send-to-list",
-        payload: {
-          organizationId: selectedValues.organization?.value || 0,
-          companyId: selectedValues.company?.value || 0,
-          officeId: selectedValues.office?.value || 0,
-          departmentId: selectedValues.department?.value || 0,
-          designationId: selectedValues.designation?.value || 0,
-        },
       });
     } else if (field === "company") {
       setOptions((prev) => ({
@@ -209,6 +232,7 @@ const CreateDraftModal = ({
           officeId: selectedValues.office?.value || 0,
           departmentId: selectedValues.department?.value || 0,
           designationId: selectedValues.designation?.value || 0,
+          action:"DRAFT",
         },
       });
     }
@@ -286,175 +310,6 @@ const CreateDraftModal = ({
       editorContentRef.current = selectedOption.tempContent;
     }
   };
-
-  useEffect(() => {
-    if (open && editMalady) {
-      setShowForm(true);
-      setFormData({
-        subject: editMalady.subject || "",
-        referenceNo: editMalady.referenceNo || "",
-        addedBy: editMalady.addedBy || "",
-        office: editMalady.office || "",
-        content: editMalady.letterContent || "",
-        tempType: editMalady.tempType || "",
-      });
-      editorContentRef.current = editMalady.letterContent || "";
-      setContents(editMalady.subject || "");
-
-      // Find organization in organizations array
-      const organization = organizations?.find(
-        (org) =>
-          org.organizationId === editMalady.employeeDeptMapVo?.organizationId
-      );
-      if (organization) {
-        const orgOption = {
-          value: organization.organizationId,
-          label: organization.organizationName,
-        };
-        setSelectedValues((prev) => ({ ...prev, organization: orgOption }));
-
-        // Fetch companies for this organization
-        fetchData.mutate({
-          endpoint: "/level/get-companies",
-          payload: { organizationId: organization.organizationId },
-        });
-      }
-    }
-  }, [open, editMalady, organizations]);
-
-  // Handle company data load and fetch offices
-  useEffect(() => {
-    if (
-      editMalady?.employeeDeptMapVo?.companyId &&
-      options.companies.length > 0
-    ) {
-      const company = options.companies.find(
-        (comp) => comp.companyId === editMalady.employeeDeptMapVo.companyId
-      );
-      if (company) {
-        const companyOption = {
-          value: company.companyId,
-          label: company.name,
-        };
-        setSelectedValues((prev) => ({ ...prev, company: companyOption }));
-
-        // Fetch offices
-        fetchData.mutate({
-          endpoint: "/level/get-offices",
-          payload: {
-            organizationId: editMalady.employeeDeptMapVo.organizationId,
-            companyId: company.companyId,
-          },
-        });
-      }
-    }
-  }, [editMalady, options.companies]);
-
-  // Handle office data load and fetch departments
-  useEffect(() => {
-    if (editMalady?.employeeDeptMapVo?.officeId && options.offices.length > 0) {
-      const office = options.offices.find(
-        (off) => off.officeId === editMalady.employeeDeptMapVo.officeId
-      );
-      if (office) {
-        const officeOption = {
-          value: office.officeId,
-          label: office.officeName,
-        };
-        setSelectedValues((prev) => ({ ...prev, office: officeOption }));
-
-        // Fetch departments
-        fetchData.mutate({
-          endpoint: "/level/get-departments",
-          payload: {
-            organizationId: editMalady.employeeDeptMapVo.organizationId,
-            companyId: editMalady.employeeDeptMapVo.companyId,
-            officeId: office.officeId,
-          },
-        });
-      }
-    }
-  }, [editMalady, options.offices]);
-
-  // Handle department data load and fetch designations
-  useEffect(() => {
-    if (
-      editMalady?.employeeDeptMapVo?.departmentId &&
-      options.departments.length > 0
-    ) {
-      const department = options.departments.find(
-        (dept) =>
-          dept.departmentId === editMalady.employeeDeptMapVo.departmentId
-      );
-      if (department) {
-        const departmentOption = {
-          value: department.departmentId,
-          label: department.departmentName,
-        };
-        setSelectedValues((prev) => ({
-          ...prev,
-          department: departmentOption,
-        }));
-
-        // Fetch designations
-        fetchData.mutate({
-          endpoint: "/level/get-designations",
-          payload: {
-            organizationId: editMalady.employeeDeptMapVo.organizationId,
-            companyId: editMalady.employeeDeptMapVo.companyId,
-            officeId: editMalady.employeeDeptMapVo.officeId,
-            departmentId: department.departmentId,
-          },
-        });
-      }
-    }
-  }, [editMalady, options.departments]);
-
-  // Handle designation data load and fetch authorities
-  useEffect(() => {
-    if (
-      editMalady?.employeeDeptMapVo?.designationId &&
-      options.designations.length > 0
-    ) {
-      const designation = options.designations.find(
-        (des) => des.id === editMalady.employeeDeptMapVo.designationId
-      );
-      if (designation) {
-        const designationOption = {
-          value: designation.id,
-          label: designation.name,
-        };
-        setSelectedValues((prev) => ({
-          ...prev,
-          designation: designationOption,
-        }));
-
-        // Fetch authorities
-        fetchData.mutate({
-          endpoint: "/file/get-send-to-list",
-          payload: {
-            organizationId: editMalady.employeeDeptMapVo.organizationId,
-            companyId: editMalady.employeeDeptMapVo.companyId,
-            officeId: editMalady.employeeDeptMapVo.officeId,
-            departmentId: editMalady.employeeDeptMapVo.departmentId,
-            designationId: designation.id,
-          },
-        });
-      }
-    }
-  }, [editMalady, options.designations]);
-
-  // Handle authorities data load
-  useEffect(() => {
-    if (editMalady?.approverEmpRoleMapId && options.authorities?.length > 0) {
-      const authority = options.authorities.find(
-        (auth) => auth.value === editMalady.approverEmpRoleMapId
-      );
-      if (authority) {
-        setSelectedValues((prev) => ({ ...prev, authorities: authority }));
-      }
-    }
-  }, [editMalady, options.authorities]);
 
   return (
     <Modal
@@ -648,15 +503,16 @@ const CreateDraftModal = ({
             Save
           </Button>
                    
-          {editMalady.correspondenceId != null && (editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId) ? <Button variant="contained" color="success" onClick={() => handleSave("APPROVE")}>
-            Approve
-          </Button> : "" }
+          {editMalady && editMalady.correspondenceId && 
+           (editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId) && (
+            <Button variant="contained" color="success" onClick={() => handleSave("APPROVE")}>
+              Approve
+            </Button>
+          )}
           
           <Button
             variant="contained"
             color="warning"
-            // onClick={resetForm}
-
             onClick={() => {
               setFormData({
                 subject: "",

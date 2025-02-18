@@ -119,35 +119,62 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     }
   };
 
-  const isAnyFieldFilled = (row) => {
-    return (
-      row.subject ||
-      row.type ||
-      row.letterNumber ||
-      row.date ||
-      row.document
-    );
-  };
-
   const getMissingFields = (row) => {
     const missingFields = [];
-    if (!row.subject) missingFields.push("Subject");
-    if (!row.type) missingFields.push("Type");
-    if (!row.letterNumber) missingFields.push("Letter Number");
+    if (!row.subject?.trim()) missingFields.push("Subject");
+    if (row.type === "SELECT") missingFields.push("Type");
+    if (row.type === "LETTER" && !row.letterNumber?.trim()) {
+      missingFields.push("Letter Number");
+    }
     if (!row.date) missingFields.push("Date");
     if (!row.document) missingFields.push("Document");
     return missingFields;
   };
 
+  const isAnyFieldFilled = (row) => {
+    return (
+      row.subject?.trim() ||
+      row.type !== "SELECT" ||
+      (row.type === "LETTER" ? row.letterNumber?.trim() : false) ||
+      row.date ||
+      row.document
+    );
+  };
+
+  const isRowEmpty = (row) => {
+    if (row.type === "LETTER") {
+      return (
+        !row.subject?.trim() &&
+        row.type === "SELECT" &&
+        !row.letterNumber?.trim() &&
+        !row.date &&
+        !row.document
+      );
+    } else {
+      return (
+        !row.subject?.trim() &&
+        row.type === "SELECT" &&
+        !row.date &&
+        !row.document
+      );
+    }
+  };
+
   const handleInputChange = (index, field, value) => {
     const newRows = [...rows];
+    
+    // If type is changed and it's not LETTER, reset letter number
+    if (field === "type" && value !== "LETTER") {
+      newRows[index].letterNumber = "";
+    }
+    
     newRows[index][field] = value;
 
-    // Check if any field in this row is filled
+    // Only validate if at least one field in the row has a value
     if (isAnyFieldFilled(newRows[index])) {
       const missingFields = getMissingFields(newRows[index]);
       if (missingFields.length > 0) {
-        toast.warning(`Please fill the following mandatory fields: ${missingFields.join(", ")}`);
+        toast.warning(`Row ${index + 1}: All fields are mandatory when any field is filled. Missing: ${missingFields.join(", ")}`);
       }
     }
 
@@ -168,14 +195,14 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       if (isAnyFieldFilled(newRows[index])) {
         const missingFields = getMissingFields(newRows[index]);
         if (missingFields.length > 0) {
-          toast.warning(`Please fill the following mandatory fields: ${missingFields.join(", ")}`);
+          toast.warning(`Row ${index + 1}: Please fill all required fields: ${missingFields.join(", ")}`);
         }
       }
 
       setRows(newRows);
       toast.success("File uploaded successfully!");
     } else {
-      toast.error("Only JPG, PNG and PDF files are allowed.");
+      toast.error("Please select a valid document (JPG, PNG or PDF files only)");
     }
   };
 
@@ -212,84 +239,39 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     return dayjs(date).format("DD/MM/YYYY");
   };
 
-  const validateAllFields = (rowData) => {
-    // Check if any field is filled in any row
-    const isAnyFieldFilled = rowData.some(row => 
-      row.subject || 
-      row.type || 
-      row.letterNumber || 
-      row.date || 
-      row.document
-    );
+  const validateForm = () => {
+    let isValid = true;
+    rows.forEach((row, index) => {
+      if (isRowEmpty(row)) {
+        return;
+      }
 
-    // If any field is filled, all fields must be filled
-    if (isAnyFieldFilled) {
-      return rowData.every(row => 
-        row.subject && 
-        row.type && 
-        row.letterNumber && 
-        row.date && 
-        row.document
-      );
-    }
+      if (isAnyFieldFilled(row)) {
+        const missingFields = getMissingFields(row);
+        if (missingFields.length > 0) {
+          toast.error(`Row ${index + 1}: Missing required fields: ${missingFields.join(", ")}`);
+          isValid = false;
+        }
+      }
+    });
 
-    // If no fields are filled, that's okay
-    return true;
+    return isValid;
   };
 
   const handleSubmit = () => {
-    const hasPartiallyFilledRows = rows.some(row => {
-      const filledFields = [
-        row.subject,
-        row.type,
-        row.letterNumber,
-        row.date,
-        row.document,
-      ].filter(Boolean).length;
-  
-      return filledFields > 0 && filledFields < 5;
-    });
-  
-    if (hasPartiallyFilledRows) {
-      const missingFields = rows.map((row, index) => {
-        const missing = getMissingFields(row);
-        return missing.length > 0 ? `Row ${index + 1}: ${missing.join(', ')}` : null;
-      }).filter(Boolean);
-  
-      toast.error(`Please fill all mandatory fields:\n${missingFields.join('\n')}`);
+    if (!validateForm()) {
       return;
     }
-  
-    // If no fields are filled, proceed with save API
-    const isAnyFieldFilled = rows.some(row => 
-      row.subject || 
-      row.type || 
-      row.letterNumber || 
-      row.date || 
-      row.document
-    );
-  
-    if (!isAnyFieldFilled) {
-      // Call save API
-      mutation.mutate({
-        documents: [],
-        uploadedDocuments: [],
-        filePriority,
-        isConfidential,
-      });
-      return;
-    }
-  
-    // If validation passes, proceed with mutation
+
     const documents = rows.map((row) => ({
       subject: row.subject,
       type: row.type,
-      letterNumber: row.letterNumber,
+      letterNumber: row.type === "LETTER" ? row.letterNumber : null,
       date: row.date,
     }));
-  
+
     const uploadedDocuments = rows.map((row) => row.document).filter(Boolean);
-  
+
     mutation.mutate({
       documents,
       uploadedDocuments,
@@ -301,17 +283,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   const mutation = useMutation({
     mutationFn: async (data) => {
       try {
-        // Additional validation before API call
-        if (!validateAllFields(rows)) {
-          const missingFields = rows.map((row, index) => {
-            const missing = getMissingFields(row);
-            return missing.length > 0 ? `Row ${index + 1}: ${missing.join(', ')}` : null;
-          }).filter(Boolean);
-          
-          toast.error(`Please fill all mandatory fields:\n${missingFields.join('\n')}`);
-          throw new Error('All fields are mandatory');
-        }
-
         const encryptedDataObject = encryptPayload({
           fileId: fileDetails.data.fileId,
           note: editorContent || null,
@@ -426,50 +397,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     error: markActionError,
   } = markActionMutation;
 
-  const newEndpointMutation = useMutation({
-    mutationFn: async (data) => {
-      if (!receiverEmpRoleMap) {
-        toast.error("Please select an action.");
-        return;
-      }
-
-      try {
-        const sendfilepayload = {
-          actionTaken: modalAction,
-          fileId: fileDetails.data.fileId,
-          note: additionalDetails.data.note,
-          filerecptId: fileDetails.data.fileReceiptId,
-          notesheetId: additionalDetails?.data?.prevNoteId,
-          receiverEmpRoleMap: receiverEmpRoleMap,
-        };
-
-        const encryptedDataObjectUpDown = encryptPayload(sendfilepayload);
-
-        const SendformData = new FormData();
-        SendformData.append("dataObject", encryptedDataObjectUpDown);
-
-        const response = await api.post("file/send-file", SendformData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        return response.data;
-      } catch (error) {
-        console.error("New API Error:", error);
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      toast.success(data.message || "Operation successful!");
-      if (data.outcome === true) {
-        navigate("/file");
-      }
-    },
-    onError: (error) => {
-      toast.error(error.message || "New API call failed!");
-    },
-  });
-
   const handleMarkupOrMarkdown = (action) => {
     setModalAction(action);
     triggerMarkAction(action);
@@ -520,15 +447,54 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     approveFileMutation.mutate(data);
   };
 
-  const isFieldFilled = (row) => {
-    return (
-      row.subject ||
-      row.type ||
-      row.letterNumber ||
-      row.date ||
-      row.document
-    );
-  };
+  const newEndpointMutation = useMutation({
+    mutationFn: async () => {
+      // Validate form before submission
+      if (!validateForm()) {
+        return;
+      }
+
+      if (!receiverEmpRoleMap) {
+        toast.error("Please select an action.");
+        return;
+      }
+
+      try {
+        const sendfilepayload = {
+          actionTaken: modalAction,
+          fileId: fileDetails.data.fileId,
+          note: additionalDetails.data.note,
+          filerecptId: fileDetails.data.fileReceiptId,
+          notesheetId: additionalDetails?.data?.prevNoteId,
+          receiverEmpRoleMap: receiverEmpRoleMap,
+        };
+
+        const encryptedDataObjectUpDown = encryptPayload(sendfilepayload);
+
+        const SendformData = new FormData();
+        SendformData.append("dataObject", encryptedDataObjectUpDown);
+
+        const response = await api.post("file/send-file", SendformData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        return response.data;
+      } catch (error) {
+        console.error("New API Error:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Operation successful!");
+      if (data.outcome === true) {
+        navigate("/file");
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || "New API call failed!");
+    },
+  });
 
   return (
     <Box
@@ -542,7 +508,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
               <div className="d-flex justify-content-between align-items-center w-100">
                 <h5 className="mb-0">Upload Document</h5>
                 <span className="toggle-icon">
-                  {isOpen ? <FaPlus /> : <FaMinus />}
+                  {isOpen ? <FaMinus /> : <FaPlus />}
                 </span>
               </div>
             </Accordion.Header>

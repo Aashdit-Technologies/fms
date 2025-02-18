@@ -5,10 +5,10 @@ import { Select, MenuItem } from "@mui/material";
 import SunEditorComponent from "./SunEditorComponent";
 import UploadDocument from "./UploadDocument";
 
-const Ckeditor = ({ additionalDetails, fileDetails,content }) => {
+const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange }) => {
   const [selectedItem, setSelectedItem] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [editorContent, setEditorContent] = useState( content || '');
+  const [editorContent, setEditorContent] = useState(content || '');
 
   const options = [
     "Noting No-1",
@@ -18,11 +18,21 @@ const Ckeditor = ({ additionalDetails, fileDetails,content }) => {
     "Noting No-5",
   ];
 
-  useEffect(() => {
-    if (additionalDetails?.data?.note) {
-      setEditorContent(additionalDetails.data.note);
-    }
-  }, [additionalDetails?.data?.note]);
+  // Update editor content when content prop changes
+ // Sync when content prop changes
+useEffect(() => {
+  if (content !== undefined) {
+    setEditorContent(content);
+  }
+}, [content]);
+
+// Sync when additionalDetails changes
+useEffect(() => {
+  if (additionalDetails?.data?.note) {
+    setEditorContent(additionalDetails.data.note);
+    onContentChange?.(additionalDetails.data.note);
+  }
+}, [additionalDetails?.data?.note, onContentChange]);
 
   const handleSelectChange = useCallback((event) => {
     const value = event.target.value;
@@ -30,13 +40,16 @@ const Ckeditor = ({ additionalDetails, fileDetails,content }) => {
 
     if (value) {
       const linkHTML = `<a href="https://example.com/${value.replace(" ", "-").toLowerCase()}" target="_blank">${value}</a>`;
-      setEditorContent((prevContent) => `${prevContent}<br/>${linkHTML}<br/>`);
+      const newContent = `${editorContent}<br/>${linkHTML}<br/>`;
+      setEditorContent(newContent);
+      onContentChange?.(newContent);
     }
-  }, []);
+  }, [editorContent, onContentChange]);
 
   const handleEditorChange = useCallback((newContent) => {
     setEditorContent(newContent);
-  }, []);
+    onContentChange?.(newContent);
+  }, [onContentChange]);
 
   const toggleAccordion = useCallback(() => {
     setIsOpen((prev) => !prev);
@@ -64,7 +77,7 @@ const Ckeditor = ({ additionalDetails, fileDetails,content }) => {
                     ))}
                   </Select>
                   <span className="toggle-icon">
-                    {isOpen ? <FaMinus /> : <FaPlus />}
+                    {isOpen ? <FaPlus /> : <FaMinus />}
                   </span>
                 </div>
               </div>
