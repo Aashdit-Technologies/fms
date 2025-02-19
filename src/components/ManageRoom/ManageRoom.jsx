@@ -27,19 +27,30 @@ const ManageRoom = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roomData, setRoomData] = useState([]);
   const [editingRoomId, setEditingRoomId] = useState(null);
-
+//  const [rowSize, setRowSize] = useState(10);
+//   const [pageNo, setPageNo] = useState(1);
+//   const [totalRows, setTotalRows] = useState(0);
   const token = useAuthStore.getState().token;
 
   // Fetch Room Data
   const fetchRoomData = useCallback(async () => {
     try {
+      //  const payload = {
+      //         pageNo: pageNo,
+      //         rowSize:rowSize,
+      //       };
+      
+            // Encrypt the payload
+      // const encryptedMessage = encryptPayload(payload);
       const { data } = await api.get("/manage-room", {
         headers: { Authorization: `Bearer ${token}` },
+        // params: { dataObject: encryptedMessage },
       });
       if(data.outcome != true){
         toast.error(data.message);
       }
       setRoomData(data.data || []);
+      setTotalRows(data.totalCount || 0);
     } catch (error) {
       console.error("Error fetching room data:", error);
     }
@@ -292,6 +303,15 @@ const ManageRoom = () => {
               highlightOnHover
               pointerOnHover
               className="custom-data-table table table-bordered"
+  //             paginationServer
+  // paginationTotalRows={totalRows} // Set total rows for server-side pagination
+  // paginationPerPage={rowSize}
+  // paginationDefaultPage={pageNo}
+  // onChangePage={(page) => setPageNo(page)} // Update page state
+  // onChangeRowsPerPage={(newRowSize) => {
+  //   setRowSize(newRowSize);
+  //   setPageNo(1); // Reset to first page when changing rows per page
+  // }}
             />
           </Accordion.Body>
         </Accordion.Item>

@@ -110,15 +110,15 @@ const LoginPage = () => {
                       }}
                     />
                   </div>
-                  <div className="inputBox d-flex justify-content-between">
+                  <div className="inputBox d-flex justify-content-center">
                     <button
                       type="submit"
-                      className="btn btn-primary btn-block mt-3"
+                      className="btn btn-primary btn-block mt-3 text-center"
                       disabled={isLoggingIn}
                     >
                       {isLoggingIn ? "Login" : "Login"}
                     </button>
-                    <button
+                    {/* <button
                       type="submit"
                       className="btn btn-primary btn-block mt-3"
                     >
@@ -128,7 +128,7 @@ const LoginPage = () => {
                       >
                         Home
                       </Link>
-                    </button>
+                    </button> */}
                   </div>
                 </form>
               </div>

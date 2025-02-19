@@ -5,32 +5,7 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNot
   const editor = useRef(null);
   const [editorContent, setEditorContent] = useState(content || '');
 
-  // Update editor content when props change, but maintain focus
-  // useEffect(() => {
-  //   const newContent = content || additionalDetails?.data?.note || selectedNote?.note || '';
-  //   console.log('Updating editor content:', newContent);
-    
-  //   if (newContent !== editorContent) {
-  //     setEditorContent(newContent);
-      
-  //     // Force update the editor's value while preserving focus
-  //     if (editor.current?.editor) {
-  //       const wasFocused = editor.current.editor.selection?.isFocused();
-  //       const cursorPosition = editor.current.editor.selection?.range?.startOffset;
-        
-  //       editor.current.editor.value = newContent;
-        
-        
-  //       // Restore focus and cursor position
-  //       if (wasFocused) {
-  //         editor.current.editor.selection?.focus();
-  //         if (cursorPosition !== undefined) {
-  //           editor.current.editor.selection?.createRange().setStart(editor.current.editor.editor, cursorPosition);
-  //         }
-  //       }
-  //     }
-  //   }
-  // }, [content, additionalDetails, selectedNote,]);
+  
     useEffect(() => {
       const newContent = content || additionalDetails?.data?.note || selectedNote?.note || '';
       console.log('Updating editor content:', newContent);

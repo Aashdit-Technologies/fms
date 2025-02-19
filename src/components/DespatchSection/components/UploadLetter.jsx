@@ -26,7 +26,6 @@ const UploadLetter = ({ open, onClose,   dispatchData}) => {
     letterDocuments: null, 
   });
 
-
   const token = useAuthStore.getState().token;
   
   useEffect(() => {
@@ -48,7 +47,7 @@ const UploadLetter = ({ open, onClose,   dispatchData}) => {
     const file = e.target.files[0];
 
     if (!file) {
-        alert("No file selected.");
+      toast.error("No file selected.");
         return;
     }
 
@@ -66,7 +65,7 @@ const UploadLetter = ({ open, onClose,   dispatchData}) => {
 
     try {
       if (!formData.letterDocuments || !(formData.letterDocuments instanceof File)) {
-        alert("Invalid file. Please select a valid document.");
+        toast.error("Invalid file. Please select a valid document.");
         console.error("Invalid file:", formData.letterDocuments);
         return;
     }
@@ -103,7 +102,7 @@ const UploadLetter = ({ open, onClose,   dispatchData}) => {
         } 
     } catch (error) {
         console.error("Upload failed:", error);
-        alert(error.response?.data?.message || "Failed to save data.");
+        toast.error(error.response?.data?.message || "Failed to save data.");
     } 
 };
 
@@ -141,12 +140,29 @@ const UploadLetter = ({ open, onClose,   dispatchData}) => {
                 name="letterNo"
                 value={formData.letterNo}
                 onChange={handleInputChange}
+                InputLabelProps={{
+                  sx: {
+                    '& .MuiFormLabel-asterisk': {
+                      color: 'red',
+                    },
+                  },
+                }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     "& fieldset": { borderColor: "#207785" },
                     "&:hover fieldset": { borderColor: "#1a5f6a" }, 
                   },
                 }}
+                autoComplete="off"
+                    inputProps={{
+                      maxLength: 20,
+                      pattern: "[^ ]*", 
+                      onKeyDown: (e) => {
+                        if (e.key === " ") {
+                          e.preventDefault(); 
+                        }
+                      },
+                    }}
               />
               <TextField
                 fullWidth
@@ -154,13 +170,25 @@ const UploadLetter = ({ open, onClose,   dispatchData}) => {
                 name="endingMemoNo"
                 value={formData.endingMemoNo}
                 onChange={handleInputChange}
+               
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     "& fieldset": { borderColor: "#207785" }, 
                     "&:hover fieldset": { borderColor: "#1a5f6a" },
                   },
                 }}
+                autoComplete="off"
+                    inputProps={{
+                      maxLength: 20,
+                      pattern: "[^ ]*", 
+                      onKeyDown: (e) => {
+                        if (e.key === " ") {
+                          e.preventDefault(); 
+                        }
+                      },
+                    }}
               />
+              
             </Box>
 
             {/* Date and File Upload */}
@@ -174,6 +202,7 @@ const UploadLetter = ({ open, onClose,   dispatchData}) => {
                 value={formData.date}
                 onChange={handleInputChange}
                 InputLabelProps={{ shrink: true }}
+                
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     "& fieldset": { borderColor: "#207785" }, 

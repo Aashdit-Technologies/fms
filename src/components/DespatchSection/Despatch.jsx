@@ -427,14 +427,47 @@ const Despatch = () => {
       <AccordionDetails sx={{ backgroundColor: '#fafafa', p: 2, borderRadius: '0 0 10px 10px' }}>
       <Box sx={{ p: 3 }}>
       {/* Tabs */}
-      <Box sx={{ mb: 2 }}>
+      {/* <Box sx={{ mb: 2 }}>
         <Button  variant={activeTab === 'NEW_LETTER' ? 'contained' : 'outlined'} onClick={() => handleTabChange('newLetter')} sx={{ mr: 1, }}>
           New Letter
         </Button>
         <Button variant={activeTab === 'SENT_LETTER' ? 'contained' : 'outlined'} onClick={() => handleTabChange('sentLetter')}>
           Sent Letter
         </Button>
-      </Box>
+      </Box> */}
+      <Box sx={{ mb: 2 }}>
+  <Button
+    variant="contained"
+    onClick={() => handleTabChange('newLetter')}
+    sx={{
+      mr: 1,
+      backgroundColor: activeTab === 'NEW_LETTER' ? '#1a5f6a' : '#ffffff',
+      color: activeTab === 'NEW_LETTER' ? '#ffffff' : '#1a5f6a',
+      border: '1px solid #1a5f6a',
+      '&:hover': {
+        backgroundColor: activeTab === 'NEW_LETTER' ? '#144952' : '#f0f0f0',
+      },
+    }}
+  >
+    New Letter
+  </Button>
+  
+  <Button
+    variant="contained"
+    onClick={() => handleTabChange('sentLetter')}
+    sx={{
+      backgroundColor: activeTab === 'SENT_LETTER' ? '#1a5f6a' : '#ffffff',
+      color: activeTab === 'SENT_LETTER' ? '#ffffff' : '#1a5f6a',
+      border: '1px solid #1a5f6a',
+      '&:hover': {
+        backgroundColor: activeTab === 'SENT_LETTER' ? '#144952' : '#f0f0f0',
+      },
+    }}
+  >
+    Sent Letter
+  </Button>
+</Box>
+
      {/* Data Table */}
     <Paper>
   {activeTab === 'NEW_LETTER' && (

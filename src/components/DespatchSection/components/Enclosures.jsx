@@ -44,10 +44,10 @@ const Enclosures = ({ open, onClose, enclosures = [] }) => {
       </DialogTitle>
       <DialogContent sx={{ mt: 2, p: 2 }}>
         <TableContainer component={Paper} sx={{ mb: 2 }}>
-          <Table>
+          <Table className='table table-bordered'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: '50px', fontWeight: 'bold' }}>#</TableCell>
+                <TableCell sx={{ width: '50px', fontWeight: 'bold' }}>SI NO</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Enclosure Type</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Enclosure Name</TableCell>
                 <TableCell sx={{ width: '100px', fontWeight: 'bold' }}>Action</TableCell>

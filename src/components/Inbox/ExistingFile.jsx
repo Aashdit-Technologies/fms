@@ -143,7 +143,9 @@ const ExistingFile = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
-  const navigate = useNavigate();
+  const [rowSize, setRowSize] = useState(10);
+  const [pageNo, setPageNo] = useState(1);
+  const Navigate = useNavigate();
 
   const location = useLocation();
   const fetchedData = location.state?.data; 
@@ -207,7 +209,8 @@ const ExistingFile = () => {
       const payload = {
         priority: priority || null,
         fileModule: fileModule || null,
-        pageno: 1,
+        pageNo: pageNo,
+        rowSize:rowSize,
       };
 
       const encryptedMessage = encryptPayload(payload);
@@ -229,7 +232,7 @@ const ExistingFile = () => {
 
   useEffect(() => {
     fetchFilteredData(priority, selectedFileModule);
-  }, [priority, selectedFileModule]);
+  }, [priority, selectedFileModule,pageNo, rowSize]);
 
     const fetchFileDetails = async (file) => {
       if (!file) return;
@@ -456,7 +459,7 @@ const ExistingFile = () => {
         useLetterStore.getState().setSuccessMessage(response.data.message);
         toast.success(response.data.message); 
         setSelectedRows([]);
-        navigate("/system/setup/menu/init");
+        Navigate("/system/setup/menu/init");
       } else {
         toast.error("Failed to send data.");
       }
@@ -641,6 +644,15 @@ const ExistingFile = () => {
               bordered
               customStyles={customStyles}
               noDataComponent={<div>No data available</div>}
+              paginationServer
+            
+              paginationPerPage={rowSize} 
+              paginationDefaultPage={pageNo}
+              onChangePage={(page) => setPageNo(page)}
+              onChangeRowsPerPage={(newRowSize) => {
+                setRowSize(newRowSize);
+                setPageNo(1);  
+              }}
             />
           </div>
           <div className="mt-3 d-flex align-items-center justify-content-center">

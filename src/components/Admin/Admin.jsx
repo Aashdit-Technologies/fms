@@ -18,6 +18,7 @@ import ManageFile from "../ManageFile/ManageFile";
 import Welcome from "../Welcome/Welcome";
 import AddToFile from "../Inbox/AddToFile";
 import EmployeeMaster from "../EmployeeMaster/EmployeeMaster";
+import ManageCustodian from "../ManageCustodian/ManageCustodian";
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -107,6 +108,14 @@ const Admin = () => {
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <ManageActivity />
+                </React.Suspense>
+              }
+            />
+            <Route
+              path="manage-custodian"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <ManageCustodian />
                 </React.Suspense>
               }
             />

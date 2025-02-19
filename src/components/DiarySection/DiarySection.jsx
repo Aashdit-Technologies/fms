@@ -16,6 +16,7 @@ import GetAppIcon from '@mui/icons-material/GetApp';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import DownloadIcon from '@mui/icons-material/Download';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { FaTimes } from "react-icons/fa";
 import { 
   TextField, 
   Button, 
@@ -232,8 +233,6 @@ const DiarySection = () => {
   const [enclosureRowstable, setEnclosureRowstable] = useState([
     { enclosureType: "", enclosureName: "", file: null },
   ]);
-
-
 
   const [records, setRecords] = useState([]);
   const [filteredRecords, setFilteredRecords] = useState([]);
@@ -615,21 +614,12 @@ const DiarySection = () => {
     setOpenSection(null); 
   };
 
- 
   const fileName = newLetterDataEncloser?.[0]?.fileName;
    const filePath = newLetterDataEncloser?.[0]?.filePath;
-//  console.log("file name checking pdf",fileName );
-//  console.log("file path checking pdf",filePath);
 
    const fileNames = selectedLetterDetails?.fileName;
    const filePaths= selectedLetterDetails?.filePath;
    const letterViews= selectedLetterDetails?.base64Path;
-  //  console.log("file names checking pdf",fileNames);
-  //  console.log("file paths checking pdf",filePaths);
-  //  console.log("file base64 checking pdf",letterViews);
-  
-
-   
 
   const validateField = (name, value) => {
     switch (name) {
@@ -847,16 +837,6 @@ const handleremarksChange = (e) => {
     return options;
   };
 
-  // const renderOption = (props, option) => {
-  //   if (option === 'add_new') {
-  //     return (
-  //       <li {...props} style={{ fontWeight: 'bold', color: '#207785' }}>
-  //         <FaPlus style={{ marginRight: '8px' }} /> Add New Sender
-  //       </li>
-  //     );
-  //   }
-  //   return <li {...props}>{option}</li>;
-  // };
   const renderOption = (props, option) => {
     const { key, ...restProps } = props; 
 
@@ -1161,8 +1141,6 @@ const handleremarksChange = (e) => {
     }
   }
 
-  
-
     saveFormData(savensendValue);
   };
 
@@ -1403,7 +1381,7 @@ const handleSendButtonClick = async (event) => {
     });
 
     if (response.status === 200) {
-      toast.success("Letter sent successfully!"); 
+      toast.success("Letter have been  sent successfully!"); 
       setShowModalShare(false); 
       setActiveTab("sentLetter"); 
       await NewLetter();
@@ -1566,7 +1544,7 @@ const handleEditButtonClick = async (row) => {
         formElement.scrollIntoView({ behavior: "smooth" });
       }
 
-      toast.success("Letter data loaded successfully");
+      toast.success("Letter data  loaded successfully");
     } else {
       toast.error(response.data.message || "Failed to fetch letter data");
     }
@@ -1671,64 +1649,6 @@ const handleEditButtonClick = async (row) => {
 // departement row table
   
 
-  // const handleRowChange = async (index, field, value) => {
-  //   const updatedRows = [...rows];
-  //   updatedRows[index][field] = value;
-  
-    
-  //   if (field === "addressee" && index !== 0 && isDuplicateAddressee(value, index)) {
-  //     toast.error("Duplicate addressee is not allowed.");
-  //     return;
-  //   }
-  
-  //   const { departmentName, addresseeDesignation } = updatedRows[index];
-  
-  //   if (field === "departmentName" || field === "addresseeDesignation") {
-  //     if (departmentName && addresseeDesignation) {
-  //       try {
-  //         const response = await api.get(
-  //           `/diary-section/get-employee-details-by-deptId-and-desigId?deptId=${departmentName}&degId=${addresseeDesignation}`,
-  //           {
-  //             headers: { Authorization: `Bearer ${token}` },
-  //           }
-  //         );
-  
-  //         const employees = response?.data?.data?.Employee;
-  
-  //         console.log("Employees:", employees);
-  
-  //         if (
-  //           response.status === 200 &&
-  //           Array.isArray(employees) &&
-  //           employees.length > 0
-  //         ) {
-  //           updatedRows[index].addressList = employees.map((employee) => ({
-  //             id: employee.employeeId,
-  //             name: `${employee.firstName} ${employee.lastName || ""}`.trim(),
-  //           }));
-  //         } else {
-  //           updatedRows[index].addressList = [];
-  //           toast.warn(
-  //             "No Addressees found for the selected Department and Designation."
-  //           );
-  //         }
-  //       } catch (error) {
-  //         console.error("Error fetching Addressee data:", error);
-  //         updatedRows[index].addressList = [];
-  //         toast.error(
-  //           error.response?.data?.message ||
-  //             "Failed to fetch Addressee data. Please try again."
-  //         );
-  //       }
-  //     } else {
-  //       updatedRows[index].addressList = [];
-  //     }
-  //   }
-  
-  //   setRows(updatedRows);
-  //   validateRows(); 
-  // };
-
   const handleRowChange = async (index, field, value) => {
     const updatedRows = [...rows];
     updatedRows[index][field] = value;
@@ -1773,45 +1693,18 @@ const handleEditButtonClick = async (row) => {
   };
   
 
-
-
-  // const handleAddRow = () => {
-  //   if (rows.length === 0) {
-     
-  //     setRows([...rows, { departmentName: "", addresseeDesignation: "", addressee: "", memoNumber: "", addressList: [] }]);
-  //   } else {
-      
-  //     const firstRow = rows[0];
-  //     if (!firstRow.departmentName || !firstRow.addresseeDesignation || !firstRow.addressee) {
-  //       alert("Please fill the first record before adding another.");
-  //       return;
-  //     }
-  
-      
-  //     const newAddressee = rows[rows.length - 1].addressee; 
-  //     if (rows.length > 1 && isDuplicateAddressee(newAddressee, rows.length - 1)) {
-  //       alert("Duplicate addressee is not allowed.");
-  //       return;
-  //     }
-  
-     
-  //     setRows([...rows, { departmentName: "", addresseeDesignation: "", addressee: "", memoNumber: "", addressList: [] }]);
-  //   }
-  // };
-
-
   const handleAddRow = () => {
     if (rows.length === 0) {
       setRows([...rows, { departmentName: "", addresseeDesignation: "", addressee: "", memoNumber: "", addressList: [] }]);
     } else {
-      // Validate the last row before adding a new one
+      
       const lastRow = rows[rows.length - 1];
       if (!lastRow.departmentName || !lastRow.addresseeDesignation || !lastRow.addressee) {
         toast.warn("Please complete the current row before adding a new one.");
         return;
       }
   
-      // Check for duplicate addressee
+    
       if (isDuplicateAddressee(lastRow.addressee, rows.length - 1)) {
         toast.warn("Duplicate addressee is not allowed.");
         return;
@@ -1834,13 +1727,6 @@ const handleEditButtonClick = async (row) => {
 
   // EnclosureTypes table Details
 
-  // const handleFileChange = (e) => {
-  //   const file = e.target.files[0];
-  //   setFormData((prevData) => ({
-  //     ...prevData,
-  //     uploadedLetter: file,
-  //   }));
-  // };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -1862,26 +1748,6 @@ const handleEditButtonClick = async (row) => {
   };
   
 
-  
-
-  // const handleFileUploadChange = (index, event) => {
-  //   const file = event.target.files[0];
-  //   if (file) {
-  //     setEnclosureRows((prevRows) =>
-  //       prevRows.map((row, rowIndex) =>
-  //         rowIndex === index
-  //           ? {
-  //               ...row,
-  //               file,
-  //               fileName: file.name, 
-  //             }
-  //           : row
-  //       )
-  //     );
-  //   }
-  // };
-
-
   const handleFileUploadChange = (index, event) => {
     const file = event.target.files[0];
   
@@ -1890,13 +1756,13 @@ const handleEditButtonClick = async (row) => {
       return;
     }
   
-    // Validate file type (PDF only)
+    
     if (file.type !== "application/pdf") {
       toast.error("Sorry! only PDF format is  Allowed.");
       return;
     }
   
-    // Update the specific row with file details
+   
     const updatedRows = [...enclosureRows];
     updatedRows[index] = { ...updatedRows[index], file, fileName: file.name };
     setEnclosureRows(updatedRows);
@@ -1906,16 +1772,9 @@ const handleEditButtonClick = async (row) => {
     setShowTable(e.target.checked);
   };
 
-  // const handleAddEnclosureRow = (e) => {
-  //   e.preventDefault();
-  //   setEnclosureRows((prevRows) => [
-  //     ...prevRows,
-  //     { enclosureType: "", enclosureName: "", file: null },
-  //   ]);
-  // };
-
+ 
   const handleAddEnclosureRow = () => {
-    // Validate the last row before adding a new one
+    
     if (enclosureRows.length > 0) {
       const lastRow = enclosureRows[enclosureRows.length - 1];
       if (!lastRow.enclosureType || !lastRow.enclosureName || !lastRow.file) {
@@ -1924,7 +1783,6 @@ const handleEditButtonClick = async (row) => {
       }
     }
   
-    // Add a new empty row
     setEnclosureRows([
       ...enclosureRows,
       { enclosureType: "", enclosureName: "", file: null, fileName: "" },
@@ -1942,19 +1800,7 @@ const handleEditButtonClick = async (row) => {
     );
   };
 
-// const handleFileUploadChangeencloser = (index, event) => {
-//   const file = event.target.files[0];
 
-//   if (file) {
-//       setEnclosureRowstable((prevRows) =>
-//           prevRows.map((row, rowIndex) =>
-//               rowIndex === index ? { ...row, file } : row
-//           )
-//       );
-//   } else {
-//       console.warn(`No file selected at index ${index}`);
-//   }
-// };
 
 const handleFileUploadChangeencloser = (index, event) => {
   const file = event.target.files[0];
@@ -1976,17 +1822,8 @@ const handleFileUploadChangeencloser = (index, event) => {
   setEnclosureRowstable(updatedRows);
 };
 
-
-  // const handleAddTableEnclosureRow = (e) => {
-  //   e.preventDefault();
-  //   setEnclosureRowstable((prevRows) => [
-  //     ...prevRows,
-  //     { enclosureType: "", enclosureName: "", file: null },
-  //   ]);
-  // };
-
   const handleAddTableEnclosureRow = () => {
-    // Prevent adding a new row if the last row is incomplete
+   
     if (enclosureRowstable.length > 0) {
       const lastRow = enclosureRowstable[enclosureRowstable.length - 1];
       if (!lastRow.enclosureType || !lastRow.enclosureName || !lastRow.file) {
@@ -1995,7 +1832,6 @@ const handleFileUploadChangeencloser = (index, event) => {
       }
     }
   
-    // Add a new empty row
     setEnclosureRowstable([
       ...enclosureRowstable,
       { enclosureType: "", enclosureName: "", file: null, fileName: "" },
@@ -2177,52 +2013,8 @@ const handleFileUploadChangeencloser = (index, event) => {
         }
       };
      
-
-
-      const handleDocumentViewenclosuer = async (fileName, filePath) => {
-        try {
-          if (!fileName || !filePath) {
-            alert("No document available to view.");
-            return;
-          }
-      
-          const payload = {
-            documentName: fileName,
-            documentPath: filePath,
-          };
-      
-          const encryptedPayload = encryptPayload(payload);
-          console.log("Checking payloads", encryptedPayload);
-      
-          const response = await api.post(
-            'download/view-document',
-            { dataObject: encryptedPayload },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-      
-          if (response.data && response.data.data) {
-            const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
-            const byteCharacters = atob(base64String);
-            const byteNumbers = new Uint8Array([...byteCharacters].map(char => char.charCodeAt(0)));
-            const blob = new Blob([byteNumbers], { type: "application/pdf" });
-      
-            const url = URL.createObjectURL(blob);
-            window.open(url, "_blank"); // Open PDF in a new tab
-          } else {
-            alert("Failed to load PDF.");
-          }
-        } catch (error) {
-          console.error("Error fetching PDF:", error);
-          alert("Failed to fetch PDF. Please try again.");
-        }
-      };
-  
       return (
     <>
-      
-
       {/* Upload Inward Letter Section */}
       <div className="diary-section-container">
         <div className="accordion-header" onClick={toggleUploadAccordion}>
@@ -2426,21 +2218,6 @@ const handleFileUploadChangeencloser = (index, event) => {
                         <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Addressee <span style={{ color: "red" }}>*</span></th>
                         <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Memo Number</th>
                         <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)', width: '55px' }}>
-                         
-                          {/* <IconButton
-                            onClick={handleAddRow}
-                            size="small"
-                            sx={{ 
-                              bgcolor: '#4caf50',
-                              color: 'white',
-                              '&:hover': {
-                                bgcolor: '#388e3c',
-                              },
-                            }}
-                            disabled={rows.length > 0 && (!rows[0].departmentName || !rows[0].addresseeDesignation || !rows[0].addressee)}
-                          >
-                            <FaPlus size={12} />
-                          </IconButton> */}
 
                             <IconButton
                               onClick={handleAddRow}
@@ -2770,7 +2547,17 @@ const handleFileUploadChangeencloser = (index, event) => {
                   <TableContainer component={Paper} sx={{ width: '100%', overflowX: 'auto' }}>
                     <Table>
                       <TableHead>
-                        <TableRow>
+                        <TableRow
+                        sx={{
+                          backgroundColor: "#f5f5f5",
+                          "& th": {
+                            color: "#000",
+                            fontWeight: "300",
+                            fontSize: "14px",
+                            borderBottom: "2px solid #e9ecef", 
+                          },
+                          boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                        }}>
                           <TableCell>Enclosure Type<span style={{ color: "red" }}>*</span></TableCell>
                           <TableCell>Enclosure Name<span style={{ color: "red" }}>*</span></TableCell>
                           <TableCell>Upload File<span style={{ color: "red" }}>*</span></TableCell>
@@ -2862,7 +2649,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                                       },
                                     },
                                   },
-                                  endAdornment: row.fileName && ( // Show eye icon only if file exists
+                                  endAdornment: row.fileName && ( 
                                     <InputAdornment position="end">
                                       <IconButton
                                         onClick={() => handleDocumentView(row.fileName, row.filePath)}
@@ -2876,8 +2663,8 @@ const handleFileUploadChangeencloser = (index, event) => {
                                   ),
                                 }}
                               />
-                              {row.fileName && ( // Display the file name below the input field
-                                <Typography variant="body2" sx={{ mt: 1 }}>
+                              {row.fileName && ( 
+                                <Typography variant="body2" sx={{ mt:1 }}>
                                   Uploaded File: {row.fileName}
                                 </Typography>
                               )}
@@ -2973,7 +2760,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                         input.value = '';
                       });
                      setShowTable(false);
-                      // Reset sender selection and search
+                    
                       setSearchTerm("");
                       setIsSearchDisabled(false);
                       setSelectedRow(null);
@@ -3398,18 +3185,21 @@ const handleFileUploadChangeencloser = (index, event) => {
               >
                 <div className="modal-dialog modal-lg" role="document">
                   <div className="diary-section-model-content modal-content">
-                    <div className="diary-section-model-header modal-header">
+                    <div className="diary-section-model-header modal-header"
+                     style={{ backgroundColor: "#207785", color: "#fff" }} >
                       <h5 className="modal-title">All Letter Recipients</h5>
                       <button
                         type="button"
                         className="btn-close"
                         onClick={() => setIsAddresssModalOpen(false)}
+                         style={{ color: "#fff" }} 
                       ></button>
                     </div>
                     <div className="modal-body">
-                      <table className="table table-bordered">
+                      <table className="table table-bordered"
+                        style={{ backgroundColor: "#f8f9fa", color: "#333" }} >
                         <thead>
-                          <tr>
+                          <tr style={{ backgroundColor: "#207785", color: "#fff" }}>
                             <th>SI No</th>
                             <th>Office Name</th>
                             <th>Department</th>
@@ -3422,7 +3212,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                         <tbody>
                           {newLetterData.length > 0 ? (
                             newLetterData.map((item, index) => (
-                              <tr key={index}>
+                              <tr key={index} style={{ backgroundColor: index % 2 === 0 ? "#fff" : "#f1f1f1" }}>
                                 <td>{index + 1}</td>
                                 <td>{item.officeName || "N/A"}</td>
                                 <td>{item.deptName || "N/A"}</td>
@@ -3449,210 +3239,246 @@ const handleFileUploadChangeencloser = (index, event) => {
 
 
  {/* new letter table encloser  data */}
-<Modal
-  show={showModalEncloser}
-  onHide={handleCloseModalEncloser}
-  size="lg"
-  backdrop="static"
-  centered
-  style={{ maxWidth: '100%', margin: 'auto' }}
->
-  <Modal.Header closeButton>
-    <Modal.Title>Attach Enclosure</Modal.Title>
-  </Modal.Header>
-  
-  <Modal.Body>
-    {selectedRow ? (
-      <>
-        {/* Dynamic Table for Uploading Enclosures */}
-      <div className="table-responsive mb-3">
-              <TableContainer component={Paper} sx={{ mb: 3 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Enclosure Type</TableCell>
-                      <TableCell>Enclosure Name</TableCell>
-                      <TableCell>Upload</TableCell>
-                      <TableCell align="center" width="100">
-                        <IconButton
-                          onClick={handleAddTableEnclosureRow}
-                          size="small"
-                          sx={{
-                            bgcolor: '#4caf50',
-                            color: 'white',
-                            '&:hover': {
-                              bgcolor: '#388e3c',
-                            },
-                          }}
-                        >
-                          <FaPlus size={12} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                  {enclosureRowstable.map((row, index) => (
-                      <TableRow key={index}>
-                        <TableCell>
-                          <FormControl sx={{ width: '100%' }}>
-                            <Select
-                              value={row.enclosureType}
-                              onChange={(e) => handleTableEnclosureRowChange(index, "enclosureType", e.target.value)}
-                            >
-                              <MenuItem value="">- Select -</MenuItem>
-                              {enclosureTypeList.map((type) => (
-                                <MenuItem key={type.id} value={type.id}>
-                                  {type.name}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            fullWidth
-                            size="small"
-                          value={row.enclosureName}
-                          onChange={(e) => handleTableEnclosureRowChange(index, "enclosureName", e.target.value)}
-                        />
-                        </TableCell>
-                        <TableCell>
-                      <input
-                          type="file"
-                          value={row.file ? undefined : ""}
-                          className="form-control"
-                          onChange={(e) => handleFileUploadChangeencloser(index, e)}
-                        />
-                       
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          onClick={() => handleRemoveTableEnclosureRow(index)}
-                          size="small"
-                          sx={{
-                            bgcolor: '#f44336',
-                            color: 'white',
-                            '&:hover': {
-                              bgcolor: '#d32f2f',
-                            },
-                          }}
-                        >
-                          <FaMinus size={12} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            </div>
-
-            {/* Save & Cancel Buttons */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3, mb: 3 }}>
-              <Button
-                variant="contained"
-                onClick={handleSaveEnclosures}
-                sx={{
-            backgroundColor: '#207785',
-                  '&:hover': {
-              backgroundColor: '#1a6470',
-                  },
-                }}
-              >
-                Save
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleCloseModalEncloser}
-                sx={{
-            backgroundColor: '#d32f2f',
-                  '&:hover': {
-              backgroundColor: '#c62828',
-                  },
-                }}
-              >
-                Cancel
-              </Button>
-            </Box>
-
-        {/* Static Table Below (Fetched Data) */}
-            <TableContainer component={Paper} sx={{ mt: 3 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>SI NO</TableCell>
-                    <TableCell>Enclosure Type</TableCell>
-                    <TableCell>Enclosure Name</TableCell>
-                    <TableCell>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-              {newLetterDataEncloser.length > 0 ? (
-                newLetterDataEncloser.map((row, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>{row.enclosureType}</TableCell>
-                        <TableCell>{row.enclosureName}</TableCell>
-                        <TableCell>
-                          <IconButton
-                            onClick={() => handleDownload (row)}
-                            sx={{
-                            color: '#207785',
-                              '&:hover': {
-                          backgroundColor: 'rgba(32, 119, 133, 0.04)'
-                              },
-                            }}
-                          >
-                       <GetAppIcon/>
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                ))
-              ) : (
-                    <TableRow>
-                <TableCell colSpan="4" align="center">No data available</TableCell>
-                    </TableRow>
-              )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-      </>
-    ) : (
-      <p className="text-center text-muted">No data available.</p>
-    )}
-  </Modal.Body>
-
-  <Modal.Footer>
-    <button className="btn btn-secondary" onClick={handleCloseModalEncloser}>
-      Close
-    </button>
-  </Modal.Footer>
-</Modal>
-
- {/* new letter table share data data */}
-    <Modal
-        show={showModalShare}
-        onHide={() => (!isSending ? setShowModalShare(false) : null)} 
+      <Modal
+        show={showModalEncloser}
+        onHide={handleCloseModalEncloser}
+        size="xl"
         backdrop="static"
-        keyboard={false}
         centered
-        size="sm"
+        style={{ maxWidth: '100%', margin: 'auto' }}
       >
-        <Modal.Header closeButton={!isSending}>
-          <Modal.Title>Confirm Sending Letter</Modal.Title>
+        <Modal.Header closeButton style={{ backgroundColor: "#207785", color: "#fff" }}  closeVariant="white">
+          <Modal.Title>Attach Enclosure</Modal.Title>
         </Modal.Header>
+        
         <Modal.Body>
-          Do you want to send letter no: <strong>{selectedRowShare?.lnumber || "N/A"}</strong>?
+          {selectedRow ? (
+            <>
+              {/* Dynamic Table for Uploading Enclosures */}
+            <div className="table-responsive mb-3">
+                    <TableContainer component={Paper}  sx={{ mb: 3 }}>
+                      <Table>
+                      <TableHead>
+                      <TableRow
+                        sx={{
+                          backgroundColor: "#f5f5f5",
+                          "& th": {
+                            color: "#000",
+                            fontWeight: "300",
+                            fontSize: "16px",
+                            borderBottom: "2px solid #e9ecef", 
+                          },
+                          boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                        }}
+                      >
+                                  <TableCell>Enclosure Type <span style={{ color: "red" }}>*</span></TableCell>
+                                  <TableCell>Enclosure Name <span style={{ color: "red" }}>*</span></TableCell>
+                                  <TableCell>Upload <span style={{ color: "red" }}>*</span></TableCell>
+                                  <TableCell align="center" width="100">
+                                    <IconButton
+                                      onClick={handleAddTableEnclosureRow}
+                                      size="small"
+                                      sx={{
+                                        bgcolor: "#207785",
+                                        color: "white",
+                                        "&:hover": {
+                                          bgcolor: "#1a5f6a",
+                                        },
+                                      }}
+                                    >
+                                      <FaPlus size={12} />
+                                    </IconButton>
+                                  </TableCell>
+                                </TableRow>
+                              </TableHead>
+                        <TableBody>
+                        {enclosureRowstable.map((row, index) => (
+                            <TableRow key={index}>
+                              <TableCell>
+                                <FormControl sx={{ width: '100%' }}>
+                                  <Select
+                                  size="medium"
+                                    value={row.enclosureType}
+                                    onChange={(e) => handleTableEnclosureRowChange(index, "enclosureType", e.target.value)}
+                                  >
+                                    <MenuItem value="">- Select -</MenuItem>
+                                    {enclosureTypeList.map((type) => (
+                                      <MenuItem key={type.id} value={type.id}>
+                                        {type.name}
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                </FormControl>
+                              </TableCell>
+                              <TableCell>
+                                <TextField
+                                  fullWidth
+                                  size="medium"
+                                value={row.enclosureName}
+                                placeholder="Enter Enclosure Name"
+                                onChange={(e) => handleTableEnclosureRowChange(index, "enclosureName", e.target.value)}
+                              />
+                              </TableCell>
+                              <TableCell>
+                            <input
+                                type="file"
+                                value={row.file ? undefined : ""}
+                                className="form-control"
+                                onChange={(e) => handleFileUploadChangeencloser(index, e)}
+                                style={{
+                                  width: "380px", 
+                                  height: "55px", 
+                                  padding: "15px 15px", 
+                                  fontSize: "14px", 
+                                  borderRadius: "4px", 
+                                  border: "1px solid #ced4da",
+                                }}
+                              />
+                            
+                            </TableCell>
+                            <TableCell align="center">
+                              <IconButton
+                                onClick={() => handleRemoveTableEnclosureRow(index)}
+                                size="small"
+                                sx={{
+                                  bgcolor: '#f44336',
+                                  color: 'white',
+                                  '&:hover': {
+                                    bgcolor: '#d32f2f',
+                                  },
+                                }}
+                              >
+                                <FaMinus size={12} />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  </div>
+
+                  {/* Save & Cancel Buttons */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3, mb: 3 }}>
+                    <Button
+                      variant="contained"
+                      onClick={handleSaveEnclosures}
+                      sx={{
+                  backgroundColor: '#207785',
+                        '&:hover': {
+                    backgroundColor: '#1a6470',
+                        },
+                      }}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleCloseModalEncloser}
+                      sx={{
+                  backgroundColor: '#d32f2f',
+                        '&:hover': {
+                    backgroundColor: '#c62828',
+                        },
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </Box>
+
+              {/* Static Table Below (Fetched Data) */}
+                  <TableContainer component={Paper} sx={{ mt: 3 }}>
+                    <Table>
+                      <TableHead
+                      sx={{
+                        backgroundColor: "#f5f5f5",
+                        "& th": {
+                          color: "#000",
+                          fontWeight: "300",
+                          fontSize: "16px",
+                          borderBottom: "2px solid #e9ecef", 
+                        },
+                        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
+                      }}>
+                        <TableRow>
+                          <TableCell>SI NO</TableCell>
+                          <TableCell>Enclosure Type</TableCell>
+                          <TableCell>Enclosure Name</TableCell>
+                          <TableCell>Action</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                    {newLetterDataEncloser.length > 0 ? (
+                      newLetterDataEncloser.map((row, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{index + 1}</TableCell>
+                              <TableCell>{row.enclosureType}</TableCell>
+                              <TableCell>{row.enclosureName}</TableCell>
+                              <TableCell>
+                                <IconButton
+                                  onClick={() => handleDownload (row)}
+                                  sx={{ 
+                                    color: '#207785',
+                                    bgcolor: 'rgba(32, 119, 133, 0.1)',
+                                    '&:hover': {
+                                      bgcolor: 'rgba(32, 119, 133, 0.2)',
+                                      transform: 'scale(1.1)',
+                                    },
+                                    transition: 'all 0.2s ease-in-out',
+                                    padding: '8px',
+                                    borderRadius: '8px',
+                                  }}
+                                >
+                            <GetAppIcon/>
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                      ))
+                    ) : (
+                          <TableRow>
+                      <TableCell colSpan="4" align="center">No data available</TableCell>
+                          </TableRow>
+                    )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+            </>
+          ) : (
+            <p className="text-center text-muted">No data available.</p>
+          )}
         </Modal.Body>
+
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModalShare(false)} disabled={isSending}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleSendButtonClick} disabled={isSending}>
-            {isSending ? "Sending..." : "Confirm"}
-          </Button>
+          <button className="btn btn-danger" onClick={handleCloseModalEncloser} >
+            Close
+          </button>
         </Modal.Footer>
       </Modal>
+
+ {/* new letter table share data data */}
+        <Modal
+            show={showModalShare}
+            onHide={() => (!isSending ? setShowModalShare(false) : null)} 
+            backdrop="static"
+            keyboard={false}
+            centered
+            size="sm"
+          >
+            <Modal.Header closeButton={!isSending} >
+              <Modal.Title>Confirm Sending Letter</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              Do you want to send letter no: <strong>{selectedRowShare?.lnumber || "N/A"}</strong>?
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setShowModalShare(false)} disabled={isSending}>
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={handleSendButtonClick} disabled={isSending}>
+                {isSending ? "Sending..." : "Confirm"}
+              </Button>
+            </Modal.Footer>
+        </Modal>
 
 
       <Modal
@@ -3665,6 +3491,7 @@ const handleFileUploadChangeencloser = (index, event) => {
       >
         <Modal.Header 
           closeButton={!isSending}
+           closeVariant="white"
           style={{
             backgroundColor: '#207785',
             color: '#fff',
@@ -3740,225 +3567,196 @@ const handleFileUploadChangeencloser = (index, event) => {
         </Modal.Body>
       </Modal>
 
-      <Modal
-        show={showLetterModal}
-        onHide={() => setShowLetterModal(false)}
-        size="xl"
-        aria-labelledby="contained-modal-title-vcenter"
-        centered
-      >
-        <Modal.Header className="bg-light">
-          <div className="w-100 d-flex justify-content-between align-items-center">
-            <h6 className="mb-0">Letter Detail</h6>
-            <div>
-              <Button 
-                variant="link" 
-                className="text-dark p-0 me-2"
-                onClick={() => setShowLetterModal(false)}
-              >
-                Back
-              </Button>
-            
-            </div>
-          </div>
-        </Modal.Header>
-        <Modal.Body className="p-0">
-          {selectedLetterDetails && (
-            <div className="container-fluid">
-              <div className="row">
-                {/* Left Side - Letter Details */}
-                <div className="col-md-6 p-4 border-end">
-                  <div className="letter-details">
-                    <div className="row mb-3">
-                      <div className="col-4">
-                        <label className="text-muted">Letter Number:</label>
-                      </div>
-                      <div className="col-8">
-                      <div className="col-8">
-                       
-                        <span>{selectedLetterDetails.letterNo || 'NA'}</span>
-                    </div>
-
-                      </div>
-                    </div>
-                    <div className="row mb-3">
-                      <div className="col-4">
-                        <label className="text-muted">Sender Date:</label>
-                      </div>
-                      <div className="col-8">
-                        <span>
-                          {selectedLetterDetails.senderDate || 'NA'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="row mb-3">
-                      <div className="col-4">
-                        <label className="text-muted">Sender:</label>
-                      </div>
-                      <div className="col-8">
-                        <span>{selectedLetterDetails.senderName || 'NA'}</span>
-                      </div>
-                    </div>
-                    <div className="row mb-3">
-                      <div className="col-4">
-                        <label className="text-muted">Addressee:</label>
-                      </div>
-                      <div className="col-8">
-                        <span>{selectedLetterDetails.addressee|| 'NA'}</span>
-                      </div>
-                    </div>
-                    <div className="row mb-3">
-                      <div className="col-4">
-                        <label className="text-muted">Subject:</label>
-                      </div>
-                      <div className="col-8">
-                        <span>{selectedLetterDetails.subject || 'NA'}</span>
-                      </div>
-                    </div>
-                    <div className="row mb-3">
-                      <div className="col-4">
-                        <label className="text-muted">Dairy Number:</label>
-                      </div>
-                      <div className="col-8">
-                        <span>{selectedLetterDetails.diaryNumber || 'NA'}</span>
-                      </div>
-                    </div>
-                    <div className="row mb-3">
-                      <div className="col-4">
-                        <label className="text-muted">Memo Number:</label>
-                      </div>
-                      <div className="col-8">
-                        <span>{selectedLetterDetails.memoNo || ''}</span>
-                      </div>
-                    </div>
-                    <div className="row mb-3">
-                      <div className="col-4">
-                        <label className="text-muted">Remarks:</label>
-                      </div>
-                      <div className="col-8">
-                        <span>{selectedLetterDetails.remarks || 'NA'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Side - PDF Preview */}
-                <div className="col-md-6 p-0 " >
-                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, p: 3 }}>
-    
-
-     
-    {/* <Card sx={{ width: "100%", boxShadow: 3, borderRadius: 2 }}>
-      <CardContent sx={{ p: 2 }}> */}
-        <iframe
-          src={letterViews}
-          style={{
-            width: "100%",
-            height: "500px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-          }}
-          title="PDF Viewer"
-        />
-      {/* </CardContent>
-    </Card> */}
-
-    
-    <Button
-      variant="contained"
-      startIcon={<DownloadIcon />}
-      onClick={handleDownloadletter}
-      sx={{
-        mt: 2,
-        px: 3,
-        py: 1,
-        borderRadius: "8px",
-        backgroundColor: "#1976d2",
-        "&:hover": { backgroundColor: "#1565c0" },
-      }}
+    <Modal
+      show={showLetterModal}
+      onHide={() => setShowLetterModal(false)}
+      size="xl"
+      aria-labelledby="contained-modal-title-vcenter"
+      centered
     >
-      Download PDF
-    </Button>
-  </Box>
+
+      <Modal.Header style={{ backgroundColor: "#207785", color: "#fff" }}>
+        <div className="w-100 d-flex justify-content-between align-items-center">
+          <h6 className="mb-0">Letter Detail</h6>
+          <div>
+            <Button
+              variant="link"
+              className="text-white btn-lg p-0 me-2"
+              onClick={() => setShowLetterModal(false)}
+            >
+              <FaTimes size={20} />
+            </Button>
+          </div>
+        </div>
+      </Modal.Header>
+
+    
+      <Modal.Body className="p-0">
+        {selectedLetterDetails && (
+          <div className="container-fluid">
+            {/* Top Section - Letter Details and PDF Preview */}
+            <div className="row">
+              {/* Left Side - Letter Details */}
+              <div className="col-md-6 p-4 border-end">
+                <div className="letter-details">
+                  {[
+                    { label: "Letter Number:", value: selectedLetterDetails.letterNo || "NA" },
+                    { label: "Sender Date:", value: selectedLetterDetails.senderDate || "NA" },
+                    { label: "Sender:", value: selectedLetterDetails.senderName || "NA" },
+                    { label: "Addressee:", value: selectedLetterDetails.addressee || "NA" },
+                    { label: "Subject:", value: selectedLetterDetails.subject || "NA" },
+                    { label: "Dairy Number:", value: selectedLetterDetails.diaryNumber || "NA" },
+                    { label: "Memo Number:", value: selectedLetterDetails.memoNo || "NA" },
+                    { label: "Remarks:", value: selectedLetterDetails.remarks || "NA" },
+                  ].map((item, index) => (
+                    <div className="row mb-3" key={index}>
+                      <div className="col-4">
+                        <label className="text-dark">{item.label}</label>
+                      </div>
+                      <div className="col-8">
+                        <span>{item.value}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Bottom Section */}
-              <div className="row mt-3">
-                {/* Bottom Left - Note */}
-                <div className="col-md-6 p-4">
-        <Box>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>
-            Note
-          </Typography>
+              {/* Right Side - PDF Preview */}
+              <div className="col-md-6 p-4">
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 2,
+                    p: 3,
+                    borderRadius: "8px",
+                  }}
+                >
+                  <iframe
+                    src={letterViews}
+                    style={{
+                      width: "100%",
+                      height: "280px",
+                      borderRadius: "8px",
+                      border: "1px solid #ccc",
+                    }}
+                    title="PDF Viewer"
+                  />
+                  <Button
+                    variant="contained"
+                    startIcon={<DownloadIcon />}
+                    onClick={handleDownloadletter}
+                    sx={{
+                      mt: 2,
+                      px: 3,
+                      py: 1,
+                      borderRadius: "8px",
+                      backgroundColor: "#1976d2",
+                      "&:hover": { backgroundColor: "#1565c0" },
+                    }}
+                  >
+                    Download PDF
+                  </Button>
+                </Box>
+              </div>
+            </div>
+          <hr />
+            {/* Bottom Section - Notes and Enclosures */}
+            <div className="row ">
+              {/* Bottom Left - Note */}
+              <div className="col-md-6 p-4">
+                <Box
+                  sx={{
+                    
+                    borderRadius: "8px", 
+                    p: 3,
+                  }}
+                >
+                  <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                    Note
+                  </Typography>
+                  {Array.isArray(selectedLetterDetails?.letterNotesArrays) &&
+                  selectedLetterDetails.letterNotesArrays.length > 0 ? (
+                    selectedLetterDetails.letterNotesArrays.map((note, index) => (
+                      <Paper
+                        key={index}
+                        elevation={2}
+                        sx={{
+                          p: 2,
+                          mb: 2,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          borderRadius: 2,
+                        }}
+                      >
+                        {/* Left Side Content */}
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                            <strong>Action taken by:</strong> {note?.actionTakenBy || "N/A"}
+                          </Typography>
+                          <Typography sx={{ mb: 1 }}>
+                            <strong>Action:</strong> {note?.action || "N/A"}
+                          </Typography>
+                          <Typography sx={{ mb: 1 }}>
+                            <strong>Date:</strong> {note?.modifyDate || "N/A"}
+                          </Typography>
+                          <Typography>
+                            <strong>Note:</strong> {note?.note || "N/A"}
+                          </Typography>
+                        </Box>
 
-          {
-        Array.isArray(selectedLetterDetails?.letterNotesArrays) &&
-        selectedLetterDetails.letterNotesArrays.length > 0 ? (
-          selectedLetterDetails.letterNotesArrays.map((note, index) => (
-            <Paper key={index} elevation={2} sx={{ p: 2, mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center", borderRadius: 1 }}>
-              {/* Left Side Content */}
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
-                  Action taken by: {note?.actionTakenBy || "N/A"}
-                </Typography>
-                <Typography>
-                  <strong>Action:</strong> {note?.action || "N/A"}
-                </Typography>
-                <Typography variant="caption" display="block">
-                  <strong>Date:</strong> {note?.modifyDate || "N/A"}
-                </Typography>
-                <Typography>
-                  <strong>Note:</strong> {note?.note || "N/A"}
-                </Typography>
-              </Box>
+                        {/* Right Side Numbering */}
+                        <Box
+                          sx={{
+                            width: 30,
+                            height: 30,
+                            borderRadius: "50%",
+                            bgcolor: "#e0e0e0",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {index + 1}
+                        </Box>
+                      </Paper>
+                    ))
+                  ) : (
+                    <Typography variant="body2" color="textSecondary">
+                      No notes available.
+                    </Typography>
+                  )}
+                </Box>
+              </div>
 
-              {/* Right Side Numbering */}
-              <Box
-                sx={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: "50%",
-                  bgcolor: "#e0e0e0",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "bold",
-                }}
-              >
-                {index + 1}
-              </Box>
-            </Paper>
-          ))
-        ) : (
-          <Typography variant="body2" color="textSecondary">
-            No notes available.
-          </Typography>
-        )
-      }
-                
-        </Box>
-               </div>
-
-                {/* Bottom Right - Enclosures Table */}
-                <div className="col-md-6 p-4">
+              {/* Bottom Right - Enclosures Table */}
+              <div className="col-md-6 p-4">
+                <Box
+                  sx={{
+                    borderRadius: "8px", 
+                    p: 3,
+                  }}
+                >
                   <h6 className="mb-3">All Enclosures</h6>
                   <div className="table-responsive">
-                    <table className="table">
-                      <thead>
-                        <tr>
-                          <th>SI NO</th>
-                          <th>Enclosure Name</th>
-                          <th>Enclosure Type</th>
-                          <th>Added By</th>
-                          <th>Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedLetterDetails.letterEnclosureArrays?.map((enclosure, index) => (
-                          <tr key={index}>
-                            <td>{index + 1}</td>
-                           <td>
+                  <table className="table table-bordered table-hover">
+                    <thead>
+                      <tr>
+                        <th className="text-center">SI NO</th>
+                        <th className="text-center">Enclosure Name</th>
+                        <th className="text-center">Enclosure Type</th>
+                        <th className="text-center">Added By</th>
+                        <th className="text-center">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedLetterDetails.letterEnclosureArrays?.map((enclosure, index) => (
+                        <tr key={index}>
+                          <td className="text-center align-middle">{index + 1}</td>
+                          <td className="text-center align-middle">
                             <button
                               style={{
                                 background: "none",
@@ -3967,30 +3765,29 @@ const handleFileUploadChangeencloser = (index, event) => {
                                 textDecoration: "underline",
                                 cursor: "pointer",
                               }}
-                              onClick={() => handleDownloadletter(enclosure.enclosureName, enclosure.enclosurePath)}
+                              onClick={() =>
+                                handleDownloadletter(enclosure.enclosureName, enclosure.enclosurePath)
+                              }
                             >
                               {enclosure.enclosureName}
                             </button>
                           </td>
-
-                            <td>{enclosure.enclosureType}</td>
-                            <td>{enclosure.enclosureUploadBy}</td>
-                            <td>
-                            {enclosure.enclosureUploadDate}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                          <td className="text-center align-middle">{enclosure.enclosureType}</td>
+                          <td className="text-center align-middle">{enclosure.enclosureUploadBy}</td>
+                          <td className="text-center align-middle">{enclosure.enclosureUploadDate}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
+                </Box>
               </div>
             </div>
-          )}
-        </Modal.Body>
-      </Modal>
+          </div>
+        )}
+      </Modal.Body>
+    </Modal>
 
-      {/* Add CSS for letter details */}
       <style jsx>{`
         .letter-details label {
           font-size: 0.9rem;

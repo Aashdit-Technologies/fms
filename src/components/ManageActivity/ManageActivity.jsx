@@ -7,6 +7,7 @@ import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
 import "./ManageActivity.css";
 import DataTable from "react-data-table-component"; // Import DataTable
+import { toast } from "react-toastify";
 
 // import { Button } from "@mui/material";
 
@@ -22,12 +23,22 @@ const ManageActivity = () => {
   const [activityData, setActivityData] = useState([]);
   const [editingActivityId, setEditingActivityId] = useState(null);
   const [activeKey, setActiveKey] = useState("1");
-
+  // const [rowSize, setRowSize] = useState(10);
+  // const [pageNo, setPageNo] = useState(1);
+  // const [totalRows, setTotalRows] = useState(0);
   const fetchActivityData = async () => {
     try {
+      // const payload = {
+      //   pageNo: pageNo,
+      //   rowSize:rowSize,
+      // };
+
+      // Encrypt the payload
+// const encryptedMessage = encryptPayload(payload);
       const token = useAuthStore.getState().token;
       const response = await api.get("/manage-activity", {
         headers: { Authorization: `Bearer ${token}` },
+        // params: { dataObject: encryptedMessage },
       });
       setActivityData(response.data.data);
     } catch (error) {
@@ -52,7 +63,7 @@ const ManageActivity = () => {
     setIsSubmitting(true);
 
     if (!activity.activityCode || !activity.activityName) {
-      alert("Please fill out all required fields.");
+      toast.warning("Please fill out all required fields.");
       setIsSubmitting(false);
       return;
     }
@@ -77,7 +88,7 @@ const ManageActivity = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(
+      toast.success(
         editingActivityId
           ? "Activity updated successfully!"
           : "Activity added successfully!"
@@ -95,7 +106,7 @@ const ManageActivity = () => {
       handleReset();
     } catch (error) {
       console.error("Error saving data:", error);
-      alert("Failed to save data.");
+      toast.error("Failed to save data.");
     } finally {
       setIsSubmitting(false);
     }
@@ -127,7 +138,7 @@ const ManageActivity = () => {
         }
       );
 
-      alert(
+      toast.success(
         `Activity status updated to ${updatedStatus ? "Active" : "Inactive"}!`
       );
       setActivityData((prevData) =>
@@ -139,7 +150,7 @@ const ManageActivity = () => {
       );
     } catch (error) {
       console.error("Error updating activity status:", error);
-      alert("Failed to update activity status.");
+      toast.error("Failed to update activity status.");
     }
   };
 
@@ -234,6 +245,7 @@ const ManageActivity = () => {
               <div className="form-group col-md-3">
                 <TextField
                   fullWidth
+                  type="number"
                   label="Activity Code"
                   variant="outlined"
                   id="activityCode"
@@ -304,60 +316,7 @@ const ManageActivity = () => {
             <div className="row">
               <div className="col-md-12">
                 <div className="table-responsive">
-                  {/* <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Sl</th>
-                        <th>Activity Code</th>
-                        <th>Activity Name</th>
-                        <th>Activity Remarks</th>
-                        <th>Active</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {activityData.length > 0 ? (
-                        activityData.map((activity, index) => (
-                          <tr key={index}>
-                            <td>{index + 1}</td>
-                            <td>{activity.activityCode}</td>
-                            <td>{activity.activityName}</td>
-                            <td>{activity.activityRemarks}</td>
-                            <td>{activity.isActive ? "Yes" : "No"}</td>
-                            <td
-                              className="d-flex"
-                              style={{ width: "max-content" }}
-                            >
-                              <button
-                                className={`btn btn-sm ${
-                                  activity.isActive
-                                    ? "btn-danger"
-                                    : "btn-success"
-                                }`}
-                                onClick={() => handleStatusToggle(activity)}
-                              >
-                                {activity.isActive ? (
-                                  <FaLock />
-                                ) : (
-                                  <FaLockOpen />
-                                )}
-                              </button>
-                              <button
-                                className="btn btn-sm btn-warning ms-2"
-                                onClick={() => handleEdit(activity)}
-                              >
-                                <FaEdit />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="5">No data available</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table> */}
+                 
 
                 <DataTable
                       columns={columns}
@@ -366,6 +325,15 @@ const ManageActivity = () => {
                       highlightOnHover
                       responsive
                       noDataComponent="No data available"
+                      // paginationServer
+                      // paginationTotalRows={totalRows} // Set total rows for server-side pagination
+                      // paginationPerPage={rowSize}
+                      // paginationDefaultPage={pageNo}
+                      // onChangePage={(page) => setPageNo(page)} // Update page state
+                      // onChangeRowsPerPage={(newRowSize) => {
+                      //   setRowSize(newRowSize);
+                      //   setPageNo(1); // Reset to first page when changing rows per page
+                      // }}
                     />
                 </div>
               </div>

@@ -34,12 +34,24 @@ const ManageRack = () => {
   const [editingRackId, setEditingRackId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(true);
   const [isTableOpen, setIsTableOpen] = useState(true);
+  // const [rowSize, setRowSize] = useState(10);
+  // const [pageNo, setPageNo] = useState(1);
+  // const [totalRows, setTotalRows] = useState(0);
 
   const fetchRackData = async () => {
     try {
+
+      // const payload = {
+      //   pageNo: pageNo,
+      //   rowSize:rowSize,
+      // };
+
+      // Encrypt the payload
+        // const encryptedMessage = encryptPayload(payload);
       const token = useAuthStore.getState().token;
       const response = await api.get("/manage-rack", {
         headers: { Authorization: `Bearer ${token}` },
+        // params: { dataObject: encryptedMessage },
       });
       setRackData(response.data?.data?.rackList?.data || []);
       setRoomList(response.data?.data?.roomList || []);
@@ -262,7 +274,17 @@ const ManageRack = () => {
             <span className="accordion-icon">{isTableOpen ? <FaMinus /> : <FaPlus />}</span>
           </Accordion.Header>
           <Accordion.Body>
-            <DataTable columns={columns} data={rackData} pagination highlightOnHover />
+            <DataTable columns={columns} data={rackData} pagination highlightOnHover
+            //  paginationServer
+            // //  paginationTotalRows={totalRows} // Set total rows for server-side pagination
+            //  paginationPerPage={rowSize}
+            //  paginationDefaultPage={pageNo}
+            //  onChangePage={(page) => setPageNo(page)} // Update page state
+            //  onChangeRowsPerPage={(newRowSize) => {
+            //    setRowSize(newRowSize);
+            //    setPageNo(1); // Reset to first page when changing rows per page
+            //  }} 
+             />
           </Accordion.Body>
         </Accordion.Item>
       </Accordion>

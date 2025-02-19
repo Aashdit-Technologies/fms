@@ -32,7 +32,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
 import api from '../../Api/Api';
-import {toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { Checkbox } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import "@react-pdf-viewer/core/lib/styles/index.css";
@@ -608,7 +608,7 @@ const handleConfirmUrgent = async () => {
     }
     } catch (error) {
     console.error("Error downloading PDF:", error);
-    alert("Failed to download PDF. Please try again.");
+    toast.error("Failed to download PDF. Please try again.");
     }
     };
 
@@ -651,7 +651,7 @@ const handleConfirmUrgent = async () => {
       }
       } catch (error) {
       console.error("Error downloading PDF:", error);
-      alert("Failed to download PDF. Please try again.");
+      toast.error("Failed to download PDF. Please try again.");
       }
       };
   

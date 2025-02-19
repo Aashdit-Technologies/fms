@@ -12,7 +12,7 @@ const useApiListStore = create(
       fileModules: [],
       fileRelatedToList: [],
       racks: [],
-      rooms: [],
+      // rooms: [],
       office: [],
       isLoading: false,
       error: null,
@@ -35,7 +35,7 @@ const useApiListStore = create(
             fileModuleResponse,
             fileRelatedToResponse,
             rackResponse,
-            roomResponse,
+            // roomResponse,
             officeResponse,
           ] = await Promise.all([
             api.get("/activity-list", { headers: { Authorization: `Bearer ${token}` } }),
@@ -44,7 +44,7 @@ const useApiListStore = create(
             api.get("/file/file-module-list", { headers: { Authorization: `Bearer ${token}` } }),
             api.get("/file/file-related-to-list", { headers: { Authorization: `Bearer ${token}` } }),
             api.get("/rack-list", { headers: { Authorization: `Bearer ${token}` } }),
-            api.get("/room-list", { headers: { Authorization: `Bearer ${token}` } }),
+            // api.get("/room-list", { headers: { Authorization: `Bearer ${token}` } }),
             api.get("/office-list", { headers: { Authorization: `Bearer ${token}` } }),
             
           ]);
@@ -57,7 +57,7 @@ const useApiListStore = create(
             fileModules: fileModuleResponse.data.data,
             fileRelatedToList: fileRelatedToResponse.data.data,
             racks: rackResponse.data.data,
-            rooms: roomResponse.data.data,
+            // rooms: roomResponse.data.data,
             office: officeResponse.data.data,
             isLoading: false,
           });

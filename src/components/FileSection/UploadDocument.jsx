@@ -330,7 +330,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
         );
 
         if (response.data && response.data.outcome === true) {
-          // Reset form after successful submission
           setRows([
             {
               subject: "",
@@ -387,7 +386,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
           }
         );
         setApiResponseData(response.data.data);
-        return response.data;
+     return response.data;
       } catch (error) {
         console.error("API Error:", error);
         throw error;

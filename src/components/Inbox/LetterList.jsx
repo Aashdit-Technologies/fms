@@ -1,5 +1,6 @@
 import React, { useState, useEffect,useCallback, useRef } from 'react';
 import DataTable from 'react-data-table-component';
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Button,
   TextField,
@@ -11,16 +12,107 @@ import {
   AccordionSummary,
   AccordionDetails,
   Typography,
+  IconButton
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import ShareIcon from '@mui/icons-material/Share';
+
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
 import LetterDetail from './LetterDetail';
-
+import {toast } from "react-toastify";
+import useLetterStore from './useLetterStore';
+const customStyles = {
+  table: {
+    style: {
+      border: "1px solid #ddd",
+      borderRadius: "10px",
+      overflow: "hidden",
+      boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+      backgroundColor: "#ffffff",
+      marginBottom: "1rem",
+    },
+  },
+  headRow: {
+    style: {
+      backgroundColor: "#005f73",
+      color: "#ffffff",
+      // fontSize: "14px",
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: "0.5px",
+      minHeight: "52px",
+      borderBottom: "2px solid #003d4c",
+    },
+  },
+  headCells: {
+    style: {
+      padding: "16px",
+      textAlign: "center",
+      fontWeight: "bold",
+      borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+    },
+  },
+  rows: {
+    style: {
+      fontSize: "14px",
+      fontWeight: "400",
+      color: "#333",
+      backgroundColor: "#ffffff",
+      minHeight: "50px",
+      transition: "background-color 0.2s ease-in-out",
+      "&:not(:last-of-type)": {
+        borderBottom: "1px solid #ddd",
+      },
+      "&:hover": {
+        backgroundColor: "#e6f2f5",
+        cursor: "pointer",
+      },
+    },
+    stripedStyle: {
+      backgroundColor: "#f9f9f9",
+    },
+  },
+  cells: {
+    style: {
+      padding: "12px 16px",
+      textAlign: "center",
+      borderRight: "1px solid #ddd",
+    },
+  },
+  pagination: {
+    style: {
+      borderTop: "1px solid #ddd",
+      padding: "10px",
+      backgroundColor: "#f9f9f9",
+    },
+  },
+  noData: {
+    style: {
+      padding: "24px",
+      textAlign: "center",
+      fontSize: "14px",
+      color: "#777",
+      backgroundColor: "#f9f9f9",
+    },
+  },
+};
 const LetterList = () => {
+
+  const { successMessage, setSuccessMessage } = useLetterStore();
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null); 
+      }, 8000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, setSuccessMessage]);
+
   const [letters, setLetters] = useState([]);
   const [viewletters, setViewLetters] = useState([]);
   const [rowSize, setRowSize] = useState(10);
@@ -28,84 +120,8 @@ const LetterList = () => {
   const [totalRows, setTotalRows] = useState(0);
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [openLetterDetail, setOpenLetterDetail] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const token = useAuthStore.getState().token;
-
-  const customStyles = {
-    table: {
-      style: {
-        border: "1px solid #ddd",
-        borderRadius: "10px",
-        overflow: "hidden",
-        boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
-        backgroundColor: "#ffffff",
-        marginBottom: "1rem",
-      },
-    },
-    headRow: {
-      style: {
-        backgroundColor: "#005f73",
-        color: "#ffffff",
-        fontSize: "14px",
-        fontWeight: "600",
-        textTransform: "uppercase",
-        letterSpacing: "0.5px",
-        minHeight: "52px",
-        borderBottom: "2px solid #003d4c",
-      },
-    },
-    headCells: {
-      style: {
-        padding: "16px",
-        textAlign: "center",
-        fontWeight: "bold",
-        borderRight: "1px solid rgba(255, 255, 255, 0.1)",
-      },
-    },
-    rows: {
-      style: {
-        fontSize: "14px",
-        fontWeight: "400",
-        color: "#333",
-        backgroundColor: "#ffffff",
-        minHeight: "50px",
-        transition: "background-color 0.2s ease-in-out",
-        "&:not(:last-of-type)": {
-          borderBottom: "1px solid #ddd",
-        },
-        "&:hover": {
-          backgroundColor: "#e6f2f5",
-          cursor: "pointer",
-        },
-      },
-      stripedStyle: {
-        backgroundColor: "#f9f9f9",
-      },
-    },
-    cells: {
-      style: {
-        padding: "12px 16px",
-        textAlign: "center",
-        borderRight: "1px solid #ddd",
-      },
-    },
-    pagination: {
-      style: {
-        borderTop: "1px solid #ddd",
-        padding: "10px",
-        backgroundColor: "#f9f9f9",
-      },
-    },
-    noData: {
-      style: {
-        padding: "24px",
-        textAlign: "center",
-        fontSize: "14px",
-        color: "#777",
-        backgroundColor: "#f9f9f9",
-      },
-    },
-  };
 
   const TAB_CODES = {
     NEW_LETTER: 'NEW_LETTER',
@@ -149,8 +165,6 @@ const LetterList = () => {
     }
   }, [activeTab, pageNo, rowSize]);
   
- 
-
 
 const handleViewLetterDetail = async (row, tabCode) => {
 
@@ -177,7 +191,7 @@ const handleViewLetterDetail = async (row, tabCode) => {
         },
       }
     );
-    console.log("all view letter respone",response)
+    console.log("all view letter respone",response.data.data)
 
     if (!response.data || !response.data.data) {
       console.error("Error: API response is missing 'data'.", response.data);
@@ -228,31 +242,43 @@ const handleTabChange = (newTab) => {
         View
     </Button>
 );
+const actionButtons = (row) => (
+  <Button
+      size="small"
+      variant="contained"
+      color="primary"
+      startIcon={<ShareIcon/>}
+      onClick={() => handleViewLetterDetail(row, activeTab)}  
+  >
+      
+  </Button>
+);
+
 
 const NewLettercolumns = [
   {
     name: 'SI No',
     cell: (row, index) => index + 1,
     sortable: true,
-    width: '60px',
+    width: '100px',
   },
   {
     name: 'Diary Number',
     selector: row => row.diaryNumber || '',
     sortable: true,
-    
+    width: '170px',
   },
   {
-    name: 'Letter Number & Date',
+    name: 'Letter Number',
     selector: row => row.letterNumber || '',
     sortable: true,
-    
+    width: '170px',
   },
   {
     name: 'Letter Source',
     selector: row => row.letterSource || '',
     sortable: true,
-    
+    width: '170px',
   },
   {
     name: 'Send Date',
@@ -264,13 +290,13 @@ const NewLettercolumns = [
     name: 'Sender',
     selector: row => row.sender || '',
     sortable: true,
-    
+    width: '300px',
   },
   {
-    name: 'Updated DateTime',
+    name: 'Updated Date',
     selector: row => row.updatedDateTime || 'NA',
     sortable: true,
-  
+    width: '170px',
   },
   {
     name: 'Memo Number & Date',
@@ -282,7 +308,7 @@ const NewLettercolumns = [
     name: 'Subject',
     selector: row => row.subject || '',
     sortable: true,
-    
+    width: '200px',
   },
   {
     name: 'Action',
@@ -332,7 +358,7 @@ const SentLetterColumns = [
   },
   {
     name: 'Action',
-    cell: actionButton,
+    cell: actionButtons,
     width: '120px',
   },
 ];
@@ -413,39 +439,70 @@ const MovedToFileColumns = [
 
   return (
     <div className="diary-section-container">
-      
+      <Box sx={{ p: 3 }}>
+      {successMessage && (
+        <Box
+          sx={{
+            bgcolor: "#e8f5e9",
+            p: 2,
+            borderRadius: "4px",
+            mb: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="body1" sx={{ color: "#1b5e20" }}>
+            {successMessage}
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={() => setSuccessMessage(null)} 
+            sx={{ color: "#1b5e20" }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      )}
+    </Box>
+
       <Accordion 
         expanded={expanded} 
         onChange={handleAccordionChange}
         sx={{
-          boxShadow: 'none',
-          border: '1px solid #e0e0e0',
-          width: '100%',
-          maxWidth: '100%',  
-          overflow: 'hidden', 
-          '&:before': {
-            display: 'none',
-          },
+          boxShadow: '3',
+        
         }}
       >
         <AccordionSummary
-          expandIcon={expanded ? <RemoveIcon /> : <AddIcon />}
+           expandIcon={
+            <IconButton 
+            sx={{
+              backgroundColor: "#1a5f6a",
+              color: "#fff",
+              width: 30, 
+              height: 30, 
+              "&:hover": {
+                backgroundColor: "#207785",
+              },
+            }}>
+              {expanded ? <RemoveIcon /> : <AddIcon />}
+            </IconButton>
+          }
+          aria-controls="panel1a-content"
+          id="panel1a-header"
           sx={{
-            '& .MuiAccordionSummary-expandIconWrapper': {
-              transform: 'none',
-              '&.Mui-expanded': {
-                transform: 'none',
-              }
-            }
+            backgroundColor: "#e9ecef",
+            borderBottom: "1px solid #1a5f6a",
           }}
         >
-          <Typography sx={{ fontWeight: 500, color: '#666' }}>
+          <Typography variant="h6" >
             Letter List
           </Typography>
         </AccordionSummary>
         
-        <AccordionDetails>
-          <Paper sx={{ width: '100%', mb: 2 }}>
+        <AccordionDetails sx={{ backgroundColor: '#fafafa', p: 2, borderRadius: '0 0 10px 10px' }}>
+          <Paper sx={{ width: '100%', mb: 2 ,mt: 3}}>
             <Tabs
               value={activeTab}
              onChange={(event, newValue) => handleTabChange(newValue)}

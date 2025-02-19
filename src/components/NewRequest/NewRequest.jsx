@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useMutation,  } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import useApiListStore from "../ManageFile/ApiListStore";
 import api from "../../Api/Api";
 import { FaEdit, FaHistory } from "react-icons/fa";
@@ -7,9 +7,100 @@ import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt.js";
 import MainFile from "../FileSection/MainFile.jsx";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import {
+  Modal,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  TableHead,
+} from "@mui/material";
 import DataTable from "react-data-table-component"; // Import DataTable
 import { Autocomplete, TextField, Button } from "@mui/material"; // Import Material UI components
 import { MdOutlineMoveDown } from "react-icons/md";
+
+
+const customStyles = {
+  table: {
+    style: {
+      border: "1px solid #ddd",
+      borderRadius: "10px",
+      overflow: "hidden",
+      boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+      backgroundColor: "#ffffff",
+      marginBottom: "1rem",
+    },
+  },
+  headRow: {
+    style: {
+      backgroundColor: "#005f73",
+      color: "#ffffff",
+      // fontSize: "14px",
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: "0.5px",
+      minHeight: "52px",
+      borderBottom: "2px solid #003d4c",
+    },
+  },
+  headCells: {
+    style: {
+      padding: "16px",
+      textAlign: "center",
+      fontWeight: "bold",
+      borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+    },
+  },
+  rows: {
+    style: {
+      fontSize: "14px",
+      fontWeight: "400",
+      color: "#333",
+      backgroundColor: "#ffffff",
+      minHeight: "50px",
+      transition: "background-color 0.2s ease-in-out",
+      "&:not(:last-of-type)": {
+        borderBottom: "1px solid #ddd",
+      },
+      "&:hover": {
+        backgroundColor: "#e6f2f5",
+        cursor: "pointer",
+      },
+    },
+    stripedStyle: {
+      backgroundColor: "#f9f9f9",
+    },
+  },
+  cells: {
+    style: {
+      padding: "12px 16px",
+      textAlign: "center",
+      borderRight: "1px solid #ddd",
+    },
+  },
+  pagination: {
+    style: {
+      borderTop: "1px solid #ddd",
+      padding: "10px",
+      backgroundColor: "#f9f9f9",
+    },
+  },
+  noData: {
+    style: {
+      padding: "24px",
+      textAlign: "center",
+      fontSize: "14px",
+      color: "#777",
+      backgroundColor: "#f9f9f9",
+    },
+  },
+};
+
 
 const NewRequest = () => {
   const [selectedFileModule, setSelectedFileModule] = useState("0");
@@ -32,6 +123,10 @@ const NewRequest = () => {
 
   const [fileDetails, setFileDetails] = useState(null);
   const [fileDetailsModalVisible, setFileDetailsModalVisible] = useState(false);
+
+  const [rowSize, setRowSize] = useState(10);
+  const [pageNo, setPageNo] = useState(1);
+
   const Navigate = useNavigate();
 
   useEffect(() => {
@@ -92,7 +187,8 @@ const NewRequest = () => {
       const payload = {
         priority: priority || null,
         fileModule: fileModule || null,
-        pageno: 1,
+        pageNo: pageNo,
+        rowSize: rowSize,
       };
 
       // Encrypt the payload
@@ -105,7 +201,7 @@ const NewRequest = () => {
       });
       setNRData(response.data.data || []);
       setPrioritylyst(response.data.data.prioritylst || []);
-
+      // setTotalRows(response.data?.data?.totalRows || 0);
       console.log(response.data.data);
     } catch (error) {
       console.error("Error fetching filtered data:", error);
@@ -116,72 +212,71 @@ const NewRequest = () => {
 
   useEffect(() => {
     fetchFilteredData(priority, selectedFileModule);
-  }, [priority, selectedFileModule]);
+  }, [priority, selectedFileModule, pageNo, rowSize]);
 
-    // Mutation for editing file
-    const fetchFileDetails = async (file) => {
-      if (!file) return;
-      const token = sessionStorage.getItem("token");
-      try {
-        setLoading(true);
-        
-        const payload1 = encryptPayload({
-          tabPanelId: 1,
-          fileId: file.fileId,
-          fileReceiptId: file.fileReceiptId,
-        });
-        const payload2 = encryptPayload({ fileId: file.fileId });
-        const payload3 = encryptPayload({
-          fileId: file.fileId,
-          lastFileSentDate: "",
-        });
-    
-        const [response1, response2, response3, response4] = await Promise.all([
-          api.post(
-            "/file/basic-details",
-            { dataObject: payload1 },
-            { headers: { Authorization: `Bearer ${token}` } }
-          ),
-          api.post(
-            "/file/get-draft-notesheet",
-            { dataObject: payload2 },
-            { headers: { Authorization: `Bearer ${token}` } }
-          ),
-          api.post(
-            "/file/file-correspondences",
-            { dataObject: payload3 },
-            { headers: { Authorization: `Bearer ${token}` } }
-          ),
-          api.post(
-            "/file/file-notesheets",
-            { dataObject: payload3 },
-            { headers: { Authorization: `Bearer ${token}` } }
-          ),
-        ]);
-    
-        const fileData = {
-          fileDetails: response1.data,
-          additionalDetails: response2.data,
-          correspondence: response3.data,
-          noteSheets: response4.data,
-        };
-    
-        setFileDetails(fileData.fileDetails);
-    
-        Navigate("/main-file", {
-          state: fileData,
-          replace: true,
-        });
-    
-      } catch (error) {
-        console.error("Error fetching file details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    const handleEditClick = (file) => {
-      fetchFileDetails(file);
-    };
+  // Mutation for editing file
+  const fetchFileDetails = async (file) => {
+    if (!file) return;
+    const token = sessionStorage.getItem("token");
+    try {
+      setLoading(true);
+
+      const payload1 = encryptPayload({
+        tabPanelId: 1,
+        fileId: file.fileId,
+        fileReceiptId: file.fileReceiptId,
+      });
+      const payload2 = encryptPayload({ fileId: file.fileId });
+      const payload3 = encryptPayload({
+        fileId: file.fileId,
+        lastFileSentDate: "",
+      });
+
+      const [response1, response2, response3, response4] = await Promise.all([
+        api.post(
+          "/file/basic-details",
+          { dataObject: payload1 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+        api.post(
+          "/file/get-draft-notesheet",
+          { dataObject: payload2 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+        api.post(
+          "/file/file-correspondences",
+          { dataObject: payload3 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+        api.post(
+          "/file/file-notesheets",
+          { dataObject: payload3 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+      ]);
+
+      const fileData = {
+        fileDetails: response1.data,
+        additionalDetails: response2.data,
+        correspondence: response3.data,
+        noteSheets: response4.data,
+      };
+
+      setFileDetails(fileData.fileDetails);
+
+      Navigate("/main-file", {
+        state: fileData,
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Error fetching file details:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleEditClick = (file) => {
+    fetchFileDetails(file);
+  };
 
   const handleSelectChange = (setter, event) => {
     setter(event.target.value);
@@ -273,8 +368,10 @@ const NewRequest = () => {
         }
       );
 
-      if (response.status === 200) {
-        alert(response.data.message); // Ensure correct response access
+      if (response.data.outcome == true) {
+        toast.success(response.data.message);
+      } else {
+        toast.error(response.data.message);
       }
     } catch (error) {
       console.error("Error fetching:", error);
@@ -297,8 +394,11 @@ const NewRequest = () => {
         }
       );
 
-      if (response.status === 200) {
-        alert(response.data.message); // Ensure correct response access
+      if(response.data.outcome == true){
+        toast.success(response.data.message);
+      }
+      else{
+        toast.error(response.data.message);
       }
     } catch (error) {
       console.error("Error fetching:", error);
@@ -310,46 +410,59 @@ const NewRequest = () => {
       name: "SL",
       selector: (row, index) => index + 1,
       sortable: true,
+      width: "50px",
     },
     {
       name: "File Number",
       selector: (row) => row.fileNo, // This correctly selects fileNo
       cell: (row) => (
-        <div style={{ display: "flex", flexDirection:"column", alignItems: "start", gap: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "start",
+            textAlign: "left",
+            gap: "8px",
+          }}
+        >
           <a href="#" onClick={() => handleFileDetailsClick(row)}>
             {row.fileNo}
           </a>
-          <span className="bg-primary rounded text-white p-1">{row.priority}</span>
+          <span className="bg-primary rounded text-white p-1">
+            {row.priority}
+          </span>
         </div>
       ),
       sortable: true,
+      width: "350px",
     },
-    
+
     {
       name: "File Name",
       selector: (row) => row.fileName,
       sortable: true,
+      width: "250px",
     },
     {
       name: "From",
       selector: (row) => row.fromEmployee,
       sortable: true,
+      width: "200px",
     },
     {
       name: "Send On",
       selector: (row) => row.sentOn,
       sortable: true,
+      width: "130px",
     },
     {
       name: "Status",
       selector: (row) => row.status,
       sortable: true,
+      width: "120px",
       cell: (row) => (
-        <span className="bg-warning text-white rounded p-1">
-          {row.status}
-        </span>
+        <span className="bg-warning text-white rounded p-1">{row.status}</span>
       ),
-      
     },
     {
       name: "Action",
@@ -360,6 +473,7 @@ const NewRequest = () => {
             color="warning"
             size="small"
             title="Send to Rack"
+            sx={{ minWidth: "auto" }}
             startIcon={<MdOutlineMoveDown />}
             onClick={() => handleSendToRack(row)}
           ></Button>
@@ -368,6 +482,7 @@ const NewRequest = () => {
             color="primary"
             size="small"
             title="Edit"
+            sx={{ minWidth: "auto" }}
             className="ms-2"
             startIcon={<FaEdit />}
             onClick={() => handleEditClick(row)}
@@ -377,11 +492,11 @@ const NewRequest = () => {
             color="secondary"
             size="small"
             title="Edit"
+            sx={{ minWidth: "auto" }}
             className="ms-2"
             startIcon={<FaHistory />}
             onClick={() => handleHistoryClick(row)}
-          >
-          </Button>
+          ></Button>
         </>
       ),
     },
@@ -440,9 +555,18 @@ const NewRequest = () => {
               pagination
               highlightOnHover
               progressPending={loading}
+              customStyles={customStyles}
               striped
               bordered
               noDataComponent={<div>No data available</div>}
+              paginationServer
+              paginationPerPage={rowSize}
+              paginationDefaultPage={pageNo}
+              onChangePage={(page) => setPageNo(page)}
+              onChangeRowsPerPage={(newRowSize) => {
+                setRowSize(newRowSize);
+                setPageNo(1);
+              }}
             />
           </div>
         </div>
@@ -557,7 +681,7 @@ const NewRequest = () => {
       )}
 
       {/* History Modal */}
-      {historyModalVisible && (
+      {/* {historyModalVisible && (
         <div
           className="modal d-block"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
@@ -614,9 +738,48 @@ const NewRequest = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
-      {fileDetailsModalVisible && fileDetails && (
+<Modal open={historyModalVisible} onClose={() => setHistoryModalVisible(false)}>
+      <Dialog open={historyModalVisible} onClose={() => setHistoryModalVisible(false)} maxWidth="xl" fullWidth>
+        <DialogTitle>File History</DialogTitle>
+        <DialogContent>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Sl</TableCell>
+                <TableCell>File Number</TableCell>
+                <TableCell>Sender</TableCell>
+                <TableCell>Receiver</TableCell>
+                <TableCell>Docket No.</TableCell>
+                <TableCell>Action Date</TableCell>
+                <TableCell>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {historyData.map((historyItem, index) => (
+                <TableRow key={index}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{historyItem.fileNo}</TableCell>
+                  <TableCell>{historyItem.sender || "NA"}</TableCell>
+                  <TableCell>{historyItem.receiver || "NA"}</TableCell>
+                  <TableCell>{historyItem.docketNo || "NA"}</TableCell>
+                  <TableCell>{historyItem.actionDate || "NA"}</TableCell>
+                  <TableCell>{historyItem.status || "NA"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="secondary" onClick={() => setHistoryModalVisible(false)}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Modal>
+
+      {/* {fileDetailsModalVisible && fileDetails && (
         <div
           className="modal d-block"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
@@ -705,7 +868,52 @@ const NewRequest = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
+
+
+<Modal open={fileDetailsModalVisible} onClose={() => setFileDetailsModalVisible(false)}>
+      <Dialog open={fileDetailsModalVisible} onClose={() => setFileDetailsModalVisible(false)} maxWidth="md" fullWidth>
+        <DialogTitle>File Details</DialogTitle>
+        <DialogContent>
+          {fileDetails && (
+            <Table>
+              <TableBody>
+                {Object.entries({
+                  "File No": fileDetails.fileNo,
+                  "File Name": fileDetails.fileName,
+                  "From Employee": fileDetails.fromEmployee,
+                  "Sent On": fileDetails.sentOn,
+                  Status: fileDetails.status,
+                  Priority: fileDetails.priority,
+                  "File Module": fileDetails.fileType,
+                  Room: fileDetails.roomNumber,
+                  Rack: fileDetails.rackNumber,
+                  Cell: fileDetails.cellNumber,
+                }).map(([key, value]) => (
+                  <TableRow key={key}>
+                    <TableCell component="th" scope="row">
+                      {key}
+                    </TableCell>
+                    <TableCell>{value}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="success" onClick={() => handleVolumeFile(fileDetails)}>
+            Create New Volume
+          </Button>
+          <Button variant="contained" color="success" onClick={() => handlePartFile(fileDetails)}>
+            Create Part File
+          </Button>
+          <Button variant="contained" color="secondary" onClick={() => setFileDetailsModalVisible(false)}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Modal>
     </div>
   );
 };

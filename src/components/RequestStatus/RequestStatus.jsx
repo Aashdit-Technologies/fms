@@ -7,6 +7,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import useApiListStore from "../ManageFile/ApiListStore";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
+import { toast } from "react-toastify";
 import { encryptPayload } from "../../utils/encrypt.js";
 import dayjs from "dayjs";
 
@@ -18,10 +19,11 @@ const RequestStatus = () => {
 
   const [fileDetails, setFileDetails] = useState(null);
   const [fileDetailsModalVisible, setFileDetailsModalVisible] = useState(false);
-
+ const [rowSize, setRowSize] = useState(10);
+  const [pageNo, setPageNo] = useState(1);
   useEffect(() => {
     fetchFilteredData(fromDate, toDate);
-  }, [fromDate, toDate]);
+  }, [fromDate, toDate, pageNo, rowSize]);
 
   const fetchFilteredData = async (fromDate, toDate) => {
     setLoading(true);
@@ -36,6 +38,8 @@ const RequestStatus = () => {
       const payload = {
         fromDate: params.fromDate,
         toDate: params.toDate,
+        pageNo: pageNo,
+        rowSize:rowSize,
       };
 
       const encryptedMessage = encryptPayload(payload);
@@ -61,13 +65,19 @@ const RequestStatus = () => {
 
       const payload = { fileReceiptId: fileReceiptId, fileId: fileId, calltype:"callfor"};
       const encryptedMessage = encryptPayload(payload);
-      await api.post("file/call-for-recall",
+      const response = await api.post("file/call-for-recall",
         { dataObject: encryptedMessage },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      alert("Request Sent Successfully");
+      if(response.data.outcome == true){
+        toast.success(response.data.message);
+        fetchFilteredData();
+      }
+      else{
+        toast.error(response.data.message);
+      }
     } catch (error) {
       console.error("Error in Call For request:", error);
     }
@@ -80,13 +90,19 @@ const RequestStatus = () => {
 
       const payload = { fileReceiptId: fileReceiptId, fileId: fileId, calltype:"recall"};
       const encryptedMessage = encryptPayload(payload);
-      await api.post("file/call-for-recall",
+      const response = await api.post("file/call-for-recall",
         { dataObject: encryptedMessage },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      alert("Request Sent Successfully");
+      if(response.data.outcome == true){
+        toast.success(response.data.message);
+        fetchFilteredData();
+      }
+      else{
+        toast.error(response.data.message);
+      }
     } catch (error) {
       console.error("Error in Call For request:", error);
     }
@@ -209,6 +225,15 @@ const RequestStatus = () => {
         bordered
         pagination
         highlightOnHover
+        paginationServer
+            
+        paginationPerPage={rowSize} 
+        paginationDefaultPage={pageNo}
+        onChangePage={(page) => setPageNo(page)}
+        onChangeRowsPerPage={(newRowSize) => {
+          setRowSize(newRowSize);
+          setPageNo(1);  
+        }}
       />
 
 {fileDetailsModalVisible && fileDetails && (
