@@ -5,73 +5,57 @@ import useAuthStore from "../../store/Store";
 
 const useApiListStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       activities: [],
       custodians: [],
       departments: [],
       fileModules: [],
       fileRelatedToList: [],
       racks: [],
-      // rooms: [],
       office: [],
       isLoading: false,
       error: null,
 
       fetchAllData: async () => {
         set({ isLoading: true, error: null });
+        const token = useAuthStore.getState().token;
+
+        if (!token) {
+          console.error("No token found. Please log in.");
+          set({ isLoading: false, error: "No token found. Please log in." });
+          return;
+        }
+
+        const endpoints = [
+          { key: "activities", url: "/activity-list" },
+          { key: "custodians", url: "/custodian-list" },
+          { key: "departments", url: "/department-list" },
+          { key: "fileModules", url: "/file/file-module-list" },
+          { key: "fileRelatedToList", url: "/file/file-related-to-list" },
+          { key: "racks", url: "/rack-list" },
+          { key: "office", url: "/office-list" },
+        ];
+
         try {
-          const token = useAuthStore.getState().token;
-
-          if (!token) {
-            console.error("No token found. Please log in.");
-            set({ isLoading: false, error: "No token found. Please log in." });
-            return;
-          }
-
-          const [
-            activityResponse,
-            custodianResponse,
-            departmentResponse,
-            fileModuleResponse,
-            fileRelatedToResponse,
-            rackResponse,
-            // roomResponse,
-            officeResponse,
-          ] = await Promise.all([
-            api.get("/activity-list", { headers: { Authorization: `Bearer ${token}` } }),
-            api.get("/custodian-list", { headers: { Authorization: `Bearer ${token}` } }),
-            api.get("/department-list", { headers: { Authorization: `Bearer ${token}` } }),
-            api.get("/file/file-module-list", { headers: { Authorization: `Bearer ${token}` } }),
-            api.get("/file/file-related-to-list", { headers: { Authorization: `Bearer ${token}` } }),
-            api.get("/rack-list", { headers: { Authorization: `Bearer ${token}` } }),
-            // api.get("/room-list", { headers: { Authorization: `Bearer ${token}` } }),
-            api.get("/office-list", { headers: { Authorization: `Bearer ${token}` } }),
-            
-          ]);
-          
-
-          set({
-            activities: activityResponse.data.data,
-            custodians: custodianResponse.data.data,
-            departments: departmentResponse.data.data,
-            fileModules: fileModuleResponse.data.data,
-            fileRelatedToList: fileRelatedToResponse.data.data,
-            racks: rackResponse.data.data,
-            // rooms: roomResponse.data.data,
-            office: officeResponse.data.data,
-            isLoading: false,
-          });
-          
-          
+          await Promise.all(
+            endpoints.map(async ({ key, url }) => {
+              const response = await api.get(url, { headers: { Authorization: `Bearer ${token}` } });
+              set((state) => ({
+                ...state,
+                [key]: response.data.data === null ? [] : response.data.data,
+              }));
+            })
+          );
         } catch (error) {
           console.error("Error fetching data:", error.message);
           set({
             isLoading: false,
             error: "Failed to fetch data. Please try again later.",
           });
+        } finally {
+          set({ isLoading: false });
         }
       },
-      
     }),
     {
       name: "api-list-storage",
@@ -82,13 +66,10 @@ const useApiListStore = create(
         fileModules: state.fileModules,
         fileRelatedToList: state.fileRelatedToList,
         racks: state.racks,
-        // rooms: state.rooms,
         office: state.office,
       }),
     }
-    
   )
-  
 );
 
 export default useApiListStore;

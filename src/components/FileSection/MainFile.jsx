@@ -8,6 +8,7 @@ import NoteSheet from './NoteSheet'
 
 
 const MainFile = () => {
+  
   const location = useLocation();
   const [sharedEditorContent, setSharedEditorContent] = useState('');
   

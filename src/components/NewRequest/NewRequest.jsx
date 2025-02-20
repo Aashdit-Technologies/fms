@@ -107,6 +107,7 @@ const NewRequest = () => {
   const [priority, setPriority] = useState("All");
   const [prioritylyst, setPrioritylyst] = useState("");
   const [nRData, setNRData] = useState({ prioritylst: [], receiptList: [] });
+  
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -171,7 +172,7 @@ const NewRequest = () => {
         setRackData(response.data.data || []);
       } catch (error) {
         console.error("Error fetching rack data:", error);
-        setRackData([]); // Clear rack data on error
+        setRackData([]); 
       }
     };
 
@@ -209,6 +210,7 @@ const NewRequest = () => {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchFilteredData(priority, selectedFileModule);

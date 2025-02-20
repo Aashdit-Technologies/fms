@@ -222,20 +222,30 @@ const ManageFile = () => {
   const handleSelectChange = (event) => {
     const selectedActivity = event.target.value;
     setSelectedActivity(selectedActivity);
-    const selectedActivityObj = activities.find(
+  
+    if (!activities || activities.length === 0) {
+      console.error("Activities data is still loading or empty.");
+      return;
+    }
+  
+    const selectedActivityObj = Array.isArray(activities) 
+  ? activities.find(
       (activity) => activity.activityId === Number(selectedActivity)
-    );
+    )
+  : null;  // If activities is not an array, return null or handle as needed
 
+  
     console.log("Selected Activity Object:", selectedActivityObj);
-
+  
     if (formTitle && formSubject && selectedActivityObj) {
       setFormFileName(
         `${formTitle}/${formSubject}/${selectedActivityObj.activityName}`
       );
     } else {
-      setFormFileName("");
+      setFormFileName(""); 
     }
   };
+  
   return (
     <div>
       <Box>
