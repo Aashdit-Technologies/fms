@@ -7,7 +7,6 @@ import Hierarchy from "../Hierarchy/Hierarchy";
 import Despatch from "../DespatchSection/Despatch";
 import DiarySection from "../DiarySection/DiarySection";
 import LetterList from "../Inbox/LetterList";
-import Letter from "../Letter/Letter";
 import "./Admin.css";
 import MainFile from "../FileSection/MainFile";
 import Scheduling from "../FileSection/Scheduling";

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import useApiListStore from "../ManageFile/ApiListStore";
 import api from "../../Api/Api";
@@ -214,6 +214,7 @@ const NewRequest = () => {
     fetchFilteredData(priority, selectedFileModule);
   }, [priority, selectedFileModule, pageNo, rowSize]);
 
+  // Mutation for editing file
   const fetchFileDetails = async (file) => {
     if (!file) return;
     const token = sessionStorage.getItem("token");
@@ -273,8 +274,6 @@ const NewRequest = () => {
       setLoading(false);
     }
   };
-
-  
   const handleEditClick = (file) => {
     fetchFileDetails(file);
   };
@@ -354,7 +353,10 @@ const NewRequest = () => {
 
   const handleVolumeFile = async (fileDetails) => {
     debugger;
-    const payload = { fileId: fileDetails.fileId };
+    const payload = { 
+      fileId: fileDetails.fileId,
+      fileTypeId: fileDetails.fileTypeId
+     };
 
     try {
       const token = useAuthStore.getState().token;
@@ -371,6 +373,8 @@ const NewRequest = () => {
 
       if (response.data.outcome == true) {
         toast.success(response.data.message);
+        setFileDetailsModalVisible(false)
+        fetchFilteredData(priority, selectedFileModule);
       } else {
         toast.error(response.data.message);
       }
@@ -380,11 +384,11 @@ const NewRequest = () => {
   };
 
   const handlePartFile = async (fileDetails) => {
-    const payload = { fileReceiptId: fileDetails.fileReceiptId };
+    const payload = { fileReceiptId: fileDetails.fileReceiptId, fileTypeId: fileDetails.fileTypeId };
 
     try {
       const token = useAuthStore.getState().token;
-      const encryptedMessage = encryptPayload(payload); // Ensure it's properly awaited
+      const encryptedMessage = encryptPayload(payload);
 
       const response = await api.post(
         "file/create-part-file",
@@ -397,6 +401,8 @@ const NewRequest = () => {
 
       if(response.data.outcome == true){
         toast.success(response.data.message);
+        setFileDetailsModalVisible(false)
+        fetchFilteredData(priority, selectedFileModule);
       }
       else{
         toast.error(response.data.message);
@@ -411,7 +417,7 @@ const NewRequest = () => {
       name: "SL",
       selector: (row, index) => index + 1,
       sortable: true,
-      width: "50px",
+      width: "80px",
     },
     {
       name: "File Number",
@@ -456,15 +462,15 @@ const NewRequest = () => {
       sortable: true,
       width: "130px",
     },
-    {
-      name: "Status",
-      selector: (row) => row.status,
-      sortable: true,
-      width: "120px",
-      cell: (row) => (
-        <span className="bg-warning text-white rounded p-1">{row.status}</span>
-      ),
-    },
+    // {
+    //   name: "Status",
+    //   selector: (row) => row.status,
+    //   sortable: true,
+    //   width: "120px",
+    //   cell: (row) => (
+    //     <span className="bg-warning text-white rounded p-1">{row.status}</span>
+    //   ),
+    // },
     {
       name: "Action",
       cell: (row) => (
@@ -681,66 +687,9 @@ const NewRequest = () => {
         </div>
       )}
 
-      {/* History Modal */}
-      {/* {historyModalVisible && (
-        <div
-          className="modal d-block"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
-          <div className="modal-dialog modal-xl">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">File History</h5>
-                <button
-                  type="button"
-                  className="close"
-                  onClick={() => setHistoryModalVisible(false)}
-                >
-                  &times;
-                </button>
-              </div>
-              <div className="modal-body">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Sl</th>
-                      <th>File Number</th>
-                      <th>Sender</th>
-                      <th>Reciver</th>
-                      <th>Docket No.</th>
-                      <th>Action Date</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historyData.map((historyItem, index) => (
-                      <tr key={index}>
-                        <td>{index + 1}</td>
-                        <td>{historyItem.fileNo}</td>
-                        <td>{historyItem.sender || "NA"}</td>
-                        <td>{historyItem.receiver || "NA"}</td>
-                        <td>{historyItem.docketNo || "NA"}</td>
-                        <td>{historyItem.actionDate || "NA"}</td>
-                        <td>{historyItem.status || "NA"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setHistoryModalVisible(false)}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )} */}
 
+
+      
 <Modal open={historyModalVisible} onClose={() => setHistoryModalVisible(false)}>
       <Dialog open={historyModalVisible} onClose={() => setHistoryModalVisible(false)} maxWidth="xl" fullWidth>
         <DialogTitle>File History</DialogTitle>
@@ -779,98 +728,6 @@ const NewRequest = () => {
         </DialogActions>
       </Dialog>
     </Modal>
-
-      {/* {fileDetailsModalVisible && fileDetails && (
-        <div
-          className="modal d-block"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">File Details</h5>
-                <button
-                  type="button"
-                  className="close"
-                  onClick={() => setFileDetailsModalVisible(false)}
-                >
-                  &times;
-                </button>
-              </div>
-              <div className="modal-body">
-                <table className="table">
-                  <tbody>
-                    <tr>
-                      <th>File No</th>
-                      <td>{fileDetails.fileNo}</td>
-                    </tr>
-                    <tr>
-                      <th>File Name</th>
-                      <td>{fileDetails.fileName}</td>
-                    </tr>
-                    <tr>
-                      <th>From Employee</th>
-                      <td>{fileDetails.fromEmployee}</td>
-                    </tr>
-                    <tr>
-                      <th>Sent On</th>
-                      <td>{fileDetails.sentOn}</td>
-                    </tr>
-                    <tr>
-                      <th>Status</th>
-                      <td>{fileDetails.status}</td>
-                    </tr>
-                    <tr>
-                      <th>Priority</th>
-                      <td>{fileDetails.priority}</td>
-                    </tr>
-                    <tr>
-                      <th>File Module</th>
-                      <td>{fileDetails.fileType}</td>
-                    </tr>
-                    <tr>
-                      <th>Room</th>
-                      <td>{fileDetails.roomNumber}</td>
-                    </tr>
-                    <tr>
-                      <th>Rack</th>
-                      <td>{fileDetails.rackNumber}</td>
-                    </tr>
-                    <tr>
-                      <th>Cell</th>
-                      <td>{fileDetails.cellNumber}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-success"
-                  onClick={() => handleVolumeFile(fileDetails)}
-                >
-                  Create New Voume
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-success"
-                  onClick={() => handlePartFile(fileDetails)}
-                >
-                  Create Part File
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setFileDetailsModalVisible(false)}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )} */}
-
 
 <Modal open={fileDetailsModalVisible} onClose={() => setFileDetailsModalVisible(false)}>
       <Dialog open={fileDetailsModalVisible} onClose={() => setFileDetailsModalVisible(false)} maxWidth="md" fullWidth>
@@ -915,6 +772,7 @@ const NewRequest = () => {
         </DialogActions>
       </Dialog>
     </Modal>
+    
     </div>
   );
 };

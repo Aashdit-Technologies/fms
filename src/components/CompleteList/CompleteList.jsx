@@ -7,7 +7,97 @@ import api from "../../Api/Api";
 import MainFile from "../FileSection/MainFile.jsx";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import {
+  Modal,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  TableHead,
+} from "@mui/material";
 import { encryptPayload } from "../../utils/encrypt.js";
+
+
+const customStyles = {
+  table: {
+    style: {
+      border: "1px solid #ddd",
+      borderRadius: "10px",
+      overflow: "hidden",
+      boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+      backgroundColor: "#ffffff",
+      marginBottom: "1rem",
+    },
+  },
+  headRow: {
+    style: {
+      backgroundColor: "#005f73",
+      color: "#ffffff",
+      // fontSize: "14px",
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: "0.5px",
+      minHeight: "52px",
+      borderBottom: "2px solid #003d4c",
+    },
+  },
+  headCells: {
+    style: {
+      padding: "16px",
+      textAlign: "center",
+      fontWeight: "bold",
+      borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+    },
+  },
+  rows: {
+    style: {
+      fontSize: "14px",
+      fontWeight: "400",
+      color: "#333",
+      backgroundColor: "#ffffff",
+      minHeight: "50px",
+      transition: "background-color 0.2s ease-in-out",
+      "&:not(:last-of-type)": {
+        borderBottom: "1px solid #ddd",
+      },
+      "&:hover": {
+        backgroundColor: "#e6f2f5",
+        cursor: "pointer",
+      },
+    },
+    stripedStyle: {
+      backgroundColor: "#f9f9f9",
+    },
+  },
+  cells: {
+    style: {
+      padding: "12px 16px",
+      textAlign: "center",
+      borderRight: "1px solid #ddd",
+    },
+  },
+  pagination: {
+    style: {
+      borderTop: "1px solid #ddd",
+      padding: "10px",
+      backgroundColor: "#f9f9f9",
+    },
+  },
+  noData: {
+    style: {
+      padding: "24px",
+      textAlign: "center",
+      fontSize: "14px",
+      color: "#777",
+      backgroundColor: "#f9f9f9",
+    },
+  },
+};
+
 
 const CompleteList = () => {
   const [completeListData, setCompleteListData] = useState([]);
@@ -245,7 +335,8 @@ const CompleteList = () => {
         progressPending={loading}
         pagination
         highlightOnHover
-        paginationServer   
+        paginationServer 
+        customStyles={customStyles}  
         paginationPerPage={rowSize} 
         paginationDefaultPage={pageNo}
         onChangePage={(page) => setPageNo(page)}
@@ -256,7 +347,7 @@ const CompleteList = () => {
       />
 
 
-{fileDetailsModalVisible && fileDetails && (
+{/* {fileDetailsModalVisible && fileDetails && (
         <div
           className="modal d-block"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
@@ -345,7 +436,51 @@ const CompleteList = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
+
+<Modal open={fileDetailsModalVisible} onClose={() => setFileDetailsModalVisible(false)}>
+      <Dialog open={fileDetailsModalVisible} onClose={() => setFileDetailsModalVisible(false)} maxWidth="md" fullWidth>
+        <DialogTitle>File Details</DialogTitle>
+        <DialogContent>
+          {fileDetails && (
+            <Table>
+              <TableBody>
+                {Object.entries({
+                  "File No": fileDetails.fileNo,
+                  "File Name": fileDetails.fileName,
+                  "From Employee": fileDetails.fromEmployee,
+                  "Sent On": fileDetails.sentOn,
+                  Status: fileDetails.status,
+                  Priority: fileDetails.priority,
+                  "File Module": fileDetails.fileType,
+                  Room: fileDetails.roomNumber,
+                  Rack: fileDetails.rackNumber,
+                  Cell: fileDetails.cellNumber,
+                }).map(([key, value]) => (
+                  <TableRow key={key}>
+                    <TableCell component="th" scope="row">
+                      {key}
+                    </TableCell>
+                    <TableCell>{value}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="success" onClick={() => handleVolumeFile(fileDetails)}>
+            Create New Volume
+          </Button>
+          <Button variant="contained" color="success" onClick={() => handlePartFile(fileDetails)}>
+            Create Part File
+          </Button>
+          <Button variant="contained" color="secondary" onClick={() => setFileDetailsModalVisible(false)}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Modal>
     </div>
   );
 };

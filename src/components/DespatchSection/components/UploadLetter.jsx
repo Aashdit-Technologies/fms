@@ -50,18 +50,39 @@ const UploadLetter = ({ open, onClose,   dispatchData}) => {
       toast.error("No file selected.");
         return;
     }
-
+    if (file.type !== "application/pdf") {
+      toast.error("Only PDF files are allowed.");
+      return;
+    }
     setFormData((prevData) => ({
         ...prevData,
         letterDocuments: file,
     }));
 };
 
+const validateForm = () => {
+  const { letterNo, date, letterDocuments } = formData;
 
+
+  if (!letterNo || !date || !letterDocuments) {
+    toast.error("Please fill all required fields.");
+    return false;
+  }
+
+  
+  if (letterDocuments && letterDocuments.type !== "application/pdf") {
+    toast.error("Only PDF files are allowed.");
+    return false;
+  }
+
+  return true; 
+};
 
   const handleSaveUpload = async (e) => {
     e.preventDefault();
-    
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       if (!formData.letterDocuments || !(formData.letterDocuments instanceof File)) {

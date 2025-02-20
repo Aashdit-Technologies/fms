@@ -17,15 +17,57 @@ import {
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import {toast } from "react-toastify";
-const Enclosures = ({ open, onClose, enclosures = [] }) => {
+import api from "../../../Api/Api";
+import useAuthStore from "../../../store/Store";
+import { encryptPayload } from "../../../utils/encrypt";
+const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
 
-  const handleDownload = (enclosure) => {
-    if (enclosure.enclosurePath) {
-      window.open(enclosure.enclosurePath, '_blank'); 
-    } else {
-      console.error('No valid path for download');
+  console.log( "fileName props",  fileName)
+  console.log( "filePath props",filePath)
+  
+const token = useAuthStore.getState().token;
+  const handleDownloadview = async () => {
+    try {
+    const payload = {
+    documentName: fileName,
+    documentPath: filePath,
+    };
+    
+    const encryptedPayload = encryptPayload(payload);
+    
+    const response = await api.post(
+    'download/download-document',
+    { dataObject: encryptedPayload },
+    {
+    headers: {
+    Authorization: `Bearer ${token}`,
+    },
+    responseType: 'blob', 
     }
-  };
+    );
+    
+    if (response.status === 200) {
+    console.log('Full PDF Response:', response.data);
+    
+    // Create a download link and trigger download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${fileName}`); 
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    
+    }
+    } catch (error) {
+    console.error("Error downloading PDF:", error);
+    alert("Failed to download PDF. Please try again.");
+    }
+    };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -61,7 +103,7 @@ const Enclosures = ({ open, onClose, enclosures = [] }) => {
                     <TableCell>{enclosure.enclosureName}</TableCell>
                     <TableCell>
                       <Tooltip title="View Enclosure">
-                       <IconButton size="small"  onClick={() => handleDownload(enclosure)}
+                       <IconButton size="small"  onClick={() =>handleDownloadview(enclosure)}
                           sx={{ 
                             color: '#207785',
                             bgcolor: 'rgba(32, 119, 133, 0.1)',

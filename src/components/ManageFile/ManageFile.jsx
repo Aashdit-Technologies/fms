@@ -16,6 +16,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  DialogTitle,
 } from "@mui/material";
 import {
   Accordion,
@@ -31,11 +35,9 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
 
 const ManageFile = () => {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isTableOpen, setIsTableOpen] = useState(true);
-  const [selectedRack, setSelectedRack] = useState("");
-  const [selectedRoom, setSelectedRoom] = useState("");
-  const [selectedCell, setSelectedCell] = useState("");
+  const [selectedRack, setSelectedRack] = useState(null);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedCell, setSelectedCell] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedActivity, setSelectedActivity] = useState("");
   const [selectedCustodian, setSelectedCustodian] = useState("");
@@ -45,8 +47,11 @@ const ManageFile = () => {
   const [formTitle, setFormTitle] = useState("");
   const [formKeyword, setFormKeyword] = useState("");
   const [formFileName, setFormFileName] = useState("");
-  console.log("formFileName:", formFileName);
-  
+  const [showModal, setShowModal] = useState(false);
+
+  const [modalMessage, setModalMessage] = useState('');
+  // console.log("formFileName:", formFileName);
+
   const [formSubject, setFormSubject] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -54,11 +59,13 @@ const ManageFile = () => {
 
   // const [activeKey, setActiveKey] = useState("1");
 
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [expandedTab, setExpandedTab] = useState(true);
 
   const [roomData, setRoomData] = useState([]);
   const [rackData, setRackData] = useState([]);
+
+  
 
   const {
     activities,
@@ -127,11 +134,15 @@ const ManageFile = () => {
     setSubmitError("");
 
     // Validate form fields
-    if (!formTitle || !selectedRack || !selectedRoom) {
-      alert("Please fill out all required fields.");
-      setIsSubmitting(false);
-      return;
-    }
+    if (!selectedOffice) return toast.error("Please select an office.");
+    if (!selectedDepartment) return toast.error("Please select a department.");
+    if (!selectedFileRTL) return toast.error("Please select a file related to.");
+    if (!formTitle.trim()) return toast.error("Please enter a title.");
+    if (!formKeyword.trim()) return toast.error("Please enter a KeyWord.");
+    if (!formSubject.trim()) return toast.error("Please enter a subject.");
+    if (!formFileName.trim()) return toast.error("Please enter a file name.");
+    if (!selectedCustodian) return toast.error("Please select a custodian.");
+    if (!selectedFileModule) return toast.error("Please select a file module.");
 
     const payload = {
       rackId: selectedRack,
@@ -165,7 +176,9 @@ const ManageFile = () => {
       );
 
       if (response.data.outcome == true) {
+        setModalMessage(response.data.message);
         toast.success(response.data.message);
+        resetForm();
       } else {
         toast.error(response.data.message);
       }
@@ -175,6 +188,22 @@ const ManageFile = () => {
       setIsSubmitting(false);
     }
   };
+
+  const resetForm = () => {
+    setSelectedOffice(null);
+    setSelectedDepartment(null);
+    setSelectedFileRTL(null);
+    setFormTitle("");
+    setFormSubject("");
+    setFormFileName("");
+    setFormKeyword("");
+    setSelectedCustodian(null);
+    setSelectedFileModule(null);
+    setSelectedRack(null);
+    setSelectedRoom(null);
+    setSelectedCell(null);
+    setSelectedActivity(null);
+  };
   // const handleSelectChange = (setter, event) => {
   //   setter(event.target.value); // Update the state with the selected value
   // };
@@ -182,21 +211,6 @@ const ManageFile = () => {
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
   };
-  // useEffect(() => {
-  //   const selectedActivityObj = activities.find(
-  //     (activity) => String(activity.activityId) === selectedActivity
-  //   );
-
-  //   console.log("Selected Activity Object:", selectedActivityObj);
-
-  //   if (formTitle && formSubject && selectedActivityObj) {
-  //     setFormFileName(
-  //       `${formTitle}/${formSubject}/${selectedActivityObj.activityName}`
-  //     );
-  //   } else {
-  //     setFormFileName("");
-  //   }
-  // }, [formTitle, formSubject, selectedActivity, activities]);
 
   const handleExpandClick = () => {
     setExpanded(!expanded);
@@ -205,8 +219,7 @@ const ManageFile = () => {
   const handleExpandClickTab = () => {
     setExpandedTab(!expandedTab);
   };
-    const handleSelectChange = (event) => {
-      debugger;
+  const handleSelectChange = (event) => {
     const selectedActivity = event.target.value;
     setSelectedActivity(selectedActivity);
     const selectedActivityObj = activities.find(
@@ -278,7 +291,12 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Select Office"
+                        label={
+                          <span>
+                            Select Office{" "}
+                            <span style={{ color: "red" }}>*</span>
+                          </span>
+                        }
                         variant="outlined"
                         fullWidth
                       />
@@ -306,7 +324,12 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Select Department"
+                        label={
+                          <span>
+                            Select Department{" "}
+                            <span style={{ color: "red" }}>*</span>
+                          </span>
+                        }
                         variant="outlined"
                         fullWidth
                       />
@@ -332,7 +355,12 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Select File Related To"
+                        label={
+                          <span>
+                            Select File Related To{" "}
+                            <span style={{ color: "red" }}>*</span>
+                          </span>
+                        }
                         variant="outlined"
                         fullWidth
                       />
@@ -344,7 +372,11 @@ const ManageFile = () => {
                 <div className="form-group col-md-3">
                   <TextField
                     id="titleInput"
-                    label="Title"
+                    label={
+                      <span>
+                        Title <span style={{ color: "red" }}>*</span>
+                      </span>
+                    }
                     variant="outlined"
                     fullWidth
                     value={formTitle}
@@ -357,7 +389,11 @@ const ManageFile = () => {
                   {/* <label htmlFor="subjectInput">Subject</label> */}
                   <TextField
                     id="subjectInput"
-                    label="Subject"
+                    label={
+                      <span>
+                        Subject <span style={{ color: "red" }}>*</span>
+                      </span>
+                    }
                     variant="outlined"
                     fullWidth
                     value={formSubject}
@@ -367,39 +403,31 @@ const ManageFile = () => {
 
                 {/* Activity */}
                 <div className="form-group col-md-3 mt-3">
-                  {/* <select
-  id="activitySelect"
-  className="form-control form-select"
-  // value={selectedActivity}
-  // onChange={(e) => handleSelectChange(setSelectedActivity, e)}
->
-  <option value="" disabled>
-    Select Activity
-  </option>
-  {activities.map((activity) => (
-    <option key={activity.activityId} value={activity.activityId}>
-      {activity.activityName}
-    </option>
-  ))}
-</select> */}
                   <TextField
-              id="activitySelect"
-              select
-              label="Select Activity"
-              value={selectedActivity || ""} 
-              onChange={handleSelectChange}
-              variant="outlined"
-              fullWidth
-            >
-              <MenuItem value="" disabled>
-                Select Activity
-              </MenuItem>
-              {activities.map((activity) => (
-                <MenuItem key={activity.activityId} value={activity.activityId}>
-                  {activity.activityName}
-                </MenuItem>
-              ))}
-                </TextField>
+                    id="activitySelect"
+                    select
+                    label={
+                      <span>
+                        Select Activity <span style={{ color: "red" }}>*</span>
+                      </span>
+                    }
+                    value={selectedActivity || ""}
+                    onChange={handleSelectChange}
+                    variant="outlined"
+                    fullWidth
+                  >
+                    <MenuItem value="" disabled>
+                      Select Activity
+                    </MenuItem>
+                    {activities.map((activity) => (
+                      <MenuItem
+                        key={activity.activityId}
+                        value={activity.activityId}
+                      >
+                        {activity.activityName}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 </div>
 
                 {/* Keyword */}
@@ -408,7 +436,11 @@ const ManageFile = () => {
                   <TextField
                     id="keywordInput"
                     variant="outlined"
-                    label="Keyword"
+                    label={
+                      <span>
+                        Keyword <span style={{ color: "red" }}>*</span>
+                      </span>
+                    }
                     fullWidth
                     value={formKeyword}
                     onChange={(e) => setFormKeyword(e.target.value)}
@@ -418,14 +450,19 @@ const ManageFile = () => {
                 {/* File Name */}
                 <div className="form-group col-md-3 mt-3">
                   {/* <label htmlFor="fileNameInput">File Name</label> */}
-                  
+
                   <TextField
                     id="fileNameInput"
                     variant="outlined"
-                    label="File Name"
+                    label={
+                      <span>
+                        File Name <span style={{ color: "red" }}>*</span>
+                      </span>
+                    }
                     fullWidth
+                    aria-readonly
                     value={formFileName}
-                    onChange={(e) => setFormFileName(e.target.value)}
+                    // onChange={(e) => setFormFileName(e.target.value)}
                   />
                 </div>
 
@@ -455,7 +492,11 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Select Custodian"
+                        label={
+                          <span>
+                            Select Custodian <span style={{ color: "red" }}>*</span>
+                          </span>
+                        }
                         variant="outlined"
                         fullWidth
                       />
@@ -479,7 +520,11 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Select Room"
+                        label={
+                          <span>
+                            Select Room
+                          </span>
+                        }
                         variant="outlined"
                         fullWidth
                       />
@@ -503,7 +548,11 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Select Rack"
+                        label={
+                          <span>
+                            Select Rack
+                          </span>
+                        }
                         variant="outlined"
                         fullWidth
                       />
@@ -524,7 +573,11 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Select Cell"
+                        label={
+                          <span>
+                            Select Cell
+                          </span>
+                        }
                         variant="outlined"
                         fullWidth
                       />
@@ -533,7 +586,6 @@ const ManageFile = () => {
                 </div>
 
                 <div className="form-group col-md-3 mt-3">
-                  {/* <label htmlFor="fileModuleSelect">Select File Module</label> */}
                   <Autocomplete
                     id="fileModuleSelect"
                     options={fileModules}
@@ -549,7 +601,12 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Select File Module"
+                        label={
+                          <span>
+                            Select File Module
+                            <span style={{ color: "red" }}>*</span>
+                          </span>
+                        }
                         variant="outlined"
                         fullWidth
                       />
@@ -563,12 +620,10 @@ const ManageFile = () => {
                     variant="contained"
                     color="primary"
                     sx={{ mt: 3 }}
-                    disabled={isSubmitting}
                     // disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Saving..." : "Submit"}
+                    Submit
                   </Button>
-                  {/* {submitError && <p className="text-danger mt-2">{submitError}</p>} */}
                 </div>
               </form>
             </Box>
@@ -616,16 +671,6 @@ const ManageFile = () => {
             }}
           >
             <Box>
-              {/* Table Accordion */}
-              {/* <Accordion.Item eventKey="1" className="mt-3">
-          <Accordion.Header onClick={() => setIsTableOpen((prev) => !prev)}>
-            <span className="accordion-title">View File</span>
-            <span className="accordion-icon">
-              {isTableOpen ? <FaMinus /> : <FaPlus />}
-            </span>
-          </Accordion.Header>
-          <Accordion.Body> */}
-
               <ul className="nav nav-tabs" role="tablist">
                 <li className="nav-item">
                   <button
@@ -678,13 +723,13 @@ const ManageFile = () => {
                   </div>
                 )}
               </div>
-              {/* </Accordion.Body>
-        </Accordion.Item> */}
-              {/* </Accordion> */}
             </Box>
           </AccordionDetails>
         </Accordion>
       </Box>
+
+    
+
     </div>
   );
 };

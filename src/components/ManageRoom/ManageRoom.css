@@ -4,5 +4,8 @@
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     } */
-    
+    .custbg button.accordion-button, .custbg button.accordion-button .collapsed{
+        color: #002830;
+        background-color: #e9ecef !important;
+    }
     

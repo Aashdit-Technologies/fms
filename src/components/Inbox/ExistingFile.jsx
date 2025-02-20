@@ -459,7 +459,7 @@ const ExistingFile = () => {
         useLetterStore.getState().setSuccessMessage(response.data.message);
         toast.success(response.data.message); 
         setSelectedRows([]);
-        Navigate("/system/setup/menu/init");
+        Navigate("/letter");
       } else {
         toast.error("Failed to send data.");
       }

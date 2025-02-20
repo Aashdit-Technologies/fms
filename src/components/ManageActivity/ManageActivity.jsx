@@ -11,6 +11,83 @@ import { toast } from "react-toastify";
 
 // import { Button } from "@mui/material";
 
+const customStyles = {
+  table: {
+    style: {
+      border: "1px solid #ddd",
+      borderRadius: "10px",
+      overflow: "hidden",
+      boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+      backgroundColor: "#ffffff",
+      marginBottom: "1rem",
+    },
+  },
+  headRow: {
+    style: {
+      backgroundColor: "#005f73",
+      color: "#ffffff",
+      // fontSize: "14px",
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: "0.5px",
+      minHeight: "52px",
+      borderBottom: "2px solid #003d4c",
+    },
+  },
+  headCells: {
+    style: {
+      padding: "16px",
+      textAlign: "center",
+      fontWeight: "bold",
+      borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+    },
+  },
+  rows: {
+    style: {
+      fontSize: "14px",
+      fontWeight: "400",
+      color: "#333",
+      backgroundColor: "#ffffff",
+      minHeight: "50px",
+      transition: "background-color 0.2s ease-in-out",
+      "&:not(:last-of-type)": {
+        borderBottom: "1px solid #ddd",
+      },
+      "&:hover": {
+        backgroundColor: "#e6f2f5",
+        cursor: "pointer",
+      },
+    },
+    stripedStyle: {
+      backgroundColor: "#f9f9f9",
+    },
+  },
+  cells: {
+    style: {
+      padding: "12px 16px",
+      textAlign: "center",
+      borderRight: "1px solid #ddd",
+    },
+  },
+  pagination: {
+    style: {
+      borderTop: "1px solid #ddd",
+      padding: "10px",
+      backgroundColor: "#f9f9f9",
+    },
+  },
+  noData: {
+    style: {
+      padding: "24px",
+      textAlign: "center",
+      fontSize: "14px",
+      color: "#777",
+      backgroundColor: "#f9f9f9",
+    },
+  },
+};
+
+
 const ManageActivity = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isTableOpen, setIsTableOpen] = useState(true);
@@ -200,6 +277,7 @@ const ManageActivity = () => {
             variant="contained"
             color={row.isActive ? "error" : "success"}
             size="small"
+            sx={{ minWidth: "auto" }}
             title={row.isActive ? "Deactivate" : "Activate"}
             startIcon={row.isActive ? <FaLock /> : <FaLockOpen />}
             onClick={() => handleStatusToggle(row)}
@@ -211,6 +289,7 @@ const ManageActivity = () => {
             color="warning"
             size="small"
             title="Edit"
+            sx={{ minWidth: "auto" }}
             startIcon={<FaEdit />}
             onClick={() => handleEdit(row)}
             style={{ marginLeft: "8px" }}
@@ -230,7 +309,8 @@ const ManageActivity = () => {
       <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
         {/* Add/Edit Activity Accordion */}
         <Accordion.Item eventKey="0">
-          <Accordion.Header onClick={() => setIsFormOpen((prev) => !prev)}>
+          <Accordion.Header onClick={() => setIsFormOpen((prev) => !prev)} className="custbg">
+          <div className="mstaccodion d-flex" style={{justifyContent:"space-between", width:"100%"}}>
             <span className="accordion-title">
               {editingActivityId
                 ? "Edit Activity Details"
@@ -239,6 +319,7 @@ const ManageActivity = () => {
             <span className="accordion-icon">
               {isFormOpen ? <FaMinus /> : <FaPlus />}
             </span>
+            </div>
           </Accordion.Header>
           <Accordion.Body>
             <form onSubmit={handleSubmit} className="row">
@@ -265,7 +346,7 @@ const ManageActivity = () => {
                   onChange={handleInputChange}
                 />
               </div>
-              <div className="form-group col-md-3">
+              <div className="form-group col-md-12 mt-3">
                 <TextField
                   fullWidth
                   label="Activity Remarks"
@@ -306,11 +387,13 @@ const ManageActivity = () => {
 
         {/* View Activity Table Accordion */}
         <Accordion.Item eventKey="1" className="mt-3">
-          <Accordion.Header onClick={() => setIsTableOpen((prev) => !prev)}>
+          <Accordion.Header onClick={() => setIsTableOpen((prev) => !prev)} className="custbg">
+          <div className="mstaccodion d-flex" style={{justifyContent:"space-between", width:"100%"}}>
             <span className="accordion-title">View Activities</span>
             <span className="accordion-icon">
               {isTableOpen ? <FaMinus /> : <FaPlus />}
             </span>
+            </div>
           </Accordion.Header>
           <Accordion.Body>
             <div className="row">
@@ -325,6 +408,7 @@ const ManageActivity = () => {
                       highlightOnHover
                       responsive
                       noDataComponent="No data available"
+                      customStyles={customStyles}
                       // paginationServer
                       // paginationTotalRows={totalRows} // Set total rows for server-side pagination
                       // paginationPerPage={rowSize}

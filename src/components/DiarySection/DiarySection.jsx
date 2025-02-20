@@ -694,6 +694,7 @@ const DiarySection = () => {
       );
 
       toast.success(response.data.message);
+    
       setSenderDetails({
         groupName: "",
         name: "",
@@ -712,7 +713,7 @@ const DiarySection = () => {
         fax: "",
         district: "",
       });
-      
+      await fetchSenderData();
       await fetchRecords();
       setOpenSection("senderList");
       
@@ -1003,7 +1004,7 @@ const handleremarksChange = (e) => {
         encTypeId: row.enclosureType || null,
         encName: row.enclosureName || null,
         enclosureId: row.enclosureId || null,
-       
+        file: row.file instanceof File ? row.file : null,
       }));
 
       const payload = {
@@ -1032,8 +1033,12 @@ const handleremarksChange = (e) => {
       enclosureRows.forEach((row, index) => {
         if (row.file) {
           formDataToSend.append("enclosureDocuments", row.file);
+        } else {
+          // Append an empty Blob to maintain the array structure
+          formDataToSend.append("enclosureDocuments", new Blob([], { type: "application/octet-stream" }));
         }
       });
+      
 
       const response = await api.post(
         "diary-section/upload-letter",
@@ -1047,7 +1052,7 @@ const handleremarksChange = (e) => {
       );
 
       if (response.status === 200) {
-        toast.success("Form have been saved successfully", { autoClose: 3000 });
+        toast.success(response.data.message, { autoClose: 3000 });
         await Promise.all([NewLetter(), sentLetter()]);
          
         setOpenSection("LettersList");
@@ -1134,10 +1139,17 @@ const handleremarksChange = (e) => {
 
   if (showTable) {
     for (const row of enclosureRows) {
+      if(row.enclosureId != null){
+        if (!row.enclosureType || !row.enclosureName) {
+          toast.warn("Please fill all required fields before saving.");
+          return;
+        }
+      }else{
       if (!row.enclosureType || !row.enclosureName || !row.file) {
         toast.warn("Please fill all required fields before saving.");
         return;
       }
+    }
     }
   }
 
@@ -1513,7 +1525,8 @@ const handleEditButtonClick = async (row) => {
         const formattedEnclosureList = editedList.enclosurelst.map(enc => ({
           enclosureType: enc.enclosuretypeid?.toString() || "",
           enclosureName: enc.enclosureName || "",
-          file: enc.fileName || null, 
+          // file: enc.fileName || null, 
+          file: enc.file ? enc.file : null,
           enclosureId: enc.enclosureId?.toString() || null,
           fileName:enc.fileName || null,
           filePath:enc.filePath || null
@@ -1748,6 +1761,25 @@ const handleEditButtonClick = async (row) => {
   };
   
 
+  // const handleFileUploadChange = (index, event) => {
+  //   const file = event.target.files[0];
+  
+  //   if (!file) {
+  //     toast.warn("Please select a file before proceeding.");
+  //     return;
+  //   }
+  
+    
+  //   if (file.type !== "application/pdf") {
+  //     toast.error("Sorry! only PDF format is  Allowed.");
+  //     return;
+  //   }
+  
+   
+  //   const updatedRows = [...enclosureRows];
+  //   updatedRows[index] = { ...updatedRows[index], file, fileName: file.name };
+  //   setEnclosureRows(updatedRows);
+  // };
   const handleFileUploadChange = (index, event) => {
     const file = event.target.files[0];
   
@@ -1756,17 +1788,25 @@ const handleEditButtonClick = async (row) => {
       return;
     }
   
-    
+    // Validate file type
     if (file.type !== "application/pdf") {
-      toast.error("Sorry! only PDF format is  Allowed.");
+      toast.error("Sorry! Only PDF format is allowed.");
       return;
     }
   
-   
-    const updatedRows = [...enclosureRows];
-    updatedRows[index] = { ...updatedRows[index], file, fileName: file.name };
-    setEnclosureRows(updatedRows);
+    setEnclosureRows(prevRows => {
+      const updatedRows = prevRows.map((row, i) =>
+        i === index
+          ? { ...row, file, fileName: file.name, filePath: null }
+          : row
+      );
+      console.log("Updated Enclosure Rows:", updatedRows); // Log the updated state
+      return updatedRows;
+    });
+    
   };
+  
+
 
   const handleCheckboxChange = (e) => {
     setShowTable(e.target.checked);
@@ -1777,10 +1817,17 @@ const handleEditButtonClick = async (row) => {
     
     if (enclosureRows.length > 0) {
       const lastRow = enclosureRows[enclosureRows.length - 1];
+      if(lastRow.enclosureId == null){
       if (!lastRow.enclosureType || !lastRow.enclosureName || !lastRow.file) {
         toast.warn("Please complete the current row before adding a new one.");
         return;
       }
+    }else{
+      if (!lastRow.enclosureType || !lastRow.enclosureName) {
+        toast.warn("Please complete the current row before adding a new one.");
+        return;
+      }
+    }
     }
   
     setEnclosureRows([
@@ -2035,7 +2082,8 @@ const handleFileUploadChangeencloser = (index, event) => {
                     </label>
                     <Autocomplete
                       disablePortal
-                      options={getFilteredOptions()}
+                      // options={getFilteredOptions()}
+                      options={filteredSenders}
                       value={searchTerm}
                       onChange={handleSenderChange}
                       getOptionLabel={(option) => {

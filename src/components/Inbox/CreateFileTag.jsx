@@ -112,6 +112,7 @@ const ManageFile = () => {
     if (!selectedDepartment) return toast.error("Please select a department.");
     if (!selectedFileRTL) return toast.error("Please select a file related to.");
     if (!formTitle.trim()) return toast.error("Please enter a title.");
+    if (!formKeyword.trim()) return toast.error("Please enter a KeyWord.");
     if (!formSubject.trim()) return toast.error("Please enter a subject.");
     if (!formFileName.trim()) return toast.error("Please enter a file name.");
     if (!selectedCustodian) return toast.error("Please select a custodian.");
@@ -221,7 +222,14 @@ const ManageFile = () => {
           value={office.find((o) => o.officeOrgId === selectedOffice) || null}
           onChange={(event, newValue) => setSelectedOffice(newValue ? newValue.officeOrgId : "")}
           renderInput={(params) => (
-            <TextField {...params} label="Select Office" variant="outlined" fullWidth />
+            <TextField {...params}
+            label={
+              <span>
+                Select Office{" "}
+                <span style={{ color: "red" }}>*</span>
+              </span>
+            }
+             variant="outlined" fullWidth />
           )}
         />
       </div>
@@ -235,7 +243,14 @@ const ManageFile = () => {
           value={departments.find((d) => d.departmentId === selectedDepartment) || null}
           onChange={(event, newValue) => setSelectedDepartment(newValue ? newValue.departmentId : "")}
           renderInput={(params) => (
-            <TextField {...params} label="Select Department" variant="outlined" fullWidth />
+            <TextField {...params}
+            label={
+              <span>
+                Select Department{" "}
+                <span style={{ color: "red" }}>*</span>
+              </span>
+            }
+              variant="outlined" fullWidth />
           )}
         />
       </div>
@@ -249,7 +264,14 @@ const ManageFile = () => {
           value={fileRelatedToList.find((f) => f.fileRelatedId === selectedFileRTL) || null}
           onChange={(event, newValue) => setSelectedFileRTL(newValue ? newValue.fileRelatedId : "")}
           renderInput={(params) => (
-            <TextField {...params} label="Select File Related To" variant="outlined" fullWidth />
+            <TextField {...params}
+            label={
+              <span>
+                Select File Related To{" "}
+                <span style={{ color: "red" }}>*</span>
+              </span>
+            }
+              variant="outlined" fullWidth />
           )}
         />
       </div>
@@ -258,7 +280,11 @@ const ManageFile = () => {
       <div className="form-group col-md-3">
         <TextField
           id="titleInput"
-          label="Title"
+          label={
+            <span>
+              Title <span style={{ color: "red" }}>*</span>
+            </span>
+          }
           variant="outlined"
           fullWidth
           value={formTitle}
@@ -269,7 +295,11 @@ const ManageFile = () => {
       <div className="form-group col-md-3 mt-3">
         <TextField
           id="subjectInput"
-          label="Subject"
+          label={
+            <span>
+              Subject <span style={{ color: "red" }}>*</span>
+            </span>
+          }
           variant="outlined"
           fullWidth
           value={formSubject}
@@ -277,33 +307,17 @@ const ManageFile = () => {
         />
       </div>
 
-           {/* <div className="form-group col-md-3 mt-3">
-          <TextField
-              id="activitySelect"
-              select
-              label="Select Activity"
-              value={selectedActivity || ""} 
-              onChange={handleSelectChange}
-              variant="outlined"
-              fullWidth
-            >
-              <MenuItem value="" disabled>
-                Select Activity
-              </MenuItem>
-              {activities.map((activity) => (
-                <MenuItem key={activity.activityId} value={activity.activityId}>
-                  {activity.activityName}
-                </MenuItem>
-              ))}
-            </TextField>
+          
 
-              </div>  */}
-
-             <div className="form-group col-md-3">
+             <div className="form-group col-md-3 mt-3">
                <TextField
                             id="activitySelect"
                             select
-                            label="Select Activity"
+                            label={
+                              <span>
+                                Select Activity <span style={{ color: "red" }}>*</span>
+                              </span>
+                            }
                             value={selectedActivity || ""} 
                             onChange={handleSelectChange}
                             variant="outlined"
@@ -325,7 +339,11 @@ const ManageFile = () => {
              <TextField
                id="keywordInput"
                variant="outlined"
-               label="Keyword"
+               label={
+                <span>
+                  Keyword <span style={{ color: "red" }}>*</span>
+                </span>
+              }
                fullWidth
                value={formKeyword}
                onChange={(e) => setFormKeyword(e.target.value)}
@@ -338,7 +356,11 @@ const ManageFile = () => {
         <TextField
           id="fileNameInput"
           variant="outlined"
-          label="File Name"
+          label={
+            <span>
+              File Name <span style={{ color: "red" }}>*</span>
+            </span>
+          }
           fullWidth
           value={formFileName}
           onChange={(e) => setFormFileName(e.target.value)}
@@ -354,7 +376,13 @@ const ManageFile = () => {
           value={custodians.find((c) => c.employeeDeptMapId === selectedCustodian) || null}
           onChange={(event, newValue) => setSelectedCustodian(newValue ? newValue.employeeDeptMapId : "")}
           renderInput={(params) => (
-            <TextField {...params} label="Select Custodian" variant="outlined" fullWidth />
+            <TextField {...params}
+            label={
+              <span>
+                Select Custodian <span style={{ color: "red" }}>*</span>
+              </span>
+            }
+             variant="outlined" fullWidth />
           )}
         />
       </div>

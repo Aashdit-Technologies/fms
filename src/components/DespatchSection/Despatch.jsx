@@ -8,6 +8,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+ 
 } from '@mui/material';
 import DataTable from 'react-data-table-component';
 import { Visibility} from '@mui/icons-material';
@@ -135,6 +136,13 @@ const Despatch = () => {
    const [dispatchdata, setDispatchData] = useState([]);
   const [expanded, setExpanded] = useState(true); 
    const token = useAuthStore.getState().token;
+   const fileName = dispatchdata?.[0]?.fileName;
+   const filePath = dispatchdata?.[0]?.filePath;
+   
+   console.log("fileName:", fileName);
+   console.log("filePath:", filePath);
+   
+
   const handleTabChange = (tab) => {
   setActiveTab(tab === 'newLetter' ? 'NEW_LETTER' : 'SENT_LETTER');
     
@@ -143,12 +151,6 @@ const Despatch = () => {
     setExpanded(!expanded);
   };
  
-
-  const handleView = (row) => {
-    window.open(`/view-pdf?id=${row.id}`, '_blank');
-  };
-
-
   const handleUpload = (row) => {
     setSelectedRow(row);
     setIsUploadModalOpen(true);
@@ -166,6 +168,7 @@ const Despatch = () => {
 
 
   const fetchLetters = async (tabCode) => {
+    
     try {
       const payload = { tabCode };
   
@@ -192,7 +195,6 @@ const Despatch = () => {
       } else if (Array.isArray(responseData)) {
         setDispatchData(responseData);
       } else if (typeof responseData === "object") {
-        // Check if the object contains meaningful data
         const convertedArray = Object.values(responseData).filter(item => item !== null && item !== undefined);
         if (convertedArray.length > 0) {
           setDispatchData(convertedArray);
@@ -204,9 +206,11 @@ const Despatch = () => {
         console.warn("Unexpected response format:", responseData);
         setDispatchData([]);
       }
+     
     } catch (error) {
       console.error("Error fetching letters:", error);
       setDispatchData([]);
+      
     }
   };
   
@@ -259,7 +263,7 @@ const Despatch = () => {
       name: "View",
       cell: (row) => (
         <Box sx={{ display: "flex", gap: 1 }}>
-          <IconButton size="small" onClick={() => handleView(row)} 
+          {/* <IconButton size="small" onClick={() => handleDownloadview(row)} 
           sx={{ 
             color: '#207785',
             bgcolor: 'rgba(32, 119, 133, 0.1)',
@@ -272,7 +276,7 @@ const Despatch = () => {
             borderRadius: '8px',
           }}>
             <Visibility />
-          </IconButton>
+          </IconButton> */}
           
     <IconButton 
   size="small" 
@@ -343,7 +347,7 @@ const Despatch = () => {
       name: "View",
       cell: (row) => (
         <Box sx={{ display: "flex", gap: 1 }}>
-          <IconButton size="small" onClick={() => handleView(row)} 
+          <IconButton size="small" onClick={() => handleDownloadview(row)} 
           sx={{ 
             color: '#207785',
             bgcolor: 'rgba(32, 119, 133, 0.1)',
@@ -388,8 +392,47 @@ const Despatch = () => {
       <Typography>No data available</Typography>
     </Box>
   );
+  const  handleDownloadview = async (row) => {
+    try {
+     
+  
+      const payload = {
+        documentName: row.fileName,
+        documentPath: row.filePath,
+      };
+  
+      const encryptedPayload = encryptPayload(payload);
+      console.log("Checking payloads", encryptedPayload);
+  
+      const response = await api.post(
+        'download/view-document',
+        { dataObject: encryptedPayload },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      console.log(response);
+      if (response.data && response.data.data) {
+        const base64String = response.data.data.split(",")[1]; 
+        const byteCharacters = atob(base64String);
+        const byteNumbers = new Uint8Array([...byteCharacters].map(char => char.charCodeAt(0)));
+        const blob = new Blob([byteNumbers], { type: "application/pdf" });
+      
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+      } else {
+        toast.error("Failed to load PDF.");
+      }
+    } catch (error) {
+      console.error("Error fetching PDF:", error);
+      toast.error("Failed to fetch PDF. Please try again.");
+    }
+  };
 
+  
   return (
+<>
+
     <Accordion 
     expanded={expanded} 
     onChange={handleAccordionChange}
@@ -426,15 +469,7 @@ const Despatch = () => {
     </AccordionSummary>
       <AccordionDetails sx={{ backgroundColor: '#fafafa', p: 2, borderRadius: '0 0 10px 10px' }}>
       <Box sx={{ p: 3 }}>
-      {/* Tabs */}
-      {/* <Box sx={{ mb: 2 }}>
-        <Button  variant={activeTab === 'NEW_LETTER' ? 'contained' : 'outlined'} onClick={() => handleTabChange('newLetter')} sx={{ mr: 1, }}>
-          New Letter
-        </Button>
-        <Button variant={activeTab === 'SENT_LETTER' ? 'contained' : 'outlined'} onClick={() => handleTabChange('sentLetter')}>
-          Sent Letter
-        </Button>
-      </Box> */}
+     
       <Box sx={{ mb: 2 }}>
   <Button
     variant="contained"
@@ -510,13 +545,14 @@ const Despatch = () => {
   open={isEnclosuresOpen} 
   onClose={handleCloseEnclosures} 
   enclosures={selectedRow?.enclosures || []} 
-  
+  fileName={dispatchdata?.[0]?.fileName} 
+  filePath={dispatchdata?.[0]?.filePath}
 />
     </Box>
 
-      </AccordionDetails>
+  </AccordionDetails>
 </Accordion>
-
+</>
   );
 };
 

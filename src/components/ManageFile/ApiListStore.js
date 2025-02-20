@@ -82,7 +82,7 @@ const useApiListStore = create(
         fileModules: state.fileModules,
         fileRelatedToList: state.fileRelatedToList,
         racks: state.racks,
-        rooms: state.rooms,
+        // rooms: state.rooms,
         office: state.office,
       }),
     }
