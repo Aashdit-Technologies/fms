@@ -21,7 +21,6 @@ const MainFile = () => {
     };
   }, [location.state]);
 
-  // Initialize content from additionalDetails if available
   useEffect(() => {
     if (locationState.additionalDetails?.data?.note) {
       setSharedEditorContent(locationState.additionalDetails.data.note);

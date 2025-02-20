@@ -144,7 +144,7 @@ const Admin = () => {
               }
             />
             <Route
-              path="system/setup/menu/init"
+              path="letter"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <LetterList />
@@ -200,7 +200,7 @@ const Admin = () => {
               if (
                 menu.menuURL === "/hierarchy" ||
                 menu.menuURL === "/file" ||
-                menu.menuURL === "/system/setup/menu/init" ||
+                menu.menuURL === "/letter" ||
                 menu.menuURL === "/scheduling" ||
                 menu.menuURL === "/manage-room" ||
                 menu.menuURL === "/manage-rack" ||

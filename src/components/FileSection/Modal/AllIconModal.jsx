@@ -179,6 +179,7 @@ export const UploadModal = ({
   open,
   onClose,
   enclosuresData,
+  
   corrId,
   allDetails,
   historyData,
@@ -197,7 +198,6 @@ export const UploadModal = ({
   ]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const refreshEnclosureData = useMutation({
     mutationFn: async () => {

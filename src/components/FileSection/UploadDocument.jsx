@@ -290,71 +290,72 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       editorContent,
     });
   };
+  
+    const mutation = useMutation({
+      mutationFn: async (data) => {
+        
+        try {
+          const encryptedDataObject = encryptPayload({
+            fileId: fileDetails.data.fileId,
+            note: editorContent || null,
+            filerecptId: fileDetails.data.fileReceiptId,
+            prevNoteId: additionalDetails?.data?.prevNoteId,
+            priority: data.filePriority,
+            isConfidential: data.isConfidential,
+          });
 
-  const mutation = useMutation({
-    mutationFn: async (data) => {
-      try {
-        const encryptedDataObject = encryptPayload({
-          fileId: fileDetails.data.fileId,
-          note: editorContent || null,
-          filerecptId: fileDetails.data.fileReceiptId,
-          prevNoteId: additionalDetails?.data?.prevNoteId,
-          priority: data.filePriority,
-          isConfidential: data.isConfidential,
-        });
+          const encryptedDocumentData = encryptPayload({
+            documents: data.documents.map((doc) => ({
+              ...doc,
+              date: dayjs(doc.date).format("DD/MM/YYYY"),
+            })),
+          });
 
-        const encryptedDocumentData = encryptPayload({
-          documents: data.documents.map((doc) => ({
-            ...doc,
-            date: dayjs(doc.date).format("DD/MM/YYYY"),
-          })),
-        });
+          const formData = new FormData();
+          formData.append("dataObject", encryptedDataObject);
+          formData.append("documentData", encryptedDocumentData);
 
-        const formData = new FormData();
-        formData.append("dataObject", encryptedDataObject);
-        formData.append("documentData", encryptedDocumentData);
+          data.uploadedDocuments.forEach((file) => {
+            formData.append("uploadedDocuments", file);
+          });
 
-        data.uploadedDocuments.forEach((file) => {
-          formData.append("uploadedDocuments", file);
-        });
-
-        const response = await api.post(
-          "/file/save-notesheet-and-documents",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-
-        if (response.data && response.data.outcome === true) {
-          setRows([
+          const response = await api.post(
+            "/file/save-notesheet-and-documents",
+            formData,
             {
-              subject: "",
-              type: "SELECT",
-              letterNumber: "",
-              date: null,
-              document: null,
-            },
-          ]);
-          setEditorContent("");
-          setFilePriority("Normal");
-          setIsConfidential(false);
-          toast.success("Document uploaded successfully!");
-        } else {
-          throw new Error(response.data?.message || "Upload failed");
-        }
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
 
-        return response.data;
-      } catch (error) {
-        console.error("Upload error:", error);
-        toast.error(error.message || "Upload failed. Please try again.");
-        throw error;
-      }
-    },
-  });
+          if (response.data && response.data.outcome === true) {
+            setRows([
+              {
+                subject: "",
+                type: "SELECT",
+                letterNumber: "",
+                date: null,
+                document: null,
+              },
+            ]);
+            setEditorContent("");
+            setFilePriority("Normal");
+            setIsConfidential(false);
+            toast.success(response.data.message);
+          } else {
+            throw new Error(response.data?.message || "Upload failed");
+          }
+          
+          return response.data;
+        } catch (error) {
+          console.error("Upload error:", error);
+          toast.error(error.message || "Upload failed. Please try again.");
+          throw error;
+        }
+      },
+    });
 
   const { mutate, isLoading, isError, error } = mutation;
 

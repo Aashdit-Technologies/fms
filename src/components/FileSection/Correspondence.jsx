@@ -118,6 +118,7 @@ const fetchOffices = async () => {
 const Correspondence = ({
   fileDetails,
   correspondence,
+  setRefresh,
   onView,
   onHistory,
   open,
@@ -175,7 +176,7 @@ const Correspondence = ({
     });
   }, []);
 
-  // Update officeNames when offices data changes
+  
   useEffect(() => {
     if (offices?.data) {
       console.log('Updating office names from query data:', offices);
@@ -628,6 +629,7 @@ const Correspondence = ({
         historyData={historyData}
         uploadData={uploadData}
         corrId={selectedCorrId}
+        
       />
       <HistoryModal
         open={historyModalOpen}
@@ -643,6 +645,7 @@ const Correspondence = ({
         correspondence={correspondence}
         allDetails={allDetails}
         editMalady={editMalady}
+        setRefresh={setRefresh}
       />
     </>
   );

@@ -21,7 +21,7 @@ const Header = ({ collapsed }) => {
     await queryClient.prefetchQuery({
       queryKey: ['roles'],
       queryFn: fetchRoles,
-      staleTime: 5 * 60 * 1000
+      // staleTime: 5 * 60 * 1000
     });
   }, [token, queryClient]);
 
@@ -46,12 +46,12 @@ const Header = ({ collapsed }) => {
   const { data: rolesData, isLoading: isLoadingRoles } = useQuery({
     queryKey: ['roles'],
     queryFn: fetchRoles,
-    enabled: !!token,
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    retry: 1,
+    // enabled: !!token,
+    // // staleTime: 5 * 60 * 1000,
+    // // cacheTime: 30 * 60 * 1000,
+    // refetchOnWindowFocus: true,
+    // refetchOnMount: false,
+    // retry: 1,
     onSuccess: (data) => {
       data?.forEach(role => {
         queryClient.setQueryData(
@@ -140,8 +140,12 @@ const Header = ({ collapsed }) => {
   
   const handleLogout = () => {
     try {
+      
       clearAuth();
       sessionStorage.removeItem('token');
+      queryClient.invalidateQueries(['roles']);
+      queryClient.invalidateQueries(['menu']);
+      queryClient.clear();
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);

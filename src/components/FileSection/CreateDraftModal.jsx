@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   Modal,
   Box,
@@ -415,7 +415,6 @@ const CreateDraftModal = ({
       },
     };
 
-    // Debug log
     console.log('Save/Approve Payload:', {
       ...payload,
       action,
