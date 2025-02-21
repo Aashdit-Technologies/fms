@@ -5,7 +5,7 @@ import { Select, MenuItem } from "@mui/material";
 import SunEditorComponent from "./SunEditorComponent";
 import UploadDocument from "./UploadDocument";
 
-const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange }) => {
+const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, refetchData }) => {
   const [selectedItem, setSelectedItem] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [editorContent, setEditorContent] = useState(content || '');
@@ -118,6 +118,7 @@ const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange }) 
         fileDetails={fileDetails}
         additionalDetails={additionalDetails}
         initialContent={editorContent}
+        refetchData={refetchData}
       />
     </>
   );

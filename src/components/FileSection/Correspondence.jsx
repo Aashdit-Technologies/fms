@@ -118,7 +118,7 @@ const fetchOffices = async () => {
 const Correspondence = ({
   fileDetails,
   correspondence,
-  setRefresh,
+  refetchData,
   onView,
   onHistory,
   open,
@@ -645,7 +645,7 @@ const Correspondence = ({
         correspondence={correspondence}
         allDetails={allDetails}
         editMalady={editMalady}
-        setRefresh={setRefresh}
+        refetchData={refetchData}
       />
     </>
   );

@@ -1800,19 +1800,16 @@ const handleEditButtonClick = async (row) => {
           ? { ...row, file, fileName: file.name, filePath: null }
           : row
       );
-      console.log("Updated Enclosure Rows:", updatedRows); // Log the updated state
+      console.log("Updated Enclosure Rows:", updatedRows); 
       return updatedRows;
     });
     
   };
   
-
-
   const handleCheckboxChange = (e) => {
     setShowTable(e.target.checked);
   };
 
- 
   const handleAddEnclosureRow = () => {
     
     if (enclosureRows.length > 0) {
@@ -1932,12 +1929,12 @@ const handleFileUploadChangeencloser = (index, event) => {
     setShowModalShare(true);
   };
 
-
-  const handleDownload = async () => {
+   // table encloser download button
+   const handleDownload = async (row) => {
     try {
     const payload = {
-    documentName: fileName,
-    documentPath: filePath,
+    documentName: row.fileName,
+    documentPath:row.filePath,
     };
     
     const encryptedPayload = encryptPayload(payload);
@@ -1972,10 +1969,10 @@ const handleFileUploadChangeencloser = (index, event) => {
     }
     } catch (error) {
     console.error("Error downloading PDF:", error);
-    alert("Failed to download PDF. Please try again.");
+    toast.error("Failed to download PDF. Please try again.");
     }
     };
-    
+    // letter right side download button
     const handleDownloadletter = async () => {
       try {
       const payload = {
@@ -2015,11 +2012,53 @@ const handleFileUploadChangeencloser = (index, event) => {
       }
       } catch (error) {
       console.error("Error downloading PDF:", error);
-      alert("Failed to download PDF. Please try again.");
+      toast.error("Failed to download PDF. Please try again.");
       }
       };
-
-
+ // letter bottom side enclosure download button
+      const handleDownloadEnclosureletter = async (fileName,filePath) => {
+        try {
+        const payload = {
+        documentName: fileName,
+        documentPath:filePath,
+        };
+        
+        const encryptedPayload = encryptPayload(payload);
+        
+        const response = await api.post(
+        'download/download-document',
+        { dataObject: encryptedPayload },
+        {
+        headers: {
+        Authorization: `Bearer ${token}`,
+        },
+        responseType: 'blob', 
+        }
+        );
+        
+        if (response.status === 200) {
+        console.log('Full PDF Response:', response.data);
+        
+        // Create a download link and trigger download
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `${fileName}`); 
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        
+        }
+        } catch (error) {
+        console.error("Error downloading PDF:", error);
+        toast.error("Failed to download PDF. Please try again.");
+        }
+        };
+   // inward letter upload letter file view
       const handleDocumentView = async () => {
         try {
           if (!formData.fileName || !formData.filePath) {
@@ -2052,14 +2091,55 @@ const handleFileUploadChangeencloser = (index, event) => {
             const url = URL.createObjectURL(blob);
             window.open(url, "_blank");
           } else {
-            alert("Failed to load PDF.");
+            toast.error("Failed to load PDF.");
           }
         } catch (error) {
           console.error("Error fetching PDF:", error);
-          alert("Failed to fetch PDF. Please try again.");
+          toast.error("Failed to fetch PDF. Please try again.");
+        }
+      };
+// inward letter table enclosure  file view
+      const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
+        try {
+          if (!fileName || !filePath) {
+            alert("No document available to view.");
+            return;
+          }
+      
+          const payload = {
+            documentName: fileName,
+            documentPath: filePath,
+          };
+      
+          const encryptedPayload = encryptPayload(payload);
+          console.log("Checking payloads", encryptedPayload);
+      
+          const response = await api.post(
+            'download/view-document',
+            { dataObject: encryptedPayload },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          console.log(response);
+          if (response.data && response.data.data) {
+            const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
+            const byteCharacters = atob(base64String);
+            const byteNumbers = new Uint8Array([...byteCharacters].map(char => char.charCodeAt(0)));
+            const blob = new Blob([byteNumbers], { type: "application/pdf" });
+          
+            const url = URL.createObjectURL(blob);
+            window.open(url, "_blank");
+          } else {
+            toast.error("Failed to load PDF.");
+          }
+        } catch (error) {
+          console.error("Error fetching PDF:", error);
+          toast.error("Failed to fetch PDF. Please try again.");
         }
       };
      
+      
       return (
     <>
       {/* Upload Inward Letter Section */}
@@ -2700,7 +2780,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                                   endAdornment: row.fileName && ( 
                                     <InputAdornment position="end">
                                       <IconButton
-                                        onClick={() => handleDocumentView(row.fileName, row.filePath)}
+                                        onClick={() => handleDocumentViewEnclosureForm(row.fileName, row.filePath)}
                                         size="small"
                                         color="primary"
                                         edge="end"
@@ -3814,7 +3894,7 @@ const handleFileUploadChangeencloser = (index, event) => {
                                 cursor: "pointer",
                               }}
                               onClick={() =>
-                                handleDownloadletter(enclosure.enclosureName, enclosure.enclosurePath)
+                                handleDownloadEnclosureletter(enclosure.fileName, enclosure.filePath)
                               }
                             >
                               {enclosure.enclosureName}

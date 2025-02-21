@@ -11,17 +11,12 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
   const [editorContent, setEditorContent] = useState(content || '');
   const [showPreview, setShowPreview] = useState(false);
 
-  // Update editor content when props change
+  // Update editor content when props change or when writeNote becomes true
   useEffect(() => {
     const newContent = content || additionalDetails?.data?.note || '';
     console.log('NoteSheet updating content:', newContent);
     setEditorContent(newContent);
-    
-    // Only notify parent if content is from additionalDetails
-    if (additionalDetails?.data?.note && !content) {
-      onContentChange?.(additionalDetails.data.note);
-    }
-  }, [content, additionalDetails, onContentChange]);
+  }, [content, additionalDetails, writeNote]);
 
   // Update notes when noteSheets change
   useEffect(() => {
@@ -190,7 +185,6 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
           overflow: hidden;
         }
         .note-card {
-          height: 500px;
           width: 100%;
           background-color: #f9f9f9;
           border-radius: 12px;
@@ -207,7 +201,7 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
           z-index: 10;
         }
         .notes-container {
-          max-height: 500px;
+          max-height: 405px;
           overflow-y: auto;
           padding: 20px;
           overflow-x: hidden;

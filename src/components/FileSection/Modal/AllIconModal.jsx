@@ -79,30 +79,7 @@ const tableCustomStyles = {
   },
 };
 
-const handleDownload = async (enclosureId) => {
-  try {
-    const response = await api.post(
-      "/file/download-file-correspondence-enclosure",
-      { dataObject: encryptPayload({ enclosureId }) },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob'
-      }
-    );
-    
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `enclosure_${enclosureId}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    toast.error("Download failed. Please try again.");
-    console.error("Download error:", error);
-  }
-};
+
 
 const columns = [
   {
@@ -124,7 +101,7 @@ const columns = [
       <Button
         variant="contained"
         color="primary"
-        onClick={() => handleDownload(row.filePath, row.fileName)}
+        onClick={() => handleDownloads(row)}
         title="Download"
       >
         <FaDownload />
@@ -135,11 +112,38 @@ const columns = [
     button: true,
   },
 ];
-
+// const token =useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+// const handleDownloads = async (row) => {
+//   console.log("fileName",row);
+  
+//   try {
+//     const response = await api.post(
+//       "/download/download-document",
+//       { dataObject: encryptPayload({  }) },
+//       {
+//         headers: { Authorization: `Bearer ${token}` },
+//         responseType: 'blob'
+//       }
+//     );
+    
+//     const url = window.URL.createObjectURL(new Blob([response.data]));
+//     const link = document.createElement('a');
+//     link.href = url;
+//     link.setAttribute('download', `enclosure_${enclosureId}.pdf`);
+//     document.body.appendChild(link);
+//     link.click();
+//     link.remove();
+//     window.URL.revokeObjectURL(url);
+//   } catch (error) {
+//     toast.error("Download failed. Please try again.");
+//     console.error("Download error:", error);
+//   }
+// };
 export const HistoryModal = ({ open, onClose, historyData }) => {
   const data = historyData?.data || [];
   const isValidHistoryData = Array.isArray(data) && data.length > 0;
-
+    
+      
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={modalStyle}>
@@ -259,7 +263,6 @@ export const UploadModal = ({
             },
           }
         );
-        
         if (response.data) {
           await refreshEnclosureData.mutateAsync();
           toast.success("Upload successful!");
@@ -276,16 +279,12 @@ export const UploadModal = ({
   });
 
   const handleSubmit = () => {
-    // Log the current state of rows for debugging
     console.log("Current rows state:", rows);
-    
-    // Check if there are any rows
     if (rows.length === 0) {
       toast.error("Please add at least one file!");
       return;
     }
 
-    // Validate all required fields
     const invalidRows = rows.filter(row => {
       console.log("Validating row:", row); // Debug log
       return !row.type || !row.name || !row.file;
@@ -296,14 +295,12 @@ export const UploadModal = ({
       return;
     }
 
-    // Check if files are selected and are PDFs
     const invalidFiles = rows.filter(row => !row.file || row.file.type !== "application/pdf");
     if (invalidFiles.length > 0) {
       toast.error("Please ensure all selected files are PDFs!");
       return;
     }
 
-    // If all validation passes, submit the form
     mutation.mutate({ 
       enclosureDocuments: rows.map((row) => row.file)
     });
@@ -324,7 +321,7 @@ export const UploadModal = ({
 
   const removeRow = (index) => setRows(rows.filter((_, i) => i !== index));
   const handleChange = (index, field, value) => {
-    console.log(`Changing ${field} at index ${index} to:`, value); // Debug log
+    console.log(`Changing ${field} at index ${index} to:`, value);
     setRows(
       rows.map((row, i) => (i === index ? { ...row, [field]: value } : row))
     );
@@ -340,7 +337,7 @@ export const UploadModal = ({
 
     if (file.type !== "application/pdf") {
       toast.error("Only PDF files are allowed.");
-      event.target.value = ''; // Clear the file input
+      event.target.value = ''; 
       return;
     }
 
@@ -359,12 +356,47 @@ export const UploadModal = ({
   };
     
 
-  // Reset form when modal closes
   useEffect(() => {
     if (!open) {
       setRows([{ type: "", name: "", file: null, fileName: "" }]);
     }
   }, [open]);
+
+const handleDownload = async (enc) => {
+  debugger
+  console.log("fileName",enc.path);
+
+  
+  try {
+      const encryptedDload = encryptPayload({
+        docFilename: enc.docFilename,
+        path: enc.path,
+          });
+    
+    console.log("Payload:", encryptedDload);
+    
+    const response = await api.post(
+      "/download/download-document",
+      { dataObject:  encryptedDload  },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      }
+    );
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `enclosure_${enc.enclosureId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    toast.error("Download failed. Please try again.");
+    console.error("Download error:", error);
+  }
+};
 
   return (
     <Modal
@@ -583,7 +615,7 @@ export const UploadModal = ({
                         variant="contained"
                         color="primary"
                         startIcon={<FaDownload style={{margin: "0 !important"}}/>}
-                        onClick={() => handleDownload(enc.enclosureId)}
+                        onClick={() => handleDownload(enc)}
                         sx={{
                           fontWeight: "light",
                         }}

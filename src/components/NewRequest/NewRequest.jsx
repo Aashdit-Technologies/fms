@@ -20,8 +20,8 @@ import {
   TableRow,
   TableHead,
 } from "@mui/material";
-import DataTable from "react-data-table-component"; // Import DataTable
-import { Autocomplete, TextField, Button } from "@mui/material"; // Import Material UI components
+import DataTable from "react-data-table-component"; 
+import { Autocomplete, TextField, Button } from "@mui/material";
 import { MdOutlineMoveDown } from "react-icons/md";
 
 
@@ -184,7 +184,6 @@ const NewRequest = () => {
     try {
       const token = useAuthStore.getState().token;
 
-      // Create the payload with explicit structure
       const payload = {
         priority: priority || null,
         fileModule: fileModule || null,
@@ -216,68 +215,12 @@ const NewRequest = () => {
     fetchFilteredData(priority, selectedFileModule);
   }, [priority, selectedFileModule, pageNo, rowSize]);
 
-  // Mutation for editing file
-  const fetchFileDetails = async (file) => {
-    if (!file) return;
-    const token = sessionStorage.getItem("token");
-    try {
-      setLoading(true);
-
-      const payload1 = encryptPayload({
-        tabPanelId: 1,
-        fileId: file.fileId,
-        fileReceiptId: file.fileReceiptId,
-      });
-      const payload2 = encryptPayload({ fileId: file.fileId });
-      const payload3 = encryptPayload({
-        fileId: file.fileId,
-        lastFileSentDate: "",
-      });
-
-      const [response1, response2, response3, response4] = await Promise.all([
-        api.post(
-          "/file/basic-details",
-          { dataObject: payload1 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-        api.post(
-          "/file/get-draft-notesheet",
-          { dataObject: payload2 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-        api.post(
-          "/file/file-correspondences",
-          { dataObject: payload3 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-        api.post(
-          "/file/file-notesheets",
-          { dataObject: payload3 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        ),
-      ]);
-
-      const fileData = {
-        fileDetails: response1.data,
-        additionalDetails: response2.data,
-        correspondence: response3.data,
-        noteSheets: response4.data,
-      };
-
-      setFileDetails(fileData.fileDetails);
-
-      Navigate("/main-file", {
-        state: fileData,
-        replace: true,
-      });
-    } catch (error) {
-      console.error("Error fetching file details:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // console.log("Edit Clicked:", file);
   const handleEditClick = (file) => {
-    fetchFileDetails(file);
+    console.log("Edit Clicked:", file);
+    
+    if (!file) return;
+    Navigate("/main-file",{state: {file: file}} ,{ replace: true });
   };
 
   const handleSelectChange = (setter, event) => {
@@ -423,7 +366,7 @@ const NewRequest = () => {
     },
     {
       name: "File Number",
-      selector: (row) => row.fileNo, // This correctly selects fileNo
+      selector: (row) => row.fileNo, 
       cell: (row) => (
         <div
           style={{

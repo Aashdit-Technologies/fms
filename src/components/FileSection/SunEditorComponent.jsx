@@ -6,20 +6,18 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNot
   const [editorContent, setEditorContent] = useState(content || '');
 
   
-    useEffect(() => {
-      const newContent = content || additionalDetails?.data?.note || selectedNote?.note || '';
-      console.log('Updating editor content:', newContent);
-
-      // Only update content if it's different from the current state
-      if (newContent !== editorContent) {
+  useEffect(() => {
+    const newContent = content || additionalDetails?.data?.note || selectedNote?.note || '';
+    if (newContent !== editorContent) {
         setEditorContent(newContent);
-        
-        // Force update the editor's value without triggering a re-render
-        if (editor.current?.editor) {
-          editor.current.editor.value = newContent;
-        }
-      }
-    }, [content, additionalDetails, selectedNote, editorContent]);
+    }
+}, [content, additionalDetails, selectedNote, editorContent]);
+
+  useEffect(() => {
+    if (editor.current?.editor) {
+      editor.current.editor.value = editorContent;
+    }
+  }, [editorContent, editor.current]);
 
   const config = useMemo(
     () => ({
@@ -39,15 +37,10 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNot
     [editorContent, placeholder]
   );
 
-  const handleContentChange = useCallback((newContent) => {
+  const handleContentChanges = useCallback((newContent) => {
     console.log('Editor content changed:', newContent);
     setEditorContent(newContent);
-    
     onContentChange?.(newContent);
-    
-    if (editor.current?.editor && editor.current.editor.value !== newContent) {
-      editor.current.editor.value = newContent;
-    }
   }, [onContentChange]);
 
   return (
@@ -57,7 +50,10 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNot
         value={editorContent}
         config={config}
         tabIndex={1}
-        onBlur={handleContentChange}
+        onChange={handleContentChanges}      
+        onReady={(instance) => {
+          instance.value = editorContent;
+        }}
       />
       <style jsx>{`
         .editor-wrapper {

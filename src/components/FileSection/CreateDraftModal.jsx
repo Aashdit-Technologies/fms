@@ -23,6 +23,7 @@ const CreateDraftModal = ({
   organizations,
   allDetails,
   editMalady,
+  refetchData,
 }) => {
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
@@ -52,12 +53,23 @@ const CreateDraftModal = ({
     subject: "",
     referenceNo: "",
     addedBy: "",
-    content: "",
+    contentss: "",
     office: "",
     tempType: "",
   });
 
-  const editorContentRef = useRef(formData.content);
+  const updatedContentRef = useRef(formData.contentss);
+
+  // Update formData.content when editor content changes
+  const handleTextUpdate = (value) => {
+    updatedContentRef.current = value;
+
+    // Optionally, you can update formData directly if you want to trigger re-render or pass to backend
+    setFormData((prevState) => ({
+      ...prevState,
+      contentss: value,
+    }));
+  };
 
   useEffect(() => {
     if (officeNames?.data) {
@@ -74,9 +86,9 @@ const CreateDraftModal = ({
             ...prev,
             office: selectedTemplate.templateId,
             tempType: selectedTemplate.tempType,
-            content: selectedTemplate.tempContent || editMalady.letterContent || "",
+            contentss: selectedTemplate.tempContent || editMalady.letterContent || "",
           }));
-          editorContentRef.current = selectedTemplate.tempContent || editMalady.letterContent || "";
+          updatedContentRef.current = selectedTemplate.tempContent || editMalady.letterContent || "";
         }
       }
     }
@@ -118,7 +130,7 @@ const CreateDraftModal = ({
       office: "",
       tempType: "",
     });
-    editorContentRef.current = "";
+    updatedContentRef.current = "";
     setContents("");
   };
 
@@ -130,10 +142,10 @@ const CreateDraftModal = ({
         referenceNo: editMalady.referenceNo || "",
         addedBy: editMalady.addedBy || "",
         office: editMalady.office || "",
-        content: editMalady.letterContent || "",
+        contentss: editMalady.letterContent || "",
         tempType: editMalady.tempType || "",
       });
-      editorContentRef.current = editMalady.letterContent || "";
+      updatedContentRef.current = editMalady.letterContent || "";
       setContents(editMalady.subject || "");
 
       const empDeptMapVo = editMalady.employeeDeptMapVo || {};
@@ -401,7 +413,7 @@ const CreateDraftModal = ({
       fileReceiptId: allDetails?.fileReceiptId,
       subject: contents,
       approverEmpRoleMapId: selectedValues.authorities?.value || null,
-      letterContent: editorContentRef.current,
+      letterContent: updatedContentRef.current,
       letterNo: formData.office || null,
       correspondenceDate: null,
       displayType: null,
@@ -438,16 +450,20 @@ const CreateDraftModal = ({
         }
       );
 
-      if (response.data.outcome) {
+    if (response.data.outcome) {
         toast.success(
           editMalady
             ? "Draft updated successfully!"
             : "Draft created successfully!"
         );
+        resetForm();
+        if (refetchData && typeof refetchData === 'function') {
+          refetchData();
+        }
         onClose();
-      } else {
+    } else {
         toast.error(response.data.message || "Operation failed");
-      }
+    }
     } catch (error) {
       console.error("Error saving draft:", error);
       toast.error("Failed to save draft");
@@ -466,7 +482,6 @@ const CreateDraftModal = ({
     }));
   }, [data]);
 
-  // Debug log to check data
   useEffect(() => {
     console.log('Letter Content Options:', officeOptions);
     console.log('Selected Template:', formData.office);
@@ -474,32 +489,35 @@ const CreateDraftModal = ({
 
   const handleOfficeChange = (selectedOption) => {
     if (selectedOption) {
-      const content = selectedOption.tempContent || "";
+      const contentss = selectedOption.tempContent || "";
       
-      // Update form data
       setFormData((prev) => ({
         ...prev,
         office: selectedOption.value,
         tempType: selectedOption.label,
-        content: content,
+        contentss: contentss,
       }));
       
-      // Update editor content
-      editorContentRef.current = content;
+      updatedContentRef.current = contentss;
       
-      // Force update the editor content
       setTimeout(() => {
         const editor = document.querySelector('.jodit-wysiwyg');
         if (editor) {
-          editor.innerHTML = content;
+          editor.innerHTML = contentss;
           
-          // Also update the editor's internal value
           if (editor.jodit) {
-            editor.jodit.value = content;
+            editor.jodit.value = contentss;
           }
         }
-      }, 100); // Increased timeout to ensure editor is ready
+      }, 100); 
     }
+  };
+ 
+  const handleClickClose = () => {
+    resetForm();
+    refetchData();
+    resetForm();
+    onClose();  
   };
 
   return (
@@ -680,10 +698,8 @@ const CreateDraftModal = ({
 
         <Box sx={{ mt: 2 }} className="editor-containers">
           <CorrespondenceEditor
-            initialContent={formData.content}
-            onContentChange={(value) => {
-              editorContentRef.current = value;
-            }}
+            defaultText={formData.contentss}
+            onTextUpdate={handleTextUpdate}
           />
         </Box>
 
@@ -714,11 +730,11 @@ const CreateDraftModal = ({
                 subject: "",
                 referenceNo: "",
                 addedBy: "",
-                content: "",
+                contentss: "",
                 office: "",
                 tempType: "",
               });
-              editorContentRef.current = "";
+              updatedContentRef.current = "";
               resetForm();
             }}
           >
@@ -727,11 +743,7 @@ const CreateDraftModal = ({
           <Button
             variant="contained"
             color="error"
-            onClick={() => {
-              editorContentRef.current = "";
-              resetForm();
-              onClose();
-            }}
+            onClick={handleClickClose}
           >
             Cancel
           </Button>

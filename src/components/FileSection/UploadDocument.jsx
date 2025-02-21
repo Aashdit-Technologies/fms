@@ -46,7 +46,7 @@ import dayjs from "dayjs";
 import { AccordionItem, Table } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import UploadDocumentsModal from "./Modal/UploadDocumentsModal";
-const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
+const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetchData }) => {
   const navigate = useNavigate();
 
   const token =
@@ -169,15 +169,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     }
     
     newRows[index][field] = value;
-
-    // Only validate if at least one field in the row has a value
-    if (isAnyFieldFilled(newRows[index])) {
-      const missingFields = getMissingFields(newRows[index]);
-      if (missingFields.length > 0) {
-        toast.warning(`Row ${index + 1}: All fields are mandatory when any field is filled. Missing: ${missingFields.join(", ")}`);
-      }
-    }
-
     setRows(newRows);
   };
 
@@ -190,15 +181,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     ) {
       const newRows = [...rows];
       newRows[index].document = file;
-
-      // Check other mandatory fields after file upload
-      if (isAnyFieldFilled(newRows[index])) {
-        const missingFields = getMissingFields(newRows[index]);
-        if (missingFields.length > 0) {
-          toast.warning(`Row ${index + 1}: Please fill all required fields: ${missingFields.join(", ")}`);
-        }
-      }
-
       setRows(newRows);
       toast.success("File uploaded successfully!");
     } else {
@@ -222,7 +204,11 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     },
   });
 
-  const handleOpenModal = () => {
+  const handleOpenModal = async () => {
+    // First save the current state
+    await handleSubmit();
+    
+    // Then fetch organizations and open modal
     fetchOrganizations.mutate();
   };
 
@@ -241,33 +227,27 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
   };
 
   const validateForm = () => {
-    let isValid = true;
-    rows.forEach((row, index) => {
-      if (isRowEmpty(row)) {
-        return;
-      }
+    const isEditorEmpty = !editorContent?.trim();
+    const firstRowComplete = !isRowEmpty(rows[0]) && getMissingFields(rows[0]).length === 0;
 
-      if (isAnyFieldFilled(row)) {
-        const missingFields = getMissingFields(row);
-        if (missingFields.length > 0) {
-          toast.error(`Row ${index + 1}: Missing required fields: ${missingFields.join(", ")}`);
-          isValid = false;
-        }
-      }
-    });
-    
+    // If editor has content, form is valid regardless of rows
+    if (!isEditorEmpty) {
+      return true;
+    }
 
+    // If editor is empty, first row must be complete
+    if (isEditorEmpty && !firstRowComplete) {
+      toast.error("Either fill the task action editor or complete all fields in the first row");
+      return false;
+    }
 
-    return isValid;
+    return true;
   };
 
   const handleSubmit = () => {
     if (!validateForm()) {
       return;
     }
-    const isEditorEmpty = !editorContent?.trim();
-    const areAllRowsEmpty = rows.every((row) => isRowEmpty(row));
-  
     
     const documents = rows.map((row) => ({
       docSubject: row.subject,
@@ -275,11 +255,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       letterNumber: row.type === "LETTER" ? row.letterNumber : null,
       letterDate: row.date,
     }));
-    
-    if (isEditorEmpty && areAllRowsEmpty) {
-      toast.error("Either editor content or at least one row must be filled.");
-      return;
-    }
     
 
     const uploadedDocuments = rows.map((row) => row.document).filter(Boolean);
@@ -346,6 +321,9 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
             setFilePriority("Normal");
             setIsConfidential(false);
             toast.success(response.data.message);
+            if (refetchData && typeof refetchData === 'function') {
+              refetchData();
+            }
           } else {
             throw new Error(response.data?.message || "Upload failed");
           }
@@ -410,7 +388,11 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
     error: markActionError,
   } = markActionMutation;
 
-  const handleMarkupOrMarkdown = (action) => {
+  const handleMarkupOrMarkdown = async (action) => {
+    // First save the current state
+    await handleSubmit();
+    
+    // Then proceed with markup/markdown
     setModalAction(action);
     triggerMarkAction(action);
     setIsModalOpen(true);
@@ -473,14 +455,23 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails }) => {
       }
 
       try {
+        // First save the current state
+        await handleSubmit();
+
+        // Then send the file
         const sendfilepayload = {
           actionTaken: modalAction,
-          fileId: fileDetails.data.fileId,
-          note: additionalDetails.data.note,
-          filerecptId: fileDetails.data.fileReceiptId,
+          fileId: fileDetails?.data?.fileId,
+          note: editorContent || "", // Use editor content instead of additionalDetails
+          filerecptId: fileDetails?.data?.fileReceiptId,
           notesheetId: additionalDetails?.data?.prevNoteId,
           receiverEmpRoleMap: receiverEmpRoleMap,
         };
+
+        // Validate required fields
+        if (!sendfilepayload.fileId || !sendfilepayload.filerecptId) {
+          throw new Error("Required file details are missing");
+        }
 
         const encryptedDataObjectUpDown = encryptPayload(sendfilepayload);
 

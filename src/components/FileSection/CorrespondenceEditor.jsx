@@ -1,32 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
 import JoditEditor from "jodit-react";
 
-const CorrespondenceEditor = ({ initialContent, onContentChange }) => {
-  const [content, setContent] = useState(initialContent || "");
+const CorrespondenceEditor = ({ defaultText, onTextUpdate }) => {
+  const [contents, setContents] = useState(defaultText || "");
   const editorRef = useRef(null);
 
+  // Update contents whenever defaultText changes from the parent
   useEffect(() => {
-    // Update content when initialContent changes (e.g., when editing a draft or selecting template)
-    if (initialContent !== content) {
-      setContent(initialContent || "");
-      // Also notify parent of the change
-      onContentChange?.(initialContent || "");
-
-      // Force update editor content
-      if (editorRef.current?.editor) {
-        editorRef.current.editor.value = initialContent || "";
-      }
+    if (defaultText !== contents) {
+      setContents(defaultText || "");
+      onTextUpdate?.(defaultText || ""); // Notify parent of the change
     }
-  }, [initialContent]);
+  }, [defaultText, contents, onTextUpdate]);
 
+  // Handle content change within the editor
   const handleEditorChange = (newContent) => {
-    setContent(newContent);
-    onContentChange?.(newContent);
+    setContents(newContent); // Update local state with the new content
+    onTextUpdate?.(newContent); // Notify the parent of the new content
   };
 
+  // Focus behavior (optional)
   const handleEditorFocus = () => {
     if (editorRef.current?.editor) {
-      // Ensure cursor is at the end of content
       const editor = editorRef.current.editor;
       editor.selection?.focus();
     }
@@ -37,16 +32,6 @@ const CorrespondenceEditor = ({ initialContent, onContentChange }) => {
     placeholder: "Start typing...",
     height: 400,
     toolbarButtonSize: "small",
-    buttons: [
-      'source', '|',
-      'bold', 'italic', 'underline', 'strikethrough', '|',
-      'font', 'fontsize', 'brush', 'paragraph', '|',
-      'align', '|', 
-      'ul', 'ol', '|',
-      'table', 'link', '|',
-      'undo', 'redo', '|',
-      'hr', 'eraser', 'fullsize'
-    ],
     removeButtons: ['about'],
     showCharsCounter: false,
     showWordsCounter: false,
@@ -54,22 +39,18 @@ const CorrespondenceEditor = ({ initialContent, onContentChange }) => {
     askBeforePasteHTML: false,
     askBeforePasteFromWord: false,
     defaultActionOnPaste: 'insert_clear_html',
-    // Enable HTML editing
     editHTMLDocumentMode: true,
     allowResizeY: true,
     useAceEditor: false,
-    // Preserve HTML formatting
     cleanHTML: {
       fillEmptyParagraph: false,
       removeEmptyElements: false,
       replaceNBSP: false,
       cleanOnPaste: false
     },
-    // Allow all HTML tags and attributes
     allowTags: '*',
     allowAttributes: '*',
     allowStyles: '*',
-    // Ensure proper HTML rendering
     processPastedHTML: false,
     beautifyHTML: false
   };
@@ -77,10 +58,11 @@ const CorrespondenceEditor = ({ initialContent, onContentChange }) => {
   return (
     <JoditEditor
       ref={editorRef}
-      value={content}
+      value={contents}  // Editor content is controlled by 'contents' state
       config={config}
-      onChange={handleEditorChange}
-      onFocus={handleEditorFocus}
+      onChange={handleEditorChange}  // Handle content changes
+      onFocus={handleEditorFocus}   // Optional: Handle focus behavior
+      onBlur={handleEditorFocus}    // Optional: Handle blur behavior
     />
   );
 };
