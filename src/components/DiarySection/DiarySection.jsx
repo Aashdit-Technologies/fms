@@ -779,6 +779,7 @@ const handleremarksChange = (e) => {
  
 
   //Fetch sender data from the API
+  useEffect(() => {
   const fetchSenderData = async () => {
     try {
       const response = await api.get(
@@ -799,10 +800,8 @@ const handleremarksChange = (e) => {
       console.error("Error fetching sender data:", error);
     }
   };
-  useEffect(() => {
-    if (token) {
+
       fetchSenderData();
-    }
   }, [token]);
 
   const handleSenderChange = (event, newValue) => {
@@ -866,6 +865,9 @@ const handleremarksChange = (e) => {
 
  
   // All Sender List get api
+  useEffect(() => {
+    fetchRecords();
+  }, []);
   const fetchRecords = async () => {
     try {
       if (!token) {
@@ -906,11 +908,9 @@ const handleremarksChange = (e) => {
     }
   };
 
-  useEffect(() => {
-    fetchRecords();
-  }, []);
 
   // departmentList get api
+  useEffect(() => {
   const fetchDepartmentAndDesignationData = async () => {
     try {
       if (!token) {
@@ -945,9 +945,9 @@ const handleremarksChange = (e) => {
       );
     }
   };
-  useEffect(() => {
+ 
     fetchDepartmentAndDesignationData();
-  }, []);
+  }, [token]);
 
   // EnclosureTypes get api
   useEffect(() => {
@@ -1053,7 +1053,7 @@ const handleremarksChange = (e) => {
 
       if (response.status === 200) {
         toast.success(response.data.message, { autoClose: 3000 });
-        await Promise.all([NewLetter(), sentLetter()]);
+        // await Promise.all([NewLetter(), sentLetter()]);
          
         setOpenSection("LettersList");
         setFormData({
@@ -1157,38 +1157,72 @@ const handleremarksChange = (e) => {
   };
 
 
-  // NewLetter
-  const NewLetter = async () => {
-    try {
-      if (!token) {
-        throw new Error("Authorization token is missing");
+  // NewLetter api binding 
+  // const NewLetter = async () => {
+  //   try {
+  //     if (!token) {
+  //       throw new Error("Authorization token is missing");
+  //     }
+
+  //     const response = await api.get("diary-section/new-letter", {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+
+  //     const allnewletter = response?.data?.data || [];
+  //     console.log("Fetched new letters:", allnewletter);
+
+  //     if (response.status === 200 && Array.isArray(allnewletter)) {
+  //       setNewLetterData(allnewletter);
+  //       setFilteredNewLetter(allnewletter);
+  //     } else {
+  //       console.error("Failed to fetch data. Unexpected response format.");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching records:", error);
+  //     toast.error(
+  //       error.response?.data?.message || "An unexpected error occurred."
+  //     );
+  //   }
+  // };
+  // useEffect(() => {
+  //   NewLetter();
+  // }, [token]);
+   
+
+    // NewLetter api binding 
+    useEffect(() => {
+    const NewLetter = async () => {
+      try {
+        if (!token) {
+          throw new Error("Authorization token is missing");
+        }
+  
+        const response = await api.get("diary-section/new-letter", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+  
+        const allnewletter = response?.data?.data || [];
+        console.log("Fetched new letters:", allnewletter);
+  
+        if (response.status === 200 && Array.isArray(allnewletter)) {
+          setNewLetterData(allnewletter);
+          setFilteredNewLetter(allnewletter);
+        } else {
+          console.error("Failed to fetch data. Unexpected response format.");
+        }
+      } catch (error) {
+        console.error("Error fetching records:", error);
+        toast.error(
+          error.response?.data?.message || "An unexpected error occurred."
+        );
       }
+    };
+  
+      NewLetter(); 
+    }, [token]); 
 
-      const response = await api.get("diary-section/new-letter", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const allnewletter = response?.data?.data || [];
-      console.log("Fetched new letters:", allnewletter);
-
-      if (response.status === 200 && Array.isArray(allnewletter)) {
-        setNewLetterData(allnewletter);
-        setFilteredNewLetter(allnewletter);
-      } else {
-        console.error("Failed to fetch data. Unexpected response format.");
-      }
-    } catch (error) {
-      console.error("Error fetching records:", error);
-      toast.error(
-        error.response?.data?.message || "An unexpected error occurred."
-      );
-    }
-  };
-  useEffect(() => {
-    NewLetter();
-  }, []);
-
- // SentLetter
+ // SentLetter api binding 
+   useEffect(() => {
   const sentLetter = async () => {
     try {
       console.log("Token:", token);
@@ -1218,11 +1252,7 @@ const handleremarksChange = (e) => {
       toast.error(error.response?.data?.message || "An unexpected error occurred.");
     }
   };
-  
-  useEffect(() => {
-    if (token) {
       sentLetter();
-    }
   }, [token]);
   
 
@@ -1396,8 +1426,8 @@ const handleSendButtonClick = async (event) => {
       toast.success("Letter have been  sent successfully!"); 
       setShowModalShare(false); 
       setActiveTab("sentLetter"); 
-      await NewLetter();
-      await sentLetter(); 
+      // await NewLetter();
+      // await sentLetter(); 
     } else {
       toast.error("Failed to send letter.");
     }
@@ -1929,6 +1959,51 @@ const handleFileUploadChangeencloser = (index, event) => {
     setShowModalShare(true);
   };
 
+ // inward letter upload letter file view
+ const handleDocumentView = async () => {
+  try {
+    if (!formData.fileName || !formData.filePath) {
+      alert("No document available to view.");
+      return;
+    }
+
+    const payload = {
+      documentName: formData.fileName,
+      documentPath: formData.filePath,
+    };
+console.log("documentname",documentName)
+console.log("documentpath",documentPath)
+    const encryptedPayload = encryptPayload(payload);
+    console.log("Checking payloads", encryptedPayload);
+
+    const response = await api.post(
+      'download/view-document',
+      { dataObject: encryptedPayload },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    console.log(response);
+    if (response.data && response.data.data) {
+      const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
+      const byteCharacters = atob(base64String);
+      const byteNumbers = new Uint8Array([...byteCharacters].map(char => char.charCodeAt(0)));
+      const blob = new Blob([byteNumbers], { type: "application/pdf" });
+    
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+    } else {
+      toast.error("Failed to load PDF.");
+    }
+  } catch (error) {
+    console.error("Error fetching PDF:", error);
+    toast.error("Failed to fetch PDF. Please try again.");
+  }
+};
+
+
+
+
    // table encloser download button
    const handleDownload = async (row) => {
     try {
@@ -2058,46 +2133,7 @@ const handleFileUploadChangeencloser = (index, event) => {
         toast.error("Failed to download PDF. Please try again.");
         }
         };
-   // inward letter upload letter file view
-      const handleDocumentView = async () => {
-        try {
-          if (!formData.fileName || !formData.filePath) {
-            alert("No document available to view.");
-            return;
-          }
-      
-          const payload = {
-            documentName: formData.fileName,
-            documentPath: formData.filePath,
-          };
-      
-          const encryptedPayload = encryptPayload(payload);
-          console.log("Checking payloads", encryptedPayload);
-      
-          const response = await api.post(
-            'download/view-document',
-            { dataObject: encryptedPayload },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          console.log(response);
-          if (response.data && response.data.data) {
-            const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
-            const byteCharacters = atob(base64String);
-            const byteNumbers = new Uint8Array([...byteCharacters].map(char => char.charCodeAt(0)));
-            const blob = new Blob([byteNumbers], { type: "application/pdf" });
-          
-            const url = URL.createObjectURL(blob);
-            window.open(url, "_blank");
-          } else {
-            toast.error("Failed to load PDF.");
-          }
-        } catch (error) {
-          console.error("Error fetching PDF:", error);
-          toast.error("Failed to fetch PDF. Please try again.");
-        }
-      };
+  
 // inward letter table enclosure  file view
       const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
         try {
@@ -2139,7 +2175,7 @@ const handleFileUploadChangeencloser = (index, event) => {
         }
       };
      
-      
+
       return (
     <>
       {/* Upload Inward Letter Section */}
@@ -2975,7 +3011,12 @@ const handleFileUploadChangeencloser = (index, event) => {
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} md={3}>
                   <TextField
-                    label="Group Name"
+                    
+                    label={
+                      <span>
+                        Group Name <span style={{ color: "red" }}>*</span>
+                      </span>
+                    }
                     variant="outlined"
                     fullWidth
                     name="groupName"
@@ -2995,7 +3036,11 @@ const handleFileUploadChangeencloser = (index, event) => {
                 </Grid>
                 <Grid item xs={12} md={3}>
                   <TextField
-                    label="Name"
+                     label={
+                      <span>
+                        Name <span style={{ color: "red" }}>*</span>
+                      </span>
+                    }
                     variant="outlined"
                     fullWidth
                     name="name"
@@ -3015,7 +3060,11 @@ const handleFileUploadChangeencloser = (index, event) => {
                 </Grid>
                 <Grid item xs={12} md={3}>
                   <TextField
-                    label="Address"
+                    label={
+                      <span>
+                       Address <span style={{ color: "red" }}>*</span>
+                      </span>
+                    }
                     variant="outlined"
                     fullWidth
                     name="address"
@@ -3035,7 +3084,12 @@ const handleFileUploadChangeencloser = (index, event) => {
                 </Grid>
                 <Grid item xs={12} md={3}>
                   <TextField
-                    label="Mobile"
+                   
+                    label={
+                      <span>
+                        Mobile<span style={{ color: "red" }}>*</span>
+                      </span>
+                    }
                     variant="outlined"
                     fullWidth
                     name="mobile"
@@ -3055,7 +3109,12 @@ const handleFileUploadChangeencloser = (index, event) => {
                 </Grid>
                 <Grid item xs={12} md={3}>
                   <TextField
-                    label="Email"
+                    
+                    label={
+                      <span>
+                       Email <span style={{ color: "red" }}>*</span>
+                      </span>
+                    }
                     variant="outlined"
                     fullWidth
                     name="email"
@@ -3095,7 +3154,11 @@ const handleFileUploadChangeencloser = (index, event) => {
                 </Grid>
                 <Grid item xs={12} md={3}>
                   <TextField
-                    label="District"
+                    label={
+                      <span>
+                       District <span style={{ color: "red" }}>*</span>
+                      </span>
+                    }
                     variant="outlined"
                     fullWidth
                     name="district"

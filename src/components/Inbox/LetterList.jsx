@@ -132,38 +132,73 @@ const LetterList = () => {
   const [activeTab, setActiveTab] = useState(TAB_CODES.NEW_LETTER);
 
  
-  const fetchLetters = async (tabCode) => {
-    try {
-      const payload = {
-        rowsize: rowSize,
-        tabCode: tabCode,
-        pageNo: pageNo,
-      };
-      const response = await api.post(
-        "letter/manage-letter-receipents",
-        { dataObject: encryptPayload(payload) },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Raw API Response:", JSON.stringify(response.data, null, 2)); 
-      const responseData = response.data?.data?.letterList || []
-      setLetters(Array.isArray(responseData) ? responseData : []);
-      setTotalRows(response.data?.data?.totalRows || 0);
-    } catch (error) {
-      console.error("Error fetching letters:", error);
-      setLetters([]);
-    }
-  };
+  // const fetchLetters = async (tabCode) => {
+  //   try {
+  //     const payload = {
+  //       rowsize: rowSize,
+  //       tabCode: tabCode,
+  //       pageNo: pageNo,
+  //     };
+  //     const response = await api.post(
+  //       "letter/manage-letter-receipents",
+  //       { dataObject: encryptPayload(payload) },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+  //     console.log("Raw API Response:", JSON.stringify(response.data, null, 2)); 
+  //     const responseData = response.data?.data?.letterList || []
+  //     setLetters(Array.isArray(responseData) ? responseData : []);
+  //     setTotalRows(response.data?.data?.totalRows || 0);
+  //   } catch (error) {
+  //     console.error("Error fetching letters:", error);
+  //     setLetters([]);
+  //   }
+  // };
   
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   if (activeTab) {
+  //     fetchLetters(activeTab);
+  //   }
+  // }, [activeTab, pageNo, rowSize]);
+ 
+    const fetchLetters = useCallback(async (tabCode) => {
+      try {
+        const payload = {
+          rowsize: rowSize,
+          tabCode: tabCode,
+          pageNo: pageNo,
+        };
+  
+        const response = await api.post(
+          "letter/manage-letter-receipents",
+          { dataObject: encryptPayload(payload) },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+  
+        console.log("Raw API Response:", JSON.stringify(response.data, null, 2));
+  
+        const responseData = response.data?.data?.letterList || [];
+        setLetters(Array.isArray(responseData) ? responseData : []);
+        setTotalRows(response.data?.data?.totalRows || 0);
+      } catch (error) {
+        console.error("Error fetching letters:", error);
+        setLetters([]);
+      }
+    },[rowSize, pageNo]);
+   
+    useEffect(() => {
     if (activeTab) {
       fetchLetters(activeTab);
     }
-  }, [activeTab, pageNo, rowSize]);
+  }, [activeTab, pageNo, rowSize]); 
   
 
 const handleViewLetterDetail = async (row, tabCode) => {

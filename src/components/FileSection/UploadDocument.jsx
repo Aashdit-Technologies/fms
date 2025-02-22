@@ -82,6 +82,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
   const [receiverEmpRoleMap, setReceiverEmpRoleMap] = useState(null);
 
   const handleRadioButtonChange = (index) => {
+    console.log("Selected Row:", index); // Debugging
     setSelectedRow(index);
     setIsSendEnabled(true);
     const actionValue = apiResponseData[index]?.empDeptRoleId || null;
@@ -94,10 +95,19 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
   };
 
   const handleSend = () => {
-    if (selectedRow !== null) {
+    console.log('Selected Row:', selectedRow); // Log for debugging
+    console.log('Receiver Emp Role Map:', receiverEmpRoleMap); // Log for debugging
+    console.log('Modal Action:', modalAction); // Log for debugging
+  
+    if (selectedRow !== null && selectedRow !== undefined) {
+      console.log('Calling newEndpointMutation.mutate'); // Log for debugging
       newEndpointMutation.mutate();
+    } else {
+      console.log("Invalid selectedRow:", selectedRow); // Log invalid row
+      toast.error("Please select a valid row.");
     }
   };
+  
 
   const handleAddRow = useCallback(() => {
     setRows((prevRows) => [
@@ -226,23 +236,23 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
     return dayjs(date).format("DD/MM/YYYY");
   };
 
-  const validateForm = () => {
-    const isEditorEmpty = !editorContent?.trim();
-    const firstRowComplete = !isRowEmpty(rows[0]) && getMissingFields(rows[0]).length === 0;
+  // const validateForm = () => {
+  //   const isEditorEmpty = !editorContent?.trim();
+  //   const firstRowComplete = !isRowEmpty(rows[0]) && getMissingFields(rows[0]).length === 0;
 
-    // If editor has content, form is valid regardless of rows
-    if (!isEditorEmpty) {
-      return true;
-    }
+  //   // If editor has content, form is valid regardless of rows
+  //   if (!isEditorEmpty) {
+  //     return true;
+  //   }
 
-    // If editor is empty, first row must be complete
-    if (isEditorEmpty && !firstRowComplete) {
-      toast.error("Either fill the task action editor or complete all fields in the first row");
-      return false;
-    }
+  //   // If editor is empty, first row must be complete
+  //   if (isEditorEmpty && !firstRowComplete) {
+  //     toast.error("Either fill the task action editor or complete all fields in the first row");
+  //     return false;
+  //   }
 
-    return true;
-  };
+  //   return true;
+  // };
 
   const handleSubmit = () => {
     if (!validateForm()) {
@@ -347,6 +357,8 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
 
   const markActionMutation = useMutation({
     mutationFn: async (action) => {
+      console.log("Action to be taken:", action);
+      
       try {
         const markupPayloads = {
           actionTaken: action,
@@ -389,13 +401,12 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
   } = markActionMutation;
 
   const handleMarkupOrMarkdown = async (action) => {
-    // First save the current state
-    await handleSubmit();
     
     // Then proceed with markup/markdown
     setModalAction(action);
     triggerMarkAction(action);
     setIsModalOpen(true);
+    // await handleSubmit();
   };
 
   const approveFileMutation = useMutation({
@@ -444,58 +455,66 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
 
   const newEndpointMutation = useMutation({
     mutationFn: async () => {
-      // Validate form before submission
-      if (!validateForm()) {
-        return;
-      }
-
-      if (!receiverEmpRoleMap) {
-        toast.error("Please select an action.");
-        return;
-      }
-
       try {
-        // First save the current state
-        await handleSubmit();
-
-        // Then send the file
+        console.log('Validating form...');
+       
+  
+        console.log('Preparing payload...');
         const sendfilepayload = {
           actionTaken: modalAction,
           fileId: fileDetails?.data?.fileId,
-          note: editorContent || "", // Use editor content instead of additionalDetails
+          note: editorContent || "",
           filerecptId: fileDetails?.data?.fileReceiptId,
           notesheetId: additionalDetails?.data?.prevNoteId,
           receiverEmpRoleMap: receiverEmpRoleMap,
         };
-
-        // Validate required fields
+        console.log("Payload before encryption:", sendfilepayload);
+  
         if (!sendfilepayload.fileId || !sendfilepayload.filerecptId) {
+          console.log('Required file details are missing');
           throw new Error("Required file details are missing");
         }
-
+  
+        console.log('Encrypting payload...');
         const encryptedDataObjectUpDown = encryptPayload(sendfilepayload);
-
+  
         const SendformData = new FormData();
         SendformData.append("dataObject", encryptedDataObjectUpDown);
-
-        const response = await api.post("file/send-file", SendformData, {
+  
+        console.log('Calling API...');
+        const response = await api.post("/file/send-file", SendformData, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
+  
+        if (!response.data) {
+          throw new Error("No data received from the server");
+        }
+  
+        console.log('API Response:', response);
         return response.data;
       } catch (error) {
         console.error("New API Error:", error);
-        throw error;
+        console.error("Error Response:", error.response); // Log the full response
+        console.error("Error Message:", error.message); // Log the error message
+  
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          "Something went wrong during the API call";
+        throw new Error(errorMessage);
       }
     },
     onSuccess: (data) => {
+      console.log('API Call Successful:', data);
       toast.success(data.message || "Operation successful!");
       if (data.outcome === true) {
         navigate("/file");
       }
     },
     onError: (error) => {
+      console.error('API Call Failed:', error);
       toast.error(error.message || "New API call failed!");
     },
   });
