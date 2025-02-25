@@ -190,7 +190,6 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
           border-radius: 12px;
           height: 500px;
           overflow: hidden;
-          overflow-y: auto;
         }
         .note-sheet-container.zoom-in .note-card {
           height: calc(100vh - 40px);

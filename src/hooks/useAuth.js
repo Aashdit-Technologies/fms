@@ -40,7 +40,7 @@ export const useAuth = () => {
       if (data?.outcome) {
         setToken(data.data);
         queryClient.invalidateQueries(['user']);
-        toast.success(data.message || 'Login successful!');
+        // toast.success(data.message || 'Login successful!');
         navigate('/');
       } else {
         // ✅ Show a toast for failed login attempt (e.g., "Account is Locked")

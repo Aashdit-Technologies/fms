@@ -46,6 +46,7 @@ import dayjs from "dayjs";
 import { AccordionItem, Table } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import UploadDocumentsModal from "./Modal/UploadDocumentsModal";
+import { PageLoader } from "../pageload/PageLoader";
 const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetchData }) => {
   const navigate = useNavigate();
 
@@ -78,8 +79,8 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
   const [modalAction, setModalAction] = useState("");
   const [apiResponseData, setApiResponseData] = useState([]);
   const [organizationsData, setOrganizationsData] = useState([]);
-
   const [receiverEmpRoleMap, setReceiverEmpRoleMap] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRadioButtonChange = (index) => {
     console.log("Selected Row:", index); // Debugging
@@ -100,7 +101,6 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
     console.log('Modal Action:', modalAction); // Log for debugging
   
     if (selectedRow !== null && selectedRow !== undefined) {
-      console.log('Calling newEndpointMutation.mutate'); // Log for debugging
       newEndpointMutation.mutate();
     } else {
       console.log("Invalid selectedRow:", selectedRow); // Log invalid row
@@ -215,11 +215,17 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
   });
 
   const handleOpenModal = async () => {
-    // First save the current state
-    await handleSubmit();
-    
-    // Then fetch organizations and open modal
-    fetchOrganizations.mutate();
+    setIsLoading(true); 
+    try {
+      await handleSubmit(); 
+      await fetchOrganizations.mutateAsync();
+      setIsSendToModalOpen(true);
+    } catch (error) {
+      toast.error("Failed to open modal.");
+      console.error("Error:", error);
+    } finally {
+      setIsLoading(false); 
+    }
   };
 
   const handleEndTask = () => {
@@ -236,23 +242,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
     return dayjs(date).format("DD/MM/YYYY");
   };
 
-  // const validateForm = () => {
-  //   const isEditorEmpty = !editorContent?.trim();
-  //   const firstRowComplete = !isRowEmpty(rows[0]) && getMissingFields(rows[0]).length === 0;
 
-  //   // If editor has content, form is valid regardless of rows
-  //   if (!isEditorEmpty) {
-  //     return true;
-  //   }
-
-  //   // If editor is empty, first row must be complete
-  //   if (isEditorEmpty && !firstRowComplete) {
-  //     toast.error("Either fill the task action editor or complete all fields in the first row");
-  //     return false;
-  //   }
-
-  //   return true;
-  // };
 
   const handleSubmit = () => {
     
@@ -345,7 +335,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
       },
     });
 
-  const { mutate, isLoading, isError, error } = mutation;
+  const { mutate,  isError, error } = mutation;
 
   useEffect(() => {
     if (isError) {
@@ -384,7 +374,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
       }
     },
     onSuccess: (data) => {
-      toast.success(data.message || "Operation successful!");
+      // toast.success(data.message || "Operation successful!");
     },
     onError: (error) => {
       toast.error(error.message || "Something went wrong!");
@@ -517,7 +507,9 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
     },
   });
 
-  return (
+  return (<>
+    {isLoading && <PageLoader />}
+  
     <Box
       sx={{ p: 3, maxWidth: 1200, margin: "auto", marginTop: "20px" }}
       className="uploaddocument"
@@ -774,14 +766,16 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
                   color="primary"
                   startIcon={<FaPaperPlane />}
                   onClick={handleOpenModal}
+                  disabled={isLoading}
                 >
-                  Send To
+                  {isLoading ? "Sending..." : "Send To"}
                 </Button>
                 <Button
                   variant="contained"
                   color="secondary"
                   startIcon={<FaCheckCircle />}
                   onClick={() => handleApprove("APPROVED")}
+                  disabled={isLoading}
                 >
                   End-Task
                 </Button>
@@ -940,6 +934,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
         additionalDetails={additionalDetails}
       />
     </Box>
+  </>
   );
 };
 

@@ -33,6 +33,7 @@ import {
 import CompleteList from "../CompleteList/CompleteList";
 import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
+import { useNavigate } from "react-router-dom";
 
 const ManageFile = () => {
   const [selectedRack, setSelectedRack] = useState(null);
@@ -65,7 +66,7 @@ const ManageFile = () => {
   const [roomData, setRoomData] = useState([]);
   const [rackData, setRackData] = useState([]);
 
-  
+  const naviget = useNavigate();
 
   const {
     activities,
@@ -138,7 +139,6 @@ const ManageFile = () => {
     if (!selectedDepartment) return toast.error("Please select a department.");
     if (!selectedFileRTL) return toast.error("Please select a file related to.");
     if (!formTitle.trim()) return toast.error("Please enter a title.");
-    if (!formKeyword.trim()) return toast.error("Please enter a KeyWord.");
     if (!formSubject.trim()) return toast.error("Please enter a subject.");
     if (!formFileName.trim()) return toast.error("Please enter a file name.");
     if (!selectedCustodian) return toast.error("Please select a custodian.");
@@ -446,11 +446,8 @@ const ManageFile = () => {
                   <TextField
                     id="keywordInput"
                     variant="outlined"
-                    label={
-                      <span>
-                        Keyword <span style={{ color: "red" }}>*</span>
-                      </span>
-                    }
+                    label="Keyword"
+                         
                     fullWidth
                     value={formKeyword}
                     onChange={(e) => setFormKeyword(e.target.value)}
@@ -624,7 +621,7 @@ const ManageFile = () => {
                   />
                 </div>
 
-                <div className="col-md-12 text-center">
+                <div className="col-md-12 text-center d-flex justify-content-center gap-1">
                   <Button
                     type="submit"
                     variant="contained"
@@ -633,6 +630,16 @@ const ManageFile = () => {
                     // disabled={isSubmitting}
                   >
                     Submit
+                  </Button>
+                  <Button
+                    // type="button"ddddd
+                    variant="contained"
+                    color="error"
+                    sx={{ mt: 3 }}
+                    // disabled={isSubmitting}
+                    onClick={resetForm}
+                  >
+                    Cancel
                   </Button>
                 </div>
               </form>

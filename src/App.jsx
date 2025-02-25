@@ -44,7 +44,8 @@ function App() {
       <BrowserRouter>
         <ToastContainer
           position="top-right"
-          autoClose={1000}
+          autoClose={2000}
+          width={{ xs: "100%", sm: "320px" }}
           closeOnClick
           pauseOnFocusLoss
         />
