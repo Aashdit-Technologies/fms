@@ -25,10 +25,11 @@ const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
   console.log( "fileName props",  fileName)
   console.log( "filePath props",filePath)
   
-const token = useAuthStore.getState().token;
+
 
   const handleDownloadview = async (encloser) => {
     try {
+      const token = useAuthStore.getState().token;
     const payload = {
     documentName: encloser.fileName,
     documentPath: encloser.filePath,

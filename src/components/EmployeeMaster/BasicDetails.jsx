@@ -160,7 +160,7 @@ const handleSaveAndNext = async () => {
         <ToastContainer /> 
         <Grid container spacing={2}>
           {/* First Row */}
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <TextField
               fullWidth
               label={
@@ -171,12 +171,13 @@ const handleSaveAndNext = async () => {
               name="firstName"
               value={data.firstName}
               onChange={handleChange}
+              InputProps={{ sx: { height: '50px' } }}
             />
           </Grid>
-          <Grid item xs={4}>
-            <TextField fullWidth label="Middle Name" name="middleName" value={data.middleName} onChange={handleChange} />
+          <Grid item xs={3}>
+            <TextField fullWidth label="Middle Name" name="middleName" value={data.middleName} onChange={handleChange} InputProps={{ sx: { height: '50px' } }}/>
           </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <TextField
               fullWidth
               label={
@@ -187,11 +188,12 @@ const handleSaveAndNext = async () => {
               name="lastName"
               value={data.lastName}
               onChange={handleChange}
+              InputProps={{ sx: { height: '50px' } }}
             />
           </Grid>
 
           {/* Second Row */}
-          <Grid item xs={4}>
+          <Grid item xs={3}>
   <MobileDatePicker
     label={
       <>
@@ -202,6 +204,7 @@ const handleSaveAndNext = async () => {
     onChange={(newValue) => handleDateChange('dateBirth', newValue)}
     
     format="DD-MM-YYYY"
+    
     slotProps={{
       textField: {
         fullWidth: true,
@@ -212,12 +215,17 @@ const handleSaveAndNext = async () => {
             </InputAdornment>
           ),
         },
+        sx: {
+          '& .MuiInputBase-root': {
+            height: '50px', // Adjust height as needed
+          },
+        },
       },
     }}
   />
 </Grid>
 
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <TextField
               fullWidth
               label="Email"
@@ -225,12 +233,13 @@ const handleSaveAndNext = async () => {
               type="email"
               value={data.email}
               onChange={handleChange}
+              InputProps={{ sx: { height: '50px' } }}
             />
           </Grid>
 
           {/* Third Row */}
         
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <TextField
               fullWidth
               label={
@@ -242,9 +251,10 @@ const handleSaveAndNext = async () => {
               type="number"
               value={data.mobile}
               onChange={handleChange}
+              InputProps={{ sx: { height: '50px' } }}
             />
           </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <TextField
               fullWidth
               label=" Office Email"
@@ -253,20 +263,22 @@ const handleSaveAndNext = async () => {
               type="email"
               value={data.officeEmail}
               onChange={handleChange}
+              InputProps={{ sx: { height: '50px' } }}
             />
           </Grid>
 
           {/* Fourth Row */}
-          <Grid item xs={4}>
-            <TextField fullWidth label="Office Phone" name="officePhone" value={data.officePhone} onChange={handleChange} />
+          <Grid item xs={3}>
+            <TextField fullWidth label="Office Phone" name="officePhone" value={data.officePhone} onChange={handleChange} InputProps={{ sx: { height: '50px' } }}/>
           </Grid>
 
-          <Grid item xs={4}>
+          <Grid item xs={3}>
           <MobileDatePicker
               label="Joining Date"
               value={data.joiningDate && dayjs(data.joiningDate).isValid() ? dayjs(data.joiningDate) : null}
               onChange={(newValue) => handleDateChange('joiningDate', newValue)}
               format="DD-MM-YYYY"
+              
               slotProps={{
                 textField: {
                   fullWidth: true,
@@ -277,11 +289,16 @@ const handleSaveAndNext = async () => {
                       </InputAdornment>
                     ),
                   },
+                  sx: {
+                    '& .MuiInputBase-root': {
+                      height: '50px', // Adjust height as needed
+                    },
+                  },
                 },
               }}
             />
           </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <MobileDatePicker
               label={
                 <>
@@ -291,6 +308,7 @@ const handleSaveAndNext = async () => {
               value={data.serviceEndDate  &&  dayjs(data.serviceEndDate).isValid()  ? dayjs(data.serviceEndDate) : null}
               onChange={(newValue) => handleDateChange('serviceEndDate', newValue)}
               format="DD-MM-YYYY"
+              
               slotProps={{
                 textField: {
                   fullWidth: true,
@@ -300,6 +318,11 @@ const handleSaveAndNext = async () => {
                         <CalendarToday />
                       </InputAdornment>
                     ),
+                  },
+                  sx: {
+                    '& .MuiInputBase-root': {
+                      height: '50px', // Adjust height as needed
+                    },
                   },
                 },
               }}

@@ -38,7 +38,6 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNot
   );
 
   const handleContentChanges = useCallback((newContent) => {
-    console.log('Editor content changed:', newContent);
     setEditorContent(newContent);
     onContentChange?.(newContent);
   }, [onContentChange]);

@@ -135,7 +135,7 @@ const Despatch = () => {
   const [selectedRow, setSelectedRow] = useState(null);
    const [dispatchdata, setDispatchData] = useState([]);
   const [expanded, setExpanded] = useState(true); 
-   const token = useAuthStore.getState().token;
+   
    const fileName = dispatchdata?.[0]?.fileName;
    const filePath = dispatchdata?.[0]?.filePath;
    
@@ -167,115 +167,65 @@ const Despatch = () => {
   };
 
 
-  // const fetchLetters = async (tabCode) => {
+  const fetchLetters = async (tabCode) => {
     
-  //   try {
-  //     const payload = { tabCode };
+    try {
+      const token = useAuthStore.getState().token;
+      const payload = { tabCode };
   
-  //     const response = await api.post(
-  //       "dispatch/dispatch-section-manage-letter",
-  //       { dataObject: encryptPayload(payload) },
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
+      const response = await api.post(
+        "dispatch/dispatch-section-manage-letter",
+        { dataObject: encryptPayload(payload) },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
   
-  //     console.log("Raw API Response:", JSON.stringify(response.data, null, 2));
+      console.log("Raw API Response:", JSON.stringify(response.data, null, 2));
   
-  //     let responseData = response.data?.data?.correspondancelist;
+      let responseData = response.data?.data?.correspondancelist;
   
-  //     if (!responseData) {
-  //       setDispatchData([]);
-  //     } else if (responseData.empty === true) {
-  //       console.log("Correspondance list is empty.");
-  //       setDispatchData([]);
-  //     } else if (Array.isArray(responseData)) {
-  //       setDispatchData(responseData);
-  //     } else if (typeof responseData === "object") {
-  //       const convertedArray = Object.values(responseData).filter(item => item !== null && item !== undefined);
-  //       if (convertedArray.length > 0) {
-  //         setDispatchData(convertedArray);
-  //       } else {
-  //         console.warn("Correspondance list is an empty object.");
-  //         setDispatchData([]);
-  //       }
-  //     } else {
-  //       console.warn("Unexpected response format:", responseData);
-  //       setDispatchData([]);
-  //     }
-     
-  //   } catch (error) {
-  //     console.error("Error fetching letters:", error);
-  //     setDispatchData([]);
-      
-  //   }
-  // };
-  
-
-  // useEffect(() => {
-  //   if (activeTab) {
-  //     fetchLetters(activeTab);
-  //   }
-  // }, [activeTab]);  
-
-  useEffect(() => {
-    const fetchLetters = async (tabCode) => {
-      try {
-        const payload = { tabCode };
-  
-        const response = await api.post(
-          "dispatch/dispatch-section-manage-letter",
-          { dataObject: encryptPayload(payload) },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-  
-        console.log("Raw API Response:", JSON.stringify(response.data, null, 2));
-  
-        let responseData = response.data?.data?.correspondancelist;
-  
-        if (!responseData) {
-          setDispatchData([]);
-        } else if (responseData.empty === true) {
-          console.log("Correspondance list is empty.");
-          setDispatchData([]);
-        } else if (Array.isArray(responseData)) {
-          setDispatchData(responseData);
-        } else if (typeof responseData === "object") {
-          const convertedArray = Object.values(responseData).filter(
-            (item) => item !== null && item !== undefined
-          );
-          if (convertedArray.length > 0) {
-            setDispatchData(convertedArray);
-          } else {
-            console.warn("Correspondance list is an empty object.");
-            setDispatchData([]);
-          }
+      if (!responseData) {
+        setDispatchData([]);
+      } else if (responseData.empty === true) {
+        console.log("Correspondance list is empty.");
+        setDispatchData([]);
+      } else if (Array.isArray(responseData)) {
+        setDispatchData(responseData);
+      } else if (typeof responseData === "object") {
+        const convertedArray = Object.values(responseData).filter(item => item !== null && item !== undefined);
+        if (convertedArray.length > 0) {
+          setDispatchData(convertedArray);
         } else {
-          console.warn("Unexpected response format:", responseData);
+          console.warn("Correspondance list is an empty object.");
           setDispatchData([]);
         }
-      } catch (error) {
-        console.error("Error fetching letters:", error);
+      } else {
+        console.warn("Unexpected response format:", responseData);
         setDispatchData([]);
       }
-    };
+     
+    } catch (error) {
+      console.error("Error fetching letters:", error);
+      setDispatchData([]);
+      
+    }
+  };
   
+
+  useEffect(() => {
     if (activeTab) {
       fetchLetters(activeTab);
     }
-  }, [activeTab]); 
+  }, [activeTab]);  
 
 
   const handleDownload = async (row) => {
     try {
+      const token = useAuthStore.getState().token;
       const payload = { correspondenceId: row.correspondenceId };
   
       const response = await api.post(
@@ -449,7 +399,7 @@ const Despatch = () => {
   const  handleDownloadview = async (row) => {
     try {
      
-  
+      const token = useAuthStore.getState().token;
       const payload = {
         documentName: row.fileName,
         documentPath: row.filePath,

@@ -26,7 +26,7 @@ const UploadLetter = ({ open, onClose,   dispatchData}) => {
     letterDocuments: null, 
   });
 
-  const token = useAuthStore.getState().token;
+  
   
   useEffect(() => {
     if (!open) {
@@ -85,6 +85,7 @@ const validateForm = () => {
     }
 
     try {
+      const token = useAuthStore.getState().token;
       if (!formData.letterDocuments || !(formData.letterDocuments instanceof File)) {
         toast.error("Invalid file. Please select a valid document.");
         console.error("Invalid file:", formData.letterDocuments);

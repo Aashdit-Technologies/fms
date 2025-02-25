@@ -188,6 +188,9 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
           width: 100%;
           background-color: #f9f9f9;
           border-radius: 12px;
+          height: 500px;
+          overflow: hidden;
+          overflow-y: auto;
         }
         .note-sheet-container.zoom-in .note-card {
           height: calc(100vh - 40px);

@@ -17,7 +17,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import ShareIcon from '@mui/icons-material/Share';
+
 
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
@@ -121,7 +121,7 @@ const LetterList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [openLetterDetail, setOpenLetterDetail] = useState(false);
   const [expanded, setExpanded] = useState(true);
-  const token = useAuthStore.getState().token;
+  
 
   const TAB_CODES = {
     NEW_LETTER: 'NEW_LETTER',
@@ -167,6 +167,7 @@ const LetterList = () => {
  
     const fetchLetters = useCallback(async (tabCode) => {
       try {
+        const token = useAuthStore.getState().token;
         const payload = {
           rowsize: rowSize,
           tabCode: tabCode,
@@ -209,6 +210,7 @@ const handleViewLetterDetail = async (row, tabCode) => {
   }
 
   try {
+    const token = useAuthStore.getState().token;
     const payload = {
       metadataId: row.metadataId,
       receiptId: row.receiptId,
@@ -277,17 +279,17 @@ const handleTabChange = (newTab) => {
         View
     </Button>
 );
-const actionButtons = (row) => (
-  <Button
-      size="small"
-      variant="contained"
-      color="primary"
-      startIcon={<ShareIcon/>}
-      onClick={() => handleViewLetterDetail(row, activeTab)}  
-  >
+// const actionButtons = (row) => (
+//   <Button
+//       size="small"
+//       variant="contained"
+//       color="primary"
+//       startIcon={<ShareIcon/>}
+//       onClick={() => handleViewLetterDetail(row, activeTab)}  
+//   >
       
-  </Button>
-);
+//   </Button>
+// );
 
 
 const NewLettercolumns = [
@@ -393,7 +395,7 @@ const SentLetterColumns = [
   },
   {
     name: 'Action',
-    cell: actionButtons,
+    cell: actionButton,
     width: '120px',
   },
 ];

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { FaPlus, FaMinus } from "react-icons/fa";
-import "../DiarySection/diarysection.css";
 import DataTable from "react-data-table-component";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
@@ -250,7 +249,6 @@ const DiarySection = () => {
   const [showModalEncloser, setShowModalEncloser] = useState(false);
   const [SentLetterData, setSentLetterData] = useState([]);
   const [filteredSentLetter, setfilteredSentLetter] = useState([]);
-  const token = useAuthStore.getState().token;
   const [searchQueryNewLetter, setSearchQueryNewLetter] = useState("");
   const [searchQuerySentLetter, setSearchQuerySentLetter] = useState("");
   const [searchQuerySender, setSearchQuerySender] = useState("");
@@ -682,6 +680,7 @@ const DiarySection = () => {
     }
 
     try {
+      const token = useAuthStore.getState().token;
       const payload = { ...senderDetails };
       const response = await api.post(
         "diary-section/save-address-book",
@@ -777,33 +776,62 @@ const handleremarksChange = (e) => {
   }));
 };
  
-
   //Fetch sender data from the API
-  useEffect(() => {
-  const fetchSenderData = async () => {
-    try {
-      const response = await api.get(
-        "diary-section/get-sender-address-auto-fill",
-        {
-          headers: { Authorization: `Bearer ${token}` },
+  // useEffect(() => {
+  // const fetchSenderData = async () => {
+  //   try {
+  //      const token = useAuthStore.getState().token;
+  //     const response = await api.get(
+  //       "diary-section/get-sender-address-auto-fill",
+  //       {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
+
+  //     const data = response?.data?.data?.searchkey;
+  //     if (Array.isArray(data)) {
+  //       setAllSenders(data);
+  //       setFilteredSenders(data);
+  //     } else {
+  //       console.error("Invalid data structure received from API");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching sender data:", error);
+  //   }
+  // };
+  //     fetchSenderData();
+  // }, [token]);
+  
+    const fetchSenderData = async () => {
+      try {
+        const token = useAuthStore.getState().token; 
+        if (!token) {
+          console.error("Token is missing");
+          return;
         }
-      );
-
-      const data = response?.data?.data?.searchkey;
-      if (Array.isArray(data)) {
-        setAllSenders(data);
-        setFilteredSenders(data);
-      } else {
-        console.error("Invalid data structure received from API");
+  
+        const response = await api.get(
+          "diary-section/get-sender-address-auto-fill",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+  
+        const data = response?.data?.data?.searchkey;
+        if (Array.isArray(data)) {
+          setAllSenders(data);
+          setFilteredSenders(data);
+        } else {
+          console.error("Invalid data structure received from API");
+        }
+      } catch (error) {
+        console.error("Error fetching sender data:", error);
       }
-    } catch (error) {
-      console.error("Error fetching sender data:", error);
-    }
-  };
-
-      fetchSenderData();
-  }, [token]);
-
+    };
+    useEffect(() => {
+    fetchSenderData();
+  }, []); 
+  
   const handleSenderChange = (event, newValue) => {
     if (newValue === null) {
       setSearchTerm('');
@@ -870,10 +898,10 @@ const handleremarksChange = (e) => {
   }, []);
   const fetchRecords = async () => {
     try {
+      const token = useAuthStore.getState().token;
       if (!token) {
         throw new Error("Authorization token is missing");
       }
-
       const response = await api.get("/common/address-list", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -910,9 +938,10 @@ const handleremarksChange = (e) => {
 
 
   // departmentList get api
-  useEffect(() => {
+ 
   const fetchDepartmentAndDesignationData = async () => {
     try {
+      const token = useAuthStore.getState().token;
       if (!token) {
         throw new Error("Authorization token is missing");
       }
@@ -945,14 +974,15 @@ const handleremarksChange = (e) => {
       );
     }
   };
- 
+  useEffect(() => {
     fetchDepartmentAndDesignationData();
-  }, [token]);
+  }, []);
 
   // EnclosureTypes get api
-  useEffect(() => {
+  
     const fetchEnclosureTypes = async () => {
       try {
+        const token = useAuthStore.getState().token;
         if (!token) {
           throw new Error("Authorization token is missing");
         }
@@ -980,15 +1010,16 @@ const handleremarksChange = (e) => {
         );
       }
     };
-
+    useEffect(() => {
     fetchEnclosureTypes();
-  }, [token]);
+  }, []);
 
   // Add Sender Details post Api
   
 
   const saveFormData = async (savensendValue) => {
     try {
+      const token = sessionStorage.getItem("token");
       const formDataToSend = new FormData();
 
       const empDeptDetailsVoList = rows.map((row) => ({
@@ -1053,7 +1084,7 @@ const handleremarksChange = (e) => {
 
       if (response.status === 200) {
         toast.success(response.data.message, { autoClose: 3000 });
-        // await Promise.all([NewLetter(), sentLetter()]);
+        await Promise.all([NewLetter(), sentLetter()]);
          
         setOpenSection("LettersList");
         setFormData({
@@ -1190,9 +1221,10 @@ const handleremarksChange = (e) => {
    
 
     // NewLetter api binding 
-    useEffect(() => {
+   
     const NewLetter = async () => {
       try {
+        const token = useAuthStore.getState().token;
         if (!token) {
           throw new Error("Authorization token is missing");
         }
@@ -1217,15 +1249,15 @@ const handleremarksChange = (e) => {
         );
       }
     };
-  
+    useEffect(() => {
       NewLetter(); 
-    }, [token]); 
+    }, []); 
 
  // SentLetter api binding 
-   useEffect(() => {
+ 
   const sentLetter = async () => {
     try {
-      console.log("Token:", token);
+      const token = useAuthStore.getState().token;
       if (!token) {
         toast.error("Authorization token is missing");
         return;
@@ -1251,9 +1283,10 @@ const handleremarksChange = (e) => {
       console.error("Error fetching records:", error);
       toast.error(error.response?.data?.message || "An unexpected error occurred.");
     }
-  };
+  };  
+  useEffect(() => {
       sentLetter();
-  }, [token]);
+  }, []);
   
 
   const handleAddressIconClick = async (row) => {
@@ -1291,7 +1324,7 @@ const handleremarksChange = (e) => {
       }
     }
     try {
-
+      const token = sessionStorage.getItem("token");
       const enclosureData = enclosureRowstable.map((row, index) => ({
         encTypeId: row.enclosureType || null,
         encName: row.enclosureName || null,
@@ -1426,8 +1459,8 @@ const handleSendButtonClick = async (event) => {
       toast.success("Letter have been  sent successfully!"); 
       setShowModalShare(false); 
       setActiveTab("sentLetter"); 
-      // await NewLetter();
-      // await sentLetter(); 
+      await NewLetter();
+      await sentLetter(); 
     } else {
       toast.error("Failed to send letter.");
     }
@@ -1706,6 +1739,7 @@ const handleEditButtonClick = async (row) => {
     if (field === "departmentName" || field === "addresseeDesignation") {
       if (departmentName && addresseeDesignation) {
         try {
+          const token = useAuthStore.getState().token;
           const response = await api.get(
             `/diary-section/get-employee-details-by-deptId-and-desigId?deptId=${departmentName}&degId=${addresseeDesignation}`,
             { headers: { Authorization: `Bearer ${token}` } }
@@ -1962,6 +1996,7 @@ const handleFileUploadChangeencloser = (index, event) => {
  // inward letter upload letter file view
  const handleDocumentView = async () => {
   try {
+    const token = useAuthStore.getState().token;
     if (!formData.fileName || !formData.filePath) {
       alert("No document available to view.");
       return;
@@ -1971,8 +2006,8 @@ const handleFileUploadChangeencloser = (index, event) => {
       documentName: formData.fileName,
       documentPath: formData.filePath,
     };
-console.log("documentname",documentName)
-console.log("documentpath",documentPath)
+// console.log("documentname",documentName)
+// console.log("documentpath",documentPath)
     const encryptedPayload = encryptPayload(payload);
     console.log("Checking payloads", encryptedPayload);
 
@@ -2001,12 +2036,53 @@ console.log("documentpath",documentPath)
   }
 };
 
+// inward letter table enclosure  file view
+const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
+  try {
+    
+    const token = useAuthStore.getState().token;
+    if (!fileName || !filePath) {
+      alert("No document available to view.");
+      return;
+    }
 
+    const payload = {
+      documentName: fileName,
+      documentPath: filePath,
+    };
 
+    const encryptedPayload = encryptPayload(payload);
+    console.log("Checking payloads", encryptedPayload);
 
-   // table encloser download button
+    const response = await api.post(
+      'download/view-document',
+      { dataObject: encryptedPayload },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    console.log(response);
+    if (response.data && response.data.data) {
+      const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
+      const byteCharacters = atob(base64String);
+      const byteNumbers = new Uint8Array([...byteCharacters].map(char => char.charCodeAt(0)));
+      const blob = new Blob([byteNumbers], { type: "application/pdf" });
+    
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+    } else {
+      toast.error("Failed to load PDF.");
+    }
+  } catch (error) {
+    console.error("Error fetching PDF:", error);
+    toast.error("Failed to fetch PDF. Please try again.");
+  }
+};
+
+   //  new letter table encloser download button
    const handleDownload = async (row) => {
     try {
+      const token = useAuthStore.getState().token;
     const payload = {
     documentName: row.fileName,
     documentPath:row.filePath,
@@ -2047,9 +2123,11 @@ console.log("documentpath",documentPath)
     toast.error("Failed to download PDF. Please try again.");
     }
     };
+
     // letter right side download button
     const handleDownloadletter = async () => {
       try {
+        const token = useAuthStore.getState().token;
       const payload = {
       documentName: fileNames,
       documentPath:filePaths,
@@ -2090,9 +2168,11 @@ console.log("documentpath",documentPath)
       toast.error("Failed to download PDF. Please try again.");
       }
       };
- // letter bottom side enclosure download button
+      
+ // letter bottom side enclosure name download button
       const handleDownloadEnclosureletter = async (fileName,filePath) => {
         try {
+          const token = useAuthStore.getState().token;
         const payload = {
         documentName: fileName,
         documentPath:filePath,
@@ -2134,46 +2214,7 @@ console.log("documentpath",documentPath)
         }
         };
   
-// inward letter table enclosure  file view
-      const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
-        try {
-          if (!fileName || !filePath) {
-            alert("No document available to view.");
-            return;
-          }
-      
-          const payload = {
-            documentName: fileName,
-            documentPath: filePath,
-          };
-      
-          const encryptedPayload = encryptPayload(payload);
-          console.log("Checking payloads", encryptedPayload);
-      
-          const response = await api.post(
-            'download/view-document',
-            { dataObject: encryptedPayload },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          console.log(response);
-          if (response.data && response.data.data) {
-            const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
-            const byteCharacters = atob(base64String);
-            const byteNumbers = new Uint8Array([...byteCharacters].map(char => char.charCodeAt(0)));
-            const blob = new Blob([byteNumbers], { type: "application/pdf" });
-          
-            const url = URL.createObjectURL(blob);
-            window.open(url, "_blank");
-          } else {
-            toast.error("Failed to load PDF.");
-          }
-        } catch (error) {
-          console.error("Error fetching PDF:", error);
-          toast.error("Failed to fetch PDF. Please try again.");
-        }
-      };
+
      
 
       return (

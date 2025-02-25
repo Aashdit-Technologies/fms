@@ -45,7 +45,7 @@ const viewdocument =  letterDataView?.base64Path;
 const encloserFileName = letterDataView?.letterEnclosureArrays?.[0]?.fileName || "No File Available";
 const encloserFilePath = letterDataView?.letterEnclosureArrays?.[0]?.filePath || "No File Available";
 
-  const token = useAuthStore.getState().token; 
+  
   const [isUrgent, setIsUrgent] = useState(letterDataView?.isUrgent || false);
   const [pendingUrgency, setPendingUrgency] = useState(null);
   const [openUrgentModal, setOpenUrgentModal] = useState(false);
@@ -190,6 +190,7 @@ useEffect(() => {
 const handleConfirmUrgent = async () => {
       
   try {
+    const token = useAuthStore.getState().token;
       const letterRecptId = letterData?.letterRecptId || letterDataView?.letterRecptId;
       const payload = {
           letterReceipentId: letterRecptId,
@@ -227,6 +228,7 @@ const handleConfirmUrgent = async () => {
   const handleConfirmConfidential = async () => {
     
     try {
+      const token = useAuthStore.getState().token;
       const letterRecptId = letterData?.letterRecptId || letterDataView?.letterRecptId;
       const tab = letterData?.tab || letterDataView?.tab;
       const payload = {
@@ -260,6 +262,7 @@ const handleConfirmUrgent = async () => {
 
   const handleConfirmSave = async () => {
     try {
+      const token = useAuthStore.getState().token;
       const metadataId = letterData?.metadataId || letterDataView?.metadataId;
       const noteId = letterData?.noteId || letterDataView?.noteId || null;
   
@@ -300,6 +303,7 @@ const handleConfirmUrgent = async () => {
   
   const handleOtherButtonClick = async () => {
     try {
+      const token = useAuthStore.getState().token;
       const [departmentResponse, officeResponse] = await Promise.all([
         api.post('common/department-list', {}, { headers: { Authorization: `Bearer ${token}` } }),
         api.post('common/office-list', {}, { headers: { Authorization: `Bearer ${token}` } }),
@@ -377,7 +381,7 @@ const handleConfirmUrgent = async () => {
   
   const fetchEmployeeData = async () => {
     try {
-     
+     const token = useAuthStore.getState().token;
       const payload = {
         officeId,
         departmentId,
@@ -435,6 +439,7 @@ const handleConfirmUrgent = async () => {
     }
   
     try {
+      const token = useAuthStore.getState().token;
       const payload = {
         metadataId,
         letterReceiptId: letterRecptId,
@@ -479,7 +484,7 @@ const handleConfirmUrgent = async () => {
 
   const handlefrequentlymarks = async () => {
     try {
-      
+      const token = useAuthStore.getState().token;
       if (selectedRowsfrequ.length === 0) {
         toast.warning("Please select at least one record to send."); 
         return; 
@@ -519,6 +524,7 @@ const handleConfirmUrgent = async () => {
 
   const handleAddToFile = async () => {
     try {
+      const token = useAuthStore.getState().token;
       const payload = {
         letterReceiptId: letterRecptId,
       };
@@ -571,6 +577,7 @@ const handleConfirmUrgent = async () => {
 
   const handleDownload = async () => {
     try {
+      const token = useAuthStore.getState().token;
     const payload = {
     documentName: fileName,
     documentPath: filePath,
@@ -614,6 +621,7 @@ const handleConfirmUrgent = async () => {
 
     const handleDownloadenclosure = async () => {
       try {
+        const token = useAuthStore.getState().token;
       const payload = {
       documentName: encloserFileName,
       documentPath: encloserFilePath,
@@ -656,8 +664,8 @@ const handleConfirmUrgent = async () => {
       };
   
     
-  const showAllDetails = letterData?.tabCode === 'NEW_LETTER' || letterData?.tabCode === 'SENT_LETTER';
-  const isNewLetter = letterData?.tabCode === 'NEW_LETTER';
+  const showAllDetails = letterData?.tabCode === 'NEW_LETTER' ;
+  // const isNewLetter = letterData?.tabCode === 'NEW_LETTER';
   return (
     <>
    
@@ -777,7 +785,7 @@ const handleConfirmUrgent = async () => {
         
        {showAllDetails  && (
       <Box sx={{ display: "flex", gap: 4, mb: 3 }}>
-         {isNewLetter && ( 
+       
         <FormControlLabel
           control={
             <Switch
@@ -788,7 +796,7 @@ const handleConfirmUrgent = async () => {
           }
           label={isUrgent ? "Urgent" : "Non-Urgent"}
         />
-        )}
+      
         <FormControlLabel
           control={
             <Switch
@@ -805,11 +813,11 @@ const handleConfirmUrgent = async () => {
             {showAllDetails && (
               <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
                   
-              {isNewLetter && (
+             
             <Button variant="contained" color="primary" onClick={handleSaveClick}>
               Save
             </Button>
-          )}
+          
                
                <Button
                   variant="contained"
@@ -820,11 +828,10 @@ const handleConfirmUrgent = async () => {
                   Send
                 </Button>
 
-                {isNewLetter && ( 
                       <Button variant="contained" color="success" onClick={handleAddToFile}>
                         Add to File
                       </Button>
-                    )}
+                   
                 <Button variant="outlined" color="error" onClick={onClose}>
                   Cancel
                 </Button>
