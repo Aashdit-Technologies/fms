@@ -255,9 +255,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
   // };
 
   const handleSubmit = () => {
-    if (!validateForm()) {
-      return;
-    }
+    
     
     const documents = rows.map((row) => ({
       docSubject: row.subject,
