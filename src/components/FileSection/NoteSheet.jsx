@@ -1,22 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Card } from "react-bootstrap";
 import { Button } from "@mui/material";
 import { MdNote } from "react-icons/md";
 import SunEditorComponent from "./SunEditorComponent";
+import { debounce } from "lodash";
+import {  useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { encryptPayload } from "../../utils/encrypt";
+import useAuthStore from "../../store/Store";
+import api from "../../Api/Api";
 
-const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) => {
+const NoteSheet = ({
+  noteSheets,
+  additionalDetails,
+  content,
+  onContentChange,
+}) => {
   const [notes, setNotes] = useState([]);
   const [zoomIn, setZoomIn] = useState(false);
   const [writeNote, setWriteNote] = useState(false);
-  const [editorContent, setEditorContent] = useState(content || '');
+  const [editorContent, setEditorContent] = useState(content || "");
   const [showPreview, setShowPreview] = useState(false);
-
-  // Update editor content when props change or when writeNote becomes true
+  const navigate = useNavigate();
+const token =useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  // Update editor content when props change
   useEffect(() => {
-    const newContent = content || additionalDetails?.data?.note || '';
-    console.log('NoteSheet updating content:', newContent);
-    setEditorContent(newContent);
-  }, [content, additionalDetails, writeNote]);
+    const newContent = content || additionalDetails?.data?.note || "";
+    if (newContent !== editorContent) {
+      console.log("NoteSheet updating content:", newContent);
+      setEditorContent(newContent);
+    }
+  }, [content, additionalDetails]);
 
   // Update notes when noteSheets change
   useEffect(() => {
@@ -27,36 +41,97 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
     }
   }, [noteSheets]);
 
+  // Debounce onContentChange to reduce re-renders
+  const debouncedOnContentChange = useCallback(
+    debounce((newContent) => {
+      console.log("NoteSheet content changed:", newContent);
+      onContentChange?.(newContent);
+    }, 300),
+    [onContentChange]
+  );
+
   const handleEditorChange = (newContent) => {
-    console.log('NoteSheet content changed:', newContent);
     setEditorContent(newContent);
-    onContentChange?.(newContent);
-  };
-  const handleEditorBlur = () => {
-    console.log('Editor blurred, saving content:', editorContent);
-    onContentChange?.(editorContent); // Notify parent about the content change when editor loses focus
+    debouncedOnContentChange(newContent);
   };
 
-  const togglePreview = () => {
-    if (showPreview) {
-      setShowPreview(false);
-      setWriteNote(true);
-    } else {
-      setShowPreview(true);
-      setWriteNote(false);
+  const handleEditorBlur = () => {
+    console.log("Editor blurred, saving content:", editorContent);
+    onContentChange?.(editorContent);
+  };
+
+  const togglePreview = async () => {
+    try {
+      const encryptedDload = encryptPayload({
+        fileId: additionalDetails.data.fileId,
+      });
+
+      console.log("Payload:", encryptedDload);
+
+      const response = await api.post(
+        "/file/notesheet-preview",
+        { dataObject: encryptedDload },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      
+      if (response.data.outcome) {
+        console.log("Preview data:", response.data);
+        navigate("/note-sheet-preview", { state: { previewData: response.data } });
+      }
+    } catch (error) {
+      toast.error("Preview failed. Please try again.");
+      console.error("Preview error:", error);
     }
   };
 
   const convertHTMLToText = (htmlContent) => {
-    if (!htmlContent) return '';
+    if (!htmlContent) return "";
     const doc = new DOMParser().parseFromString(htmlContent, "text/html");
-    return doc.body.textContent || doc.body.innerText || '';
+    return doc.body.textContent || doc.body.innerText || "";
   };
 
   const badgeColors = ["#ff5733", "#1e90ff", "#28a745", "#ffcc00"];
 
+  // Memoize rendered notes to optimize performance
+  const renderedNotes = useMemo(() => {
+    return notes.map((note, index) => (
+      <Card.Body
+        key={note.noteSheetId}
+        className="note-card-body"
+        style={{
+          background: index % 2 === 0 ? "#ffffff" : "#f8f9fa",
+          borderLeft: `6px solid ${badgeColors[index % badgeColors.length]}`,
+        }}
+      >
+        <div
+          className="note-index"
+          style={{
+            background: badgeColors[index % badgeColors.length],
+          }}
+        >
+          {index + 1}
+        </div>
+        <p className="note-author">
+          <strong>Noting By:</strong>{" "}
+          <span className="text-primary">{note.senderName}</span> (
+          {note.senderDesignation})
+        </p>
+        <p className="note-content">{convertHTMLToText(note.note)}</p>
+        <p className="note-date">
+          {note.senderName} | {note.createdDate} | {note.createdTime}
+        </p>
+      </Card.Body>
+    ));
+  }, [notes]);
+
   return (
-    <div className={`note-sheet-container ${zoomIn || writeNote || showPreview ? "zoom-in" : ""}`}>
+    <div
+      className={`note-sheet-container ${
+        zoomIn || writeNote || showPreview ? "zoom-in" : ""
+      }`}
+    >
       <Card className="p-4 mb-4 shadow-lg note-card">
         <div className="d-flex justify-content-between align-items-center note-header">
           <h5 className="fw-bold text-uppercase text-dark d-flex align-items-center">
@@ -70,7 +145,7 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
                     variant="contained"
                     color="error"
                     className="me-2"
-                    onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => setWriteNote(false)}
                   >
                     Close View
@@ -80,7 +155,7 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
                     variant="contained"
                     color="success"
                     className="me-2"
-                    onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => setWriteNote(true)}
                   >
                     Write Note
@@ -92,7 +167,7 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
                     variant="contained"
                     color="primary"
                     className="me-2"
-                    onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => setZoomIn(!zoomIn)}
                   >
                     {zoomIn ? "Zoom Out" : "Zoom In"}
@@ -100,66 +175,44 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
                 )}
               </>
             )}
-            
+
             <Button
               variant="contained"
               color="secondary"
               className="me-2"
-              onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
+              // onMouseDown={(e) => e.preventDefault()}
               onClick={togglePreview}
             >
-              {showPreview ? "Close Preview" : "Preview"}
+              Preview
             </Button>
           </div>
         </div>
 
         <div className="d-flex">
-          <div className={`notes-container ${(writeNote || showPreview) && !zoomIn ? "half-width" : "full-width"}`}>
-            {notes.length > 0 ? (
-              notes.map((note, index) => (
-                <Card.Body
-                  key={note.noteSheetId}
-                  className="note-card-body"
-                  style={{
-                    background: index % 2 === 0 ? "#ffffff" : "#f8f9fa",
-                    borderLeft: `6px solid ${badgeColors[index % badgeColors.length]}`,
-                  }}
-                >
-                  <div
-                    className="note-index"
-                    style={{
-                      background: badgeColors[index % badgeColors.length],
-                    }}
-                  >
-                    {index + 1}
-                  </div>
-                  <p className="note-author">
-                    <strong>Noting By:</strong>{" "}
-                    <span className="text-primary">{note.senderName}</span> ({note.senderDesignation})
-                  </p>
-                  <p className="note-content">{convertHTMLToText(note.note)}</p>
-                  <p className="note-date">
-                    {note.senderName} | {note.createdDate} | {note.createdTime}
-                  </p>
-                </Card.Body>
-              ))
-            ) : (
-              <p>No notes available</p>
-            )}
+          <div
+            className={`notes-container ${
+              (writeNote || showPreview) && !zoomIn
+                ? "half-width"
+                : "full-width"
+            }`}
+          >
+            {notes.length > 0 ? renderedNotes : <p>No notes available</p>}
           </div>
 
           {(writeNote || showPreview) && (
             <div className="editor-container half-width">
               {showPreview ? (
                 <div className="preview-content">
-                  <div dangerouslySetInnerHTML={{ __html: editorContent || '' }} />
+                  <div
+                    dangerouslySetInnerHTML={{ __html: editorContent || "" }}
+                  />
                 </div>
               ) : (
                 <SunEditorComponent
+                  key={writeNote ? "write-mode" : "preview-mode"}
                   content={editorContent}
                   placeholder="Enter your task action here..."
                   onContentChange={handleEditorChange}
-                  additionalDetails={additionalDetails}
                   onBlur={handleEditorBlur}
                 />
               )}
@@ -282,4 +335,4 @@ const NoteSheet = ({ noteSheets, additionalDetails, content, onContentChange }) 
   );
 };
 
-export default NoteSheet;
+export default React.memo(NoteSheet);

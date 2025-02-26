@@ -104,7 +104,7 @@ const UploadDocumentsModal = ({
 
   const handleSelectionChange = (field, selectedOption) => {
     setSelectedValues((prev) => ({ ...prev, [field]: selectedOption }));
-
+    setTableData([]);
     if (field === "organization") {
       setOptions({
         companies: [],
@@ -131,7 +131,7 @@ const UploadDocumentsModal = ({
         },
       });
     } else if (field === "office") {
-      setOptions((prev) => ({ ...prev, departments: [], designations: [] }));
+      setOptions((prev) => ({ ...prev, departments: [], designations: [], }));
       fetchData.mutate({
         endpoint: "/level/get-departments",
         payload: {

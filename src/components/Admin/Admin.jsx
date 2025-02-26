@@ -18,6 +18,7 @@ import Welcome from "../Welcome/Welcome";
 import AddToFile from "../Inbox/AddToFile";
 import EmployeeMaster from "../EmployeeMaster/EmployeeMaster";
 import ManageCustodian from "../ManageCustodian/ManageCustodian";
+import NoteSheetPreview from "../FileSection/notesheetpreview/NoteSheetPreview";
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -123,6 +124,14 @@ const Admin = () => {
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <MainFile />
+                </React.Suspense>
+              }
+            />
+            <Route
+              path="note-sheet-preview"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <NoteSheetPreview />
                 </React.Suspense>
               }
             />

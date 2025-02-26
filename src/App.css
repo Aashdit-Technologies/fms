@@ -12,10 +12,12 @@
     overflow: hidden;
   }
   
-  .admin-main.collapsed {
+  /* .admin-main.collapsed {
     margin-left: 60px;
+  } */
+  .gvYsEF{
+    overflow: hidden !important;
   }
-  
   .card {
     background: #fff;
     border-radius: 8px;
@@ -448,4 +450,8 @@
   }
   .css-1sh91j5-MuiButton-startIcon{
     margin: 0 !important;
+  }
+  .corr_button>button{
+    margin-bottom: 5px;
+    margin-top: 5px;
   }

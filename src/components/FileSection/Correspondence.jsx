@@ -72,7 +72,7 @@ const customStyles = {
   },
   headRow: {
     style: {
-      backgroundColor: "#007bff",
+      backgroundColor: "#207785",
       color: "white",
       fontWeight: "bold",
       minHeight: "50px",
@@ -100,17 +100,17 @@ const fetchOffices = async () => {
         Authorization: `Bearer ${token}`,
       },
     });
-    
-    console.log('Letter Content API Response:', response.data);
-    
+
+    console.log("Letter Content API Response:", response.data);
+
     if (!response.data?.data) {
-      console.error('Invalid letter content response:', response.data);
-      throw new Error('Invalid letter content response');
+      console.error("Invalid letter content response:", response.data);
+      throw new Error("Invalid letter content response");
     }
-    
+
     return response.data;
   } catch (error) {
-    console.error('Error fetching letter content:', error);
+    console.error("Error fetching letter content:", error);
     throw error;
   }
 };
@@ -140,13 +140,13 @@ const Correspondence = ({
   const allDetails = fileDetails?.data || {};
   const [organizationsData, setOrganizationsData] = useState([]);
   const [editMalady, setEditMalady] = useState(null);
-  
+
   // Configure letter content query
   const {
     data: offices,
     isLoading,
     refetch,
-    error
+    error,
   } = useQuery({
     queryKey: ["offices"],
     queryFn: fetchOffices,
@@ -157,29 +157,30 @@ const Correspondence = ({
     retry: 2,
     onSuccess: (data) => {
       if (data?.data) {
-        console.log('Setting office names:', data);
+        console.log("Setting office names:", data);
         setOfficeNames(data);
       }
     },
     onError: (error) => {
-      console.error('Error loading letter content:', error);
-      toast.error('Failed to load letter templates');
-    }
+      console.error("Error loading letter content:", error);
+      toast.error("Failed to load letter templates");
+    },
   });
 
   // Fetch letter content on mount
   useEffect(() => {
-    refetch().then(response => {
-      console.log('Initial letter content fetch:', response);
-    }).catch(error => {
-      console.error('Error in initial fetch:', error);
-    });
+    refetch()
+      .then((response) => {
+        console.log("Initial letter content fetch:", response);
+      })
+      .catch((error) => {
+        console.error("Error in initial fetch:", error);
+      });
   }, []);
 
-  
   useEffect(() => {
     if (offices?.data) {
-      console.log('Updating office names from query data:', offices);
+      console.log("Updating office names from query data:", offices);
       setOfficeNames(offices);
     }
   }, [offices]);
@@ -202,7 +203,7 @@ const Correspondence = ({
 
   const fetchEnclosuresData = async (corrId) => {
     const encryptedData = encryptPayload({ corrId: corrId });
-  
+
     const response = await api.post(
       "file/get-file-correspondence-enclosures",
       { dataObject: encryptedData },
@@ -212,21 +213,22 @@ const Correspondence = ({
         },
       }
     );
-  
+
     console.log("Enclosures Data:", response.data);
     return response.data;
   };
 
-  const { mutate: fetchEnclosures, isLoading: isLoadingEnclosures } = useMutation({
-    mutationFn: fetchEnclosuresData,
-    onSuccess: (data) => {
-      setEnclosuresData(data);
-    },
-    onError: (error) => {
-      console.error("Error fetching enclosures", error);
-      toast.error("Failed to fetch enclosures");
-    },
-  });
+  const { mutate: fetchEnclosures, isLoading: isLoadingEnclosures } =
+    useMutation({
+      mutationFn: fetchEnclosuresData,
+      onSuccess: (data) => {
+        setEnclosuresData(data);
+      },
+      onError: (error) => {
+        console.error("Error fetching enclosures", error);
+        toast.error("Failed to fetch enclosures");
+      },
+    });
 
   const fetchUploadData = async () => {
     const response = await api.get("common/enclousuretype-list", {
@@ -261,7 +263,7 @@ const Correspondence = ({
 
   const handleUploadClick = (row) => {
     setSelectedCorrId(row.corrId);
-  
+
     fetchEnclosures(row.corrId, {
       onSuccess: () => {
         fetchUpload(row.corrId, {
@@ -271,16 +273,49 @@ const Correspondence = ({
         });
       },
       onError: (error) => {
-        console.error('Error fetching enclosures on button click', error);
+        console.error("Error fetching enclosures on button click", error);
         toast.error("Failed to fetch enclosures");
       },
     });
   };
-  
+
   const handleHistoryClick = (row) => {
     fetchHistory(row.draftNo);
   };
+  const printDraft = async (row) => {
+    if (!row || !row.corrId ) {
+      console.error("Invalid row data for download");
+      return;
+    }
 
+    try {
+      const encryptedDload = encryptPayload({
+        corrId: row.corrId,
+      });
+
+      const response = await api.post(
+        "/file/cor-draft-print",
+        { dataObject: encryptedDload },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
+        }
+      );
+
+      if (response.data && response.data.success) {
+        console.log("Download successful!");
+      } else {
+        console.error("Failed to download the document");
+      }
+    } catch (error) {
+      console.error("Error downloading the document", error);
+      alert(
+        "An error occurred while downloading the document. Please try again."
+      );
+    }
+  };
   const download = async (row) => {
     if (!row || !row.correspondenceName || !row.correspondencePath) {
       console.error("Invalid row data for download");
@@ -300,7 +335,7 @@ const Correspondence = ({
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          responseType: 'blob'
+          responseType: "blob",
         }
       );
 
@@ -330,11 +365,11 @@ const Correspondence = ({
       // Ensure we have the latest data
       const [officesResponse, orgResponse] = await Promise.all([
         refetch(),
-        fetchOrganizations.mutateAsync()
+        fetchOrganizations.mutateAsync(),
       ]);
 
       if (officesResponse.data?.data) {
-        console.log('Setting office names from create:', officesResponse.data);
+        console.log("Setting office names from create:", officesResponse.data);
         setOfficeNames(officesResponse.data);
       }
 
@@ -343,9 +378,9 @@ const Correspondence = ({
       }
 
       // Add debug logs
-      console.log('Offices Data:', officesResponse.data);
-      console.log('Organizations Data:', orgResponse?.data);
-      
+      console.log("Offices Data:", officesResponse.data);
+      console.log("Organizations Data:", orgResponse?.data);
+
       setModalOpen(true);
     } catch (error) {
       console.error("Error preparing draft creation:", error);
@@ -359,18 +394,18 @@ const Correspondence = ({
       const draftResponse = await EditDraftMutation.mutateAsync({
         corrId: row.corrId,
         fileId: fileDetails.data.fileId,
-        fileReceiptId: fileDetails.data.fileReceiptId
+        fileReceiptId: fileDetails.data.fileReceiptId,
       });
 
       // Then fetch required dropdown data in parallel
       const [officesResponse, orgResponse] = await Promise.all([
         refetch(),
-        fetchOrganizations.mutateAsync()
+        fetchOrganizations.mutateAsync(),
       ]);
 
       // Set office names
       if (officesResponse.data) {
-        console.log('Setting office names from edit:', officesResponse.data);
+        console.log("Setting office names from edit:", officesResponse.data);
         setOfficeNames(officesResponse.data);
       }
 
@@ -380,9 +415,9 @@ const Correspondence = ({
       }
 
       // Add debug logs
-      console.log('Draft Data:', draftResponse.data);
-      console.log('Offices Data:', officesResponse.data);
-      console.log('Organizations Data:', orgResponse?.data);
+      console.log("Draft Data:", draftResponse.data);
+      console.log("Offices Data:", officesResponse.data);
+      console.log("Organizations Data:", orgResponse?.data);
 
       // Only open modal if we have all required data
       if (draftResponse.data && officesResponse.data && orgResponse?.data) {
@@ -423,7 +458,8 @@ const Correspondence = ({
         fileReceiptId: data.fileReceiptId,
       });
 
-      const response = await api.post("/file/edit-draft-in-file", 
+      const response = await api.post(
+        "/file/edit-draft-in-file",
         { dataObject: encryptedDataObject },
         {
           headers: {
@@ -431,7 +467,7 @@ const Correspondence = ({
           },
         }
       );
-      
+
       if (response.data.outcome) {
         setEditMalady(response.data.data);
       } else {
@@ -446,7 +482,7 @@ const Correspondence = ({
         toast.error(error.message || "Failed to fetch draft data");
       }
       throw error;
-    }
+    },
   });
 
   const handleEditDraft = async (data) => {
@@ -500,8 +536,16 @@ const Correspondence = ({
     {
       name: "Subject",
       selector: (row) => (
-        <Tooltip title={row.subject} arrow >
-          <Typography variant="body2" style={{ width: '80px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <Tooltip title={row.subject} arrow>
+          <Typography
+            variant="body2"
+            style={{
+              width: "80px",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
             {row.subject}
           </Typography>
         </Tooltip>
@@ -518,7 +562,7 @@ const Correspondence = ({
     {
       name: "Action",
       cell: (row) => (
-        <Box sx={{ display: "flex", justifyContent: "center" }}>
+        <Box className="corr_button" sx={{ width: "70%" }}>
           {row.corrType === "LETTER" && (
             <>
               <StyledButton
@@ -531,11 +575,32 @@ const Correspondence = ({
               </StyledButton>
               <StyledButton
                 variant="contained"
+                style={{ backgroundColor: "#28a745" }}
+                onClick={() => download(row)}
+                title="Download"
+              >
+                <FaDownload size={16} />
+              </StyledButton>
+              <br />
+              <StyledButton
+                variant="contained"
                 color="secondary"
                 onClick={() => handleHistoryClick(row)}
                 title="View History"
               >
                 <FaHistory size={16} />
+              </StyledButton>
+            </>
+          )}
+          {row.corrType === "DOCUMENT" && (
+            <>
+              <StyledButton
+                variant="contained"
+                color="primary"
+                onClick={() => handleUploadClick(row)}
+                title="View Enclosure"
+              >
+                <FaCloudUploadAlt size={16} />
               </StyledButton>
               <StyledButton
                 variant="contained"
@@ -547,18 +612,24 @@ const Correspondence = ({
               </StyledButton>
             </>
           )}
-          {row.corrType === "DOCUMENT" && (
-            <StyledButton
-              variant="contained"
-              style={{ backgroundColor: "#28a745" }}
-              onClick={() => download(row)}
-              title="Download"
-            >
-              <FaDownload size={16} />
-            </StyledButton>
-          )}
           {row.corrType === "DRAFT" && (
             <>
+              <StyledButton
+                variant="contained"
+                color="primary"
+                onClick={() => handleUploadClick(row)}
+                title="View Enclosure"
+              >
+                <FaCloudUploadAlt size={16} />
+              </StyledButton>
+              <StyledButton
+                variant="contained"
+                style={{ backgroundColor: "#28a745" }}
+                onClick={() => printDraft(row)}
+                title="Download"
+              >
+                <FaDownload size={16} />
+              </StyledButton>
               <StyledButton
                 variant="contained"
                 color="primary"
@@ -569,11 +640,11 @@ const Correspondence = ({
               </StyledButton>
               <StyledButton
                 variant="contained"
-                style={{ backgroundColor: "#28a745" }}
-                onClick={() => download(row)}
-                title="Download"
+                color="secondary"
+                onClick={() => handleHistoryClick(row)}
+                title="View History"
               >
-                <FaDownload size={16} />
+                <FaHistory size={16} />
               </StyledButton>
             </>
           )}
@@ -593,10 +664,7 @@ const Correspondence = ({
       <TableContainer>
         <TopSection>
           <Title>Correspondence</Title>
-          <ActionButton
-            startIcon={<FaPlus />}
-            onClick={handleCreateDraft}
-          >
+          <ActionButton startIcon={<FaPlus />} onClick={handleCreateDraft}>
             Create Draft
           </ActionButton>
         </TopSection>
@@ -629,13 +697,13 @@ const Correspondence = ({
         historyData={historyData}
         uploadData={uploadData}
         corrId={selectedCorrId}
-        
       />
       <HistoryModal
         open={historyModalOpen}
         onClose={() => setHistoryModalOpen(false)}
         historyData={historyData}
         isLoading={isLoadingHistory}
+        correspondence={correspondence}
       />
       <CreateDraftModal
         open={modalOpen}

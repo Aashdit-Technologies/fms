@@ -1,23 +1,16 @@
 import React, { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 import JoditEditor from 'jodit-react';
 
-const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNote, additionalDetails }) => {
+const SunEditorComponent = ({ content, onContentChange, placeholder }) => {
   const editor = useRef(null);
   const [editorContent, setEditorContent] = useState(content || '');
 
-  
+  // Update editorContent when content prop changes
   useEffect(() => {
-    const newContent = content || additionalDetails?.data?.note || selectedNote?.note || '';
-    if (newContent !== editorContent) {
-        setEditorContent(newContent);
+    if (content !== editorContent) {
+      setEditorContent(content);
     }
-}, [content, additionalDetails, selectedNote, editorContent]);
-
-  useEffect(() => {
-    if (editor.current?.editor) {
-      editor.current.editor.value = editorContent;
-    }
-  }, [editorContent, editor.current]);
+  }, [content]);
 
   const config = useMemo(
     () => ({
@@ -32,7 +25,6 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNot
       showCharsCounter: true,
       showWordsCounter: true,
       showXPathInStatusbar: false,
-      
     }),
     [editorContent, placeholder]
   );
@@ -42,6 +34,11 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNot
     onContentChange?.(newContent);
   }, [onContentChange]);
 
+  const handleBlur = useCallback(() => {
+    console.log('Editor lost focus:', editorContent);
+    onContentChange?.(editorContent);
+  }, [editorContent, onContentChange]);
+
   return (
     <div className="editor-wrapper">
       <JoditEditor
@@ -49,27 +46,11 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNot
         value={editorContent}
         config={config}
         tabIndex={1}
-        onChange={handleContentChanges}      
-        onReady={(instance) => {
-          instance.value = editorContent;
-        }}
+        onChange={handleContentChanges}
+        onBlur={handleBlur}
       />
-      <style jsx>{`
-        .editor-wrapper {
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          overflow: hidden;
-        }
-        :global(.jodit-workplace) {
-          min-height: 400px;
-        }
-        :global(.jodit-status-bar) {
-          background: #f8f9fa;
-          border-top: 1px solid #ddd;
-        }
-      `}</style>
     </div>
   );
 };
 
-export default SunEditorComponent;
+export default React.memo(SunEditorComponent);

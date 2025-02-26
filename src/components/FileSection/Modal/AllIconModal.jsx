@@ -20,13 +20,14 @@ import {
   TablePagination,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { FaDownload, FaMinus, FaPlus } from "react-icons/fa";
+import { FaEye, FaMinus, FaPlus } from "react-icons/fa";
 import useAuthStore from "../../../store/Store";
 import { encryptPayload } from "../../../utils/encrypt";
 import api from "../../../Api/Api";
 import { useMutation } from "@tanstack/react-query";
 import DataTable from "react-data-table-component";
 import { toast } from "react-toastify";
+import { FaDownload } from "react-icons/fa6";
 
 const modalStyle = {
   position: "absolute",
@@ -81,68 +82,82 @@ const tableCustomStyles = {
 
 
 
-const columns = [
-  {
-    name: "Correspondence Type",
-    selector: (row) => row.corrType,
-    sortable: true,
-  },
-  { name: "Draft Number", selector: (row) => row.draftNo, sortable: true },
-  { name: "Added By", selector: (row) => row.addedBy, sortable: true },
-  {
-    name: "Modified Date",
-    selector: (row) => row.modifiedDate,
-    sortable: true,
-  },
-  { name: "Letter Number", selector: (row) => row.letterno, sortable: true },
-  {
-    name: "Action",
-    cell: (row) => (
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => handleDownloads(row)}
-        title="Download"
-      >
-        <FaDownload />
-      </Button>
-    ),
-    ignoreRowClick: true,
-    allowOverflow: true,
-    button: true,
-  },
-];
-// const token =useAuthStore((state) => state.token) || sessionStorage.getItem("token");
-// const handleDownloads = async (row) => {
-//   console.log("fileName",row);
-  
-//   try {
-//     const response = await api.post(
-//       "/download/download-document",
-//       { dataObject: encryptPayload({  }) },
-//       {
-//         headers: { Authorization: `Bearer ${token}` },
-//         responseType: 'blob'
-//       }
-//     );
-    
-//     const url = window.URL.createObjectURL(new Blob([response.data]));
-//     const link = document.createElement('a');
-//     link.href = url;
-//     link.setAttribute('download', `enclosure_${enclosureId}.pdf`);
-//     document.body.appendChild(link);
-//     link.click();
-//     link.remove();
-//     window.URL.revokeObjectURL(url);
-//   } catch (error) {
-//     toast.error("Download failed. Please try again.");
-//     console.error("Download error:", error);
-//   }
-// };
+
+
 export const HistoryModal = ({ open, onClose, historyData }) => {
+  // console.log("History Data:", historyData);
+  // console.log("Correspondence Data:", correspondence.data);
+  
   const data = historyData?.data || [];
   const isValidHistoryData = Array.isArray(data) && data.length > 0;
-    
+  const token =useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  const handleDownloads = async (row) => {
+    if (!row || !row.correspondenceId ) {
+      console.error("Invalid row data for download");
+      return;
+    }
+
+    try {
+      const encryptedDload = encryptPayload({
+        corrId: row.correspondenceId,
+      });
+
+      const response = await api.post(
+        "/file/generate-corres-pdf",
+        { dataObject: encryptedDload },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
+        }
+      );
+      if (!response.data) {
+        throw new Error("No response data received");
+      }
+      const blob = new Blob([response.data], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank"); 
+    } catch (error) {
+      console.error("Error downloading the document", error);
+      alert(
+        "An error occurred while downloading the document. Please try again."
+      );
+    }
+  };
+  
+  const columns = [
+    {
+      name: "Correspondence Type",
+      selector: (row) => row.corrType,
+      sortable: true,
+    },
+    { name: "Draft Number", selector: (row) => row.draftNo, sortable: true },
+    { name: "Added By", selector: (row) => row.addedBy, sortable: true },
+    {
+      name: "Modified Date",
+      selector: (row) => row.modifiedDate,
+      sortable: true,
+    },
+    { name: "Letter Number", selector: (row) => row.letterno, sortable: true },
+    {
+      name: "Action",
+      cell: (row) => (
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => handleDownloads(row)}
+          title="View"
+        >
+          <FaEye />
+        </Button>
+      ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
+    },
+  ];
+
       
   return (
     <Modal open={open} onClose={onClose}>
@@ -165,7 +180,7 @@ export const HistoryModal = ({ open, onClose, historyData }) => {
         {isValidHistoryData ? (
           <DataTable
             columns={columns}
-            data={data}
+            data={data }
             pagination
             highlightOnHover
             customStyles={tableCustomStyles}
@@ -369,8 +384,8 @@ const handleDownload = async (enc) => {
   
   try {
       const encryptedDload = encryptPayload({
-        docFilename: enc.docFilename,
-        path: enc.path,
+        documentName: enc.docFilename,
+        documentPath: enc.path,
           });
     
     console.log("Payload:", encryptedDload);

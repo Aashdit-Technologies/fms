@@ -108,7 +108,7 @@ const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, re
                 content={editorContent}
                 placeholder="Enter your task action here..."
                 onContentChange={handleEditorChange}
-                additionalDetails={additionalDetails}
+                // additionalDetails={additionalDetails}
               />
             </Accordion.Body>
           </Accordion.Item>

@@ -13,7 +13,6 @@ const MainFile = () => {
   const { file } = location.state || {};
   const fileId = file?.fileId;  
   const receiptId = file?.fileReceiptId;
-  console.log('MainFile:', fileId, receiptId);
   
   const [fileData, setFileData] = useState({
     fileDetails: null,
@@ -41,8 +40,8 @@ const MainFile = () => {
         correspondence: res3.data,
         noteSheets: res4.data
       });
-      if (res2.data.note) {
-        setSharedEditorContent(res2.data.note);
+      if (res4.data.note) {
+        setSharedEditorContent(res4.data.note);
       }
     } catch (err) {
       console.error("Error fetching data:", err);

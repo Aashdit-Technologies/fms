@@ -5,7 +5,7 @@ import useAuthStore from "../store/Store";
 
 
 const api = axios.create({
-  //  baseURL: "http://192.168.3.142:2020/file-management/api/",
+  //  baseURL: "http://192.168.3.116:2020/file-management/api/",
   // baseURL: "http://192.168.3.180:2020/file-management/api/",
   // baseURL: "http://192.168.3.165:2020/file-management/api/",
   baseURL: "http://142.93.210.247:2020/file-management/api/",

@@ -64,7 +64,6 @@ const CreateDraftModal = ({
   const handleTextUpdate = (value) => {
     updatedContentRef.current = value;
 
-    // Optionally, you can update formData directly if you want to trigger re-render or pass to backend
     setFormData((prevState) => ({
       ...prevState,
       contentss: value,
@@ -532,10 +531,35 @@ const CreateDraftModal = ({
   };
  
   const handleClickClose = () => {
-    resetForm();
-    refetchData();
-    resetForm();
-    onClose();  
+    setSelectedValues({
+      organization: null,
+      company: null,
+      office: null,
+      department: null,
+      designation: null,
+      authorities: null,
+    });
+    setOptions({
+      companies: [],
+      offices: [],
+      departments: [],
+      designations: [],
+      authorities: [],
+    });
+    setFormData({
+      subject: "",
+      referenceNo: "",
+      addedBy: "",
+      contentss: "",
+      office: "",
+      tempType: "",
+    });
+    updatedContentRef.current = "";
+    setContents("");
+    if (refetchData && typeof refetchData === 'function') {
+      refetchData();
+    }
+    onClose();
   };
 
   return (
