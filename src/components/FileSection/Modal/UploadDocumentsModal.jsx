@@ -25,12 +25,19 @@ import { encryptPayload } from "../../../utils/encrypt";
 import api from "../../../Api/Api";
 import { toast } from "react-toastify";
 import useAuthStore from "../../../store/Store";
-import { IoIosSend } from "react-icons/io";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { PageLoader } from "../../pageload/PageLoader";
 
-const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additionalDetails }) => {
+const UploadDocumentsModal = ({
+  open,
+  onClose,
+  organizations,
+  fileDetails,
+  additionalDetails,
+}) => {
   const navigate = useNavigate();
-  
+  const [loading, setLoading] = useState(false);
+
   const [selectedValues, setSelectedValues] = useState({
     organization: null,
     company: null,
@@ -74,8 +81,10 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
   };
   const fetchData = useMutation({
     mutationFn: async ({ endpoint, payload }) => {
+      setLoading(true);
       const encryptedData = encryptPayload(payload);
       const response = await api.post(endpoint, { dataObject: encryptedData });
+      setLoading(false);
       return response.data;
     },
     onSuccess: (data, variables) => {
@@ -147,13 +156,14 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
 
   const searchMutation = useMutation({
     mutationFn: async () => {
+      setLoading(true);
       const payload = {
         organizationId: selectedValues.organization?.value || 0,
         companyId: selectedValues.company?.value || 0,
         officeId: selectedValues.office?.value || 0,
         departmentId: selectedValues.department?.value || 0,
         designationId: selectedValues.designation?.value || 0,
-        action:"SENDTO",
+        action: "SENDTO",
       };
       console.log("Payload before encryption:", payload);
 
@@ -162,7 +172,7 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
       const response = await api.post("file/get-send-to-list", {
         dataObject: encryptedPayload,
       });
-
+      setLoading(false);
       return response.data;
     },
     onSuccess: (data) => {
@@ -191,9 +201,9 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
 
   const sendFileMutation = useMutation({
     mutationFn: async (action) => {
+      setLoading(true);
       try {
         const payload = encryptPayload({
-          
           actionTaken: action,
           fileId: fileDetails.data.fileId,
           note: additionalDetails.data.note,
@@ -201,7 +211,7 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
           notesheetId: additionalDetails?.data?.prevNoteId,
           receiverEmpRoleMap: selectedRow,
         });
-        
+
         const formData = new FormData();
         formData.append("dataObject", payload);
 
@@ -210,7 +220,7 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
             Authorization: `Bearer ${token}`,
           },
         });
-
+        setLoading(false);
         if (response.data.outcome) {
           toast.success(response.data.message || "File sent successfully!");
           navigate("/file");
@@ -236,7 +246,7 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
   };
 
   const handleSelectRow = (empDeptRoleId) => {
-    setSelectedRow(empDeptRoleId); 
+    setSelectedRow(empDeptRoleId);
   };
 
   return (
@@ -259,6 +269,7 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
           paddingBottom: "20px",
         }}
       >
+        {loading && <PageLoader />} 
         <Typography
           variant="h6"
           sx={{
@@ -275,32 +286,36 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
           <Grid item xs={6}>
             <label>Organization</label>
             <ReactSelect
-              options={
-                organizations?.map((org) => ({
+              options={[
+                { value: 0, label: "Select Organization" },
+                ...(organizations?.map((org) => ({
                   value: org.organizationId,
                   label: org.organizationName,
-                })) || []
-              }
+                })) || []),
+              ]}
               value={selectedValues.organization}
               onChange={(option) =>
                 handleSelectionChange("organization", option)
               }
               isSearchable
+              isClearable={true}
             />
           </Grid>
 
           <Grid item xs={6}>
             <label>Company</label>
             <ReactSelect
-              options={
-                options.companies?.map((comp) => ({
+              options={[
+                { value: 0, label: "Select Company" },
+                ...(options.companies?.map((comp) => ({
                   value: comp.companyId,
                   label: comp.name,
-                })) || []
-              }
+                })) || []),
+              ]}
               value={selectedValues.company}
               onChange={(option) => handleSelectionChange("company", option)}
               isSearchable
+              isClearable={true}
               isDisabled={!selectedValues.organization}
             />
           </Grid>
@@ -308,15 +323,17 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
           <Grid item xs={6}>
             <label>Office</label>
             <ReactSelect
-              options={
-                options.offices?.map((office) => ({
+              options={[
+                { value: 0, label: "Select Office" },
+                ...(options.offices?.map((office) => ({
                   value: office.officeId,
                   label: office.officeName,
-                })) || []
-              }
+                })) || []),
+              ]}
               value={selectedValues.office}
               onChange={(option) => handleSelectionChange("office", option)}
               isSearchable
+              isClearable={true}
               isDisabled={!selectedValues.company}
             />
           </Grid>
@@ -324,12 +341,14 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
           <Grid item xs={6}>
             <label>Department</label>
             <ReactSelect
-              options={
-                options.departments?.map((dept) => ({
+              options={[
+                { value: 0, label: "Select Department" },
+                ...(options.departments?.map((dept) => ({
                   value: dept.departmentId,
                   label: dept.departmentName,
-                })) || []
-              }
+                })) || []),
+              ]}
+              isClearable={true}
               value={selectedValues.department}
               onChange={(option) => handleSelectionChange("department", option)}
               isSearchable
@@ -340,22 +359,26 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
           <Grid item xs={6}>
             <label>Designation</label>
             <ReactSelect
-              options={
-                options.designations?.map((desig) => ({
+              options={[
+                { value: 0, label: "Select Designation" },
+                ...(options.designations?.map((desig) => ({
                   value: desig.id,
                   label: desig.name,
-                })) || []
-              }
+                })) || []),
+              ]}
               value={selectedValues.designation}
               onChange={(option) =>
                 handleSelectionChange("designation", option)
               }
+              isClearable={true}
               isSearchable
               isDisabled={!selectedValues.department}
+              menuPortalTarget={document.body}
+              styles={{ menuPortal: (base) => ({ ...base, zIndex: 1300 }) }}
             />
           </Grid>
           <Grid item xs={6} style={{ paddingTop: "40px" }}>
-            <Button variant="contained" color="primary" onClick={handleSearch}>
+            <Button variant="contained" color="primary" onClick={handleSearch} disabled={loading}>
               Search
             </Button>
             <Button
@@ -407,47 +430,41 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
             <TableBody>
               {tableData
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map(
-                  (row, idx) => (
-                    (
-                      <TableRow
-                        key={idx}
-                        sx={{
-                          "&:hover": { backgroundColor: "#f5f5f5" }, // Highlight on hover
-                          backgroundColor:
-                            idx % 2 === 0 ? "#f9f9f9" : "transparent", // Striped rows
-                        }}
-                      >
-                        <TableCell>
-                          {row.empNameWithDesgAndDept
-                            ? row.empNameWithDesgAndDept
-                            : "N/A"}
-                        </TableCell>
-                        <TableCell>
-                          <FormControl>
-                            <RadioGroup
-                              aria-labelledby="demo-radio-buttons-group-label"
-                              value={
-                                selectedRow === row.empDeptRoleId
-                                  ? row.empDeptRoleId
-                                  : "N/A"
-                              } 
-                              onChange={() =>
-                                handleSelectRow(row.empDeptRoleId)
-                              } 
-                              name="radio-buttons-group"
-                            >
-                              <FormControlLabel
-                                value={row.empDeptRoleId} 
-                                control={<Radio />}
-                              />
-                            </RadioGroup>
-                          </FormControl>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  )
-                )}
+                .map((row, idx) => (
+                  <TableRow
+                    key={idx}
+                    sx={{
+                      "&:hover": { backgroundColor: "#f5f5f5" }, // Highlight on hover
+                      backgroundColor:
+                        idx % 2 === 0 ? "#f9f9f9" : "transparent", // Striped rows
+                    }}
+                  >
+                    <TableCell>
+                      {row.empNameWithDesgAndDept
+                        ? row.empNameWithDesgAndDept
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      <FormControl>
+                        <RadioGroup
+                          aria-labelledby="demo-radio-buttons-group-label"
+                          value={
+                            selectedRow === row.empDeptRoleId
+                              ? row.empDeptRoleId
+                              : "N/A"
+                          }
+                          onChange={() => handleSelectRow(row.empDeptRoleId)}
+                          name="radio-buttons-group"
+                        >
+                          <FormControlLabel
+                            value={row.empDeptRoleId}
+                            control={<Radio />}
+                          />
+                        </RadioGroup>
+                      </FormControl>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
 
@@ -468,7 +485,10 @@ const UploadDocumentsModal = ({ open, onClose, organizations,fileDetails, additi
             color="primary"
             // startIcon={<IoIosSend />}
             onClick={() => handleSendFile("SENDTO")}
-          >SEND</Button>
+            disabled={loading}
+          >
+            {loading ? <PageLoader /> : "SEND"}
+          </Button>
           <Button
             variant="contained"
             color="error"

@@ -58,11 +58,11 @@ const CorrespondenceEditor = ({ defaultText, onTextUpdate }) => {
   return (
     <JoditEditor
       ref={editorRef}
-      value={contents}  // Editor content is controlled by 'contents' state
+      value={contents}  
       config={config}
-      onChange={handleEditorChange}  // Handle content changes
-      onFocus={handleEditorFocus}   // Optional: Handle focus behavior
-      onBlur={handleEditorFocus}    // Optional: Handle blur behavior
+      onChange={handleEditorChange}  
+      onFocus={handleEditorFocus}   
+      onBlur={handleEditorFocus}    
     />
   );
 };

@@ -511,7 +511,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
     {isLoading && <PageLoader />}
   
     <Box
-      sx={{ p: 3, maxWidth: 1200, margin: "auto", marginTop: "20px" }}
+      sx={{ width: "100%", margin: "auto", marginTop: "20px" }}
       className="uploaddocument"
     >
       <Accordion defaultActiveKey="0" className="custom-accordion">

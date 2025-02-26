@@ -405,8 +405,26 @@ const CreateDraftModal = ({
       });
     }
   };
+  const validateForm = () => {
+    const errors = [];
 
+    if (!contents) errors.push("Subject is required");
+    else if (!selectedValues.organization) errors.push("Organization is required");
+    else if (!selectedValues.company) errors.push("Company is required");
+    else if (!selectedValues.office) errors.push("Office is required");
+    else if (!selectedValues.department) errors.push("Department is required");
+    else if (!selectedValues.designation) errors.push("Designation is required");
+    else if (!selectedValues.authorities) errors.push("Approving Authority is required");
+    else if (!updatedContentRef.current) errors.push("Letter content is required");
+
+    return errors;
+  };
   const handleSave = async (action) => {
+    const errors = validateForm();
+    if (errors.length > 0) {
+      errors.forEach((error) => toast.error(error));
+      return;
+    }
     const payload = {
       correspondenceId: editMalady?.correspondenceId || null,
       fileId: allDetails?.fileId,
@@ -571,6 +589,7 @@ const CreateDraftModal = ({
                 )}
                 onChange={handleOfficeChange}
                 isSearchable
+                isClearable={true}
               />
             </Grid>
             <Grid container spacing={2}>
@@ -599,6 +618,7 @@ const CreateDraftModal = ({
                     handleSelectionChange("organization", option)
                   }
                   isSearchable
+                  isClearable={true}
                 />
               </Grid>
 
@@ -616,6 +636,7 @@ const CreateDraftModal = ({
                     handleSelectionChange("company", option)
                   }
                   isSearchable
+                  isClearable={true}
                   isDisabled={!selectedValues.organization}
                 />
               </Grid>
@@ -632,6 +653,7 @@ const CreateDraftModal = ({
                   value={selectedValues.office}
                   onChange={(option) => handleSelectionChange("office", option)}
                   isSearchable
+                  isClearable={true}
                   isDisabled={!selectedValues.company}
                 />
               </Grid>
@@ -650,6 +672,7 @@ const CreateDraftModal = ({
                     handleSelectionChange("department", option)
                   }
                   isSearchable
+                  isClearable={true}
                   isDisabled={!selectedValues.office}
                 />
               </Grid>
@@ -668,6 +691,7 @@ const CreateDraftModal = ({
                     handleSelectionChange("designation", option)
                   }
                   isSearchable
+                  isClearable={true}
                   isDisabled={!selectedValues.department}
                 />
               </Grid>
@@ -683,6 +707,7 @@ const CreateDraftModal = ({
                     }))
                   }
                   isSearchable
+                  isClearable={true}
                   isDisabled={
                     !selectedValues.designation &&
                     !selectedValues.organization &&
