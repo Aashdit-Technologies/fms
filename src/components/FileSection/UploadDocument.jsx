@@ -546,7 +546,11 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
                     <Grid item xs={2.4}>
                       <TextField
                         fullWidth
-                        label="Subject"
+                        label={
+                          <Typography>
+                            Subject <span style={{ color: "red" }}>*</span>
+                          </Typography>
+                        }
                         value={row.subject}
                         onChange={(e) =>
                           handleInputChange(index, "subject", e.target.value)
@@ -559,8 +563,13 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
                       <FormControl fullWidth>
                         <TextField
                           select
-                          label="Type"
-                          value={row.type}
+                          label={
+                            <Typography>
+                              Type <span style={{ color: "red" }}>*</span>
+                            </Typography>
+                          }
+                          value={row.type || ""} 
+                          
                           onChange={(e) =>
                             handleInputChange(index, "type", e.target.value)
                           }
@@ -591,7 +600,11 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
                     <Grid item xs={2.4}>
                       <TextField
                         fullWidth
-                        label="Letter Number"
+                        label={
+                          <Typography>
+                            Letter Number{row.type === "LETTER"? <span style={{ color: "red" }}>*</span>:""} 
+                          </Typography>
+                        }
                         value={row.letterNumber}
                         onChange={(e) =>
                           handleInputChange(
@@ -608,7 +621,12 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
                     <Grid item xs={2.4}>
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <MobileDatePicker
-                          label="Date"
+                          label={
+                            <Typography>
+                              Date <span style={{ color: "red" }}>*</span>
+                            </Typography>
+                          }
+                          inputProps={{ "aria-label": "Without label" }}
                           value={
                             row.date ? dayjs(row.date, "DD/MM/YYYY") : null
                           }
@@ -653,7 +671,11 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
                           height: "54px",
                         }}
                       >
-                        Upload File
+                         {
+                          <Typography >
+                            Upload File <span style={{ color: "red" , }}>*</span>
+                          </Typography>
+                        }
                         <input
                           type="file"
                           hidden
@@ -663,6 +685,7 @@ const UploadDocument = ({ fileDetails, initialContent, additionalDetails, refetc
                           }
                         />
                       </Button>
+                      
                     </Grid>
 
                     {rows.length > 1 && (
