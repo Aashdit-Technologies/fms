@@ -294,14 +294,12 @@ export const UploadModal = ({
   });
 
   const handleSubmit = () => {
-    console.log("Current rows state:", rows);
     if (rows.length === 0) {
       toast.error("Please add at least one file!");
       return;
     }
 
     const invalidRows = rows.filter(row => {
-      console.log("Validating row:", row); // Debug log
       return !row.type || !row.name || !row.file;
     });
     
@@ -477,7 +475,7 @@ const handleDownload = async (enc) => {
           }}
         >
           <Table sx={{ width: "100%" }}>
-            <TableHead sx={{position: "sticky", top: 0, bgcolor: "#0A3D62" , zIndex: 1 }}>
+            <TableHead sx={{position: "sticky", top: 0, bgcolor: "#207785" , zIndex: 1 }}>
               <TableRow>
                 <TableCell
                   style={{
@@ -587,7 +585,7 @@ const handleDownload = async (enc) => {
           }}
         >
           <Table>
-            <TableHead sx={{position: "sticky", top: 0, bgcolor: "#0A3D62" , zIndex: 1 }}>
+            <TableHead sx={{position: "sticky", top: 0, bgcolor: "#207785" , zIndex: 1 }}>
               <TableRow>
                 <TableCell
                   style={{

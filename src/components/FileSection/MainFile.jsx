@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Ckeditor from './Ckeditor';
 import api from "../../Api/Api";
 import Correspondence from './Correspondence';
@@ -13,6 +13,10 @@ const MainFile = () => {
   const { file } = location.state || {};
   const fileId = file?.fileId;  
   const receiptId = file?.fileReceiptId;
+  
+  // Use a ref to track if we're currently updating the shared content
+  // This will help prevent focus issues during content updates
+  const isUpdatingContentRef = useRef(false);
   
   const [fileData, setFileData] = useState({
     fileDetails: null,
@@ -40,8 +44,12 @@ const MainFile = () => {
         correspondence: res3.data,
         noteSheets: res4.data
       });
-      if (res4.data.note) {
-        setSharedEditorContent(res4.data.note);
+      if (res2.data.data.note) {
+        isUpdatingContentRef.current = true;
+        setSharedEditorContent(res2.data.data.note);
+        setTimeout(() => {
+          isUpdatingContentRef.current = false;
+        }, 100);
       }
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -57,7 +65,14 @@ const MainFile = () => {
   };
 
   const handleEditorContentChange = (newContent) => {
-    setSharedEditorContent(newContent);
+    // Only update if we're not already updating from another source
+    if (!isUpdatingContentRef.current) {
+      isUpdatingContentRef.current = true;
+      setSharedEditorContent(newContent);
+      setTimeout(() => {
+        isUpdatingContentRef.current = false;
+      }, 100);
+    }
   };
 
   return (

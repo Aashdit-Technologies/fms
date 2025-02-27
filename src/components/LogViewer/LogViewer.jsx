@@ -226,7 +226,7 @@ import { Button, Paper, Typography } from "@mui/material";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 
-const DevLogViewer = () => {
+const LogViewer = () => {
   const [logData, setLogData] = useState([]);
   const [catalinaLogData, setCatalinaLogData] = useState([]);
   const [activeLog, setActiveLog] = useState(null); // "application" or "catalina"
@@ -414,5 +414,5 @@ const logStyle = {
   flex: 1,
 };
 
-export default DevLogViewer;
+export default LogViewer;
 

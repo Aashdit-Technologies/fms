@@ -8,6 +8,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Tooltip,
  
 } from '@mui/material';
 import DataTable from 'react-data-table-component';
@@ -21,7 +22,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { MdFileUpload } from "react-icons/md";
 import {toast } from "react-toastify";
-
+import { PageLoader } from "../pageload/PageLoader";
 const customStyles = {
   table: {
     style: {
@@ -39,7 +40,7 @@ const customStyles = {
       color: "#ffffff",
       fontSize: "14px",
       fontWeight: "600",
-      textTransform: "uppercase",
+      // textTransform: "uppercase",
       letterSpacing: "0.5px",
       minHeight: "52px",
       borderBottom: "2px solid #1a5f6a",
@@ -135,7 +136,7 @@ const Despatch = () => {
   const [selectedRow, setSelectedRow] = useState(null);
    const [dispatchdata, setDispatchData] = useState([]);
   const [expanded, setExpanded] = useState(true); 
-   
+  const [isLoading, setIsLoading] = useState(false);
    const fileName = dispatchdata?.[0]?.fileName;
    const filePath = dispatchdata?.[0]?.filePath;
    
@@ -168,7 +169,8 @@ const Despatch = () => {
 
 
   const fetchLetters = async (tabCode) => {
-    
+    debugger
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const payload = { tabCode };
@@ -213,6 +215,9 @@ const Despatch = () => {
       setDispatchData([]);
       
     }
+    finally{
+      setIsLoading(false);
+    }
   };
   
 
@@ -224,6 +229,7 @@ const Despatch = () => {
 
 
   const handleDownload = async (row) => {
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const payload = { correspondenceId: row.correspondenceId };
@@ -252,12 +258,15 @@ const Despatch = () => {
     } catch (error) {
       console.error("Error fetching enclosures:", error);
     }
+    finally{
+      setIsLoading(false);
+    }
   };
 
   const newLetterColumns = [
-    { name: 'SI NO', selector: (row, index) => index + 1, sortable: true, width: '100px' },
-    { name: 'Letter Number', selector: (row) => row.letterNo || '', sortable: true, width: '200px' },
-    { name: 'Ending Memo Number', selector: (row) => row.memoNo || '', sortable: true, width: '250px' },
+    { name: 'Sl No', selector: (row, index) => index + 1, sortable: true, width: '100px' },
+    { name: 'Letter No.', selector: (row) => row.letterNo || '', sortable: true, width: '200px' },
+    { name: 'Ending Memo No.', selector: (row) => row.memoNo || '', sortable: true, width: '250px' },
     { name: 'Subject', selector: (row) => row.subject, sortable: true, wrap: true, grow: 2 },
     { name: 'From', selector: (row) => row.from, sortable: true, wrap: true, grow: 1 ,width:"200px"},
     { name: 'Date', selector: (row) => row.date, sortable: true, width: '120px' },
@@ -279,7 +288,7 @@ const Despatch = () => {
           }}>
             <Visibility />
           </IconButton> */}
-          
+      <Tooltip title="View Enclosures">   
     <IconButton 
   size="small" 
   onClick={() => handleDownload(row)}
@@ -297,6 +306,7 @@ const Despatch = () => {
 >
   <MdFileUpload style={{ fontSize: '28px' }} />
 </IconButton>
+</Tooltip> 
 
         </Box>
       ),
@@ -314,6 +324,7 @@ const Despatch = () => {
         color="success"
         size="small"
         sx={{
+          textTransform: 'none',
           "&:hover": { bgcolor: "success.dark" }
         }}
       >
@@ -327,9 +338,9 @@ const Despatch = () => {
 
 
   const sentLetterColumns = [
-    { name: 'SI NO', selector: (row, index) => index + 1, sortable: true, width: '80px' },
-    { name: 'Letter Number', selector: (row) => row.letterNo || '', sortable: true, width: '200px' },
-    { name: 'Ending Memo Number', selector: (row) => row.memoNo || '', sortable: true, width: '250px' },
+    { name: 'Sl No.', selector: (row, index) => index + 1, sortable: true, width: '80px' },
+    { name: 'Letter No.', selector: (row) => row.letterNo || '', sortable: true, width: '200px' },
+    { name: 'Ending Memo No.', selector: (row) => row.memoNo || '', sortable: true, width: '250px' },
     { name: 'Subject', selector: (row) => row.subject, sortable: true, wrap: true, grow: 2 },
     { name: 'From', selector: (row) => row.from, sortable: true, wrap: true, grow: 1 },
     { name: 'Date', selector: (row) => row.date, sortable: true, width: '120px' },
@@ -349,6 +360,7 @@ const Despatch = () => {
       name: "View",
       cell: (row) => (
         <Box sx={{ display: "flex", gap: 1 }}>
+          <Tooltip title="View Letter">
           <IconButton size="small" onClick={() => handleDownloadview(row)} 
           sx={{ 
             color: '#207785',
@@ -363,25 +375,26 @@ const Despatch = () => {
           }}>
             <Visibility />
           </IconButton>
-          
-    <IconButton 
-  size="small" 
-  onClick={() => handleDownload(row)}
-  sx={{ 
-    color: '#207785',
-    bgcolor: 'rgba(32, 119, 133, 0.1)',
-    '&:hover': {
-      bgcolor: 'rgba(32, 119, 133, 0.2)',
-      transform: 'scale(1.1)',
-    },
-    transition: 'all 0.2s ease-in-out',
-    padding: '8px',
-    borderRadius: '8px',
-  }}
->
-  <MdFileUpload style={{ fontSize: '28px' }} />
-</IconButton>
-
+          </Tooltip>
+          <Tooltip title="View Enclosures">
+            <IconButton 
+          size="small" 
+          onClick={() => handleDownload(row)}
+          sx={{ 
+            color: '#207785',
+            bgcolor: 'rgba(32, 119, 133, 0.1)',
+            '&:hover': {
+              bgcolor: 'rgba(32, 119, 133, 0.2)',
+              transform: 'scale(1.1)',
+            },
+            transition: 'all 0.2s ease-in-out',
+            padding: '8px',
+            borderRadius: '8px',
+          }}
+        >
+          <MdFileUpload style={{ fontSize: '28px' }} />
+        </IconButton>
+        </Tooltip>
         </Box>
       ),
       width: "150px",
@@ -397,6 +410,7 @@ const Despatch = () => {
   );
   
   const  handleDownloadview = async (row) => {
+    setIsLoading(true);
     try {
      
       const token = useAuthStore.getState().token;
@@ -431,12 +445,15 @@ const Despatch = () => {
       console.error("Error fetching PDF:", error);
       toast.error("Failed to fetch PDF. Please try again.");
     }
+    finally{
+      setIsLoading(false);
+    }
   };
 
   
   return (
 <>
-
+{isLoading && <PageLoader />}
     <Accordion 
     expanded={expanded} 
     onChange={handleAccordionChange}
@@ -479,6 +496,7 @@ const Despatch = () => {
     variant="contained"
     onClick={() => handleTabChange('newLetter')}
     sx={{
+      textTransform: 'none',
       mr: 1,
       backgroundColor: activeTab === 'NEW_LETTER' ? '#1a5f6a' : '#ffffff',
       color: activeTab === 'NEW_LETTER' ? '#ffffff' : '#1a5f6a',
@@ -495,6 +513,7 @@ const Despatch = () => {
     variant="contained"
     onClick={() => handleTabChange('sentLetter')}
     sx={{
+      textTransform: 'none',
       backgroundColor: activeTab === 'SENT_LETTER' ? '#1a5f6a' : '#ffffff',
       color: activeTab === 'SENT_LETTER' ? '#ffffff' : '#1a5f6a',
       border: '1px solid #1a5f6a',
@@ -543,7 +562,9 @@ const Despatch = () => {
 </Paper>
 
       <UploadLetter open={isUploadModalOpen} onClose={handleCloseUploadModal}
-         dispatchData={dispatchdata}/>
+         dispatchData={dispatchdata}
+         fetchLetters={fetchLetters}
+         />
    
     <Enclosures 
   open={isEnclosuresOpen} 

@@ -14,8 +14,9 @@ import useAuthStore from "../../../store/Store";
 import { encryptPayload } from "../../../utils/encrypt";
 import api from '../../../Api/Api';
 import {toast } from "react-toastify";
+import { PageLoader } from "../../pageload/PageLoader";
 
-const UploadLetter = ({ open, onClose,   dispatchData}) => {
+const UploadLetter = ({ open, onClose,   dispatchData,fetchLetters}) => {
   
   const correspondenceId = dispatchData?.length > 0 ? dispatchData[0].correspondenceId : null;
  
@@ -26,7 +27,7 @@ const UploadLetter = ({ open, onClose,   dispatchData}) => {
     letterDocuments: null, 
   });
 
-  
+  const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
     if (!open) {
@@ -83,7 +84,7 @@ const validateForm = () => {
     if (!validateForm()) {
       return;
     }
-
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       if (!formData.letterDocuments || !(formData.letterDocuments instanceof File)) {
@@ -114,7 +115,8 @@ const validateForm = () => {
         });
         if (response.status === 200) {
           if(response.data.outcome){
-            toast.success(response.data.message);
+            await fetchLetters('NEW_LETTER');
+            toast.success(response.data.data);
             onClose();
           }else{
             toast.error(response.data.data);
@@ -126,10 +128,15 @@ const validateForm = () => {
         console.error("Upload failed:", error);
         toast.error(error.response?.data?.message || "Failed to save data.");
     } 
+    finally{
+      setIsLoading(false);
+    }
 };
 
 
   return (
+    <>
+     {isLoading && <PageLoader />}
 <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       {/* Dialog Title */}
       <DialogTitle
@@ -164,27 +171,31 @@ const validateForm = () => {
                 onChange={handleInputChange}
                 InputLabelProps={{
                   sx: {
+                    
                     '& .MuiFormLabel-asterisk': {
                       color: 'red',
                     },
                   },
                 }}
                 sx={{
+                 
                   "& .MuiOutlinedInput-root": {
+                    height: "50px",
                     "& fieldset": { borderColor: "#207785" },
                     "&:hover fieldset": { borderColor: "#1a5f6a" }, 
                   },
                 }}
                 autoComplete="off"
-                    inputProps={{
-                      maxLength: 20,
-                      pattern: "[^ ]*", 
-                      onKeyDown: (e) => {
-                        if (e.key === " ") {
-                          e.preventDefault(); 
-                        }
-                      },
-                    }}
+                inputProps={{
+                  maxLength: 20,
+                  pattern: "[0-9]*", // Allows only numbers
+                  inputMode: "numeric", // Shows numeric keyboard on mobile
+                  onKeyDown: (e) => {
+                    if (!/^[0-9]$/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete") {
+                      e.preventDefault(); // Block non-numeric input
+                    }
+                  },
+                }}
               />
               <TextField
                 fullWidth
@@ -195,20 +206,22 @@ const validateForm = () => {
                
                 sx={{
                   "& .MuiOutlinedInput-root": {
+                    height: "50px",
                     "& fieldset": { borderColor: "#207785" }, 
                     "&:hover fieldset": { borderColor: "#1a5f6a" },
                   },
                 }}
                 autoComplete="off"
-                    inputProps={{
-                      maxLength: 20,
-                      pattern: "[^ ]*", 
-                      onKeyDown: (e) => {
-                        if (e.key === " ") {
-                          e.preventDefault(); 
-                        }
-                      },
-                    }}
+                inputProps={{
+                  maxLength: 20,
+                  pattern: "[0-9]*", // Allows only numbers
+                  inputMode: "numeric", // Shows numeric keyboard on mobile
+                  onKeyDown: (e) => {
+                    if (!/^[0-9]$/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete") {
+                      e.preventDefault(); // Block non-numeric input
+                    }
+                  },
+                }}
               />
               
             </Box>
@@ -223,10 +236,20 @@ const validateForm = () => {
                 type="date"
                 value={formData.date}
                 onChange={handleInputChange}
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink:true,
+                  sx: {
+                    
+                    '& .MuiFormLabel-asterisk': {
+                      color: 'red',
+                    },
+                  },
+                }}
                 
                 sx={{
                   "& .MuiOutlinedInput-root": {
+                    height: "50px",
+                    width: "420px",
                     "& fieldset": { borderColor: "#207785" }, 
                     "&:hover fieldset": { borderColor: "#1a5f6a" }, 
                   },
@@ -237,11 +260,14 @@ const validateForm = () => {
                   variant="contained"
                   component="label"
                   sx={{
+                    width: "420px",
+                    height:"50px",
+                    textTransform: 'none',
                     bgcolor: "#207785", 
                     "&:hover": { bgcolor: "#1a5f6a" }, 
                   }}
                 >
-                  Select File *
+                  Select File <span style={{color:"red"}}> *</span>
                   <input
                     type="file"
                     accept=".pdf"
@@ -250,13 +276,30 @@ const validateForm = () => {
                     onChange={handleFileChange}
                   />
                 </Button>
-                {formData.letterDocuments && (
-                  <Box sx={{ ml: 1, color: "#1976d2", fontWeight: "medium" }}>
-                    {formData.letterDocuments.name}
-                  </Box>
-                )}
+                
               </Box>
+
             </Box>
+            <Box sx={{ display: "flex", justifyContent: "end", maxWidth: "100%" }}>
+              {formData.letterDocuments && (
+                <Box
+                  sx={{
+                    ml: 1,
+                    color: "#1976d2",
+                    fontWeight: "medium",
+                    maxWidth: "420px", // Adjust as needed
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  title={formData.letterDocuments.name} // Show full name on hover
+                >
+                  {formData.letterDocuments.name}
+                </Box>
+              )}
+            </Box>
+
+
           </Box>
         </form>
       </DialogContent>
@@ -266,6 +309,7 @@ const validateForm = () => {
         <Button
           onClick={onClose}
           sx={{
+            textTransform: 'none',
             color: "#1976d2", 
             "&:hover": { bgcolor: "#e3f2fd" }, 
           }}
@@ -276,6 +320,7 @@ const validateForm = () => {
           variant="contained"
           onClick={handleSaveUpload}
           sx={{
+            textTransform: 'none',
             bgcolor: "#207785", 
             "&:hover": { bgcolor: "#1a5f6a" }, 
           }}
@@ -284,7 +329,7 @@ const validateForm = () => {
         </Button>
       </DialogActions>
     </Dialog>
-
+    </>
   );
 };
 

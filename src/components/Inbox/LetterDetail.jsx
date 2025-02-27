@@ -36,7 +36,8 @@ import { toast } from "react-toastify";
 import { Checkbox } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import "@react-pdf-viewer/core/lib/styles/index.css";
-const LetterDetail = ({ open, onClose, letterData ,letterDataView}) => {
+import { PageLoader } from "../pageload/PageLoader";
+const LetterDetail = ({ open, onClose, letterData ,letterDataView,fetchLetters}) => {
   const navigate = useNavigate()
 
 const fileName =  letterDataView?.fileName;
@@ -79,7 +80,7 @@ const encloserFilePath = letterDataView?.letterEnclosureArrays?.[0]?.filePath ||
    const [selectedRows, setSelectedRows] = useState([]);
    
    const [selectedRowsfrequ, setSelectedRowsfrequ] = useState([]);
-  
+   const [isLoading, setIsLoading] = useState(false);
 
   const handleCloseModal = () => {
     setOpenModalotherbutton(false);
@@ -188,7 +189,7 @@ useEffect(() => {
 
 
 const handleConfirmUrgent = async () => {
-      
+  setIsLoading(true);
   try {
     const token = useAuthStore.getState().token;
       const letterRecptId = letterData?.letterRecptId || letterDataView?.letterRecptId;
@@ -221,12 +222,13 @@ const handleConfirmUrgent = async () => {
       setIsUrgent(!pendingUrgency); 
   }
   finally {
-    setOpenUrgentModal(false); 
+    setOpenUrgentModal(false);
+    setIsLoading(false); 
   }
 };
 
   const handleConfirmConfidential = async () => {
-    
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const letterRecptId = letterData?.letterRecptId || letterDataView?.letterRecptId;
@@ -257,10 +259,12 @@ const handleConfirmUrgent = async () => {
       setIsConfidential(!pendingConfidential);
     } finally {
       setOpenConfidentialModal(false);
+      setIsLoading(false);
     }
   };
 
   const handleConfirmSave = async () => {
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const metadataId = letterData?.metadataId || letterDataView?.metadataId;
@@ -299,9 +303,13 @@ const handleConfirmUrgent = async () => {
       setErrorMessage("Failed to save. Please try again.");
       setErrorModalOpen(true); 
     }
+    finally{
+      setIsLoading(false);
+    }
   };
   
   const handleOtherButtonClick = async () => {
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const [departmentResponse, officeResponse] = await Promise.all([
@@ -372,6 +380,9 @@ const handleConfirmUrgent = async () => {
     } catch (error) {
       console.error('Error calling APIs:', error);
     }
+    finally{
+      setIsLoading(false);
+    }
   };
   useEffect(() => {
     if (officeId && departmentId) {
@@ -380,6 +391,7 @@ const handleConfirmUrgent = async () => {
   }, [officeId, departmentId]);
   
   const fetchEmployeeData = async () => {
+    setIsLoading(true);
     try {
      const token = useAuthStore.getState().token;
       const payload = {
@@ -429,6 +441,9 @@ const handleConfirmUrgent = async () => {
   
       setTableData([]); 
     }
+    finally{
+      setIsLoading(false);
+    }
   };
 
 
@@ -437,7 +452,7 @@ const handleConfirmUrgent = async () => {
       toast.warning("Please select at least one record before sending.");
       return;
     }
-  
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const payload = {
@@ -469,7 +484,7 @@ const handleConfirmUrgent = async () => {
         setSelectedRows([]);
         setOpenModalotherbutton(false);
         onClose();
-      
+        await fetchLetters('NEW_LETTER');
       } else {
         console.error("Unexpected API Response:", response.data.message);
         toast.error("Failed to send data.");
@@ -479,10 +494,14 @@ const handleConfirmUrgent = async () => {
       console.log("Server response:", error.response?.data);
       toast.error("An error occurred while sending data.");
     }
+    finally{
+      setIsLoading(false);
+    }
   };
   
 
   const handlefrequentlymarks = async () => {
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       if (selectedRowsfrequ.length === 0) {
@@ -512,6 +531,7 @@ const handleConfirmUrgent = async () => {
         toast.success(response.data.message);
         setSelectedRowsfrequ([]); 
         onClose();
+        await fetchLetters('NEW_LETTER');
       } else {
         toast.error("Failed to send data.");
       }
@@ -519,10 +539,14 @@ const handleConfirmUrgent = async () => {
       console.error("Error sending data:", error);
       toast.error("An error occurred while sending data.");
     }
+    finally{
+      setIsLoading(false);
+    }
   };
 
 
   const handleAddToFile = async () => {
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const payload = {
@@ -572,10 +596,14 @@ const handleConfirmUrgent = async () => {
     } catch (error) {
       console.error('Error adding to file:', error);
     }
+    finally{
+      setIsLoading(false);
+    }
   };
   
 
   const handleDownload = async () => {
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
     const payload = {
@@ -617,9 +645,13 @@ const handleConfirmUrgent = async () => {
     console.error("Error downloading PDF:", error);
     toast.error("Failed to download PDF. Please try again.");
     }
+    finally{
+      setIsLoading(false);
+    }
     };
 
     const handleDownloadenclosure = async () => {
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
       const payload = {
@@ -661,6 +693,9 @@ const handleConfirmUrgent = async () => {
       console.error("Error downloading PDF:", error);
       toast.error("Failed to download PDF. Please try again.");
       }
+      finally{
+        setIsLoading(false);
+      }
       };
   
     
@@ -668,7 +703,7 @@ const handleConfirmUrgent = async () => {
   // const isNewLetter = letterData?.tabCode === 'NEW_LETTER';
   return (
     <>
-   
+    {isLoading && <PageLoader />}
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ m: 0, p: 2, bgcolor: '#f5f5f5' }}>
         <Typography variant="h6"   component="span" sx={{ fontWeight: 500, color: '#666' }}>Letter Detail</Typography>
@@ -764,6 +799,7 @@ const handleConfirmUrgent = async () => {
                     onClick={handleOtherButtonClick}
                     sx={{
                       backgroundColor: '#1976d2',
+                      textTransform: 'none', 
                       color: '#ffffff',
                       '&:hover': {
                         backgroundColor: '#115293',
@@ -814,13 +850,19 @@ const handleConfirmUrgent = async () => {
               <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
                   
              
-            <Button variant="contained" color="primary" onClick={handleSaveClick}>
+            <Button variant="contained" 
+            sx={{
+              textTransform: 'none', 
+            }}
+            color="primary" 
+            onClick={handleSaveClick}>
               Save
             </Button>
           
                
                <Button
                   variant="contained"
+                  sx={{ textTransform: 'none', }}
                   color="secondary"
                   onClick={handlefrequentlymarks}
                   disabled={!letterDataView?.letterFrequentlyMarkObj || letterDataView.letterFrequentlyMarkObj.length === 0} // Check if array is undefined or empty
@@ -828,11 +870,17 @@ const handleConfirmUrgent = async () => {
                   Send
                 </Button>
 
-                      <Button variant="contained" color="success" onClick={handleAddToFile}>
+                      <Button variant="contained"
+                      sx={{ textTransform: 'none', }}
+                       color="success" onClick={handleAddToFile}>
                         Add to File
                       </Button>
                    
-                <Button variant="outlined" color="error" onClick={onClose}>
+                <Button 
+                sx={{
+                  textTransform: 'none', 
+                }}
+                variant="outlined" color="error" onClick={onClose}>
                   Cancel
                 </Button>
               </Box>
@@ -869,6 +917,7 @@ const handleConfirmUrgent = async () => {
           py: 1,
           borderRadius: "8px",
           backgroundColor: "#1976d2",
+          textTransform: 'none', 
           "&:hover": { backgroundColor: "#1565c0" },
         }}
       >
@@ -999,8 +1048,8 @@ const handleConfirmUrgent = async () => {
         Do you want to make the letter {pendingUrgency ? "Urgent" : "Non-Urgent"}?
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCancelUrgent} variant="contained" color="error">No</Button>
-        <Button onClick={handleConfirmUrgent} variant="contained"  color="primary">Yes</Button>
+        <Button onClick={handleCancelUrgent} variant="contained" sx={{ textTransform: 'none', }} color="error">No</Button>
+        <Button onClick={handleConfirmUrgent} variant="contained" sx={{ textTransform: 'none', }}  color="primary">Yes</Button>
       </DialogActions>
           </Dialog>
 
@@ -1019,8 +1068,8 @@ const handleConfirmUrgent = async () => {
         Do you want to make the letter {pendingConfidential ? "Confidential" : "Non-Confidential"}?
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCancelConfidential} variant="contained" color="error">No</Button>
-        <Button onClick={handleConfirmConfidential} variant="contained" color="primary">Yes</Button>
+        <Button onClick={handleCancelConfidential} variant="contained"  sx={{ textTransform: 'none', }} color="error">No</Button>
+        <Button onClick={handleConfirmConfidential} variant="contained" sx={{ textTransform: 'none', }} color="primary">Yes</Button>
       </DialogActions>
          </Dialog>
 
@@ -1044,10 +1093,10 @@ const handleConfirmUrgent = async () => {
           <Typography>Do you want to proceed?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenConfirmModal(false)} variant="outlined" color="secondary">
+          <Button onClick={() => setOpenConfirmModal(false)} variant="outlined" sx={{ textTransform: 'none', }} color="secondary">
              Cancel
           </Button>
-          <Button onClick={handleConfirmSave} variant="contained" color="primary" >
+          <Button onClick={handleConfirmSave} variant="contained" sx={{ textTransform: 'none', }} color="primary" >
              Confirm
           </Button>
         </DialogActions>
@@ -1081,7 +1130,7 @@ const handleConfirmUrgent = async () => {
 
 
   <DialogActions>
-    <Button onClick={() => setOpenWarningModal(false)} variant="contained" color="error">
+    <Button onClick={() => setOpenWarningModal(false)} variant="contained" sx={{ textTransform: 'none', }} color="error">
       OK
     </Button>
   </DialogActions>
@@ -1129,13 +1178,16 @@ const handleConfirmUrgent = async () => {
               {/* Office Name Dropdown */}
               <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="office-name-label">Office Name *</InputLabel>
+                <InputLabel id="office-name-label">
+                  Office Name <span style={{ color: 'red' }}>*</span>
+                </InputLabel>
                   <Select
                     labelId="office-name-label"
                     id="office-name"
                     value={officeName}
                     label="Office Name *"
                     onChange={handleOfficeNameChange}
+                   
                   >
                     {Array.isArray(officeList) &&
                       officeList.map((office) => (
@@ -1150,7 +1202,7 @@ const handleConfirmUrgent = async () => {
               {/* Department Name Dropdown */}
               <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="department-name-label">Department Name *</InputLabel>
+                  <InputLabel id="department-name-label">Department Name <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     labelId="department-name-label"
                     id="department-name"
@@ -1201,10 +1253,10 @@ const handleConfirmUrgent = async () => {
 
             {/* Buttons */}
             <Box sx={{ display: "flex", justifyContent: "end", mt: 3, gap: 2, p:3 }}>
-              <Button variant="contained" size="small" color="error" onClick={() => setSelectedRows([])}>
+              <Button variant="contained" sx={{ textTransform: 'none', }} size="small" color="error" onClick={() => setSelectedRows([])}>
                 Clear All
               </Button>
-              <Button variant="contained" size="small" color="primary" onClick={handleSend}>
+              <Button variant="contained" sx={{ textTransform: 'none', }} size="small" color="primary" onClick={handleSend}>
                 Send
               </Button>
             </Box>

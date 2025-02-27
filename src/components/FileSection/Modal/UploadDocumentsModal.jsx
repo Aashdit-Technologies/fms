@@ -131,7 +131,7 @@ const UploadDocumentsModal = ({
         },
       });
     } else if (field === "office") {
-      setOptions((prev) => ({ ...prev, departments: [], designations: [], }));
+      setOptions((prev) => ({ ...prev, departments: [], designations: [] }));
       fetchData.mutate({
         endpoint: "/level/get-departments",
         payload: {
@@ -269,7 +269,7 @@ const UploadDocumentsModal = ({
           paddingBottom: "20px",
         }}
       >
-        {loading && <PageLoader />} 
+        {loading && <PageLoader />}
         <Typography
           variant="h6"
           sx={{
@@ -299,6 +299,20 @@ const UploadDocumentsModal = ({
               }
               isSearchable
               isClearable={true}
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+                option: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+                singleValue: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+              }}
             />
           </Grid>
 
@@ -317,6 +331,20 @@ const UploadDocumentsModal = ({
               isSearchable
               isClearable={true}
               isDisabled={!selectedValues.organization}
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+                option: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+                singleValue: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+              }}
             />
           </Grid>
 
@@ -335,6 +363,20 @@ const UploadDocumentsModal = ({
               isSearchable
               isClearable={true}
               isDisabled={!selectedValues.company}
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+                option: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+                singleValue: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+              }}
             />
           </Grid>
 
@@ -353,6 +395,20 @@ const UploadDocumentsModal = ({
               onChange={(option) => handleSelectionChange("department", option)}
               isSearchable
               isDisabled={!selectedValues.office}
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+                option: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+                singleValue: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+              }}
             />
           </Grid>
 
@@ -374,11 +430,30 @@ const UploadDocumentsModal = ({
               isSearchable
               isDisabled={!selectedValues.department}
               menuPortalTarget={document.body}
-              styles={{ menuPortal: (base) => ({ ...base, zIndex: 1300 }) }}
+              styles={{
+                menuPortal: (base) => ({ ...base, zIndex: 1300 }),
+                control: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+                option: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+                singleValue: (base) => ({
+                  ...base,
+                  fontSize: "14px",
+                }),
+              }}
             />
           </Grid>
           <Grid item xs={6} style={{ paddingTop: "40px" }}>
-            <Button variant="contained" color="primary" onClick={handleSearch} disabled={loading}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSearch}
+              disabled={loading}
+            >
               Search
             </Button>
             <Button
@@ -434,9 +509,9 @@ const UploadDocumentsModal = ({
                   <TableRow
                     key={idx}
                     sx={{
-                      "&:hover": { backgroundColor: "#f5f5f5" }, // Highlight on hover
+                      "&:hover": { backgroundColor: "#f5f5f5" },
                       backgroundColor:
-                        idx % 2 === 0 ? "#f9f9f9" : "transparent", // Striped rows
+                        idx % 2 === 0 ? "#f9f9f9" : "transparent",
                     }}
                   >
                     <TableCell>

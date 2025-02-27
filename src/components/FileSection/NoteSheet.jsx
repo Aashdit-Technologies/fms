@@ -316,19 +316,19 @@ const token =useAuthStore((state) => state.token) || sessionStorage.getItem("tok
         }
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
-          width: 10px;
-          height: 8px;
+          width: 5px;
+          height: 5px;
         }
         ::-webkit-scrollbar-track {
           background: #f1f1f1;
           border-radius: 5px;
         }
         ::-webkit-scrollbar-thumb {
-          background: #1565C0;
-          border-radius: 5px;
+          background: #207785;
+          border-radius: 3px;
         }
         ::-webkit-scrollbar-thumb:hover {
-          background: #1565C0;
+          background: #207785;
         }
       `}</style>
     </div>

@@ -11,32 +11,96 @@ import PreviousEmployment from '../EmployeeMaster/PreviousEmployment';
 import Bank from '../EmployeeMaster/Bank';
 import OtherSkills from '../EmployeeMaster/OtherSkills';
 import useFormStore from '../EmployeeMaster/store';
+import { PageLoader } from "../pageload/PageLoader";
+import api from "../../Api/Api";
+import useAuthStore from "../../store/Store";
+import { encryptPayload } from "../../utils/encrypt";
 
 const tabComponents = [
-  { label: 'Basic Details', component: <BasicDetails /> },
-  { label: 'Employment Details', component: <EmploymentDetails /> },
-  { label: 'Family Details', component: <FamilyDetails /> },
-  { label: 'Address', component: <Address /> },
-  { label: 'Education', component: <Education /> },
-  { label: 'Previous Employment', component: <PreviousEmployment /> },
-  { label: 'Bank', component: <Bank /> },
-  { label: 'Other Skills', component: <OtherSkills /> },
+  { key: "BASIC_DETAILS", label: "Basic Details", component: <BasicDetails /> },
+  { key: "EMPLOYMENT_DETAILS", label: "Employment Details", component: <EmploymentDetails /> },
+  { key: "FAMILY_DETAILS", label: "Family Details", component: <FamilyDetails /> },
+  { key: "ADDRESS", label: "Address", component: <Address /> },
+  { key: "EDUCATION", label: "Education", component: <Education /> },
+  { key: "PREVIOUS_EMPLOYMENT", label: "Previous Employment", component: <PreviousEmployment /> },
+  { key: "BANK", label: "Bank", component: <Bank /> },
+  { key: "OTHER_SKILLS", label: "Other Skills", component: <OtherSkills /> },
 ];
 
-const EmployeeForm = () => {
-  const { activeTab, setActiveTab } = useFormStore();
-  const [expanded, setExpanded] = useState(true); 
 
-  const handleTabChange = (_, newValue) => {
-    setActiveTab(newValue);
-  };
+const EmployeeForm = () => {
+
+  const { activeTab, setActiveTab } = useFormStore();
+  const employeeId = useFormStore((state) => state.employeeId);
+  const [expanded, setExpanded] = useState(true); 
+  const [isLoading, setIsLoading] = useState(false);
+
 
   const toggleAccordion = (event) => {
     event.stopPropagation(); 
     setExpanded(!expanded);
   };
 
+  const handleTabChange = async (_, newValue) => {
+   
+    setActiveTab(newValue);
+  
+    if (employeeId) {
+      setIsLoading(true);
+      try {
+        const token = useAuthStore.getState().token;
+        const payload = {
+          employeeId: employeeId,
+          tabCode: newValue, // Pass the selected tab key
+        };
+  
+        const response = await api.post(
+          "governance/get-employee-details-by-empid-tabcode",
+          { dataObject: encryptPayload(payload) },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+  
+        if (response.status === 200) {
+          const employeeData = response.data.data;
+          if(newValue == 'BASIC_DETAILS'){
+            useFormStore.getState().updateFormData("basicDetails", employeeData);
+            useFormStore.getState().setEmployeeId(employeeData.employeeId);
+          }else if(newValue == 'EMPLOYMENT_DETAILS'){
+            useFormStore.getState().updateFormData("employmentDetails", employeeData);
+            useFormStore.getState().setEmployeeId(employeeData.employeeId);
+          }else if(newValue == 'FAMILY_DETAILS'){
+            useFormStore.getState().updateFormData("familyDetails", employeeData);
+          }else if(newValue == 'ADDRESS'){
+            useFormStore.getState().updateFormData("address", employeeData);
+          }else if(newValue == 'EDUCATION'){
+            useFormStore.getState().updateFormData("education", employeeData);
+          }else if(newValue == 'PREVIOUS_EMPLOYMENT'){
+            useFormStore.getState().updateFormData("previousEmployment", employeeData);
+          }else if(newValue == 'BANK'){
+            useFormStore.getState().updateFormData("bank", employeeData);
+          }else if(newValue == 'OTHER_SKILLS'){
+            useFormStore.getState().updateFormData("otherSkills", employeeData);
+          }
+          
+         
+        }
+      } catch (error) {
+        console.error("Error fetching employee details:", error);
+        alert("Error fetching employee details");
+      }finally{
+        setIsLoading(false);
+      }
+    }
+  };
+  
+
   return (
+    < >
+      {isLoading && <PageLoader />}
     <Box sx={{ width: '100%', margin: 'auto', mt: 3 }}>
      <Accordion expanded={expanded} square elevation={0} sx={{ backgroundColor: '#f5f8fa' }}>
      <AccordionSummary
@@ -64,7 +128,7 @@ const EmployeeForm = () => {
       }}
     >
       <Typography variant="h6" >
-      Update Employee Details
+      {employeeId ? 'Update Employee Details'  :'Save Employee Details'}
       </Typography>
     </AccordionSummary > 
         <AccordionDetails>
@@ -95,13 +159,15 @@ const EmployeeForm = () => {
             }}
             >
             {tabComponents.map((tab, index) => (
-                <Tab key={index} label={tab.label} />
+                <Tab key={index} label={tab.label} value={tab.key} />
             ))}
+           
             </Tabs>
-          <Box sx={{ mt: 3 }}>{tabComponents[activeTab].component}</Box>
+          <Box sx={{ mt: 3 }}>{tabComponents.find((tab) => tab.key === activeTab)?.component || null}</Box>
         </AccordionDetails>
       </Accordion>
     </Box>
+    </>
   );
 };
 

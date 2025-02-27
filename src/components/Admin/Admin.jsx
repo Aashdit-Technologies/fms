@@ -18,7 +18,8 @@ import Welcome from "../Welcome/Welcome";
 import AddToFile from "../Inbox/AddToFile";
 import EmployeeMaster from "../EmployeeMaster/EmployeeMaster";
 import ManageCustodian from "../ManageCustodian/ManageCustodian";
-import NoteSheetPreview from "../FileSection/notesheetpreview/NoteSheetPreview";
+import EmployeeList from "../EmployeeList/EmployeeList";
+import LogViewer from "../LogViewer/LogViewer";
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -128,14 +129,6 @@ const Admin = () => {
               }
             />
             <Route
-              path="note-sheet-preview"
-              element={
-                <React.Suspense fallback={<div>Loading...</div>}>
-                  <NoteSheetPreview />
-                </React.Suspense>
-              }
-            />
-            <Route
               path="diary-section"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
@@ -173,6 +166,22 @@ const Admin = () => {
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <EmployeeMaster/>
+                </React.Suspense>
+              }
+            />
+              <Route
+              path="employee-list"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <EmployeeList/>
+                </React.Suspense>
+              }
+            />
+              <Route
+              path="log-view"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <LogViewer/>
                 </React.Suspense>
               }
             />
@@ -215,7 +224,8 @@ const Admin = () => {
                 menu.menuURL === "/manage-activity" ||
                 menu.menuURL === "/diary-section" ||
                 menu.menuURL === "/despatch-section"||
-                menu.menuURL === "/employee-master"
+                menu.menuURL === "/employee-master" ||
+                menu.menuURL === "/employee-list" 
               ) {
                 return null;
               }

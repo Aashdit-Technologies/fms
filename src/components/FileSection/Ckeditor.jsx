@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Accordion } from "react-bootstrap";
 import { FaPlus, FaMinus } from "react-icons/fa6";
 import { Select, MenuItem } from "@mui/material";
@@ -9,6 +9,7 @@ const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, re
   const [selectedItem, setSelectedItem] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [editorContent, setEditorContent] = useState(content || '');
+  const isUpdatingRef = useRef(false);
 
   const options = [
     "Noting No-1",
@@ -20,10 +21,16 @@ const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, re
 
   // Update editor content when props change
   useEffect(() => {
-    const newContent = content || additionalDetails?.data?.note || '';
-    console.log('Ckeditor updating content:', newContent);
-    setEditorContent(newContent);
-  }, [content, additionalDetails]);
+    if (content !== editorContent && !isUpdatingRef.current) {
+      const newContent = content || additionalDetails?.data?.note || '';
+      console.log('Ckeditor updating content:', newContent);
+      isUpdatingRef.current = true;
+      setEditorContent(newContent);
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 100);
+    }
+  }, [content, additionalDetails, editorContent]);
 
   const handleSelectChange = useCallback((event) => {
     const value = event.target.value;
@@ -33,18 +40,30 @@ const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, re
       const linkHTML = `<a href="https://example.com/${value.replace(" ", "-").toLowerCase()}" target="_blank">${value}</a>`;
       const newContent = `${editorContent}<br/>${linkHTML}<br/>`;
       console.log('Adding link to content:', newContent);
+      isUpdatingRef.current = true;
       setEditorContent(newContent);
       onContentChange?.(newContent);
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 100);
     }
   }, [editorContent, onContentChange]);
 
   const handleEditorChange = useCallback((newContent) => {
-    console.log('Ckeditor content changed:', newContent);
-    setEditorContent(newContent);
-    onContentChange?.(newContent);
+    if (!isUpdatingRef.current) {
+      console.log('Ckeditor content changed:', newContent);
+      isUpdatingRef.current = true;
+      setEditorContent(newContent);
+      onContentChange?.(newContent);
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 100);
+    }
   }, [onContentChange]);
 
-  const toggleAccordion = useCallback(() => {
+  const toggleAccordion = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsOpen((prev) => !prev);
   }, []);
 

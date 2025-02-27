@@ -25,6 +25,7 @@ import { encryptPayload } from "../../utils/encrypt";
 import LetterDetail from './LetterDetail';
 import {toast } from "react-toastify";
 import useLetterStore from './useLetterStore';
+import { PageLoader } from "../pageload/PageLoader";
 const customStyles = {
   table: {
     style: {
@@ -42,7 +43,7 @@ const customStyles = {
       color: "#ffffff",
       // fontSize: "14px",
       fontWeight: "600",
-      textTransform: "uppercase",
+      // textTransform: "uppercase",
       letterSpacing: "0.5px",
       minHeight: "52px",
       borderBottom: "2px solid #003d4c",
@@ -107,7 +108,7 @@ const LetterList = () => {
     if (successMessage) {
       const timer = setTimeout(() => {
         setSuccessMessage(null); 
-      }, 8000);
+      }, 12000);
 
       return () => clearTimeout(timer);
     }
@@ -121,7 +122,7 @@ const LetterList = () => {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [openLetterDetail, setOpenLetterDetail] = useState(false);
   const [expanded, setExpanded] = useState(true);
-  
+  const [isLoading, setIsLoading] = useState(false);
 
   const TAB_CODES = {
     NEW_LETTER: 'NEW_LETTER',
@@ -166,6 +167,7 @@ const LetterList = () => {
   // }, [activeTab, pageNo, rowSize]);
  
     const fetchLetters = useCallback(async (tabCode) => {
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         const payload = {
@@ -184,7 +186,7 @@ const LetterList = () => {
           }
         );
   
-        console.log("Raw API Response:", JSON.stringify(response.data, null, 2));
+        // console.log("Raw API Response:", JSON.stringify(response.data, null, 2));
   
         const responseData = response.data?.data?.letterList || [];
         setLetters(Array.isArray(responseData) ? responseData : []);
@@ -192,6 +194,8 @@ const LetterList = () => {
       } catch (error) {
         console.error("Error fetching letters:", error);
         setLetters([]);
+      }  finally{
+        setIsLoading(false);
       }
     },[rowSize, pageNo]);
    
@@ -208,7 +212,7 @@ const handleViewLetterDetail = async (row, tabCode) => {
     console.error("Error: receiptId is missing in row data!");
     return;
   }
-
+  setIsLoading(true);
   try {
     const token = useAuthStore.getState().token;
     const payload = {
@@ -244,6 +248,9 @@ const handleViewLetterDetail = async (row, tabCode) => {
     console.error("Error fetching letters:", error);
     setViewLetters([]);
   }
+  finally{
+    setIsLoading(false);
+  }
 };
 
 
@@ -270,53 +277,74 @@ const handleTabChange = (newTab) => {
 
   const actionButton = (row) => (
     <Button
-        size="small"
-        variant="contained"
-        color="primary"
-        startIcon={<VisibilityIcon />}
-        onClick={() => handleViewLetterDetail(row, activeTab)}  
-    >
-        View
-    </Button>
-);
-// const actionButtons = (row) => (
-//   <Button
-//       size="small"
-//       variant="contained"
-//       color="primary"
-//       startIcon={<ShareIcon/>}
-//       onClick={() => handleViewLetterDetail(row, activeTab)}  
-//   >
-      
-//   </Button>
-// );
+      size="small"
+      variant="contained"
+      color="primary"
+      startIcon={<VisibilityIcon sx={{ fontSize: 20 }} />} 
+      onClick={() => handleViewLetterDetail(row, activeTab)}
+      sx={{
+        minWidth: "36px", 
+        padding: "6px 10px", 
+        "& .MuiButton-startIcon": {
+          margin: 0, 
+        },
+      }}
+    />
+  );
+  
+
 
 
 const NewLettercolumns = [
   {
-    name: 'SI No',
+    name: 'Sl No',
     cell: (row, index) => index + 1,
     sortable: true,
-    width: '100px',
+    width: '80px',
   },
   {
-    name: 'Diary Number',
+    name: 'Diary No.',
     selector: row => row.diaryNumber || '',
     sortable: true,
-    width: '170px',
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '150px'
+        }} 
+        title={row.diaryNumber || ''}
+      >
+        {row.diaryNumber || ''}
+      </div>
+    ),
   },
   {
-    name: 'Letter Number',
-    selector: row => row.letterNumber || '',
+    name: 'Letter No. & Date',
+    cell: (row) => `${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`,
     sortable: true,
-    width: '170px',
-  },
+    
+  },  
   {
     name: 'Letter Source',
     selector: row => row.letterSource || '',
     sortable: true,
-    width: '170px',
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '150px'
+        }} 
+        title={row.letterSource || ''}
+      >
+        {row.letterSource || ''}
+      </div>
+    ),
   },
+  
   {
     name: 'Send Date',
     selector: row => row.senderDate || '',
@@ -327,66 +355,119 @@ const NewLettercolumns = [
     name: 'Sender',
     selector: row => row.sender || '',
     sortable: true,
-    width: '300px',
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '150px'
+        }} 
+        title={row.sender || ''}
+      >
+        {row.sender || ''}
+      </div>
+    ),
   },
   {
-    name: 'Updated Date',
+    name: 'Updated Date & Time',
     selector: row => row.updatedDateTime || 'NA',
     sortable: true,
-    width: '170px',
+    // width: '170px',
   },
   {
-    name: 'Memo Number & Date',
+    name: 'Memo No. & Date',
     selector: row => row.memoNo || '',
     sortable: true,
    
   },
-  {
-    name: 'Subject',
-    selector: row => row.subject || '',
-    sortable: true,
-    width: '200px',
-  },
+  // {
+  //   name: 'Subject',
+  //   selector: row => row.subject || '',
+  //   sortable: true,
+   
+  //   cell: row => (
+  //     <div 
+  //       style={{
+  //         whiteSpace: 'nowrap', 
+  //         overflow: 'hidden', 
+  //         textOverflow: 'ellipsis', 
+  //         maxWidth: '150px'
+  //       }} 
+  //       title={row.subject || ''}
+  //     >
+  //       {row.subject || ''}
+  //     </div>
+  //   ),
+  // },
   {
     name: 'Action',
     cell: actionButton,
-   
+    width:"100px",
   },
 ];
 
 const SentLetterColumns = [
   {
-    name: 'SI NO',
+    name: 'Sl No.',
     cell: (row, index) => index + 1,
     sortable: true,
-    width: '60px',
+    width: '100px',
   },
   {
-    name: 'Letter Number & Date',
-    selector: row => row.letterNumber || '',
+    name: 'Letter No. & Date',
+    cell: (row) => `${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`,
     sortable: true,
-  },
+    
+  },  
   {
-    name: 'Updated DateTime',
+    name: 'Updated Date & Time',
     selector: row => row.updatedDateTime || 'NA',
     sortable: true,
   },
   {
-    name: 'Memo Number & Date',
+    name: 'Memo No. & Date',
     selector: row => row.memoNo|| '',
     sortable: true,
+    width: '130px',
   },
   {
     name: 'Send To',
     selector: row => row.sendTo || '',
-    sortable: true,
-   
+    
+   cell: row => (
+    <div 
+      style={{
+        whiteSpace: 'nowrap', 
+        overflow: 'hidden', 
+        textOverflow: 'ellipsis', 
+        maxWidth: '200px'
+      }} 
+      title={row.sendTo || ''}
+    >
+      {row.sendTo || ''}
+    </div>
+  ),
+  sortable: true,
+   width:"250px"
   },
   {
     name: 'Subject',
     selector: row => row.subject || '',
     sortable: true,
-   
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '200px'
+        }} 
+        title={row.subject || ''}
+      >
+        {row.subject || ''}
+      </div>
+    ),
   },
   {
     name: 'Send Date',
@@ -396,34 +477,35 @@ const SentLetterColumns = [
   {
     name: 'Action',
     cell: actionButton,
-    width: '120px',
+    width:"100px",
   },
 ];
 
 const MovedToFileColumns = [
   {
-    name: 'SI NO',
+    name: 'Sl No.',
     cell: (row, index) => index + 1,
     sortable: true,
-    width: '60px',
+    width: '100px',
   },
   {
-    name: 'Diary Number',
+    name: 'Diary No.',
     selector: row => row.diaryNumber || '',
     sortable: true,
   },
   {
-    name: 'Letter Number & Date',
-    selector: row => row.letterNumber || '',
+    name: 'Letter No. & Date',
+    cell: (row) => `${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`,
     sortable: true,
-  },
+    // width: '170px',
+  },  
   {
-    name: 'Updated DateTime',
+    name: 'Updated Date & Time',
     selector: row => row.updatedDateTime || 'NA',
     sortable: true,
   },
   {
-    name: 'Memo Number & Date',
+    name: 'Memo No. & Date',
     selector: row => row.memoNo || '',
     sortable: true,
   },
@@ -432,6 +514,19 @@ const MovedToFileColumns = [
     selector: row => row.subject || '',
     sortable: true,
    
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '200px'
+        }} 
+        title={row.subject|| ''}
+      >
+        {row.subject|| ''}
+      </div>
+    ),
   },
   {
     name: 'Status',
@@ -451,7 +546,7 @@ const MovedToFileColumns = [
   {
     name: 'Action',
     cell: actionButton,
-    width: '120px',
+    width:"100px",
   },
 ];
 
@@ -475,6 +570,8 @@ const MovedToFileColumns = [
  
 
   return (
+    <>
+     {isLoading && <PageLoader />}
     <div className="diary-section-container">
       <Box sx={{ p: 3 }}>
       {successMessage && (
@@ -558,9 +655,9 @@ const MovedToFileColumns = [
                 },
               }}
             >
-              <Tab value="NEW_LETTER" label="New Letters" />
-              <Tab value="SENT_LETTER" label="Sent Letters" />
-              <Tab value="MOVE_FILE" label="Move Files" />
+              <Tab value="NEW_LETTER" label="New Letter" />
+              <Tab value="SENT_LETTER" label="Sent Letter" />
+              <Tab value="MOVE_FILE" label="Moved To File" />
             </Tabs>
           </Paper>
 
@@ -610,9 +707,12 @@ const MovedToFileColumns = [
     onClose={handleCloseLetterDetail}
     letterData={selectedLetter} 
     letterDataView={viewletters[0]}
+    fetchLetters={fetchLetters}
 />
 
+
     </div>
+    </>
   );
 };
 

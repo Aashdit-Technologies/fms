@@ -15,7 +15,7 @@ import useFormStore from "../EmployeeMaster/store";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
-
+import { PageLoader } from "../pageload/PageLoader";
 import { encryptPayload } from "../../utils/encrypt";
 import {toast } from "react-toastify";
 const fetchDropdownData = async () => {
@@ -35,8 +35,9 @@ const fetchDropdownData = async () => {
 };
 
 const EmploymentDetails = () => {
-  const { employeeCode } = useFormStore();
-  const {employeeId, activeTab, updateFormData, setActiveTab ,formData,} = useFormStore();
+  
+  const { activeTab, updateFormData, setActiveTab ,formData,setEmployeeCode} = useFormStore();
+  const [isLoading, setIsLoading] = useState(false);
   const token = useAuthStore((state) => state.token);
   const { data } = useQuery({
     queryKey: ["dropdownData"],
@@ -103,20 +104,19 @@ const EmploymentDetails = () => {
 
   const handleBack = () => {
     updateFormData("employmentDetails", rows);
-    setActiveTab(0);
+    setActiveTab('BASIC_DETAILS');
   };
 
  
+  
   const handleSaveAndNext = async () => {
     const storedEmployeeId = useFormStore.getState().employeeId;
-    console.log("Stored EmployeeId:", storedEmployeeId);
-    
     
     if (!rows || rows.length === 0) {
       toast.error("No employment data provided.");
       return;
     }
-  
+  setIsLoading(true)
     try {
       const payload = {
         ServiceStatusId: serviceStatus ?? null,
@@ -136,11 +136,7 @@ const EmploymentDetails = () => {
         })),
       };
   
-      console.log("Payload before encryption:", JSON.stringify(payload, null, 2));
-  
       const encryptedPayload = encryptPayload(payload);
-  
-      console.log("Encrypted Payload:", encryptedPayload);
   
       const response = await api.post(
         "governance/save-or-update-employement",
@@ -148,91 +144,76 @@ const EmploymentDetails = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
-      console.log("Response:", response);
-  
       if (response.data?.outcome) {
-        const { EmployeeCode, EmployeeId } = response.data.data;
+        const { employeeCode, employeeId } = response.data.data;
   
-        useFormStore.getState().setEmployeeCode(EmployeeCode);
-        useFormStore.getState().setEmployeeId(EmployeeId); 
+        useFormStore.getState().setEmployeeCode(employeeCode);
+        useFormStore.getState().setEmployeeId(employeeId);
   
-        updateFormData("employmentDetails", { ...payload, EmployeeId });
+       
+        updateFormData("employmentDetails", {
+          employeeDeptMap: payload.employeeDeptMap,
+          ServiceStatusId: serviceStatus ?? null,
+        });
   
         toast.success("Data saved successfully!", { position: "top-right", autoClose: 3000 });
-        setActiveTab(2);
+  
+        setActiveTab("FAMILY_DETAILS");
       } else {
         toast.error(response.data?.message || "Failed to save employment details.");
       }
     } catch (error) {
       console.error("Error saving employment details:", error);
       toast.error("An error occurred while saving. Please try again.");
+    }finally{
+      setIsLoading(false)
     }
   };
-
+  
   
   useEffect(() => {
-    if (activeTab === 1) {
-      const storedData = formData.employmentDetails;
-      if (storedData && storedData.organization) {
-        setRows([storedData]); 
-        setServiceStatus(storedData.serviceStatus || "");
-      } else {
-        fetchEmployeeDetails();
+    if (activeTab === "EMPLOYMENT_DETAILS") {
+      const storedData = formData?.employmentDetails;
+
+      if (storedData) {
+        
+        setEmployeeCode(storedData?.staffCode || ""); 
+        setServiceStatus(storedData?.serviceStatusId || "");
+
+      
+        if (storedData?.employmentDetails) {
+          const formattedRows = storedData.employmentDetails.map((row) => ({
+            empDeptMapId: row?.employeeDeptMapId ?? null,
+            role: row?.roleId ?? "",
+            organization: row?.organizationId ?? "",
+            company: row?.companyId ?? "",
+            office: row?.officeId ?? "",
+            department: row?.departmentId ?? "",
+            designation: row?.designationId ?? "",
+            fromDate: row?.fromDate ? new Date(row.fromDate).toISOString().split("T")[0] : "",
+            endDate: row?.endDate ? new Date(row.endDate).toISOString().split("T")[0] : "",
+            isPrimary: row?.isPrimary ? "Yes" : "No",
+          }));
+
+          setRows(formattedRows);
+        }
       }
     }
-  }, [activeTab]);
-
-   
-  const fetchEmployeeDetails = async () => {
-    if (!employeeId) return;
-
-    try {
-      const response = await api.get("governance/get-employee-details-by-empid-tabcode", {
-        params: { employeeId, tabCode: 2 },
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.data?.outcome) {
-        const employeeData = response.data.data;
-
-        // Set Service Status
-        setServiceStatus(employeeData.serviceStatus || "");
-
-        // Map response data to state
-        const mappedRow = {
-          empDeptMapId: employeeData.employeeDeptMapId || null,
-          organization: employeeData.organizationId || "",
-          company: employeeData.companyId || "",
-          office: employeeData.officeId || "",
-          department: employeeData.departmentId || "",
-          designation: employeeData.designationId || "",
-          role: employeeData.roleId || "",
-          fromDate: employeeData.fromDate || "",
-          endDate: employeeData.endDate || "",
-          isPrimary: employeeData.isPrimary ? "Yes" : "No",
-        };
-
-        setRows([mappedRow]);
-
-        // Store data in Zustand
-        updateFormData("employmentDetails", mappedRow);
-      }
-    } catch (error) {
-      console.error("Error fetching employee details:", error);
-      toast.error("Failed to load employment details.");
-    }
-  };
-
+  }, [activeTab, formData]);
+  
   return (
+    <>
+    {isLoading && <PageLoader />}
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ p: 3 }}>
-        <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      <Box>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 5,mt:3 }}>
           <Grid item xs={3}>
             <TextField
               fullWidth
               label="Employee Code"
-              value={employeeCode}
-              InputProps={{ readOnly: true }}
+              value={formData?.employmentDetails?.staffCode || ""}
+              InputProps={{ readOnly: true ,sx: { height: '50px' }}}
+              
             />
           </Grid>
 
@@ -242,6 +223,7 @@ const EmploymentDetails = () => {
               fullWidth
               label="Service Status"
               value={serviceStatus}
+              InputProps={{ sx: { height: '50px' } }}
               onChange={(e) => setServiceStatus(e.target.value)}
             >
               {ServiceStatus?.map((serv) => (
@@ -261,48 +243,30 @@ const EmploymentDetails = () => {
             key={index}
             sx={{ borderBottom: "1px solid #ddd", pb: 2, mb: 2 }}
           >
-           <Grid item xs={3}>
-              <TextField
+           <Grid item xs={3} sx={{mb:3}} >
+           <TextField
                 select
                 fullWidth
                 label="Organization"
-                value={row.organization}
+                value={row.organization} 
+                InputProps={{ sx: { height: '50px' } }}
                 onChange={(e) => handleChange(index, "organization", e.target.value)}
-                SelectProps={{
-                  MenuProps: {
-                    PaperProps: {
-                      style: {
-                        maxHeight: 300, 
-                        width: 150, 
-                      },
-                    },
-                  },
-                }}
-              
               >
                 {organizations.map((org) => (
-                  <MenuItem
-                    key={org.OrganizationId}
-                    value={org.OrganizationId}
-                    style={{
-                      whiteSpace: "nowrap",
-                      overflow: "hidden", 
-                      textOverflow: "ellipsis", 
-                      display: "block", 
-                    }}
-                  >
+                  <MenuItem key={org.OrganizationId} value={org.OrganizationId}>
                     {org.OrganizationName}
                   </MenuItem>
                 ))}
-              </TextField>
+         </TextField>
             </Grid>
 
-            <Grid item xs={3}>
+            <Grid item xs={3} sx={{mb:3}}>
               <TextField
                 select
                 fullWidth
                 label="Company"
                 value={row.company}
+                InputProps={{ sx: { height: '50px' } }}
                 onChange={(e) => handleChange(index, "company", e.target.value)}
                 SelectProps={{
                   MenuProps: {
@@ -329,12 +293,13 @@ const EmploymentDetails = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={3}>
+            <Grid item xs={3} sx={{mb:3}}>
               <TextField
                 select
                 fullWidth
                 label="Office"
                 value={row.office}
+                InputProps={{ sx: { height: '50px' } }}
                 onChange={(e) => handleChange(index, "office", e.target.value)}
               >
                 { offices.map((ofc) => (
@@ -345,12 +310,13 @@ const EmploymentDetails = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={3}>
+            <Grid item xs={3} sx={{mb:3}}>
               <TextField
                 select
                 fullWidth
                 label="Department"
                 value={row.department}
+                InputProps={{ sx: { height: '50px' } }}
                 onChange={(e) => handleChange(index, "department", e.target.value)}
               >
                 {departments.map((dep) => (
@@ -361,12 +327,13 @@ const EmploymentDetails = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={3}>
+            <Grid item xs={3} sx={{mb:3}}>
               <TextField
                 select
                 fullWidth
                 label="Designation"
                 value={row.designation}
+                InputProps={{ sx: { height: '50px' } }}
                 onChange={(e) => handleChange(index, "designation", e.target.value)}
               >
                 {designations.map((desi) => (
@@ -377,12 +344,13 @@ const EmploymentDetails = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={3}>
+            <Grid item xs={3} sx={{mb:3}}>
               <TextField
                 select
                 fullWidth
                 label="Role"
                 value={row.role}
+                InputProps={{ sx: { height: '50px' } }}
                 onChange={(e) => handleChange(index, "role", e.target.value)}
               >
                 {roles?.map((role) => (
@@ -393,42 +361,41 @@ const EmploymentDetails = () => {
               </TextField>
             </Grid>
 
-            {/* <Grid item xs={3}>
-              <TextField
-                select
-                fullWidth
-                label="ServiceStatus"
-                value={row.ServiceStatusId}
-                onChange={(e) => handleChange(index, "ServiceStatusId", e.target.value)}
-              >
-                {ServiceStatus?.map((serv) => (
-                  <MenuItem key={serv.ServiceStatusId} value={serv.ServiceStatusId}>
-                    {serv.ServiceStatusName}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid> */}
+           
 
-            <Grid item xs={3}>
+            <Grid item xs={3} sx={{mb:3}}>
               <MobileDatePicker
                 label="From Date"
                 value={row.fromDate ? dayjs(row.fromDate) : null}
                 onChange={(newValue) =>
                   handleChange(index, "fromDate", newValue ? newValue.format("YYYY-MM-DD") : "")
                 }
+               
                 format="YYYY-MM-DD"
                 slotProps={{
                   textField: {
                     fullWidth: true,
+                    
                     InputProps: {
                       endAdornment: <CalendarToday color="action" />,
                     },
+                    sx: {
+                      '& .MuiInputBase-root': {
+                        height: '50px', 
+                      },
+                    },
                   },
+                  actionBar: {
+                    actions: [], 
+                  },
+                 
                 }}
+               
+                closeOnSelect={true}
               />
             </Grid>
 
-            <Grid item xs={3}>
+            <Grid item xs={3} sx={{mb:3}}>
               <MobileDatePicker
                 label="End Date"
                 value={row.endDate ? dayjs(row.endDate) : null}
@@ -442,17 +409,27 @@ const EmploymentDetails = () => {
                     InputProps: {
                       endAdornment: <CalendarToday color="action" />,
                     },
+                    sx: {
+                      '& .MuiInputBase-root': {
+                        height: '50px', 
+                      },
+                    },
+                  },
+                  actionBar: {
+                    actions: [], // Removes both "OK" and "Clear" buttons
                   },
                 }}
+                closeOnSelect={true}
               />
             </Grid>
 
-            <Grid item xs={3}>
+            <Grid item xs={3} >
             <TextField
               select
               fullWidth
               label="Is Primary"
               value={row.isPrimary}
+              InputProps={{ sx: { height: '50px' } }}
               onChange={(e) => handleChange(index, "isPrimary", e.target.value)}
             >
               {["Yes", "No"].map((option) => (
@@ -488,6 +465,7 @@ const EmploymentDetails = () => {
         </Box>
       </Box>
     </LocalizationProvider>
+    </>
   );
 };
 

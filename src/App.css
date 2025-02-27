@@ -18,6 +18,31 @@
   .gvYsEF{
     overflow: hidden !important;
   }
+  button{
+    text-transform: capitalize !important;
+  }
+  label, select, input{
+    text-transform: capitalize !important;
+  }
+  label{
+    font-size: 14px;
+    font-weight: 600;
+    color: #207785;
+  }
+  textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    transition: border 0.3s ease-in-out;
+    font-size: 14px;
+  }
+  
+  textarea:focus {
+    border: 2px solid #4A90E2; /* Blue focus border */
+  }
+  
   .card {
     background: #fff;
     border-radius: 8px;

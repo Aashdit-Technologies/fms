@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 const useFormStore = create((set) => ({
-  activeTab: 0,
+  activeTab: "BASIC_DETAILS",
   formData: {
     basicDetails: {},
     employmentDetails: {},
@@ -28,3 +28,4 @@ const useFormStore = create((set) => ({
 }));
 
 export default useFormStore;
+

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -15,19 +15,22 @@ import {
   Tooltip, 
   IconButton,
 } from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import DownloadIcon from '@mui/icons-material/Download';
+
 import {toast } from "react-toastify";
 import api from "../../../Api/Api";
 import useAuthStore from "../../../store/Store";
 import { encryptPayload } from "../../../utils/encrypt";
+import { PageLoader } from "../../pageload/PageLoader";
 const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
 
   console.log( "fileName props",  fileName)
   console.log( "filePath props",filePath)
   
-
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleDownloadview = async (encloser) => {
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
     const payload = {
@@ -47,7 +50,7 @@ const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
     responseType: 'blob', 
     }
     );
-    
+    debugger
     if (response.status === 200) {
     console.log('Full PDF Response:', response.data);
     
@@ -55,7 +58,7 @@ const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `${fileName}`); 
+    link.setAttribute("download", encloser.fileName); 
     document.body.appendChild(link);
     link.click();
     
@@ -67,11 +70,16 @@ const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
     }
     } catch (error) {
     console.error("Error downloading PDF:", error);
-    alert("Failed to download PDF. Please try again.");
+    toast.error("Failed to download PDF. Please try again.");
+    }
+    finally{
+      setIsLoading(false);
     }
     };
 
   return (
+    <>
+     {isLoading && <PageLoader />}
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle
         sx={{
@@ -91,48 +99,63 @@ const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
           <Table className='table table-bordered'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: '50px', fontWeight: 'bold' }}>SI NO</TableCell>
+                <TableCell sx={{ width: '100px', fontWeight: 'bold' }}>Sl No.</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Enclosure Type</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Enclosure Name</TableCell>
                 <TableCell sx={{ width: '100px', fontWeight: 'bold' }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-                {enclosures.map((enclosure, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{enclosure.enclosuretype || 'N/A'}</TableCell>
-                    <TableCell>{enclosure.enclosureName}</TableCell>
-                    <TableCell>
-                      <Tooltip title="View Enclosure">
-                       <IconButton size="small"  onClick={() =>handleDownloadview(enclosure)}
-                          sx={{ 
-                            color: '#207785',
-                            bgcolor: 'rgba(32, 119, 133, 0.1)',
-                            '&:hover': {
-                              bgcolor: 'rgba(32, 119, 133, 0.2)',
-                              transform: 'scale(1.1)',
-                            },
-                            transition: 'all 0.2s ease-in-out',
-                            padding: '8px',
-                            borderRadius: '8px',
-                          }}>
-                            <VisibilityIcon/>
-                          </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
+  {enclosures.length > 0 ? (
+    enclosures.map((enclosure, index) => (
+      <TableRow key={index}>
+        <TableCell>{index + 1}</TableCell>
+        <TableCell>{enclosure.enclosuretype || 'N/A'}</TableCell>
+        <TableCell>{enclosure.enclosureName || 'N/A'}</TableCell>
+        <TableCell>
+          <Tooltip title="Download Enclosure">
+            <IconButton
+              size="small"
+              onClick={() => handleDownloadview(enclosure)}
+              sx={{
+                color: '#207785',
+                bgcolor: 'rgba(32, 119, 133, 0.1)',
+                '&:hover': {
+                  bgcolor: 'rgba(32, 119, 133, 0.2)',
+                  transform: 'scale(1.1)',
+                },
+                transition: 'all 0.2s ease-in-out',
+                padding: '8px',
+                borderRadius: '8px',
+              }}
+            >
+              <DownloadIcon />
+            </IconButton>
+          </Tooltip>
+        </TableCell>
+      </TableRow>
+    ))
+  ) : (
+    <TableRow>
+      <TableCell colSpan={4} align="center">
+        No data available
+      </TableCell>
+    </TableRow>
+  )}
+</TableBody>
+
           </Table>
         </TableContainer>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="contained" color="warning" onClick={onClose}>
+          <Button variant="contained" 
+          sx={{ textTransform: 'none',}}
+          color="warning" onClick={onClose}>
             Close
           </Button>
         </Box>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 

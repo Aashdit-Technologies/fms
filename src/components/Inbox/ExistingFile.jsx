@@ -10,7 +10,7 @@ import { MdOutlineMoveDown } from "react-icons/md";
 import {toast, ToastContainer } from "react-toastify";
 import CloseIcon from "@mui/icons-material/Close";
 import useLetterStore from "../Inbox/useLetterStore.js";
-
+import { PageLoader } from "../pageload/PageLoader";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography,Autocomplete, TextField, IconButton  } from "@mui/material";
 const customStyles = {
   table: {
@@ -122,7 +122,7 @@ const ExistingFile = () => {
   const [priority, setPriority] = useState("All");
   const [prioritylyst, setPrioritylyst] = useState("");
   const [nRData, setNRData] = useState({ prioritylst: [], receiptList: [] });
-  const [loading, setLoading] = useState(false);
+  //const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [roomId, setRoom] = useState("");
@@ -152,13 +152,14 @@ const ExistingFile = () => {
   const letterReceiptId = fetchedData.letterReceiptId;
   const metadataId = fetchedData.metadataId;
   const token = useAuthStore.getState().token; 
-
+  const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     fetchAllData();
   }, [fetchAllData]);
 
   useEffect(() => {
     const fetchRoomData = async () => {
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         const response = await api.get("/manage-room", {
@@ -167,6 +168,9 @@ const ExistingFile = () => {
         setRoomData(response.data.data || []);
       } catch (error) {
         console.error("Error fetching room data:", error);
+      }
+      finally{
+        setIsLoading(false);
       }
     };
     fetchRoomData();
@@ -180,7 +184,7 @@ const ExistingFile = () => {
       }
 
       const payload = { docRoomId: roomId };
-
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         const encryptedMessage = encryptPayload(payload);
@@ -197,13 +201,17 @@ const ExistingFile = () => {
         console.error("Error fetching rack data:", error);
         setRackData([]); 
       }
+      finally{
+        setIsLoading(false);
+      }
     };
 
     fetchRackData();
   }, [roomId]);
 
   const fetchFilteredData = async (priority, fileModule) => {
-    setLoading(true);
+
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const payload = {
@@ -226,7 +234,7 @@ const ExistingFile = () => {
     } catch (error) {
       console.error("Error fetching filtered data:", error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -238,7 +246,7 @@ const ExistingFile = () => {
       if (!file) return;
       const token = sessionStorage.getItem("token");
       try {
-        setLoading(true);
+        setIsLoading(true);
         
         const payload1 = encryptPayload({
           tabPanelId: 1,
@@ -290,7 +298,7 @@ const ExistingFile = () => {
       } catch (error) {
         console.error("Error fetching file details:", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     const handleEditClick = (file) => {
@@ -316,6 +324,7 @@ const ExistingFile = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
 
@@ -343,10 +352,14 @@ const ExistingFile = () => {
     } catch (error) {
       console.error("Error submitting the form:", error);
     }
+    finally{
+      setIsLoading(false);
+    }
   };
 
   const handleHistoryClick = async (file) => {
     const payload = { fileId: file.fileId };
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const encryptedMessage = encryptPayload(payload);
@@ -363,6 +376,9 @@ const ExistingFile = () => {
     } catch (error) {
       console.error("Error fetching history:", error);
     }
+    finally{
+      setIsLoading(false);
+    }
   };
 
   const handleFileDetailsClick = (file) => {
@@ -371,9 +387,9 @@ const ExistingFile = () => {
   };
 
   const handleVolumeFile = async (fileDetails) => {
-    debugger;
+ 
     const payload = { fileId: fileDetails.fileId };
-
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const encryptedMessage = encryptPayload(payload); 
@@ -393,11 +409,14 @@ const ExistingFile = () => {
     } catch (error) {
       console.error("Error fetching:", error);
     }
+    finally{
+      setIsLoading(false);
+    }
   };
 
   const handlePartFile = async (fileDetails) => {
     const payload = { fileReceiptId: fileDetails.fileReceiptId };
-
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const encryptedMessage = encryptPayload(payload); 
@@ -416,6 +435,9 @@ const ExistingFile = () => {
       }
     } catch (error) {
       console.error("Error fetching:", error);
+    }
+    finally{
+      setIsLoading(false);
     }
   };
 
@@ -439,7 +461,7 @@ const ExistingFile = () => {
     if (!isConfirming) {
       return; 
     }
-
+    setIsLoading(true);
     try {
       const payload = {
         metadataId,
@@ -457,7 +479,7 @@ const ExistingFile = () => {
 
       if (response.status === 200) {
         useLetterStore.getState().setSuccessMessage(response.data.message);
-        toast.success(response.data.message); 
+        //toast.success(response.data.message); 
         setSelectedRows([]);
         Navigate("/letter");
       } else {
@@ -466,6 +488,9 @@ const ExistingFile = () => {
     } catch (error) {
       console.error("Error sending data:", error);
       toast.error("An error occurred while sending data.");
+    }
+    finally{
+      setIsLoading(false);
     }
   };
 
@@ -583,7 +608,8 @@ const ExistingFile = () => {
 
 
   return (
-    
+    <>
+    {isLoading && <PageLoader />}
     <div>
        <ToastContainer position="top-right" autoClose={1000} hideProgressBar={false} />
       <div className="row">
@@ -639,7 +665,7 @@ const ExistingFile = () => {
                keyField="fileReceiptId"
               pagination
               highlightOnHover
-              progressPending={loading}
+              progressPending={isLoading}
               striped
               bordered
               customStyles={customStyles}
@@ -656,10 +682,21 @@ const ExistingFile = () => {
             />
           </div>
           <div className="mt-3 d-flex align-items-center justify-content-center">
-          <Button variant="contained" color="success" onClick={handleSave}>
+          <Button
+           variant="contained"
+           color="success" 
+           sx={{ textTransform: 'none', }}
+           onClick={handleSave}>
             Save
           </Button>
-          <Button  className=" ms-2" variant="contained" color="error" onClick={() => navigate("/system/setup/menu/init")}>
+          <Button 
+          sx={{
+            textTransform: 'none', 
+          }}
+           className=" ms-2"
+            variant="contained"
+             color="error"
+              onClick={() => Navigate("/letter")}>
           Cancel
       </Button>
        
@@ -669,7 +706,7 @@ const ExistingFile = () => {
         </div>
      
 
-        <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="md" fullWidth>
+  <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="sm" fullWidth>
   
   {/* Dialog Title with Close Icon */}
   <DialogTitle
@@ -679,7 +716,7 @@ const ExistingFile = () => {
       fontWeight: "bold",
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between", // Ensures title & close button are aligned
+      justifyContent: "space-between", 
     }}
   >
     Confirmation
@@ -702,6 +739,8 @@ const ExistingFile = () => {
       variant="contained"
       sx={{
         borderRadius: "8px",
+        textTransform: 'none', 
+        
         px: 3,
         color: "#fff",
         background: "red",
@@ -714,6 +753,7 @@ const ExistingFile = () => {
       variant="contained"
       sx={{
         borderRadius: "8px",
+        textTransform: 'none', 
         px: 3,
         bgcolor: "#1b5e20",
       }}
@@ -988,6 +1028,7 @@ const ExistingFile = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

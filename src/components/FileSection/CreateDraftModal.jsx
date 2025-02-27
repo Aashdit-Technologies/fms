@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   Modal,
   Box,
@@ -8,7 +14,7 @@ import {
   Grid,
 } from "@mui/material";
 import { FaPlus, FaMinus } from "react-icons/fa";
-import CorrespondenceEditor from "./CorrespondenceEditor";
+import ModalEditor from "./ModalEditor";
 import ReactSelect from "react-select";
 import { encryptPayload } from "../../utils/encrypt";
 import api from "../../Api/Api";
@@ -61,33 +67,34 @@ const CreateDraftModal = ({
   const updatedContentRef = useRef(formData.contentss);
 
   // Update formData.content when editor content changes
-  const handleTextUpdate = (value) => {
+  const handleTextUpdate = useCallback((value) => {
+    // Store the content in the ref and state, but keep it isolated from other editors
     updatedContentRef.current = value;
 
     setFormData((prevState) => ({
       ...prevState,
       contentss: value,
     }));
-  };
+  }, []);
 
   useEffect(() => {
     if (officeNames?.data) {
       // Set the data for letter content dropdown
       setData(officeNames.data);
-      
-      // If editing, find and set the selected template
       if (editMalady && editMalady.tempType) {
         const selectedTemplate = officeNames.data.find(
-          template => template.tempType === editMalady.tempType
+          (template) => template.tempType === editMalady.tempType
         );
         if (selectedTemplate) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             office: selectedTemplate.templateId,
             tempType: selectedTemplate.tempType,
-            contentss: selectedTemplate.tempContent || editMalady.letterContent || "",
+            contentss:
+              selectedTemplate.tempContent || editMalady.letterContent || "",
           }));
-          updatedContentRef.current = selectedTemplate.tempContent || editMalady.letterContent || "";
+          updatedContentRef.current =
+            selectedTemplate.tempContent || editMalady.letterContent || "";
         }
       }
     }
@@ -177,7 +184,10 @@ const CreateDraftModal = ({
                 value: company.companyId,
                 label: company.name,
               };
-              setSelectedValues((prev) => ({ ...prev, company: companyOption }));
+              setSelectedValues((prev) => ({
+                ...prev,
+                company: companyOption,
+              }));
 
               // Fetch offices
               const officesResponse = await fetchData.mutateAsync({
@@ -198,7 +208,10 @@ const CreateDraftModal = ({
                     value: office.officeId,
                     label: office.officeName,
                   };
-                  setSelectedValues((prev) => ({ ...prev, office: officeOption }));
+                  setSelectedValues((prev) => ({
+                    ...prev,
+                    office: officeOption,
+                  }));
 
                   // Fetch departments
                   const departmentsResponse = await fetchData.mutateAsync({
@@ -211,7 +224,10 @@ const CreateDraftModal = ({
                   });
 
                   // Set department and fetch designations
-                  if (departmentsResponse.outcome && empDeptMapVo.departmentId) {
+                  if (
+                    departmentsResponse.outcome &&
+                    empDeptMapVo.departmentId
+                  ) {
                     const department = departmentsResponse.data.find(
                       (dept) => dept.departmentId === empDeptMapVo.departmentId
                     );
@@ -255,22 +271,28 @@ const CreateDraftModal = ({
                           }));
 
                           // Fetch authorities
-                          const authoritiesResponse = await fetchData.mutateAsync({
-                            endpoint: "/file/get-send-to-list",
-                            payload: {
-                              organizationId: organization.organizationId,
-                              companyId: company.companyId,
-                              officeId: office.officeId,
-                              departmentId: department.departmentId,
-                              designationId: designation.id,
-                              action: "DRAFT",
-                            },
-                          });
+                          const authoritiesResponse =
+                            await fetchData.mutateAsync({
+                              endpoint: "/file/get-send-to-list",
+                              payload: {
+                                organizationId: organization.organizationId,
+                                companyId: company.companyId,
+                                officeId: office.officeId,
+                                departmentId: department.departmentId,
+                                designationId: designation.id,
+                                action: "DRAFT",
+                              },
+                            });
 
                           // Set authority if it exists in the response
-                          if (authoritiesResponse.outcome && editMalady.approverEmpRoleMapId) {
+                          if (
+                            authoritiesResponse.outcome &&
+                            editMalady.approverEmpRoleMapId
+                          ) {
                             const authority = authoritiesResponse.data.find(
-                              (auth) => auth.empDeptRoleId === editMalady.approverEmpRoleMapId
+                              (auth) =>
+                                auth.empDeptRoleId ===
+                                editMalady.approverEmpRoleMapId
                             );
                             if (authority) {
                               const authorityOption = {
@@ -346,7 +368,7 @@ const CreateDraftModal = ({
           officeId: selectedValues.office?.value || 0,
           departmentId: selectedValues.department?.value || 0,
           designationId: selectedValues.designation?.value || 0,
-          action:"DRAFT",
+          action: "DRAFT",
         },
       });
     } else if (field === "company") {
@@ -364,6 +386,10 @@ const CreateDraftModal = ({
           companyId: selectedOption.value,
         },
       });
+      setSelectedValues((prev) => ({
+        ...prev,
+        authorities: "",
+      }));
     } else if (field === "office") {
       setOptions((prev) => ({
         ...prev,
@@ -399,7 +425,7 @@ const CreateDraftModal = ({
           officeId: selectedValues.office?.value || 0,
           departmentId: selectedValues.department?.value || 0,
           designationId: selectedOption?.value || 0,
-          action:"DRAFT",
+          action: "DRAFT",
         },
       });
     }
@@ -408,13 +434,18 @@ const CreateDraftModal = ({
     const errors = [];
 
     if (!contents) errors.push("Subject is required");
-    else if (!selectedValues.organization) errors.push("Organization is required");
-    else if (!selectedValues.company) errors.push("Company is required");
-    else if (!selectedValues.office) errors.push("Office is required");
-    else if (!selectedValues.department) errors.push("Department is required");
-    else if (!selectedValues.designation) errors.push("Designation is required");
-    else if (!selectedValues.authorities) errors.push("Approving Authority is required");
-    else if (!updatedContentRef.current) errors.push("Letter content is required");
+    else if (!selectedValues.organization)
+      errors.push("Organization is required");
+    else if (selectedValues.company && !selectedValues.office)
+      errors.push("Office is required");
+    else if (selectedValues.office && !selectedValues.department)
+      errors.push("Department is required");
+    else if (selectedValues.department && !selectedValues.designation)
+      errors.push("Designation is required");
+    else if (!selectedValues.authorities)
+      errors.push("Approving Authority is required");
+    else if (!updatedContentRef.current)
+      errors.push("Letter content is required");
 
     return errors;
   };
@@ -444,16 +475,20 @@ const CreateDraftModal = ({
       },
     };
 
-    console.log('Save/Approve Payload:', {
+    console.log("Save/Approve Payload:", {
       ...payload,
       action,
-      isApproveEnabled: editMalady?.approverEmpRoleMapId === editMalady?.currEmpDeptMapId,
-      currentFormData: formData
+      isApproveEnabled:
+        editMalady?.approverEmpRoleMapId === editMalady?.currEmpDeptMapId,
+      currentFormData: formData,
     });
 
     try {
       const encryptedPayload = encryptPayload(payload);
-      const endpoint = action === "APPROVE" ? "/file/approve-draft" : "/file/create-draft-in-file";
+      const endpoint =
+        action === "APPROVE"
+          ? "/file/approve-draft"
+          : "/file/create-draft-in-file";
 
       const response = await api.post(
         endpoint,
@@ -467,20 +502,20 @@ const CreateDraftModal = ({
         }
       );
 
-    if (response.data.outcome) {
+      if (response.data.outcome) {
         toast.success(
           editMalady
             ? "Draft updated successfully!"
             : "Draft created successfully!"
         );
         resetForm();
-        if (refetchData && typeof refetchData === 'function') {
+        if (refetchData && typeof refetchData === "function") {
           refetchData();
         }
         onClose();
-    } else {
+      } else {
         toast.error(response.data.message || "Operation failed");
-    }
+      }
     } catch (error) {
       console.error("Error saving draft:", error);
       toast.error("Failed to save draft");
@@ -491,45 +526,46 @@ const CreateDraftModal = ({
     if (!Array.isArray(data)) {
       return [];
     }
-    
-    return data.map((item) => ({
-      label: item.tempType,
-      value: item.templateId,
-      tempContent: item.tempContent,
-    }));
+
+    return [
+      { label: "None", value: "" },
+      ...data.map((item) => ({
+        label: item.tempType,
+        value: item.templateId,
+        tempContent: item.tempContent,
+      })),
+    ];
   }, [data]);
 
   useEffect(() => {
-    console.log('Letter Content Options:', officeOptions);
-    console.log('Selected Template:', formData.office);
+    console.log("Letter Content Options:", officeOptions);
+    console.log("Selected Template:", formData.office);
   }, [officeOptions, formData.office]);
 
   const handleOfficeChange = (selectedOption) => {
     if (selectedOption) {
       const contentss = selectedOption.tempContent || "";
-      
+
       setFormData((prev) => ({
         ...prev,
         office: selectedOption.value,
         tempType: selectedOption.label,
         contentss: contentss,
       }));
-      
+
       updatedContentRef.current = contentss;
-      
-      setTimeout(() => {
-        const editor = document.querySelector('.jodit-wysiwyg');
-        if (editor) {
-          editor.innerHTML = contentss;
-          
-          if (editor.jodit) {
-            editor.jodit.value = contentss;
-          }
-        }
-      }, 100); 
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        office: "",
+        tempType: "",
+        contentss: "",
+      }));
+
+      updatedContentRef.current = "";
     }
   };
- 
+
   const handleClickClose = () => {
     setSelectedValues({
       organization: null,
@@ -556,7 +592,7 @@ const CreateDraftModal = ({
     });
     updatedContentRef.current = "";
     setContents("");
-    if (refetchData && typeof refetchData === 'function') {
+    if (refetchData && typeof refetchData === "function") {
       refetchData();
     }
     onClose();
@@ -594,17 +630,19 @@ const CreateDraftModal = ({
             alignItems: "center",
           }}
         >
-          <Typography variant="h6">
+          <Typography variant="h6" style={{ color: "#052C65", fontWeight: "bold" }}>
             {editMalady ? "Edit Draft" : "Create Draft"}
           </Typography>
-          <IconButton onClick={() => setShowForm(!showForm)} color="primary">
+          <IconButton onClick={() => setShowForm(!showForm)} sx={{ color: "#207785" }}>
             {showForm ? <FaMinus /> : <FaPlus />}
           </IconButton>
         </Box>
 
         {showForm && (
           <Box sx={{ mt: 2, display: "grid", gap: 2 }}>
-            <Grid item xs={12}>
+            
+            <Grid container spacing={2}>
+            <Grid item xs={6}>
               <label>Letter Content</label>
               <ReactSelect
                 options={officeOptions}
@@ -614,22 +652,35 @@ const CreateDraftModal = ({
                 onChange={handleOfficeChange}
                 isSearchable
                 isClearable={true}
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    fontSize: "14px",
+                  }),
+                  option: (base) => ({
+                    ...base,
+                    fontSize: "14px",
+                  }),
+                  singleValue: (base) => ({
+                    ...base,
+                    fontSize: "14px",
+                  }),
+                }}
               />
             </Grid>
-            <Grid container spacing={2}>
-              <Grid item xs={3}>
-                <label htmlFor="subject">Subject:</label>
+              <Grid item xs={6}>
+                <label htmlFor="subject">Subject <span style={{ color: "red", marginLeft: "5px" }}>*</span></label>
                 <textarea
                   id="subject"
                   value={contents}
                   onChange={(e) => setContents(e.target.value)}
                   rows={1}
                   placeholder="Enter content..."
-                  style={{ width: "100%", padding: "8px" }}
+                 
                 />
               </Grid>
               <Grid item xs={6}>
-                <label>Organization</label>
+                <label>Organization <span style={{ color: "red", marginLeft: "5px" }}>*</span></label>
                 <ReactSelect
                   options={
                     organizations?.map((org) => ({
@@ -643,11 +694,25 @@ const CreateDraftModal = ({
                   }
                   isSearchable
                   isClearable={true}
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    option: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    singleValue: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                  }}
                 />
               </Grid>
 
               <Grid item xs={6}>
-                <label>Company</label>
+                <label>Company {selectedValues.company?<span style={{ color: "red", marginLeft: "5px" }}>*</span>:""}</label>
                 <ReactSelect
                   options={
                     options.companies?.map((comp) => ({
@@ -662,11 +727,25 @@ const CreateDraftModal = ({
                   isSearchable
                   isClearable={true}
                   isDisabled={!selectedValues.organization}
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    option: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    singleValue: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                  }}
                 />
               </Grid>
 
               <Grid item xs={6}>
-                <label>Office</label>
+                <label>Office {selectedValues.organization && selectedValues.company?<span style={{ color: "red", marginLeft: "5px" }}>*</span>:""}</label>
                 <ReactSelect
                   options={
                     options.offices?.map((office) => ({
@@ -679,11 +758,25 @@ const CreateDraftModal = ({
                   isSearchable
                   isClearable={true}
                   isDisabled={!selectedValues.company}
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    option: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    singleValue: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                  }}
                 />
               </Grid>
 
               <Grid item xs={6}>
-                <label>Department</label>
+                <label>Department {selectedValues.organization && selectedValues.company?<span style={{ color: "red", marginLeft: "5px" }}>*</span>:""}</label>
                 <ReactSelect
                   options={
                     options.departments?.map((dept) => ({
@@ -698,11 +791,25 @@ const CreateDraftModal = ({
                   isSearchable
                   isClearable={true}
                   isDisabled={!selectedValues.office}
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    option: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    singleValue: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                  }}
                 />
               </Grid>
 
               <Grid item xs={6}>
-                <label>Designation</label>
+                <label>Designation {selectedValues.organization && selectedValues.company ?<span style={{ color: "red", marginLeft: "5px" }}>*</span>:""}</label>
                 <ReactSelect
                   options={
                     options.designations?.map((desig) => ({
@@ -717,10 +824,24 @@ const CreateDraftModal = ({
                   isSearchable
                   isClearable={true}
                   isDisabled={!selectedValues.department}
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    option: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    singleValue: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                  }}
                 />
               </Grid>
               <Grid item xs={6}>
-                <label>Approving Authority</label>
+                <label>Approving Authority {selectedValues.organization?<span style={{ color: "red", marginLeft: "5px" }}>*</span>:""}</label>
                 <ReactSelect
                   options={options.authorities}
                   value={selectedValues.authorities}
@@ -733,12 +854,29 @@ const CreateDraftModal = ({
                   isSearchable
                   isClearable={true}
                   isDisabled={
-                    !selectedValues.designation &&
-                    !selectedValues.organization &&
-                    !selectedValues.company &&
-                    !selectedValues.office &&
-                    !selectedValues.department
+                    (!selectedValues.designation &&
+                      !selectedValues.organization &&
+                      !selectedValues.company &&
+                      !selectedValues.office &&
+                      !selectedValues.department) ||
+                    (selectedValues.company &&
+                      selectedValues.organization &&
+                      !selectedValues.designation)
                   }
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    option: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                    singleValue: (base) => ({
+                      ...base,
+                      fontSize: "14px",
+                    }),
+                  }}
                 />
               </Grid>
             </Grid>
@@ -746,7 +884,7 @@ const CreateDraftModal = ({
         )}
 
         <Box sx={{ mt: 2 }} className="editor-containers">
-          <CorrespondenceEditor
+          <ModalEditor
             defaultText={formData.contentss}
             onTextUpdate={handleTextUpdate}
           />
@@ -755,22 +893,26 @@ const CreateDraftModal = ({
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}
         >
-          <Button variant="contained" color="success" onClick={() => handleSave("SAVE")}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => handleSave("SAVE")}
+          >
             Save
           </Button>
-                   
-          {editMalady?.correspondenceId && 
-           editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId && (
-            <Button 
-              variant="contained" 
-              color="success" 
-              onClick={() => handleSave("APPROVE")}
-              title="Approve Draft"
-            >
-              Approve
-            </Button>
-          )}
-          
+
+          {editMalady?.correspondenceId &&
+            editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId && (
+              <Button
+                variant="contained"
+                color="success"
+                onClick={() => handleSave("APPROVE")}
+                title="Approve Draft"
+              >
+                Approve
+              </Button>
+            )}
+
           <Button
             variant="contained"
             color="warning"
@@ -789,11 +931,7 @@ const CreateDraftModal = ({
           >
             Reset
           </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleClickClose}
-          >
+          <Button variant="contained" color="error" onClick={handleClickClose}>
             Cancel
           </Button>
         </Box>

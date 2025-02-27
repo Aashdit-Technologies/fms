@@ -4,20 +4,21 @@ import api from "../../Api/Api";
 import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
 import { toast } from "react-toastify";
+import useLetterStore from "../Inbox/useLetterStore.js";
 import { Autocomplete, TextField, Button, MenuItem } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 //  const Navigate = useNavigate();
-
+import { PageLoader } from "../pageload/PageLoader";
 const ManageFile = () => {
   const location = useLocation();
   const fetchedData = location.state?.data; 
   const letterReceiptId = fetchedData.letterReceiptId;
   const metadataId = fetchedData.metadataId;
-   
+  const Navigate = useNavigate(); 
 
-  const [selectedRack, setSelectedRack] = useState("");
-  const [selectedRoom, setSelectedRoom] = useState("");
-  const [selectedCell, setSelectedCell] = useState("");
+  const [selectedRack, setSelectedRack] = useState(null);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedCell, setSelectedCell] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedActivity, setSelectedActivity] = useState("");
   const [selectedCustodian, setSelectedCustodian] = useState("");
@@ -31,7 +32,7 @@ const ManageFile = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roomData, setRoomData] = useState([]); 
   const [rackData, setRackData] = useState([]);
-
+  const [isLoading, setIsLoading] = useState(false);
   const {
     activities,
     custodians,
@@ -54,6 +55,7 @@ const ManageFile = () => {
   
   useEffect(() => {
     const fetchRoomData = async () => {
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
 
@@ -65,6 +67,9 @@ const ManageFile = () => {
       } catch (error) {
         console.error("Error fetching room data:", error);
         
+      }
+      finally{
+        setIsLoading(false);
       }
     };
     fetchRoomData();
@@ -80,7 +85,7 @@ const ManageFile = () => {
       }
   
       const payload = { docRoomId: selectedRoom };
-  
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         const encryptedMessage = encryptPayload(payload);
@@ -97,6 +102,9 @@ const ManageFile = () => {
       } catch (error) {
         console.error("Error fetching rack data:", error);
         setRackData([]); 
+      }
+      finally{
+        setIsLoading(false);
       }
     };
   
@@ -136,7 +144,7 @@ const ManageFile = () => {
       fileName: formFileName,
       subject: formSubject,
     };
-  
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const encryptedMessage = encryptPayload(payload);
@@ -152,8 +160,9 @@ const ManageFile = () => {
       );
   
       if (response.status === 200) {
-        toast.success("Form have been submitted successfully!");
-        // Navigate("/system/setup/menu/init");
+        useLetterStore.getState().setSuccessMessage(response.data);
+       // toast.success(response.data);
+        Navigate("/letter");
         resetForm(); 
       } else {
         toast.error("An error occurred while submitting the form.");
@@ -163,6 +172,7 @@ const ManageFile = () => {
       toast.error(error.response?.data?.message || "An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
+      setIsLoading(false)
     }
   };
   
@@ -217,6 +227,8 @@ const ManageFile = () => {
   };
   
   return (
+    <>
+     {isLoading && <PageLoader />}
     <div className="manageFile-section-container">
   
          
@@ -450,12 +462,14 @@ const ManageFile = () => {
         />
       </div>
       <div className="col-md-12 text-center">
-        <Button type="submit" variant="contained" color="primary" sx={{ mt: 3 }}>
+        <Button type="submit" variant="contained" 
+        color="primary" sx={{ mt: 3, textTransform: 'none',  }}>
           Create file & tag Letter to file
         </Button>
       </div>
     </form> 
     </div>
+    </>
   );
 };
 

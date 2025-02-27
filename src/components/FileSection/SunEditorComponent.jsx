@@ -4,10 +4,11 @@ import JoditEditor from 'jodit-react';
 const SunEditorComponent = ({ content, onContentChange, placeholder }) => {
   const editor = useRef(null);
   const [editorContent, setEditorContent] = useState(content || '');
+  const isUpdatingRef = useRef(false);
 
   // Update editorContent when content prop changes
   useEffect(() => {
-    if (content !== editorContent) {
+    if (content !== editorContent && !isUpdatingRef.current) {
       setEditorContent(content);
     }
   }, [content]);
@@ -15,7 +16,7 @@ const SunEditorComponent = ({ content, onContentChange, placeholder }) => {
   const config = useMemo(
     () => ({
       readonly: false,
-      placeholder: !editorContent ? placeholder : '',
+      placeholder: '',
       height: '300px',
       toolbarButtonSize: 'medium',
       enableDragAndDropFileToEditor: false,
@@ -25,18 +26,34 @@ const SunEditorComponent = ({ content, onContentChange, placeholder }) => {
       showCharsCounter: true,
       showWordsCounter: true,
       showXPathInStatusbar: false,
+      // Improve focus handling
+      // events: {
+      //   afterInit: (jodit) => {
+      //     jodit.e.on('blur', () => {
+      //       // Prevent focus from jumping to toolbar
+      //       setTimeout(() => {
+      //         if (document.activeElement.tagName === 'BODY') {
+      //           jodit.selection.focus();
+      //         }
+      //       }, 0);
+      //     });
+      //   }
+      // }
     }),
-    [editorContent, placeholder]
+    [placeholder]
   );
 
   const handleContentChanges = useCallback((newContent) => {
     setEditorContent(newContent);
+    // Notify parent immediately to keep editors in sync
     onContentChange?.(newContent);
   }, [onContentChange]);
 
   const handleBlur = useCallback(() => {
-    console.log('Editor lost focus:', editorContent);
-    onContentChange?.(editorContent);
+    // Only notify parent if we're not already updating
+    if (!isUpdatingRef.current) {
+      onContentChange?.(editorContent);
+    }
   }, [editorContent, onContentChange]);
 
   return (
@@ -52,5 +69,4 @@ const SunEditorComponent = ({ content, onContentChange, placeholder }) => {
     </div>
   );
 };
-
-export default React.memo(SunEditorComponent);
+export default SunEditorComponent;

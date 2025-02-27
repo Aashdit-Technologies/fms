@@ -47,7 +47,7 @@ const FileDetails = ({ fileDetails }) => {
                     <div className="card h-100 border-0 bg-light">
                       <div className="card-body">
                         <div className="mb-3">
-                          <label className="text-muted small text-uppercase">File Number</label>
+                          <label className="text-muted small text-uppercase " style={{fontWeight:"600", color:"black"}}>File Number</label>
                           <p className="mb-0 fw-medium clickable-text" onClick={handleShowDetails}>{allDetails.fileNo || 'N/A'}</p>
                         </div>
                         <div className="mb-3">

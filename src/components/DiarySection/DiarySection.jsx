@@ -23,7 +23,7 @@ import {
   Box, 
   Typography, 
   IconButton, 
-  Autocomplete, 
+  Autocomplete,   
   MenuItem, 
   TableContainer, 
   Table, 
@@ -44,7 +44,7 @@ import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import SearchIcon from '@mui/icons-material/Search';
 import RemoveCircleOutline from '@mui/icons-material/RemoveCircleOutline';
 import Visibility from '@mui/icons-material/Visibility';
-
+import { PageLoader } from "../pageload/PageLoader";
 const customStyles = {
   table: {
     style: {
@@ -62,7 +62,7 @@ const customStyles = {
       color: "#ffffff",
       fontSize: "14px",
       fontWeight: "600",
-      textTransform: "uppercase",
+      // textTransform: "uppercase",
       letterSpacing: "0.5px",
       minHeight: "52px",
       borderBottom: "2px solid #1a5f6a",
@@ -254,10 +254,21 @@ const DiarySection = () => {
   const [searchQuerySender, setSearchQuerySender] = useState("");
   const [showLetterModal, setShowLetterModal] = useState(false);
   const [selectedLetterDetails, setSelectedLetterDetails] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+
+  
+  const handleTabChange = (tabKey) => {
+    
+    setActiveTab(tabKey);
+    if (tabKey === "sentLetter") {
+      sentLetter(); 
+    }
+  };
 
   const columns = [
     {
-      name: "SI No.",
+      name: "Sl No.",
       selector: (_, index) => index + 1,
       sortable: true,
       width: "80px",
@@ -308,7 +319,7 @@ const DiarySection = () => {
 
   const columnsNewLetter = [
     {
-      name: "SI NO",
+      name: "Sl No",
       selector: (row, index) => index + 1,
       width: "100px",
       sortable: true,
@@ -317,10 +328,10 @@ const DiarySection = () => {
       name: "Sender Details",
       selector: (row) => row?.sender || "N/A",
       sortable: true,
-      width: "250px",
+      width: "480px",
     },
     {
-      name: "Letter Number/Date",
+      name: "Letter No. & Date",
       cell: (row) => (
         <div>
           {`${row?.lnumber || "N/A"} / ${row?.senderDate || "N/A"}`} <br/>
@@ -374,32 +385,6 @@ const DiarySection = () => {
         </div>
       ),
      
-    },
-    {
-      name: "Confidential",
-      cell: (row) => (
-        <Chip
-          label={row?.isConfidential ? "Confidential" : "N/A"}
-          size="small"
-          color={row?.isConfidential ? "primary" : "default"}
-          sx={{
-            bgcolor: row?.isConfidential ? '#1976d2' : '#f5f5f5',
-            color: row?.isConfidential ? 'white' : 'text.secondary',
-            '& .MuiChip-label': {
-              fontWeight: 500,
-            },
-          }}
-        />
-      ),
-      sortable: true,
-      
-    },
-    {
-      name: "Remarks",
-      selector: (row) => row?.remarks || "N/A",
-      wrap: true,
-      width: "150px",
-      sortable: true,
     },
    
     {
@@ -495,18 +480,19 @@ const DiarySection = () => {
 
   const columnsSentLetter = [
     {
-      name: "SI NO",
+      name: "Sl No",
       selector: (row, index) => index + 1,
-     
+     width:"100px"
     },
     {
-      name: "Sender",
+      name: "Sender Details",
       selector: (row) => row.sender,
       wrap: true,
+     width:"330px"
     },
 
     {
-      name: "Letter Number/Date",
+      name: "Letter No. & Date",
       cell: (row) => (
         <div>
           {`${row?.lnumber || "N/A"} / ${row?.senderDate || "N/A"}`}  <br/>
@@ -534,37 +520,39 @@ const DiarySection = () => {
       ),
     },
     {
-      name: "Memo Number",
+      name: "Memo No.",
       selector: (row) => row.memoNo,
+       width:"150px"
     },
     {
       name: "Addressee",
       selector: (row) => row.addressee,
       wrap: true,
+       width:"350px"
     },
-    {
-      name: "Confidential",
-      selector: (row) => (
-        <Chip
-          label={row.isConfidential ? "Confidential" : "NA"}
-          size="small"
-          color={row.isConfidential ? "primary" : "default"}
-          sx={{
-            bgcolor: row.isConfidential ? '#1976d2' : '#f5f5f5',
-            color: row.isConfidential ? 'white' : 'text.secondary',
-            '& .MuiChip-label': {
-              fontWeight: 500,
-            },
-          }}
-        />
-      ),
-      // width: "150px",
-    },
-    {
-      name: "Remarks",
-      selector: (row) => row.remarks,
-      wrap: true,
-    },
+    // {
+    //   name: "Confidential",
+    //   selector: (row) => (
+    //     <Chip
+    //       label={row.isConfidential ? "Confidential" : "NA"}
+    //       size="small"
+    //       color={row.isConfidential ? "primary" : "default"}
+    //       sx={{
+    //         bgcolor: row.isConfidential ? '#1976d2' : '#f5f5f5',
+    //         color: row.isConfidential ? 'white' : 'text.secondary',
+    //         '& .MuiChip-label': {
+    //           fontWeight: 500,
+    //         },
+    //       }}
+    //     />
+    //   ),
+    //   // width: "150px",
+    // },
+    // {
+    //   name: "Remarks",
+    //   selector: (row) => row.remarks,
+    //   wrap: true,
+    // },
     
     {
       name: "Action",
@@ -574,6 +562,7 @@ const DiarySection = () => {
           e.stopPropagation(); 
           handleViewLetterDetails(row); 
         }}
+        
         sx={{ 
             color: '#207785',
             bgcolor: 'rgba(32, 119, 133, 0.1)',
@@ -585,6 +574,7 @@ const DiarySection = () => {
             padding: '8px',
             borderRadius: '8px',
         }}
+       
       >
           <Visibility sx={{ fontSize: '1.2rem' }} />
         </IconButton>
@@ -678,7 +668,7 @@ const DiarySection = () => {
       toast.error("Please fill all required fields correctly");
       return;
     }
-
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       const payload = { ...senderDetails };
@@ -724,6 +714,9 @@ const DiarySection = () => {
       } else {
         toast.error("An unexpected error occurred.");
       }
+    }
+    finally{
+      setIsLoading(false);
     }
   };
 
@@ -776,33 +769,9 @@ const handleremarksChange = (e) => {
   }));
 };
  
-  //Fetch sender data from the API
-  // useEffect(() => {
-  // const fetchSenderData = async () => {
-  //   try {
-  //      const token = useAuthStore.getState().token;
-  //     const response = await api.get(
-  //       "diary-section/get-sender-address-auto-fill",
-  //       {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       }
-  //     );
-
-  //     const data = response?.data?.data?.searchkey;
-  //     if (Array.isArray(data)) {
-  //       setAllSenders(data);
-  //       setFilteredSenders(data);
-  //     } else {
-  //       console.error("Invalid data structure received from API");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching sender data:", error);
-  //   }
-  // };
-  //     fetchSenderData();
-  // }, [token]);
   
     const fetchSenderData = async () => {
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token; 
         if (!token) {
@@ -826,6 +795,9 @@ const handleremarksChange = (e) => {
         }
       } catch (error) {
         console.error("Error fetching sender data:", error);
+      }
+      finally{
+        setIsLoading(false);
       }
     };
     useEffect(() => {
@@ -897,6 +869,7 @@ const handleremarksChange = (e) => {
     fetchRecords();
   }, []);
   const fetchRecords = async () => {
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       if (!token) {
@@ -934,12 +907,16 @@ const handleremarksChange = (e) => {
         );
       }
     }
+    finally{
+      setIsLoading(false);
+    }
   };
 
 
   // departmentList get api
  
   const fetchDepartmentAndDesignationData = async () => {
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       if (!token) {
@@ -973,6 +950,9 @@ const handleremarksChange = (e) => {
         { autoClose: 3000 }
       );
     }
+    finally{
+      setIsLoading(false);
+    }
   };
   useEffect(() => {
     fetchDepartmentAndDesignationData();
@@ -981,6 +961,7 @@ const handleremarksChange = (e) => {
   // EnclosureTypes get api
   
     const fetchEnclosureTypes = async () => {
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         if (!token) {
@@ -1009,6 +990,9 @@ const handleremarksChange = (e) => {
           { autoClose: 3000 }
         );
       }
+      finally{
+        setIsLoading(false);
+      }
     };
     useEffect(() => {
     fetchEnclosureTypes();
@@ -1018,6 +1002,7 @@ const handleremarksChange = (e) => {
   
 
   const saveFormData = async (savensendValue) => {
+    setIsLoading(true)
     try {
       const token = sessionStorage.getItem("token");
       const formDataToSend = new FormData();
@@ -1084,7 +1069,7 @@ const handleremarksChange = (e) => {
 
       if (response.status === 200) {
         toast.success(response.data.message, { autoClose: 3000 });
-        await Promise.all([NewLetter(), sentLetter()]);
+       
          
         setOpenSection("LettersList");
         setFormData({
@@ -1128,7 +1113,7 @@ const handleremarksChange = (e) => {
         setIsSearchDisabled(false);
         setSelectedRow(null);
         setSelectedRowShare(null);
-    
+        await Promise.all([NewLetter(), sentLetter()]);
         if (typeof setSelectedSender === "function") {
           setSelectedSender(null);
         }
@@ -1145,10 +1130,14 @@ const handleremarksChange = (e) => {
         });
       }
     } catch (error) {
+
       console.error("Error saving form:", error);
       toast.error(`Failed to save form: ${error.message || "Unknown error"}`, {
         autoClose: 3000,
       });
+      
+    }finally{
+      setIsLoading(false)
     }
   };
 
@@ -1157,12 +1146,18 @@ const handleremarksChange = (e) => {
       toast.warn("Please fill all required fields.", { autoClose: 3000 });
       return;
     }
+    let incompleteRows = rows.some((row,index )=> 
+      !row.departmentName || 
+      !row.addresseeDesignation || 
+      !row.addressee || 
+      (index > 0 && !row.memoNumber) 
+    );
     
-  const incompleteRows = rows.some(row => !row.departmentName || !row.addresseeDesignation || !row.addressee);
-  if (incompleteRows) {
-    toast.warn("Please fill all required fields in each row before saving.");
-    return;
-  }
+    if (incompleteRows) {
+      toast.warn("Please fill all required fields in each row before saving.");
+      return;
+    }
+    
   if (!formData.uploadedLetter) {
     toast.warn("Please upload a letter before saving.");
     return;
@@ -1187,42 +1182,9 @@ const handleremarksChange = (e) => {
     saveFormData(savensendValue);
   };
 
-
-  // NewLetter api binding 
-  // const NewLetter = async () => {
-  //   try {
-  //     if (!token) {
-  //       throw new Error("Authorization token is missing");
-  //     }
-
-  //     const response = await api.get("diary-section/new-letter", {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-
-  //     const allnewletter = response?.data?.data || [];
-  //     console.log("Fetched new letters:", allnewletter);
-
-  //     if (response.status === 200 && Array.isArray(allnewletter)) {
-  //       setNewLetterData(allnewletter);
-  //       setFilteredNewLetter(allnewletter);
-  //     } else {
-  //       console.error("Failed to fetch data. Unexpected response format.");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching records:", error);
-  //     toast.error(
-  //       error.response?.data?.message || "An unexpected error occurred."
-  //     );
-  //   }
-  // };
-  // useEffect(() => {
-  //   NewLetter();
-  // }, [token]);
-   
-
-    // NewLetter api binding 
    
     const NewLetter = async () => {
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         if (!token) {
@@ -1247,6 +1209,8 @@ const handleremarksChange = (e) => {
         toast.error(
           error.response?.data?.message || "An unexpected error occurred."
         );
+      }finally{
+        setIsLoading(false);
       }
     };
     useEffect(() => {
@@ -1256,7 +1220,9 @@ const handleremarksChange = (e) => {
  // SentLetter api binding 
  
   const sentLetter = async () => {
+    setIsLoading(true);
     try {
+
       const token = useAuthStore.getState().token;
       if (!token) {
         toast.error("Authorization token is missing");
@@ -1282,14 +1248,15 @@ const handleremarksChange = (e) => {
     } catch (error) {
       console.error("Error fetching records:", error);
       toast.error(error.response?.data?.message || "An unexpected error occurred.");
+    }finally{
+      setIsLoading(false);
     }
   };  
-  useEffect(() => {
-      sentLetter();
-  }, []);
+
   
 
   const handleAddressIconClick = async (row) => {
+    setIsLoading(true); 
     if (!row || !row.documentMetaDataId) {
       console.error("Invalid row data: ", row);
       return;
@@ -1314,15 +1281,20 @@ const handleremarksChange = (e) => {
     } catch (error) {
       console.error("Error fetching data: ", error);
     }
+     finally {
+      setIsLoading(false); 
+    }
   };
 
   const handleSaveEnclosures = async () => {
+
     for (const row of enclosureRowstable) {
       if (!row.enclosureType || !row.enclosureName || !row.file) {
         toast.warn("Please fill all required fields before saving.");
         return;
       }
     }
+    setIsLoading(true);
     try {
       const token = sessionStorage.getItem("token");
       const enclosureData = enclosureRowstable.map((row, index) => ({
@@ -1374,13 +1346,15 @@ const handleremarksChange = (e) => {
           await handleEncloserIconClick(selectedRow);
         }
       
-      
+        await Promise.all([NewLetter(), sentLetter()]);
       } else {
         toast.error("Error uploading enclosures.");
       }
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error("Something went wrong!");
+    }finally{
+      setIsLoading(false);
     }
   };
 
@@ -1404,7 +1378,7 @@ const handleEncloserIconClick = async (row) => {
     enclosureType: row.enclosureType || [],
     enclosureName: row.enclosureName || []
   };
-
+  setIsLoading(true);
   try {
     const response = await api.post(
       "diary-section/getallEnclosureByMetadataId",
@@ -1432,6 +1406,8 @@ const handleEncloserIconClick = async (row) => {
   } catch (error) {
     setNewLetterDataEncloser([]); 
     console.error("Error fetching data:", error);
+  }finally{
+    setIsLoading(false);
   }
 };
 
@@ -1449,18 +1425,19 @@ const handleSendButtonClick = async (event) => {
   const payload = {
     value: selectedRowShare.documentMetaDataId.toString(),
   };
-
+  setIsLoading(true);
   try {
     const response = await api.post("diary-section/send-letter", {
       dataObject: encryptPayload(payload),
     });
 
     if (response.status === 200) {
-      toast.success("Letter have been  sent successfully!"); 
+       
       setShowModalShare(false); 
       setActiveTab("sentLetter"); 
       await NewLetter();
       await sentLetter(); 
+      toast.success("Letter have been  sent successfully!");
     } else {
       toast.error("Failed to send letter.");
     }
@@ -1469,11 +1446,13 @@ const handleSendButtonClick = async (event) => {
     toast.error("Something went wrong!");
   } finally {
     setIsSending(false);
+    setIsLoading(false);
   }
 };
  
 
 const handleEditButtonClick = async (row) => {
+
   if (!row || !row.documentMetaDataId) {
     console.error("Invalid row data: ", row);
     return;
@@ -1481,7 +1460,7 @@ const handleEditButtonClick = async (row) => {
 
   const payload = { value: row.documentMetaDataId.toString() };
   console.log("Edit payload:", payload);
-
+  setIsLoading(true);
   try {
     const response = await api.post(
       "diary-section/get-data-for-edit-letter",
@@ -1620,13 +1599,14 @@ const handleEditButtonClick = async (row) => {
         formElement.scrollIntoView({ behavior: "smooth" });
       }
 
-      toast.success("Letter data  loaded successfully");
     } else {
       toast.error(response.data.message || "Failed to fetch letter data");
     }
   } catch (error) {
     console.error("Error fetching data: ", error);
     toast.error("Failed to fetch letter data. Please try again.");
+  }finally{
+    setIsLoading(false);
   }
 };
 
@@ -1641,7 +1621,7 @@ const handleEditButtonClick = async (row) => {
       metadataId: row.documentMetaDataId,
       recipientId: row.recipientId,
     };
-
+    setIsLoading(true);
     try {
       const response = await api.post(
         "diary-section/view-letter",
@@ -1657,6 +1637,8 @@ const handleEditButtonClick = async (row) => {
     } catch (error) {
       console.error("Error fetching letter details: ", error);
       toast.error("Failed to fetch letter details. Please try again.");
+    }finally{
+      setIsLoading(false);
     }
   };
 
@@ -1682,14 +1664,10 @@ const handleEditButtonClick = async (row) => {
 
     if (value) {
       const filteredData = SentLetterData.filter(item => {
-        return (
-          (item.letterNumber && item.letterNumber.toString().toLowerCase().includes(value.toLowerCase())) ||
-          (item.subject && item.subject.toString().toLowerCase().includes(value.toLowerCase())) ||
-          (item.sender && item.sender.toString().toLowerCase().includes(value.toLowerCase())) ||
-          (item.date && item.date.toString().toLowerCase().includes(value.toLowerCase())) ||
-          (item.memoNumber && item.memoNumber.toString().toLowerCase().includes(value.toLowerCase()))
-        );
-      });
+        return Object.values(item).some(field => 
+            field && field.toString().toLowerCase().includes(value.toLowerCase())
+          );
+        });
       setfilteredSentLetter(filteredData);
     } else {
       setfilteredSentLetter(SentLetterData);
@@ -2001,7 +1979,7 @@ const handleFileUploadChangeencloser = (index, event) => {
       alert("No document available to view.");
       return;
     }
-
+    setIsLoading(true);
     const payload = {
       documentName: formData.fileName,
       documentPath: formData.filePath,
@@ -2033,6 +2011,8 @@ const handleFileUploadChangeencloser = (index, event) => {
   } catch (error) {
     console.error("Error fetching PDF:", error);
     toast.error("Failed to fetch PDF. Please try again.");
+  }finally{
+    setIsLoading(false);
   }
 };
 
@@ -2050,7 +2030,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
       documentName: fileName,
       documentPath: filePath,
     };
-
+    setIsLoading(true);
     const encryptedPayload = encryptPayload(payload);
     console.log("Checking payloads", encryptedPayload);
 
@@ -2076,11 +2056,14 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
   } catch (error) {
     console.error("Error fetching PDF:", error);
     toast.error("Failed to fetch PDF. Please try again.");
+  }finally{
+    setIsLoading(false);
   }
 };
 
    //  new letter table encloser download button
    const handleDownload = async (row) => {
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
     const payload = {
@@ -2121,11 +2104,14 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
     } catch (error) {
     console.error("Error downloading PDF:", error);
     toast.error("Failed to download PDF. Please try again.");
+    }finally{
+      setIsLoading(false);
     }
     };
 
     // letter right side download button
     const handleDownloadletter = async () => {
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
       const payload = {
@@ -2166,11 +2152,14 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
       } catch (error) {
       console.error("Error downloading PDF:", error);
       toast.error("Failed to download PDF. Please try again.");
+      }finally{
+        setIsLoading(false);
       }
       };
       
  // letter bottom side enclosure name download button
       const handleDownloadEnclosureletter = async (fileName,filePath) => {
+        setIsLoading(true);
         try {
           const token = useAuthStore.getState().token;
         const payload = {
@@ -2211,6 +2200,8 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
         } catch (error) {
         console.error("Error downloading PDF:", error);
         toast.error("Failed to download PDF. Please try again.");
+        }finally{
+          setIsLoading(false);
         }
         };
   
@@ -2219,8 +2210,9 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
 
       return (
     <>
+     {isLoading && <PageLoader />}
       {/* Upload Inward Letter Section */}
-      <div className="diary-section-container">
+      <div className="diary-section-container" id="letterForm">
         <div className="accordion-header" onClick={toggleUploadAccordion}>
           <span className="accordion-title">Upload Inward Letter</span>
           <span className="accordion-icon">
@@ -2229,7 +2221,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
         </div>
         {isUploadOpen && (
           <div className="accordion-body">
-            <form encType="multipart/form-data">
+            <form encType="multipart/form-data" >
             {/* sender add data first row */}
               <div className="row align-items-center mb-3">
                 <div className="col-md-4">
@@ -2332,7 +2324,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     name="letterNumber"
                     value={formData.letterNumber}
                     onChange={handleLetterNumberChange}
-                    placeholder="Enter Letter Number"
+                    
                     required
                      autoComplete="off"
                     inputProps={{
@@ -2367,6 +2359,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                   <TextField
                     fullWidth
                     size="small"
+                    // InputProps={{ sx: { height: 55 } }}
                     type="date"
                     name="senderDate"
                     inputProps={{
@@ -2400,7 +2393,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     name="subject"
                     value={formData.subject || ""}
                     onChange={handleSubjectChange}
-                    placeholder="Enter subject"
+                   
                     required
                     maxLength={250}
                   />
@@ -2596,7 +2589,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     name="remarks"
                     value={formData.remarks || ""}
                     onChange={handleremarksChange}
-                    placeholder="Enter remarks"
+                   
                     maxLength={250}
                   />
                 </div>
@@ -2632,6 +2625,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                         startIcon={<CloudUploadIcon />}
                         sx={{ 
                           bgcolor: '#207785',
+                          textTransform: 'none',
                           '&:hover': {
                             bgcolor: '#1a5f6a',
                           }
@@ -2687,15 +2681,17 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                   </Typography>
                 </div>
 
-                <div className="col-md-3 mt-4 d-flex gap-3 align-items-center">
+                <div className="col-md-3 mt-3 d-flex gap-3 align-items-center">
                   <input
                     type="checkbox"
-                    className="form-check-input me-3"
+                  
+                    className="form-check-input ms-4 "
                     name="addEnclosure"
                     checked={showTable} 
                     onChange={handleCheckboxChange}
+                    style={{ width: "20px", height: "20px", cursor: "pointer",border:"1px solid gray" }}
                   />
-                  <label className="form-check-label">Add Enclosure</label>
+                  <label className="form-check-label mt-1">Add Enclosure</label>
                 </div>
 
 
@@ -2711,9 +2707,9 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     }
                   >
                     {formData.isUrgent ? (
-                      <FaToggleOn size={20} color="green" />
+                      <FaToggleOn size={25} color="blue" />
                     ) : (
-                      <FaToggleOff size={20} color="gray" />
+                      <FaToggleOff size={25} color="gray" />
                     )}
                   </div>
                   <label className="form-check-label">
@@ -2733,9 +2729,9 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     }
                   >
                     {formData.isConfidential ? (
-                      <FaToggleOn size={20} color="green" />
+                      <FaToggleOn size={25} color="blue" />
                     ) : (
-                      <FaToggleOff size={20} color="gray" />
+                      <FaToggleOff size={25} color="gray" />
                     )}
                   </div>
                   <label className="form-check-label">
@@ -2777,6 +2773,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                                   bgcolor: '#388e3c',
                                 },
                                 padding: '8px',
+                               
                               }}
                             >
                               <FaPlus size={12} />
@@ -2868,11 +2865,11 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                                   ),
                                 }}
                               />
-                              {row.fileName && ( 
+                              {/* {row.fileName && ( 
                                 <Typography variant="body2" sx={{ mt:1 }}>
                                   Uploaded File: {row.fileName}
                                 </Typography>
-                              )}
+                              )} */}
                             </TableCell>
 
                             <TableCell>
@@ -2906,6 +2903,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     onClick={() => handleSave("0")}
                     sx={{ 
                       bgcolor: '#207785',
+                      textTransform: 'none',
                       '&:hover': {
                         bgcolor: '#1a5f6a',
                       }
@@ -2918,6 +2916,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     onClick={() => handleSave("1")}
                     sx={{ 
                       bgcolor: '#207785',
+                      textTransform: 'none',
                       '&:hover': {
                         bgcolor: '#1a5f6a',
                       }
@@ -2931,6 +2930,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     sx={{ 
                       mx: 1,
                       bgcolor: '#dc3545',
+                      textTransform: 'none',
                       '&:hover': {
                         bgcolor: '#bb2d3b',
                       }
@@ -2999,7 +2999,6 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                       }
                       setOpenSection(null);
 
-                      toast.success("All fields have been reset successfully!");
                     }}
                   >
                     Cancel
@@ -3224,6 +3223,9 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                       color="primary"
                       onClick={handleSaveSender}
                       style={{ flex: 1 }}
+                      sx={{
+                        textTransform: 'none',
+                      }}
                     >
                       Submit
                     </Button>
@@ -3243,6 +3245,9 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                         });
                       }}
                       style={{ flex: 1 }}
+                      sx={{
+                        textTransform: 'none',
+                      }}
                     >
                       Close
                     </Button>
@@ -3254,7 +3259,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                   )}
                 </div>
                 {/* All Sender List */}
-                <div className="diary-section-container">
+                <div className="diary-section-container mt-3">
                   <div className="accordion-header">
                     <span className="accordion-title">All Sender List</span>
                     <span 
@@ -3333,7 +3338,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                 <div className="container mt-3">
                   <Tabs
                     activeKey={activeTab}
-                    onSelect={handleTabSelect}
+                    onSelect={handleTabChange}
                     className="mb-3"
                   >
                     <Tab eventKey="newLetter" title="New Letter">
@@ -3432,8 +3437,8 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                         style={{ backgroundColor: "#f8f9fa", color: "#333" }} >
                         <thead>
                           <tr style={{ backgroundColor: "#207785", color: "#fff" }}>
-                            <th>SI No</th>
-                            <th>Office Name</th>
+                            <th>Sl No</th>
+                            <th>Office</th>
                             <th>Department</th>
                             <th>Designation</th>
                             <th>Name</th>
@@ -3488,7 +3493,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
             <>
               {/* Dynamic Table for Uploading Enclosures */}
             <div className="table-responsive mb-3">
-                    <TableContainer component={Paper}  sx={{ mb: 3 }}>
+                    <TableContainer sx={{ mb: 3 }}>
                       <Table>
                       <TableHead>
                       <TableRow
@@ -3529,7 +3534,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                               <TableCell>
                                 <FormControl sx={{ width: '100%' }}>
                                   <Select
-                                  size="medium"
+                                  size="small"
                                     value={row.enclosureType}
                                     onChange={(e) => handleTableEnclosureRowChange(index, "enclosureType", e.target.value)}
                                   >
@@ -3545,7 +3550,8 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                               <TableCell>
                                 <TextField
                                   fullWidth
-                                  size="medium"
+                                  size="small"
+                                 
                                 value={row.enclosureName}
                                 placeholder="Enter Enclosure Name"
                                 onChange={(e) => handleTableEnclosureRowChange(index, "enclosureName", e.target.value)}
@@ -3557,14 +3563,8 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                                 value={row.file ? undefined : ""}
                                 className="form-control"
                                 onChange={(e) => handleFileUploadChangeencloser(index, e)}
-                                style={{
-                                  width: "380px", 
-                                  height: "55px", 
-                                  padding: "15px 15px", 
-                                  fontSize: "14px", 
-                                  borderRadius: "4px", 
-                                  border: "1px solid #ced4da",
-                                }}
+                                 size="small"
+                            
                               />
                             
                             </TableCell>
@@ -3597,6 +3597,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                       onClick={handleSaveEnclosures}
                       sx={{
                   backgroundColor: '#207785',
+                  textTransform: 'none',
                         '&:hover': {
                     backgroundColor: '#1a6470',
                         },
@@ -3609,6 +3610,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                       onClick={handleCloseModalEncloser}
                       sx={{
                   backgroundColor: '#d32f2f',
+                  textTransform: 'none',
                         '&:hover': {
                     backgroundColor: '#c62828',
                         },
@@ -3619,8 +3621,8 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                   </Box>
 
               {/* Static Table Below (Fetched Data) */}
-                  <TableContainer component={Paper} sx={{ mt: 3 }}>
-                    <Table>
+                  <TableContainer component={Paper} sx={{ mt: 5 ,mb:4}}>
+                    <Table className="table table-bordered">
                       <TableHead
                       sx={{
                         backgroundColor: "#f5f5f5",
@@ -3633,7 +3635,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                         boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
                       }}>
                         <TableRow>
-                          <TableCell>SI NO</TableCell>
+                          <TableCell>Sl No</TableCell>
                           <TableCell>Enclosure Type</TableCell>
                           <TableCell>Enclosure Name</TableCell>
                           <TableCell>Action</TableCell>
@@ -3680,11 +3682,6 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
           )}
         </Modal.Body>
 
-        <Modal.Footer>
-          <button className="btn btn-danger" onClick={handleCloseModalEncloser} >
-            Close
-          </button>
-        </Modal.Footer>
       </Modal>
 
  {/* new letter table share data data */}
@@ -3869,7 +3866,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     src={letterViews}
                     style={{
                       width: "100%",
-                      height: "280px",
+                      height: "350px",
                       borderRadius: "8px",
                       border: "1px solid #ccc",
                     }}
@@ -3884,6 +3881,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                       px: 3,
                       py: 1,
                       borderRadius: "8px",
+                      textTransform: 'none',
                       backgroundColor: "#1976d2",
                       "&:hover": { backgroundColor: "#1565c0" },
                     }}
