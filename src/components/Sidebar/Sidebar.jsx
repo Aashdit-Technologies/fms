@@ -13,9 +13,10 @@ import "boxicons/css/boxicons.min.css";
 import "./Sidebar.css";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
+import { PageLoader } from "../pageload/PageLoader";
 
 const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
-  const [openMenus, setOpenMenus] = useState({});
+  const [openMenus, setOpenMenus] = useState({}); 
   const location = useLocation();
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
@@ -162,10 +163,12 @@ const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
       <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
         <div className="sidebar-header">
           <button className="toggle-btn" onClick={() => setCollapsed(!collapsed)}>
-            {collapsed ? <FaHandPointRight /> : <FaHandPointLeft />}
+            {collapsed ?  <FaHandPointRight /> : <FaHandPointLeft />}
           </button>
         </div>
-        <div className="sidebar-loading">Loading menu...</div>
+        <div className="sidebar-loading">
+          <PageLoader />
+        </div>
       </div>
     );
 

@@ -23,12 +23,12 @@ import {
 import DataTable from "react-data-table-component"; 
 import { Autocomplete, TextField, Button } from "@mui/material";
 import { MdOutlineMoveDown } from "react-icons/md";
-
-
+import { PageLoader } from "../pageload/PageLoader";
 const customStyles = {
   table: {
     style: {
       border: "1px solid #ddd",
+      borderRadius: "10px",
       borderRadius: "10px",
       overflow: "hidden",
       boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
@@ -241,6 +241,7 @@ const NewRequest = () => {
   };
 
   const handleFormSubmit = async (e) => {
+    setLoading(true);
     e.preventDefault();
     try {
       const token = useAuthStore.getState().token;
@@ -268,10 +269,13 @@ const NewRequest = () => {
       closeModal();
     } catch (error) {
       console.error("Error submitting the form:", error);
+    }finally{
+      setLoading(false);
     }
   };
 
   const handleHistoryClick = async (file) => {
+    setLoading(true);
     const payload = { fileId: file.fileId };
     try {
       const token = useAuthStore.getState().token;
@@ -288,6 +292,8 @@ const NewRequest = () => {
       setHistoryModalVisible(true);
     } catch (error) {
       console.error("Error fetching history:", error);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -297,7 +303,7 @@ const NewRequest = () => {
   };
 
   const handleVolumeFile = async (fileDetails) => {
-    debugger;
+    setLoading(true);
     const payload = { 
       fileId: fileDetails.fileId,
       fileTypeId: fileDetails.fileTypeId
@@ -325,10 +331,13 @@ const NewRequest = () => {
       }
     } catch (error) {
       console.error("Error fetching:", error);
+    }finally{
+      setLoading(false);
     }
   };
 
   const handlePartFile = async (fileDetails) => {
+    setLoading(true);
     const payload = { fileReceiptId: fileDetails.fileReceiptId, fileTypeId: fileDetails.fileTypeId };
 
     try {
@@ -353,7 +362,7 @@ const NewRequest = () => {
         toast.error(response.data.message);
       }
     } catch (error) {
-      console.error("Error fetching:", error);
+      setLoading(false);
     }
   };
 
@@ -428,6 +437,7 @@ const NewRequest = () => {
             sx={{ minWidth: "auto" }}
             startIcon={<MdOutlineMoveDown />}
             onClick={() => handleSendToRack(row)}
+            disabled={loading}
           ></Button>
           <Button
             variant="contained"
@@ -438,6 +448,7 @@ const NewRequest = () => {
             className="ms-2"
             startIcon={<FaEdit />}
             onClick={() => handleEditClick(row)}
+            disabled={loading}
           ></Button>
           <Button
             variant="contained"
@@ -448,6 +459,7 @@ const NewRequest = () => {
             className="ms-2"
             startIcon={<FaHistory />}
             onClick={() => handleHistoryClick(row)}
+            disabled={loading}
           ></Button>
         </>
       ),
@@ -507,6 +519,7 @@ const NewRequest = () => {
               pagination
               highlightOnHover
               progressPending={loading}
+              progressComponent={<PageLoader />}
               customStyles={customStyles}
               striped
               bordered

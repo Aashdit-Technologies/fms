@@ -1,0 +1,27 @@
+.note-sheet-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .note-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .note-card h3 {
+    font-size: 18px;
+    margin: 0;
+  }
+  
+  .note-card p {
+    margin: 8px 0;
+    color: #555;
+  }
+  
+  .note-card .meta {
+    font-size: 14px;
+    color: #777;
+  }

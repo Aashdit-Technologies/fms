@@ -274,7 +274,7 @@ const UploadDocumentsModal = ({
           variant="h6"
           sx={{
             textAlign: "center",
-            bgcolor: "#0A3D62",
+            bgcolor: "#207785",
             color: "white",
             padding: 1,
           }}
@@ -479,7 +479,7 @@ const UploadDocumentsModal = ({
         >
           <Table sx={{ width: "100%" }}>
             <TableHead
-              sx={{ position: "sticky", top: 0, bgcolor: "#0A3D62", zIndex: 1 }}
+              sx={{ position: "sticky", top: 0, bgcolor: "#207785", zIndex: 1 }}
             >
               <TableRow>
                 <TableCell

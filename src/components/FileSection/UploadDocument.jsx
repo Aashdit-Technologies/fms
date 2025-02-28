@@ -87,7 +87,7 @@ const UploadDocument = ({
   const [receiverEmpRoleMap, setReceiverEmpRoleMap] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const moveToRack = fileDetails?.data?.btn || null;
+  const moveToRack = fileDetails?.data?.btnValue || null;
   const [selectedFiles, setSelectedFiles] = useState({});
 
   const handleRadioButtonChange = (index) => {
@@ -132,17 +132,16 @@ const UploadDocument = ({
   const handleRemoveRow = (index) => {
     if (rows.length > 1) {
       setRows(rows.filter((_, i) => i !== index));
-  
+
       setSelectedFiles((prev) => {
         const updatedFiles = { ...prev };
-        delete updatedFiles[index]; 
+        delete updatedFiles[index];
         return updatedFiles;
       });
-  
+
       toast.warning("Row removed successfully!");
     }
   };
-  
 
   const getMissingFields = (row) => {
     const missingFields = [];
@@ -248,9 +247,9 @@ const UploadDocument = ({
     }
   };
 
-  const handleEndTask = () => {
-    toast.warning("Task ended!");
-  };
+  // const handleEndTask = () => {
+  //   toast.warning("Task ended!");
+  // };
 
   const handleCancel = () => {
     navigate("/file");
@@ -262,55 +261,61 @@ const UploadDocument = ({
     return dayjs(date).format("DD/MM/YYYY");
   };
 
+  const validateDocuments = (rows, editorContent) => {
+    let isAnyRowStarted = false; 
 
-  const validateDocuments = (rows) => {
+    if (editorContent.trim()) {
+      return true;
+    }
+
     for (const row of rows) {
-      const { subject: docSubject, type: letterType, letterNumber, date: letterDate, document } = row;
-  
-      const areMandatoryFieldsFilled = docSubject && letterType && letterDate;
-  
-      if (letterType === "LETTER") {
-        if (!areMandatoryFieldsFilled || !letterNumber) {
-          toast.error("All fields are required when Letter Type is 'LETTER'.", { position: "top-right" });
-          return false;
-        } 
-      } else {
-        if (!areMandatoryFieldsFilled) {
-          toast.error("Subject, Letter Type, and Letter Date are required.", { position: "top-right" });
+      const { subject, type, letterNumber, date, document } = row;
+
+      const isRowStarted = subject || type || date || letterNumber || document;
+
+      if (isRowStarted) {
+        isAnyRowStarted = true;
+
+        if (
+          !subject ||
+          !type ||
+          !date ||
+          (type === "LETTER" && !letterNumber) ||
+          !document
+        ) {
+          toast.error(
+            "All fields in each row must be filled before submission."
+          );
           return false;
         }
       }
-  
-      if (document && !areMandatoryFieldsFilled) {
-        toast.error("All fields must be filled when a document is uploaded.", { position: "top-right" });
-        return false;
-      }
     }
-  
-    return true;
+
+    if (!editorContent.trim() && !isAnyRowStarted) {
+      toast.error(
+        "Please enter text in the editor or complete a document entry."
+      );
+      return false;
+    }
+
+    return true; 
   };
+
   const handleDirectSubmit = async () => {
-    await handleSubmit("Save"); // Toast should be shown
+    await handleSubmit("Save");
   };
   const handleSubmit = async (Mark) => {
+  
+  
     const documents = rows.map((row) => ({
       docSubject: row.subject,
       letterType: row.type,
       letterNumber: row.type === "LETTER" ? row.letterNumber : null,
       letterDate: row.date,
     }));
-  
+
     const uploadedDocuments = rows.map((row) => row.document).filter(Boolean);
-  
-    if (!validateDocuments(rows)) {
-      return;
-    }
-  
-    if (uploadedDocuments.length === 0) {
-      toast.error("Please upload at least one document.");
-      return;
-    }
-  
+
     try {
       const response = await mutation.mutateAsync({
         documents,
@@ -326,7 +331,7 @@ const UploadDocument = ({
       // toast.error(error.response?.data?.message || error.message || "Something went wrong!");
     }
   };
-  
+
   const mutation = useMutation({
     mutationFn: async (data) => {
       try {
@@ -338,22 +343,22 @@ const UploadDocument = ({
           priority: data.filePriority,
           isConfidential: data.isConfidential,
         });
-  
+
         const encryptedDocumentData = encryptPayload({
           documents: data.documents.map((doc) => ({
             ...doc,
             date: dayjs(doc.date).format("DD/MM/YYYY"),
           })),
         });
-  
+
         const formData = new FormData();
         formData.append("dataObject", encryptedDataObject);
         formData.append("documentData", encryptedDocumentData);
-  
+
         data.uploadedDocuments.forEach((file) => {
           formData.append("uploadedDocuments", file);
         });
-  
+
         const response = await api.post(
           "/file/save-notesheet-and-documents",
           formData,
@@ -364,7 +369,7 @@ const UploadDocument = ({
             },
           }
         );
-  
+
         if (response.data && response.data.outcome === true) {
           setRows([
             {
@@ -379,26 +384,23 @@ const UploadDocument = ({
           setFilePriority("Normal");
           setIsConfidential(false);
           setSelectedFiles({});
-          
+
           if (refetchData && typeof refetchData === "function") {
             refetchData();
           }
-          return response.data; 
+          return response.data;
         } else {
           throw new Error(response.data?.message);
         }
       } catch (error) {
-        throw error; 
+        throw error;
       }
     },
     onSuccess: (data) => {
-      // toast.success(data.message);
     },
     onError: (error) => {
-      // toast.error(error.response?.data?.message || error.message );
     },
   });
-  
 
   const { mutate, isError, error } = mutation;
 
@@ -410,7 +412,6 @@ const UploadDocument = ({
 
   const markActionMutation = useMutation({
     mutationFn: async (action) => {
-
       try {
         const markupPayloads = {
           actionTaken: action,
@@ -456,7 +457,7 @@ const UploadDocument = ({
     setModalAction(action);
     triggerMarkAction(action);
     setIsModalOpen(true);
-      await handleSubmit("Mark"); 
+    await handleSubmit("Mark");
   };
 
   const approveFileMutation = useMutation({
@@ -517,7 +518,6 @@ const UploadDocument = ({
           notesheetId: additionalDetails?.data?.prevNoteId,
           receiverEmpRoleMap: receiverEmpRoleMap,
         };
-        console.log("Payload before encryption:", sendfilepayload);
 
         if (!sendfilepayload.fileId || !sendfilepayload.filerecptId) {
           console.log("Required file details are missing");
@@ -885,15 +885,28 @@ const UploadDocument = ({
                   >
                     {isLoading ? "Sending..." : "Send To"}
                   </Button>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<FaCheckCircle />}
-                    onClick={() => handleApprove("APPROVED")}
-                    disabled={isLoading}
-                  >
-                    End-Task
-                  </Button>
+                  {moveToRack && moveToRack === "MOVE_TO_RACK" ? (
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      startIcon={<FaCheckCircle />}
+                      onClick={() => handleMoveToRack("MOVE-TO-RACK")}
+                      disabled={isLoading}
+                    >
+                      Move-To-Rack
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      startIcon={<FaCheckCircle />}
+                      onClick={() => handleApprove("APPROVED")}
+                      disabled={isLoading}
+                    >
+                      End-Task
+                    </Button>
+                  )}
+
                   <Button
                     variant="contained"
                     color="error"

@@ -14,8 +14,7 @@ const MainFile = () => {
   const fileId = file?.fileId;  
   const receiptId = file?.fileReceiptId;
   
-  // Use a ref to track if we're currently updating the shared content
-  // This will help prevent focus issues during content updates
+  
   const isUpdatingContentRef = useRef(false);
   
   const [fileData, setFileData] = useState({
@@ -55,6 +54,8 @@ const MainFile = () => {
       console.error("Error fetching data:", err);
     }
   };
+  // console.log("aju",fileData.additionalDetails);
+  
 
   useEffect(() => {
     fetchData();
@@ -65,7 +66,6 @@ const MainFile = () => {
   };
 
   const handleEditorContentChange = (newContent) => {
-    // Only update if we're not already updating from another source
     if (!isUpdatingContentRef.current) {
       isUpdatingContentRef.current = true;
       setSharedEditorContent(newContent);
@@ -85,6 +85,7 @@ const MainFile = () => {
         <div className="main_note w-50">
           <NoteSheet 
             noteSheets={fileData.noteSheets} 
+            fileDetails={fileData.fileDetails}
             additionalDetails={fileData.additionalDetails}
             content={sharedEditorContent}
             onContentChange={handleEditorContentChange}

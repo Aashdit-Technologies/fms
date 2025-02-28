@@ -3,7 +3,7 @@ import { Card } from "react-bootstrap";
 import { Button } from "@mui/material";
 import { MdNote } from "react-icons/md";
 import SunEditorComponent from "./SunEditorComponent";
-import { debounce } from "lodash";
+import { add, debounce, set } from "lodash";
 import {  useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { encryptPayload } from "../../utils/encrypt";
@@ -13,6 +13,7 @@ import api from "../../Api/Api";
 const NoteSheet = ({
   noteSheets,
   additionalDetails,
+  fileDetails,
   content,
   onContentChange,
 }) => {
@@ -21,8 +22,11 @@ const NoteSheet = ({
   const [writeNote, setWriteNote] = useState(false);
   const [editorContent, setEditorContent] = useState(content || "");
   const [showPreview, setShowPreview] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 const token =useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+
+
   // Update editor content when props change
   useEffect(() => {
     const newContent = content || additionalDetails?.data?.note || "";
@@ -61,9 +65,12 @@ const token =useAuthStore((state) => state.token) || sessionStorage.getItem("tok
   };
 
   const togglePreview = async () => {
+    setIsLoading(true);
     try {
+      console.log("Previewing note sheet...", fileDetails.data.fileId);
+      
       const encryptedDload = encryptPayload({
-        fileId: additionalDetails.data.fileId,
+        fileId: fileDetails.data.fileId,
       });
 
       console.log("Payload:", encryptedDload);
@@ -83,6 +90,8 @@ const token =useAuthStore((state) => state.token) || sessionStorage.getItem("tok
     } catch (error) {
       toast.error("Preview failed. Please try again.");
       console.error("Preview error:", error);
+    }finally{
+      setIsLoading(false);
     }
   };
 
@@ -182,6 +191,7 @@ const token =useAuthStore((state) => state.token) || sessionStorage.getItem("tok
               className="me-2"
               // onMouseDown={(e) => e.preventDefault()}
               onClick={togglePreview}
+              disabled={isLoading}
             >
               Preview
             </Button>

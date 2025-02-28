@@ -390,36 +390,29 @@ const Correspondence = ({
 
   const handleEdit = async (row) => {
     try {
-      // First fetch the draft data
+      
       const draftResponse = await EditDraftMutation.mutateAsync({
         corrId: row.corrId,
         fileId: fileDetails.data.fileId,
         fileReceiptId: fileDetails.data.fileReceiptId,
       });
 
-      // Then fetch required dropdown data in parallel
+      
       const [officesResponse, orgResponse] = await Promise.all([
         refetch(),
         fetchOrganizations.mutateAsync(),
       ]);
 
-      // Set office names
       if (officesResponse.data) {
         console.log("Setting office names from edit:", officesResponse.data);
         setOfficeNames(officesResponse.data);
       }
 
-      // Set organizations
       if (orgResponse?.data) {
         setOrganizationsData(orgResponse.data);
       }
 
-      // Add debug logs
-      console.log("Draft Data:", draftResponse.data);
-      console.log("Offices Data:", officesResponse.data);
-      console.log("Organizations Data:", orgResponse?.data);
 
-      // Only open modal if we have all required data
       if (draftResponse.data && officesResponse.data && orgResponse?.data) {
         setModalOpen(true);
       } else {
@@ -433,7 +426,7 @@ const Correspondence = ({
 
   const handleCloseModal = () => {
     setModalOpen(false);
-    setEditMalady(null); // Clear edit data when modal closes
+    setEditMalady(null); 
   };
 
   const fetchOrganizations = useMutation({
