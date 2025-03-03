@@ -4,11 +4,12 @@ import { Button } from "@mui/material";
 import { MdNote } from "react-icons/md";
 import SunEditorComponent from "./SunEditorComponent";
 import { add, debounce, set } from "lodash";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
 import api from "../../Api/Api";
+import { PageLoader } from "../pageload/PageLoader";
 
 const NoteSheet = ({
   noteSheets,
@@ -24,8 +25,8 @@ const NoteSheet = ({
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-const token =useAuthStore((state) => state.token) || sessionStorage.getItem("token");
-
+  const token =
+    useAuthStore((state) => state.token) || sessionStorage.getItem("token");
 
   // Update editor content when props change
   useEffect(() => {
@@ -67,8 +68,6 @@ const token =useAuthStore((state) => state.token) || sessionStorage.getItem("tok
   const togglePreview = async () => {
     setIsLoading(true);
     try {
-      console.log("Previewing note sheet...", fileDetails.data.fileId);
-      
       const encryptedDload = encryptPayload({
         fileId: fileDetails.data.fileId,
       });
@@ -82,15 +81,17 @@ const token =useAuthStore((state) => state.token) || sessionStorage.getItem("tok
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      
+
       if (response.data.outcome) {
         console.log("Preview data:", response.data);
-        navigate("/note-sheet-preview", { state: { previewData: response.data } });
+        navigate("/note-sheet-preview", {
+          state: { previewData: response.data },
+        });
       }
     } catch (error) {
       toast.error("Preview failed. Please try again.");
       console.error("Preview error:", error);
-    }finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -108,6 +109,7 @@ const token =useAuthStore((state) => state.token) || sessionStorage.getItem("tok
     return notes.map((note, index) => (
       <Card.Body
         key={note.noteSheetId}
+        id={`note-${index + 1}`}
         className="note-card-body"
         style={{
           background: index % 2 === 0 ? "#ffffff" : "#f8f9fa",
@@ -136,102 +138,109 @@ const token =useAuthStore((state) => state.token) || sessionStorage.getItem("tok
   }, [notes]);
 
   return (
-    <div
-      className={`note-sheet-container ${
-        zoomIn || writeNote || showPreview ? "zoom-in" : ""
-      }`}
-    >
-      <Card className="p-4 mb-4 shadow-lg note-card">
-        <div className="d-flex justify-content-between align-items-center note-header">
-          <h5 className="fw-bold text-uppercase text-dark d-flex align-items-center">
-            <MdNote className="text-success me-2" size={28} /> Note Sheet
-          </h5>
-          <div>
-            {!showPreview && (
-              <>
-                {writeNote ? (
-                  <Button
-                    variant="contained"
-                    color="error"
-                    className="me-2"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => setWriteNote(false)}
-                  >
-                    Close View
-                  </Button>
-                ) : (
-                  <Button
-                    variant="contained"
-                    color="success"
-                    className="me-2"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => setWriteNote(true)}
-                  >
-                    Write Note
-                  </Button>
+    <>
+      {isLoading && <PageLoader />}
+      <div
+        className={`note-sheet-container ${
+          zoomIn || writeNote || showPreview ? "zoom-in" : ""
+        }`}
+      >
+        <Card className="p-4 mb-4 shadow-lg note-card">
+          <div className="d-flex justify-content-between align-items-center note-header">
+            <h5 className="fw-bold text-uppercase text-dark d-flex align-items-center">
+              <MdNote className="text-success me-2" size={28} /> Note Sheet
+            </h5>
+            <div>
+              {!showPreview && (
+                <>
+                {fileDetails && fileDetails?.data.tabPanelId === 1 && (
+                  <>
+                   {writeNote ? (
+                    <Button
+                      variant="contained"
+                      color="error"
+                      className="me-2"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => setWriteNote(false)}
+                    >
+                      Close View
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="success"
+                      className="me-2"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => setWriteNote(true)}
+                    >
+                      Write Note
+                    </Button>
+                  )}
+                  </>
                 )}
+                  
 
-                {!writeNote && (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    className="me-2"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => setZoomIn(!zoomIn)}
-                  >
-                    {zoomIn ? "Zoom Out" : "Zoom In"}
-                  </Button>
-                )}
-              </>
-            )}
-
-            <Button
-              variant="contained"
-              color="secondary"
-              className="me-2"
-              // onMouseDown={(e) => e.preventDefault()}
-              onClick={togglePreview}
-              disabled={isLoading}
-            >
-              Preview
-            </Button>
-          </div>
-        </div>
-
-        <div className="d-flex">
-          <div
-            className={`notes-container ${
-              (writeNote || showPreview) && !zoomIn
-                ? "half-width"
-                : "full-width"
-            }`}
-          >
-            {notes.length > 0 ? renderedNotes : <p>No notes available</p>}
-          </div>
-
-          {(writeNote || showPreview) && (
-            <div className="editor-container half-width">
-              {showPreview ? (
-                <div className="preview-content">
-                  <div
-                    dangerouslySetInnerHTML={{ __html: editorContent || "" }}
-                  />
-                </div>
-              ) : (
-                <SunEditorComponent
-                  key={writeNote ? "write-mode" : "preview-mode"}
-                  content={editorContent}
-                  placeholder="Enter your task action here..."
-                  onContentChange={handleEditorChange}
-                  onBlur={handleEditorBlur}
-                />
+                  {!writeNote && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      className="me-2"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => setZoomIn(!zoomIn)}
+                    >
+                      {zoomIn ? "Zoom Out" : "Zoom In"}
+                    </Button>
+                  )}
+                </>
               )}
-            </div>
-          )}
-        </div>
-      </Card>
 
-      <style>{`
+              <Button
+                variant="contained"
+                color="secondary"
+                className="me-2"
+                // onMouseDown={(e) => e.preventDefault()}
+                onClick={togglePreview}
+                disabled={isLoading}
+              >
+                Preview
+              </Button>
+            </div>
+          </div>
+
+          <div className="d-flex">
+            <div
+              className={`notes-container ${
+                (writeNote || showPreview) && !zoomIn
+                  ? "half-width"
+                  : "full-width"
+              }`}
+            >
+              {notes.length > 0 ? renderedNotes : <p>No notes available</p>}
+            </div>
+
+            {(writeNote || showPreview) && (
+              <div className="editor-container half-width">
+                {showPreview ? (
+                  <div className="preview-content">
+                    <div
+                      dangerouslySetInnerHTML={{ __html: editorContent || "" }}
+                    />
+                  </div>
+                ) : (
+                  <SunEditorComponent
+                    key={writeNote ? "write-mode" : "preview-mode"}
+                    content={editorContent}
+                    placeholder="Enter your task action here..."
+                    onContentChange={handleEditorChange}
+                    onBlur={handleEditorBlur}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <style>{`
         .note-sheet-container {
           display: flex;
           justify-content: center;
@@ -340,8 +349,31 @@ const token =useAuthStore((state) => state.token) || sessionStorage.getItem("tok
         ::-webkit-scrollbar-thumb:hover {
           background: #207785;
         }
+       .note-link {
+          color: #207785;
+          text-decoration: none;
+          font-weight: 500;
+          padding: 2px 4px;
+          border-radius: 3px;
+          transition: background-color 0.2s;
+        }
+
+        .note-link:hover {
+          background-color: #e9ecef;
+          text-decoration: underline;
+        }
+
+        .note-card-body {
+          scroll-margin-top: 100px;
+          transition: background-color 0.3s;
+        }
+
+        .note-card-body.highlight {
+          background-color: #fff3cd !important;
+        }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 };
 

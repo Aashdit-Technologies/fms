@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { FaPrint } from "react-icons/fa";
-import { Button, Checkbox, FormControlLabel } from "@mui/material";
+import { Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
+import "./NoteSheetPreview.css";
+import { toast } from "react-toastify";
 
 const NoteSheetPreview = () => {
   const location = useLocation();
   const previewData = location.state?.previewData?.data || [];
   const [selectedNotes, setSelectedNotes] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
-  // Handle "Select All" functionality
   const handleSelectAll = () => {
     if (selectAll) {
       setSelectedNotes([]);
@@ -19,26 +21,32 @@ const NoteSheetPreview = () => {
     setSelectAll(!selectAll);
   };
 
-  // Handle individual note selection
   const handleSelectNote = (id) => {
     setSelectedNotes((prev) =>
       prev.includes(id) ? prev.filter((noteId) => noteId !== id) : [...prev, id]
     );
   };
 
-  // Handle print functionality
+  const highlightText = (text) => {
+    if (!searchText.trim()) return text;
+    const regex = new RegExp(`(${searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi");
+    return text.replace(
+      regex,
+      `<span style="background-color: yellow; color: black;">$1</span>`
+    );
+  };
+  
+
   const handlePrint = () => {
     if (selectedNotes.length === 0) {
-      alert("Please select at least one note to print.");
+      toast.error("Please select at least one note to print.");
       return;
     }
-  
-    // Filter selected notes
+
     const selectedNoteDetails = previewData.filter((note) =>
       selectedNotes.includes(note.noteSheetId)
     );
-  
-    // Open new print window
+
     const printWindow = window.open("", "_blank");
     printWindow.document.write(`
       <html>
@@ -48,9 +56,18 @@ const NoteSheetPreview = () => {
             body { font-family: Arial, sans-serif; margin: 20px; }
             .note-sheet { max-width: 800px; margin: 0 auto; }
             .note-sheet h1 { text-align: center; font-size: 24px; margin-bottom: 20px; }
-            .note-container { display: flex; align-items: flex-start; border-top: 1px solid #ddd; padding: 10px; }
-            .left-section { width: 25%; padding-right: 10px; border-right: 1px solid #e5e7eb; }
-            .right-section { width: 75%; padding-left: 10px; border-left: 1px solid #e5e7eb; }
+            .note-container { position: relative; width: 100%; display: flex; align-items: flex-start; border-top: 1px solid #000; padding: 10px; }
+            .note-container::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 26%;
+              width: 0%;
+              height: 100vh;
+              border-right:2px solid #052C65;
+            }
+            .left-section { width: 25%; padding-right: 10px; }
+            .right-section { width: 75%; padding-left: 10px; }
             .noting-no { font-size: 14px; font-weight: bold; margin-bottom: 5px; }
             .meta { font-size: 12px; color: #555; }
             .note-content { font-size: 14px; margin-top: 10px; }
@@ -64,17 +81,18 @@ const NoteSheetPreview = () => {
               .map(
                 (note) => `
               <div class="note-container">
-                <!-- Left Section: Docket Number, Date -->
                 <div class="left-section">
                   <p class="noting-no">Noting No: ${note.notingNo}</p>
                   <p class="meta">Docket No: ${note.docketNumber}</p>
                   <p class="meta">${note.createdDate}</p>
                 </div>
-  
-                <!-- Right Section: Note Content & Sender Info -->
                 <div class="right-section">
                   <p class="note-content">
-                    ${note.note ? note.note.replace(/<[^>]*>/g, "") : "No additional notes."}
+                    ${
+                      note.note
+                        ? note.note.replace(/<[^>]*>/g, "")
+                        : "No additional notes."
+                    }
                   </p>
                   <div class="sender-info">
                     ${note.senderName} <br /> (${note.senderDesignation})
@@ -88,11 +106,10 @@ const NoteSheetPreview = () => {
         </body>
       </html>
     `);
-  
+
     printWindow.document.close();
     printWindow.print();
   };
-  
 
   const getPlainText = (html) => {
     const doc = new DOMParser().parseFromString(html, "text/html");
@@ -100,34 +117,46 @@ const NoteSheetPreview = () => {
   };
 
   return (
-    <div className="p-4 bg-gray-100 min-h-screen">
+    <div className=" bg-gray-100 min-h-screen">
       {/* Header Section */}
-      <div className="flex justify-between items-center bg-blue-200 p-2 rounded">
-        <h1 className="text-lg font-bold text-blue-900">Note sheet List</h1>
-        <div className="flex gap-2 items-center">
-          <input
-            type="text"
-            placeholder="Search content"
-            className="border p-1 rounded"
+      <div className="d-flex justify-content-between align-items-center bg-blue-300 p-2 rounded shadow-lg">
+        <h1 className="hii" style={{fontSize:"20px", fontWeight:"600",margin:"0", padding:"0", lineHeight:"inherit", color:"#052C65" }}>Note Sheet List</h1>
+
+        {/* Search Bar */}
+        <div className="d-flex gap-2 align-items-center">
+          <TextField
+            variant="outlined"
+            placeholder="Search content..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="w-52"
+            size="small"
+            style={{ 
+              padding: "0",
+              textTransform: 'inherit' 
+            }}
+            InputProps={{
+              style: { textTransform: 'inherit' }
+            }}
           />
-          <Button variant="contained" color="success">
-            Find
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<FaPrint />}
-            onClick={handlePrint}
-            disabled={selectedNotes.length === 0}
-          >
-            Print
-          </Button>
         </div>
+
+        {/* Print Button */}
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<FaPrint />}
+          onClick={handlePrint}
+          disabled={selectedNotes.length === 0}
+          style={{ height: "40px" }}
+        >
+          Print
+        </Button>
       </div>
 
       {/* Note Sheet List */}
       <div className="mt-4 bg-white p-4 shadow rounded-lg">
-        <h2 className="text-xl font-bold text-center">NOTE SHEET</h2>
+        <h2 className=" text-center"style={{fontSize:"20px", fontWeight:"600",margin:"0", padding:"0", lineHeight:"inherit", color:"#052C65" }}>NOTE SHEET</h2>
         {previewData.length === 0 ? (
           <p className="text-gray-500 text-center mt-2">
             No note sheet available.
@@ -150,7 +179,7 @@ const NoteSheetPreview = () => {
                 className="border-t pl-4 mt-4 d-flex justify-content-start align-items-center"
               >
                 <div
-                  className="w-25 "
+                  className="w-25"
                   style={{ borderRight: "1px solid #e5e7eb", height: "100%" }}
                 >
                   <div className="flex items-center">
@@ -159,15 +188,26 @@ const NoteSheetPreview = () => {
                       onChange={() => handleSelectNote(note.noteSheetId)}
                     />
                     <div>
-                      <p className="text-sm text-gray-600 mb-2">
-                        NotingNo: {note.notingNo}
-                      </p>
-                      <p className="text-sm text-gray-600 m-0">
-                        Docket No: {note.docketNumber}
-                      </p>
-                      <p className="text-sm text-gray-600 m-0">
-                        {note.createdDate}
-                      </p>
+                      <p
+                        className="text-sm text-gray-600 mb-2"
+                        dangerouslySetInnerHTML={{
+                          __html: highlightText(`Noting No: ${note.notingNo}`),
+                        }}
+                      />
+                      <p
+                        className="text-sm text-gray-600 m-0"
+                        dangerouslySetInnerHTML={{
+                          __html: highlightText(
+                            `Docket No: ${note.docketNumber}`
+                          ),
+                        }}
+                      />
+                      <p
+                        className="text-sm text-gray-600 m-0"
+                        dangerouslySetInnerHTML={{
+                          __html: highlightText(note.createdDate),
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -177,17 +217,22 @@ const NoteSheetPreview = () => {
                   style={{ borderLeft: "1px solid #e5e7eb", height: "100%" }}
                 >
                   <div className="border-l-4 border-gray-400 pl-4">
-                    {note.note ? (
-                      <p className="mt-2">{getPlainText(note.note)}</p>
-                    ) : (
-                      <p className="text-gray-500">No additional notes.</p>
-                    )}
+                    <p
+                      className="mt-2"
+                      dangerouslySetInnerHTML={{
+                        __html: highlightText(getPlainText(note.note)),
+                      }}
+                    />
                   </div>
                   <div className="mt-4 text-right float-end">
-                    <p>
-                      <strong>{note.senderName}</strong>
-                      <br /> ({note.senderDesignation})
-                    </p>
+                    <p
+                      className="text-right float-end"
+                      dangerouslySetInnerHTML={{
+                        __html: highlightText(
+                          `${note.senderName} <br /> (${note.senderDesignation})`
+                        ),
+                      }}
+                    />
                   </div>
                 </div>
               </div>

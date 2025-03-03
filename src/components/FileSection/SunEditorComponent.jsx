@@ -15,6 +15,7 @@ const SunEditorComponent = ({ content, onContentChange, placeholder }) => {
 
   const config = useMemo(
     () => ({
+      
       readonly: false,
       placeholder: '',
       height: '300px',
@@ -26,19 +27,7 @@ const SunEditorComponent = ({ content, onContentChange, placeholder }) => {
       showCharsCounter: true,
       showWordsCounter: true,
       showXPathInStatusbar: false,
-      // Improve focus handling
-      // events: {
-      //   afterInit: (jodit) => {
-      //     jodit.e.on('blur', () => {
-      //       // Prevent focus from jumping to toolbar
-      //       setTimeout(() => {
-      //         if (document.activeElement.tagName === 'BODY') {
-      //           jodit.selection.focus();
-      //         }
-      //       }, 0);
-      //     });
-      //   }
-      // }
+     
     }),
     [placeholder]
   );

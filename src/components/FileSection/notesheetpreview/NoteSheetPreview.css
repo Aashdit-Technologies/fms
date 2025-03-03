@@ -25,3 +25,16 @@
     font-size: 14px;
     color: #777;
   }
+  .rounded-lg{
+    position: relative;
+    width: 100%;
+  }
+.rounded-lg::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 26%;
+        width: 0%;
+        height: 100%;
+        border-right:2px solid #052C65;
+    }

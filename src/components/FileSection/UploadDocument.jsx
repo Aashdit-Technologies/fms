@@ -47,6 +47,7 @@ import { AccordionItem, Table } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import UploadDocumentsModal from "./Modal/UploadDocumentsModal";
 import { PageLoader } from "../pageload/PageLoader";
+import MoveToRackModal from "./Modal/MoveToRackModal";
 const UploadDocument = ({
   fileDetails,
   initialContent,
@@ -89,6 +90,7 @@ const UploadDocument = ({
 
   const moveToRack = fileDetails?.data?.btnValue || null;
   const [selectedFiles, setSelectedFiles] = useState({});
+  const [isMoveToRackModalOpen, setIsMoveToRackModalOpen] = useState(false);
 
   const handleRadioButtonChange = (index) => {
     console.log("Selected Row:", index); // Debugging
@@ -209,7 +211,7 @@ const UploadDocument = ({
       const newRows = [...rows];
       newRows[index].document = file;
       setRows(newRows);
-      toast.success("File uploaded successfully!");
+      // toast.success("File uploaded successfully!");
     } else {
       toast.error(
         "Please select a valid document (JPG, PNG or PDF files only)"
@@ -253,7 +255,7 @@ const UploadDocument = ({
 
   const handleCancel = () => {
     navigate("/file");
-    toast.warning("Task cancelled!");
+    // toast.warning("Task cancelled!");
   };
 
   const formatDateToString = (date) => {
@@ -262,7 +264,7 @@ const UploadDocument = ({
   };
 
   const validateDocuments = (rows, editorContent) => {
-    let isAnyRowStarted = false; 
+    let isAnyRowStarted = false;
 
     if (editorContent.trim()) {
       return true;
@@ -298,15 +300,13 @@ const UploadDocument = ({
       return false;
     }
 
-    return true; 
+    return true;
   };
 
   const handleDirectSubmit = async () => {
     await handleSubmit("Save");
   };
   const handleSubmit = async (Mark) => {
-  
-  
     const documents = rows.map((row) => ({
       docSubject: row.subject,
       letterType: row.type,
@@ -396,10 +396,8 @@ const UploadDocument = ({
         throw error;
       }
     },
-    onSuccess: (data) => {
-    },
-    onError: (error) => {
-    },
+    onSuccess: (data) => {},
+    onError: (error) => {},
   });
 
   const { mutate, isError, error } = mutation;
@@ -568,6 +566,7 @@ const UploadDocument = ({
     },
   });
 
+
   return (
     <>
       {isLoading && <PageLoader />}
@@ -622,7 +621,8 @@ const UploadDocument = ({
                           onChange={(e) =>
                             handleInputChange(index, "subject", e.target.value)
                           }
-                          sx={{ height: "54px" }}
+                          size="small"
+                          // sx={{ height: "30px" }}
                         />
                       </Grid>
 
@@ -639,7 +639,8 @@ const UploadDocument = ({
                             onChange={(e) =>
                               handleInputChange(index, "type", e.target.value)
                             }
-                            sx={{ height: "54px" }}
+                            // sx={{ height: "40px" }}
+                            size="small"
                             SelectProps={{
                               displayEmpty: true,
                               renderValue: (value) => {
@@ -688,7 +689,7 @@ const UploadDocument = ({
                               e.target.value
                             )
                           }
-                          sx={{ height: "54px" }}
+                          size="small"
                           disabled={row.type !== "LETTER"}
                         />
                       </Grid>
@@ -701,7 +702,7 @@ const UploadDocument = ({
                                 Date <span style={{ color: "red" }}>*</span>
                               </Typography>
                             }
-                            inputProps={{ "aria-label": "Without label" }}
+                            format="DD/MM/YYYY"
                             value={
                               row.date ? dayjs(row.date, "DD/MM/YYYY") : null
                             }
@@ -727,12 +728,28 @@ const UploadDocument = ({
                             shouldDisableDate={(date) =>
                               dayjs(date).isAfter(dayjs())
                             }
+                            closeOnSelect
+                            disableOpenPicker
+                            onAccept={(date) => {
+                              if (date && date.isValid()) {
+                                handleInputChange(
+                                  index,
+                                  "date",
+                                  dayjs(date).format("DD/MM/YYYY")
+                                );
+                              }
+                            }}
                             renderInput={(params) => (
                               <TextField
                                 {...params}
                                 fullWidth
-                                size="small"
-                                sx={{ height: "54px" }}
+                                inputProps={{
+                                  ...params.inputProps,
+                                  placeholder: "DD/MM/YYYY", 
+                                }}
+                                InputLabelProps={{
+                                  shrink: true, // ✅ Forces label to always stay above
+                                }}
                               />
                             )}
                           />
@@ -747,7 +764,7 @@ const UploadDocument = ({
                           sx={{
                             bgcolor: "#207785",
                             "&:hover": { bgcolor: "#207785" },
-                            height: "54px",
+                            height: "40px",
                           }}
                         >
                           {
@@ -798,7 +815,7 @@ const UploadDocument = ({
 
                 <Grid container spacing={2} sx={{ mt: 4 }}>
                   <Grid item xs={6}>
-                    <FormControl fullWidth sx={{ height: "54px" }}>
+                    <FormControl fullWidth sx={{ height: "40px" }}>
                       <InputLabel>File Priority</InputLabel>
                       <Select
                         value={filePriority}
@@ -822,7 +839,7 @@ const UploadDocument = ({
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        height: "54px",
+                        height: "40px",
                       }}
                     >
                       <Typography sx={{ mr: 2 }}>
@@ -890,7 +907,7 @@ const UploadDocument = ({
                       variant="contained"
                       color="secondary"
                       startIcon={<FaCheckCircle />}
-                      onClick={() => handleMoveToRack("MOVE-TO-RACK")}
+                      onClick={() => setIsMoveToRackModalOpen(true)}
                       disabled={isLoading}
                     >
                       Move-To-Rack
@@ -920,6 +937,7 @@ const UploadDocument = ({
             </Card>
           </AccordionItem>
         </Accordion>
+        
         <Modal
           open={confirmationModalOpen}
           onClose={() => setConfirmationModalOpen(false)}
@@ -1063,7 +1081,13 @@ const UploadDocument = ({
           fileDetails={fileDetails}
           additionalDetails={additionalDetails}
         />
+        <MoveToRackModal
+          open={isMoveToRackModalOpen}
+          onClose={() => setIsMoveToRackModalOpen(false)}
+          fileDetails={fileDetails}
+        />
       </Box>
+      
     </>
   );
 };

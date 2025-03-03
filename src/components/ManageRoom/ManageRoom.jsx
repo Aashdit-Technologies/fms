@@ -9,12 +9,12 @@ import {
   FaLock,
   FaLockOpen,
 } from "react-icons/fa";
-import { TextField, Button } from "@mui/material"; // Importing Button from Material-UI
+import { TextField, Button } from "@mui/material";
 import { toast } from "react-toastify";
 import api from "../../Api/Api";
 import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
-import DataTable from "react-data-table-component"; 
+import DataTable from "react-data-table-component";
 
 import "react-toastify/dist/ReactToastify.css";
 import "./ManageRoom.css";
@@ -94,7 +94,6 @@ const customStyles = {
     },
   },
 };
-
 const ManageRoom = () => {
   const [activeKey, setActiveKey] = useState("1");
   const [isFormOpen, setIsFormOpen] = useState();
@@ -103,30 +102,18 @@ const ManageRoom = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roomData, setRoomData] = useState([]);
   const [editingRoomId, setEditingRoomId] = useState(null);
-//  const [rowSize, setRowSize] = useState(10);
-//   const [pageNo, setPageNo] = useState(1);
-//   const [totalRows, setTotalRows] = useState(0);
   const token = useAuthStore.getState().token;
 
   // Fetch Room Data
   const fetchRoomData = useCallback(async () => {
     try {
-      //  const payload = {
-      //         pageNo: pageNo,
-      //         rowSize:rowSize,
-      //       };
-      
-            // Encrypt the payload
-      // const encryptedMessage = encryptPayload(payload);
       const { data } = await api.get("/manage-room", {
         headers: { Authorization: `Bearer ${token}` },
-        // params: { dataObject: encryptedMessage },
       });
-      if(data.outcome != true){
+      if (data.outcome !== true) {
         toast.error(data.message);
       }
       setRoomData(data.data || []);
-      setTotalRows(data.totalCount || 0);
     } catch (error) {
       console.error("Error fetching room data:", error);
     }
@@ -168,14 +155,15 @@ const ManageRoom = () => {
         { dataObject: payload },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if(data.outcome != true){
+
+      if (data.outcome !== true) {
         toast.error(data.message);
-      }
-      else{
+      } else {
         toast.success(data.message);
+        fetchRoomData(); // Refresh the table data
+        handleReset(); // Reset the form
+        setActiveKey("1"); // Open the table section
       }
-      fetchRoomData();
-      handleReset();
     } catch (error) {
       console.error("Error saving data:", error);
       toast.error("Failed to save data.");
@@ -201,23 +189,19 @@ const ManageRoom = () => {
           params: { dataObject: payload },
         }
       );
-      debugger
-      if(data.outcome != true){
-        toast.error(data.message);
-      }
-      else{
-        toast.success(data.message);
-      }
-      setRoomData((prev) =>
-        prev.map((item) =>
-          item.docRoomId === room.docRoomId
-            ? { ...item, isActive: updatedStatus }
-            : item
-        )
-      );
-      
 
-     
+      if (data.outcome !== true) {
+        toast.error(data.message);
+      } else {
+        toast.success(data.message);
+        setRoomData((prev) =>
+          prev.map((item) =>
+            item.docRoomId === room.docRoomId
+              ? { ...item, isActive: updatedStatus }
+              : item
+          )
+        );
+      }
     } catch (error) {
       console.error("Error updating room status:", error);
       toast.error("Failed to update room status.");
@@ -235,7 +219,7 @@ const ManageRoom = () => {
   const columns = [
     {
       name: "Sl No.",
-      selector: (row, index) => index + 1, // Add Serial Number column
+      selector: (row, index) => index + 1,
       sortable: false,
     },
     {
@@ -266,28 +250,26 @@ const ManageRoom = () => {
       name: "Actions",
       cell: (row) => (
         <div>
-          {/* Use Material UI Button for toggling status */}
           <Button
             variant="contained"
             color={row.isActive ? "error" : "success"}
             size="small"
             sx={{ minWidth: "auto" }}
             onClick={() => handleStatusToggle(row)}
-            startIcon={row.isActive ? <FaLock /> : <FaLockOpen />}
             title={row.isActive ? "In-Active" : "Active"}
           >
+            {row.isActive ? <FaLock /> : <FaLockOpen />}
           </Button>
-          {/* Use Material UI Button for editing */}
           <Button
-            variant="outlined"
-            color="warning"
+            variant="contained"
+            color="primary"
             size="small"
             sx={{ minWidth: "auto" }}
             onClick={() => handleEdit(row)}
-            startIcon={<FaEdit />}
             className="ms-2"
             title="Edit"
           >
+            <FaEdit />
           </Button>
         </div>
       ),
@@ -300,21 +282,31 @@ const ManageRoom = () => {
       <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
         {/* Form Accordion */}
         <Accordion.Item eventKey="0">
-          <Accordion.Header onClick={() => setIsFormOpen((prev) => !prev)} className="custbg">
-            <div className="mstaccodion d-flex" style={{justifyContent:"space-between", width:"100%"}}>
-            <span className="accordion-title">
-              {editingRoomId ? "Edit Room Details" : "Add Room Details"}
-            </span>
-            <span className="accordion-icon ms-auto">
-              {isFormOpen ? <FaMinus /> : <FaPlus />}
-            </span>
+          <Accordion.Header
+            onClick={() => setIsFormOpen((prev) => !prev)}
+            className="custbg"
+          >
+            <div
+              className="mstaccodion d-flex"
+              style={{ justifyContent: "space-between", width: "100%" }}
+            >
+              <span className="accordion-title">
+                {editingRoomId ? "Edit Room Details" : "Add Room Details"}
+              </span>
+              <span className="accordion-icon ms-auto">
+                {isFormOpen ? <FaMinus /> : <FaPlus />}
+              </span>
             </div>
           </Accordion.Header>
           <Accordion.Body>
             <form className="row">
-              <div className="form-group col-md-3">
+              <div className="form-group col-md-6">
                 <TextField
-                  label="Room Number"
+                  label={
+                    <span>
+                      Room Number <span style={{ color: "red" }}>*</span>
+                    </span>
+                  }
                   variant="outlined"
                   fullWidth
                   id="roomNumber"
@@ -324,13 +316,18 @@ const ManageRoom = () => {
                   placeholder="Enter Room"
                 />
               </div>
-              <div className="form-group col-md-12 mt-3">
+              <div className="form-group col-md-6">
                 <TextField
-                  label="Room Description"
+                  label={
+                    <span>
+                      Room Description <span style={{ color: "red" }}>*</span>
+                    </span>
+                  }
                   variant="outlined"
                   fullWidth
-                  multiline
+                  multilines
                   minRows={3}
+                  maxRows={6}
                   id="description"
                   name="description"
                   value={room.description}
@@ -368,12 +365,18 @@ const ManageRoom = () => {
 
         {/* Table Accordion */}
         <Accordion.Item eventKey="1" className="mt-3">
-          <Accordion.Header onClick={() => setIsTableOpen((prev) => !prev)} className="custbg">
-          <div className="mstaccodion d-flex" style={{justifyContent:"space-between", width:"100%"}}>
-            <span className="accordion-title">View Rooms</span>
-            <span className="accordion-icon">
-              {isTableOpen ? <FaPlus /> : <FaMinus />}
-            </span>
+          <Accordion.Header
+            onClick={() => setIsTableOpen((prev) => !prev)}
+            className="custbg"
+          >
+            <div
+              className="mstaccodion d-flex"
+              style={{ justifyContent: "space-between", width: "100%" }}
+            >
+              <span className="accordion-title">View Rooms</span>
+              <span className="accordion-icon">
+                {isTableOpen ? <FaPlus /> : <FaMinus />}
+              </span>
             </div>
           </Accordion.Header>
           <Accordion.Body>
@@ -386,15 +389,6 @@ const ManageRoom = () => {
               highlightOnHover
               pointerOnHover
               className="custom-data-table table table-bordered"
-  //             paginationServer
-  // paginationTotalRows={totalRows} // Set total rows for server-side pagination
-  // paginationPerPage={rowSize}
-  // paginationDefaultPage={pageNo}
-  // onChangePage={(page) => setPageNo(page)} // Update page state
-  // onChangeRowsPerPage={(newRowSize) => {
-  //   setRowSize(newRowSize);
-  //   setPageNo(1); // Reset to first page when changing rows per page
-  // }}
             />
           </Accordion.Body>
         </Accordion.Item>

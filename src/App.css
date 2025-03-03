@@ -11,12 +11,29 @@
     background: #f5f5f5;
     overflow: hidden;
   }
-  
+  label#\:rc\:-label{
+    margin-top: -9px;
+  }
+  input, 
+textarea, 
+.MuiInputBase-input {
+  text-transform: inherit !important;
+}
+
+.no-capitalize {
+  text-transform: none !important;
+}
+.css-1dune0f-MuiInputBase-input-MuiOutlinedInput-input{
+  padding: 9px 14px !important;
+}
   /* .admin-main.collapsed {
     margin-left: 60px;
   } */
-  .gvYsEF{
+  /* .gvYsEF{
     overflow: hidden !important;
+  } */
+  input#\:rc\:{
+    height: 7px;
   }
   button{
     text-transform: capitalize !important;

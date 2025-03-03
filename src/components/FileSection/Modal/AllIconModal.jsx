@@ -28,6 +28,7 @@ import { useMutation } from "@tanstack/react-query";
 import DataTable from "react-data-table-component";
 import { toast } from "react-toastify";
 import { FaDownload } from "react-icons/fa6";
+import { PageLoader } from "../../pageload/PageLoader";
 
 const modalStyle = {
   position: "absolute",
@@ -80,19 +81,16 @@ const tableCustomStyles = {
   },
 };
 
-
-
-
-
 export const HistoryModal = ({ open, onClose, historyData }) => {
   // console.log("History Data:", historyData);
   // console.log("Correspondence Data:", correspondence.data);
-  
+
   const data = historyData?.data || [];
   const isValidHistoryData = Array.isArray(data) && data.length > 0;
-  const token =useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  const token =
+    useAuthStore((state) => state.token) || sessionStorage.getItem("token");
   const handleDownloads = async (row) => {
-    if (!row || !row.correspondenceId ) {
+    if (!row || !row.correspondenceId) {
       console.error("Invalid row data for download");
       return;
     }
@@ -116,8 +114,8 @@ export const HistoryModal = ({ open, onClose, historyData }) => {
         throw new Error("No response data received");
       }
       const blob = new Blob([response.data], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        window.open(url, "_blank"); 
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
     } catch (error) {
       console.error("Error downloading the document", error);
       alert(
@@ -125,7 +123,7 @@ export const HistoryModal = ({ open, onClose, historyData }) => {
       );
     }
   };
-  
+
   const columns = [
     {
       name: "Correspondence Type",
@@ -158,7 +156,6 @@ export const HistoryModal = ({ open, onClose, historyData }) => {
     },
   ];
 
-      
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={modalStyle}>
@@ -180,7 +177,7 @@ export const HistoryModal = ({ open, onClose, historyData }) => {
         {isValidHistoryData ? (
           <DataTable
             columns={columns}
-            data={data }
+            data={data}
             pagination
             highlightOnHover
             customStyles={tableCustomStyles}
@@ -198,13 +195,14 @@ export const UploadModal = ({
   open,
   onClose,
   enclosuresData,
-  
+  refetchGet,
   corrId,
   allDetails,
   historyData,
   uploadData,
 }) => {
   const token = sessionStorage.getItem("token");
+  const [loading, setLoading] = useState(false);
   const data = Array.isArray(uploadData?.data.enclosureTypeList)
     ? uploadData?.data.enclosureTypeList
     : [];
@@ -218,56 +216,42 @@ export const UploadModal = ({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const refreshEnclosureData = useMutation({
-    mutationFn: async () => {
-      const response = await api.post("/file/get-file-correspondence-enclosures",
-        { dataObject: encryptPayload({ correspondenceId: corrId }) },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
-    },
-    onSuccess: (data) => {
-      // Handle the refreshed data
-      console.log("Enclosure data refreshed:", data);
-    },
-    onError: (error) => {
-      console.error("Error refreshing enclosure data:", error);
-      toast.error("Failed to refresh enclosure data");
-    }
-  });
-
   const mutation = useMutation({
     mutationFn: async (data) => {
+      setLoading(true);
       try {
         const formData = new FormData();
-        
+
         // First, prepare the enclosures data
         const enclosuresPayload = {
           enclosures: rows.map((row) => ({
-            encTypeId: row.type,  // This is the type ID from the dropdown
+            encTypeId: row.type, // This is the type ID from the dropdown
             encName: row.name,
           })),
         };
-        
+
         console.log("Enclosures payload:", enclosuresPayload); // Debug log
-        
+
         // Prepare and append the main data object
         const dataObject = {
           fileId: allDetails.fileId,
           fileReceiptId: allDetails.fileReceiptId,
           correspondenceId: corrId,
         };
-        
+
         formData.append("dataObject", encryptPayload(dataObject));
         formData.append("enclosureData", encryptPayload(enclosuresPayload));
-        
+
         // Append each file to the formData
         data.enclosureDocuments.forEach((file, index) => {
           formData.append(`enclosureDocuments`, file);
         });
 
-        console.log("Submitting form data with types:", rows.map(r => ({ type: r.type, name: r.name }))); // Debug log
-        
+        console.log(
+          "Submitting form data with types:",
+          rows.map((r) => ({ type: r.type, name: r.name }))
+        ); // Debug log
+
         const response = await api.post(
           "/file/upload-file-correspondence-enclosures",
           formData,
@@ -278,8 +262,11 @@ export const UploadModal = ({
             },
           }
         );
-        if (response.data) {
-          await refreshEnclosureData.mutateAsync();
+        if (response.data.outcome === true) {
+          setRows([{ type: "", name: "", file: null, fileName: "" }]);
+          if (refetchGet && typeof refetchGet === "function") {
+            refetchGet();
+          }
           toast.success("Upload successful!");
           return response.data;
         } else {
@@ -289,6 +276,8 @@ export const UploadModal = ({
         console.error("Upload error details:", error);
         toast.error(error.message || "Upload failed. Please try again.");
         throw error;
+      } finally {
+        setLoading(false);
       }
     },
   });
@@ -299,23 +288,27 @@ export const UploadModal = ({
       return;
     }
 
-    const invalidRows = rows.filter(row => {
+    const invalidRows = rows.filter((row) => {
       return !row.type || !row.name || !row.file;
     });
-    
+
     if (invalidRows.length > 0) {
-      toast.error("Please fill all required fields (Type, Name, and File) for each row!");
+      toast.error(
+        "Please fill all required fields (Type, Name, and File) for each row!"
+      );
       return;
     }
 
-    const invalidFiles = rows.filter(row => !row.file || row.file.type !== "application/pdf");
+    const invalidFiles = rows.filter(
+      (row) => !row.file || row.file.type !== "application/pdf"
+    );
     if (invalidFiles.length > 0) {
       toast.error("Please ensure all selected files are PDFs!");
       return;
     }
 
-    mutation.mutate({ 
-      enclosureDocuments: rows.map((row) => row.file)
+    mutation.mutate({
+      enclosureDocuments: rows.map((row) => row.file),
     });
   };
 
@@ -342,7 +335,7 @@ export const UploadModal = ({
   const handleFileChange = (index, event) => {
     const file = event.target.files[0];
     console.log("Selected file:", file);
-    
+
     if (!file) {
       toast.error("No file selected");
       return;
@@ -350,24 +343,25 @@ export const UploadModal = ({
 
     if (file.type !== "application/pdf") {
       toast.error("Only PDF files are allowed.");
-      event.target.value = ''; 
+      event.target.value = "";
       return;
     }
 
-    setRows(rows.map((row, i) => {
-      if (i === index) {
-        return {
-          ...row,
-          file: file,
-          fileName: file.name
-        };
-      }
-      return row;
-    }));
-    
+    setRows(
+      rows.map((row, i) => {
+        if (i === index) {
+          return {
+            ...row,
+            file: file,
+            fileName: file.name,
+          };
+        }
+        return row;
+      })
+    );
+
     toast.success(`File selected: ${file.name}`);
   };
-    
 
   useEffect(() => {
     if (!open) {
@@ -375,281 +369,295 @@ export const UploadModal = ({
     }
   }, [open]);
 
-const handleDownload = async (enc) => {
-  debugger
-  console.log("fileName",enc.path);
-
-  
-  try {
+  const handleDownload = async (enc) => {
+    setLoading(true);
+    try {
       const encryptedDload = encryptPayload({
         documentName: enc.docFilename,
         documentPath: enc.path,
-          });
-    
-    console.log("Payload:", encryptedDload);
-    
-    const response = await api.post(
-      "/download/download-document",
-      { dataObject:  encryptedDload  },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob'
-      }
-    );
-    
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `enclosure_${enc.enclosureId}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    toast.error("Download failed. Please try again.");
-    console.error("Download error:", error);
-  }
-};
+      });
+
+      console.log("Payload:", encryptedDload);
+
+      const response = await api.post(
+        "/download/download-document",
+        { dataObject: encryptedDload },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: "blob",
+        }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `enclosure_${enc.enclosureId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error("Download failed. Please try again.");
+      console.error("Download error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Modal
-      open={open}
-      onClose={(event, reason) => {
-        if (reason && reason === "backdropClick") {
-          return;
-        }
-        onClose();
-      }}
-    >
-      <Box
-        sx={{
-          width: "800px",
-          padding: "20px",
-          background: "#fff",
-          borderRadius: "10px",
-          margin: "auto",
-          mt: "5vh",
+    <>
+      {loading && <PageLoader />}
+      <Modal
+        open={open}
+        onClose={(event, reason) => {
+          if (reason && reason === "backdropClick") {
+            return;
+          }
+          onClose();
         }}
       >
         <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
-          <Typography variant="h6">Upload Enclosure</Typography>
-          <IconButton onClick={onClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-
-        <Box display="flex" justifyContent="flex-end" gap={1} mb={2}>
-          <Button
-            onClick={addRow}
-            color="success"
-            variant="contained"
-            startIcon={<FaPlus />}
-          >
-            
-          </Button>
-          {rows.length > 1 && (
-            <Button
-              onClick={() => removeRow(rows.length - 1)}
-              color="error"
-              variant="contained"
-              startIcon={<FaMinus />}
-            >
-              
-            </Button>
-          )}
-        </Box>
-
-        <TableContainer
-          component={Paper}
           sx={{
-            maxHeight: 300,
-            overflow: "auto",
-            mt: 2,
-            border: "1px solid #ccc",
-            bgcolor: "#f5f5f5",
+            width: "800px",
+            padding: "20px",
+            background: "#fff",
+            borderRadius: "10px",
+            margin: "auto",
+            mt: "5vh",
           }}
         >
-          <Table sx={{ width: "100%" }}>
-            <TableHead sx={{position: "sticky", top: 0, bgcolor: "#207785" , zIndex: 1 }}>
-              <TableRow>
-                <TableCell
-                  style={{
-                    fontWeight: "bold",
-                    color: "#fff",
-                    borderRight: "1px solid #ddd",
-                  }}
-                >
-                  Type *
-                </TableCell>
-                <TableCell
-                  style={{
-                    fontWeight: "bold",
-                    color: "#fff",
-                    borderRight: "1px solid #ddd",
-                  }}
-                >
-                  Name *
-                </TableCell>
-                <TableCell
-                  style={{
-                    fontWeight: "bold",
-                    color: "#fff",
-                    borderRight: "1px solid #ddd",
-                  }}
-                >
-                  File *
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <FormControl fullWidth>
-                      <TextField
-                        select
-                        style={{ width: "190px" }}
-                        variant="outlined"
-                        label="Enclosure Type"
-                        value={row.type}
-                        onChange={(e) =>
-                          handleChange(index, "type", e.target.value)
-                        }
-                      >
-                        {data.map((opt) => (
-                          <MenuItem key={opt.id} value={opt.id}>
-                            {opt.name}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    </FormControl>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+          >
+            <Typography variant="h6">Upload Enclosure</Typography>
+            <IconButton onClick={onClose}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          <Box display="flex" justifyContent="flex-end" gap={1} mb={2}>
+            <Button
+              onClick={addRow}
+              color="success"
+              variant="contained"
+              startIcon={<FaPlus />}
+            ></Button>
+            {rows.length > 1 && (
+              <Button
+                onClick={() => removeRow(rows.length - 1)}
+                color="error"
+                variant="contained"
+                startIcon={<FaMinus />}
+              ></Button>
+            )}
+          </Box>
+
+          <TableContainer
+            component={Paper}
+            sx={{
+              maxHeight: 300,
+              overflow: "auto",
+              mt: 2,
+              border: "1px solid #ccc",
+              bgcolor: "#f5f5f5",
+            }}
+          >
+            <Table sx={{ width: "100%" }}>
+              <TableHead
+                sx={{
+                  position: "sticky",
+                  top: 0,
+                  bgcolor: "#207785",
+                  zIndex: 1,
+                }}
+              >
+                <TableRow>
+                  <TableCell
+                    style={{
+                      fontWeight: "bold",
+                      color: "#fff",
+                      borderRight: "1px solid #ddd",
+                    }}
+                  >
+                    Type *
                   </TableCell>
-                  <TableCell>
-                    <FormControl fullWidth>
-                      <TextField
-                        variant="outlined"
-                        label="Name"
-                        fullWidth
-                        value={row.name}
-                        onChange={(e) =>
-                          handleChange(index, "name", e.target.value)
-                        }
-                      />
-                    </FormControl>
+                  <TableCell
+                    style={{
+                      fontWeight: "bold",
+                      color: "#fff",
+                      borderRight: "1px solid #ddd",
+                    }}
+                  >
+                    Name *
                   </TableCell>
-                  <TableCell>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      sx={{ backgroundColor: "primary" }}
-                      component="label"
-                    >
-                      Choose File
-                      <input
-                        type="file"
-                        hidden
-                        onChange={(e) => handleFileChange(index, e)}
-                      />
-                    </Button>
-                      {/* {row.fileName && <Typography variant="body2" color="textSecondary">{row.fileName}</Typography>} */}
+                  <TableCell
+                    style={{
+                      fontWeight: "bold",
+                      color: "#fff",
+                      borderRight: "1px solid #ddd",
+                    }}
+                  >
+                    File *
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <Box mt={2} display="flex" justifyContent="center" gap={2}>
-          <Button variant="contained" color="success" onClick={handleSubmit}>
-            Save
-          </Button>
-          <Button variant="outlined" onClick={handleCancel}>
-            Cancel
-          </Button>
-        </Box>
-
-        <TableContainer
-          component={Paper}
-          sx={{
-            maxHeight: 300,
-            overflow: "auto",
-            mt: 2,
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            bgcolor: "#f9f9f9",
-          }}
-        >
-          <Table>
-            <TableHead sx={{position: "sticky", top: 0, bgcolor: "#207785" , zIndex: 1 }}>
-              <TableRow>
-                <TableCell
-                  style={{
-                    fontWeight: "bold",
-                    color: "#fff",
-                    borderRight: "1px solid #ddd",
-                  }}
-                >
-                  Type
-                </TableCell>
-                <TableCell
-                  style={{
-                    fontWeight: "bold",
-                    color: "#fff",
-                    borderRight: "1px solid #ddd",
-                  }}
-                >
-                  Name
-                </TableCell>
-                <TableCell
-                  style={{
-                    fontWeight: "bold",
-                    color: "#fff",
-                    borderRight: "1px solid #ddd",
-                  }}
-                >
-                  Action
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {enclosuredatas
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((enc, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>{enc.enclosuretype}</TableCell>
-                    <TableCell>{enc.enclosureName}</TableCell>
+              </TableHead>
+              <TableBody>
+                {rows.map((row, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <FormControl fullWidth>
+                        <TextField
+                          select
+                          style={{ width: "190px" }}
+                          variant="outlined"
+                          label="Enclosure Type"
+                          value={row.type}
+                          onChange={(e) =>
+                            handleChange(index, "type", e.target.value)
+                          }
+                        >
+                          {data.map((opt) => (
+                            <MenuItem key={opt.id} value={opt.id}>
+                              {opt.name}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </FormControl>
+                    </TableCell>
+                    <TableCell>
+                      <FormControl fullWidth>
+                        <TextField
+                          variant="outlined"
+                          label="Name"
+                          fullWidth
+                          value={row.name}
+                          onChange={(e) =>
+                            handleChange(index, "name", e.target.value)
+                          }
+                        />
+                      </FormControl>
+                    </TableCell>
                     <TableCell>
                       <Button
+                        fullWidth
                         variant="contained"
-                        color="primary"
-                        startIcon={<FaDownload style={{margin: "0 !important"}}/>}
-                        onClick={() => handleDownload(enc)}
-                        sx={{
-                          fontWeight: "light",
-                        }}
+                        sx={{ backgroundColor: "primary" }}
+                        component="label"
                       >
-                        Download
+                        Choose File
+                        <input
+                          type="file"
+                          hidden
+                          onChange={(e) => handleFileChange(index, e)}
+                        />
                       </Button>
+                      {/* {row.fileName && <Typography variant="body2" color="textSecondary">{row.fileName}</Typography>} */}
                     </TableCell>
                   </TableRow>
                 ))}
-            </TableBody>
-          </Table>
-          <TablePagination
-            rowsPerPageOptions={[5]}
-            component="div"
-            count={enclosuredatas.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={(_, newPage) => setPage(newPage)}
-          />
-        </TableContainer>
-      </Box>
-    </Modal>
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Box mt={2} display="flex" justifyContent="center" gap={2}>
+            <Button variant="contained" color="success" onClick={handleSubmit}>
+              Save
+            </Button>
+            <Button variant="outlined" onClick={handleCancel}>
+              Cancel
+            </Button>
+          </Box>
+
+          <TableContainer
+            component={Paper}
+            sx={{
+              maxHeight: 300,
+              overflow: "auto",
+              mt: 2,
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              bgcolor: "#f9f9f9",
+            }}
+          >
+            <Table>
+              <TableHead
+                sx={{
+                  position: "sticky",
+                  top: 0,
+                  bgcolor: "#207785",
+                  zIndex: 1,
+                }}
+              >
+                <TableRow>
+                  <TableCell
+                    style={{
+                      fontWeight: "bold",
+                      color: "#fff",
+                      borderRight: "1px solid #ddd",
+                    }}
+                  >
+                    Type
+                  </TableCell>
+                  <TableCell
+                    style={{
+                      fontWeight: "bold",
+                      color: "#fff",
+                      borderRight: "1px solid #ddd",
+                    }}
+                  >
+                    Name
+                  </TableCell>
+                  <TableCell
+                    style={{
+                      fontWeight: "bold",
+                      color: "#fff",
+                      borderRight: "1px solid #ddd",
+                    }}
+                  >
+                    Action
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {enclosuredatas
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((enc, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{enc.enclosuretype}</TableCell>
+                      <TableCell>{enc.enclosureName}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          startIcon={
+                            <FaDownload style={{ margin: "0 !important" }} />
+                          }
+                          onClick={() => handleDownload(enc)}
+                          sx={{
+                            fontWeight: "light",
+                          }}
+                        >
+                          Download
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+            <TablePagination
+              rowsPerPageOptions={[5]}
+              component="div"
+              count={enclosuredatas.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+            />
+          </TableContainer>
+        </Box>
+      </Modal>
+    </>
   );
 };

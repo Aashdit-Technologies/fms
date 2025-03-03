@@ -20,6 +20,7 @@ import CreateDraftModal from "./CreateDraftModal";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { HistoryModal, UploadModal } from "./Modal/AllIconModal";
 import { toast } from "react-toastify";
+import { PageLoader } from "../pageload/PageLoader";
 
 const StyledButton = styled(Button)`
   margin: 0 4px;
@@ -140,6 +141,7 @@ const Correspondence = ({
   const allDetails = fileDetails?.data || {};
   const [organizationsData, setOrganizationsData] = useState([]);
   const [editMalady, setEditMalady] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Configure letter content query
   const {
@@ -186,6 +188,7 @@ const Correspondence = ({
   }, [offices]);
 
   const fetchHistoryData = async (draftNo, token) => {
+    setLoading(true);
     const encryptedData = encryptPayload({ draftNo: draftNo });
     const response = await api.post(
       "file/file-corr-history",
@@ -196,26 +199,34 @@ const Correspondence = ({
         },
       }
     );
-    console.log("History Data:", response.data);
 
     return response.data;
   };
 
   const fetchEnclosuresData = async (corrId) => {
-    const encryptedData = encryptPayload({ corrId: corrId });
+    setLoading(true);
+    try {
+      const encryptedData = encryptPayload({ corrId: corrId });
 
-    const response = await api.post(
-      "file/get-file-correspondence-enclosures",
-      { dataObject: encryptedData },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+      const response = await api.post(
+        "file/get-file-correspondence-enclosures",
+        { dataObject: encryptedData },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching enclosures:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    console.log("Enclosures Data:", response.data);
-    return response.data;
+  const refetchGet = async () => {
+    await fetchEnclosuresData(corrId);
   };
 
   const { mutate: fetchEnclosures, isLoading: isLoadingEnclosures } =
@@ -231,15 +242,20 @@ const Correspondence = ({
     });
 
   const fetchUploadData = async () => {
-    const response = await api.get("common/enclousuretype-list", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    console.log("Upload Data:", response.data);
-    return response.data;
+    try {
+      const response = await api.get("common/enclousuretype-list", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Upload Data:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching room data:", error);
+    } finally {
+      setLoading(false);
+    }
   };
-
   const { mutate: fetchUpload, isLoading: isLoadingUpload } = useMutation({
     mutationFn: fetchUploadData,
     onSuccess: (data) => {
@@ -283,7 +299,8 @@ const Correspondence = ({
     fetchHistory(row.draftNo);
   };
   const printDraft = async (row) => {
-    if (!row || !row.corrId ) {
+    setLoading(true);
+    if (!row || !row.corrId) {
       console.error("Invalid row data for download");
       return;
     }
@@ -314,9 +331,12 @@ const Correspondence = ({
       alert(
         "An error occurred while downloading the document. Please try again."
       );
+    } finally {
+      setLoading(false);
     }
   };
   const download = async (row) => {
+    setLoading(true);
     if (!row || !row.correspondenceName || !row.correspondencePath) {
       console.error("Invalid row data for download");
       return;
@@ -357,10 +377,13 @@ const Correspondence = ({
       alert(
         "An error occurred while downloading the document. Please try again."
       );
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCreateDraft = async () => {
+    setLoading(true);
     try {
       // Ensure we have the latest data
       const [officesResponse, orgResponse] = await Promise.all([
@@ -385,19 +408,20 @@ const Correspondence = ({
     } catch (error) {
       console.error("Error preparing draft creation:", error);
       toast.error("Failed to load required data");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleEdit = async (row) => {
+    setLoading(true);
     try {
-      
       const draftResponse = await EditDraftMutation.mutateAsync({
         corrId: row.corrId,
         fileId: fileDetails.data.fileId,
         fileReceiptId: fileDetails.data.fileReceiptId,
       });
 
-      
       const [officesResponse, orgResponse] = await Promise.all([
         refetch(),
         fetchOrganizations.mutateAsync(),
@@ -412,7 +436,6 @@ const Correspondence = ({
         setOrganizationsData(orgResponse.data);
       }
 
-
       if (draftResponse.data && officesResponse.data && orgResponse?.data) {
         setModalOpen(true);
       } else {
@@ -421,52 +444,69 @@ const Correspondence = ({
     } catch (error) {
       console.error("Error preparing edit mode:", error);
       toast.error(error.message || "Failed to load draft data for editing");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCloseModal = () => {
     setModalOpen(false);
-    setEditMalady(null); 
+    setEditMalady(null);
   };
 
   const fetchOrganizations = useMutation({
     mutationFn: async () => {
-      const response = await api.get("/level/get-organizations", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.data?.data) {
-        setOrganizationsData(response.data.data);
+      setLoading(true);
+      try {
+        const response = await api.get("/level/get-organizations", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.data?.data) {
+          setOrganizationsData(response.data.data);
+        }
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching organizations", error);
+      } finally {
+        setLoading(false);
       }
-      return response.data;
     },
   });
 
   const EditDraftMutation = useMutation({
     mutationFn: async (data) => {
+      setLoading(true);
       const encryptedDataObject = encryptPayload({
         fileId: data.fileId,
         correspondenceId: data.corrId,
         fileReceiptId: data.fileReceiptId,
       });
+      try {
+        const response = await api.post(
+          "/file/edit-draft-in-file",
+          { dataObject: encryptedDataObject },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-      const response = await api.post(
-        "/file/edit-draft-in-file",
-        { dataObject: encryptedDataObject },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        if (response.data.outcome) {
+          setEditMalady(response.data.data);
+        } else {
+          throw new Error(
+            response.data.message || "Failed to fetch draft data"
+          );
         }
-      );
-
-      if (response.data.outcome) {
-        setEditMalady(response.data.data);
-      } else {
-        throw new Error(response.data.message || "Failed to fetch draft data");
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching room data:", error);
+      } finally {
+        setLoading(false);
       }
-      return response.data;
     },
     onError: (error) => {
       if (error.response?.status === 401) {
@@ -479,6 +519,7 @@ const Correspondence = ({
   });
 
   const handleEditDraft = async (data) => {
+    setLoading(true);
     try {
       await EditDraftMutation.mutateAsync(data);
       setModalOpen(true);
@@ -486,6 +527,8 @@ const Correspondence = ({
     } catch (error) {
       console.error("Error editing draft:", error);
       toast.error("Failed to edit draft. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -654,12 +697,15 @@ const Correspondence = ({
 
   return (
     <>
+      {loading && <PageLoader />}
       <TableContainer>
         <TopSection>
           <Title>Correspondence</Title>
-          <ActionButton startIcon={<FaPlus />} onClick={handleCreateDraft}>
-            Create Draft
-          </ActionButton>
+          {fileDetails && fileDetails?.data.tabPanelId === 1 && (
+            <ActionButton startIcon={<FaPlus />} onClick={handleCreateDraft}>
+              Create Draft
+            </ActionButton>
+          )}
         </TopSection>
 
         <TextField
@@ -667,7 +713,7 @@ const Correspondence = ({
           placeholder="Search Correspondence"
           value={filterText}
           onChange={(e) => setFilterText(e.target.value)}
-          style={{ margin: "12px 16px", width: "300px" }}
+          style={{ margin: "12px 16px", width: "300px", float: "right" }}
         />
 
         <DataTable
@@ -681,6 +727,7 @@ const Correspondence = ({
           striped
         />
       </TableContainer>
+      {loading && <PageLoader />}
       <UploadModal
         open={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
@@ -690,6 +737,7 @@ const Correspondence = ({
         historyData={historyData}
         uploadData={uploadData}
         corrId={selectedCorrId}
+        refetchGet={refetchGet}
       />
       <HistoryModal
         open={historyModalOpen}

@@ -5,21 +5,19 @@ import { Select, MenuItem } from "@mui/material";
 import SunEditorComponent from "./SunEditorComponent";
 import UploadDocument from "./UploadDocument";
 
-const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, refetchData }) => {
+const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, refetchData, notingNo }) => {
   const [selectedItem, setSelectedItem] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [editorContent, setEditorContent] = useState(content || '');
   const isUpdatingRef = useRef(false);
+  const options = React.useMemo(() => {
+    if (!notingNo || !notingNo.data || !Array.isArray(notingNo.data)) {
+      return [];
+    }
+    return notingNo.data.map((item, index) => `Noting No-${index + 1}`);
+  }, [notingNo]);
 
-  const options = [
-    "Noting No-1",
-    "Noting No-2",
-    "Noting No-3",
-    "Noting No-4",
-    "Noting No-5",
-  ];
 
-  // Update editor content when props change
   useEffect(() => {
     if (content !== editorContent && !isUpdatingRef.current) {
       const newContent = content || additionalDetails?.data?.note || '';
@@ -33,21 +31,53 @@ const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, re
   }, [content, additionalDetails, editorContent]);
 
   const handleSelectChange = useCallback((event) => {
+    event.stopPropagation();
+
     const value = event.target.value;
     setSelectedItem(value);
 
     if (value) {
-      const linkHTML = `<a href="https://example.com/${value.replace(" ", "-").toLowerCase()}" target="_blank">${value}</a>`;
+      const noteNumber = value.split("-")[1];
+
+      const linkHTML = `<a href="#note-${noteNumber}" class="note-link">${value}</a>`;
       const newContent = `${editorContent}<br/>${linkHTML}<br/>`;
-      console.log('Adding link to content:', newContent);
+
       isUpdatingRef.current = true;
       setEditorContent(newContent);
       onContentChange?.(newContent);
+
       setTimeout(() => {
         isUpdatingRef.current = false;
       }, 100);
     }
   }, [editorContent, onContentChange]);
+
+  
+  useEffect(() => {
+    const handleNoteClick = (event) => {
+      if (event.target.classList.contains("note-link")) {
+        event.preventDefault(); 
+
+        const href = event.target.getAttribute("href"); 
+        if (href && href.startsWith("#note-")) {
+          const noteElement = document.querySelector(href);
+          if (noteElement) {
+            noteElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }
+        }
+      }
+    };
+
+    document.addEventListener("click", handleNoteClick);
+
+    return () => {
+      document.removeEventListener("click", handleNoteClick); // ✅ Cleanup on unmount
+    };
+  }, []);
+  
 
   const handleEditorChange = useCallback((newContent) => {
     if (!isUpdatingRef.current) {
@@ -76,18 +106,19 @@ const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, re
               <div className="d-flex justify-content-between align-items-center w-100">
                 <h5>Task Action</h5>
                 <div 
-                  className="d-flex align-items-center" 
+                  className="d-flex align-items-center z-3" 
                   onMouseDown={(e) => {
-                    e.preventDefault(); // Prevent focus loss
-                    e.stopPropagation(); // Prevent accordion toggle
+                    e.preventDefault(); 
+                    e.stopPropagation(); 
                   }}
                 >
                   <Select
                     value={selectedItem}
+                    onClick={(e) => e.stopPropagation()} 
                     onChange={handleSelectChange}
                     onMouseDown={(e) => {
-                      e.preventDefault(); // Prevent focus loss
-                      e.stopPropagation(); // Prevent accordion toggle
+                      e.preventDefault(); 
+                      e.stopPropagation();  
                     }}
                     MenuProps={{
                       anchorOrigin: {
@@ -112,8 +143,8 @@ const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, re
                   <span 
                     className="toggle-icon"
                     onMouseDown={(e) => {
-                      e.preventDefault(); // Prevent focus loss
-                      e.stopPropagation(); // Prevent accordion toggle
+                      e.preventDefault(); 
+                      e.stopPropagation(); 
                     }}
                     onClick={toggleAccordion}
                   >

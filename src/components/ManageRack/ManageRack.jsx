@@ -11,9 +11,9 @@ import {
 import api from "../../Api/Api";
 import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
-import { toast } from "react-toastify"; // Import toast
-import DataTable from "react-data-table-component"; // Import DataTable
-import "react-toastify/dist/ReactToastify.css"; // Import toast styles
+import { toast } from "react-toastify";
+import DataTable from "react-data-table-component";
+import "react-toastify/dist/ReactToastify.css";
 import Accordion from "react-bootstrap/Accordion";
 import {
   TextField,
@@ -22,8 +22,6 @@ import {
   CircularProgress,
   Autocomplete,
 } from "@mui/material";
-
-// toast.configure(); // Initialize toast notifications
 
 const customStyles = {
   table: {
@@ -40,7 +38,6 @@ const customStyles = {
     style: {
       backgroundColor: "#005f73",
       color: "#ffffff",
-      // fontSize: "14px",
       fontWeight: "600",
       textTransform: "uppercase",
       letterSpacing: "0.5px",
@@ -101,7 +98,6 @@ const customStyles = {
   },
 };
 
-
 const ManageRack = () => {
   const [activeKey, setActiveKey] = useState("1");
   const [rack, setRack] = useState({ rackNumber: "", noOfCell: "", roomId: "" });
@@ -111,24 +107,12 @@ const ManageRack = () => {
   const [editingRackId, setEditingRackId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(true);
   const [isTableOpen, setIsTableOpen] = useState(true);
-  // const [rowSize, setRowSize] = useState(10);
-  // const [pageNo, setPageNo] = useState(1);
-  // const [totalRows, setTotalRows] = useState(0);
 
   const fetchRackData = async () => {
     try {
-
-      // const payload = {
-      //   pageNo: pageNo,
-      //   rowSize:rowSize,
-      // };
-
-      // Encrypt the payload
-        // const encryptedMessage = encryptPayload(payload);
       const token = useAuthStore.getState().token;
       const response = await api.get("/manage-rack", {
         headers: { Authorization: `Bearer ${token}` },
-        // params: { dataObject: encryptedMessage },
       });
       setRackData(response.data?.data?.rackList?.data || []);
       setRoomList(response.data?.data?.roomList || []);
@@ -172,10 +156,11 @@ const ManageRack = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      fetchRackData();
+      fetchRackData(); // Refresh the table data
       toast.success(editingRackId ? "Rack updated successfully!" : "Rack added successfully!");
-      setRack({ rackNumber: "", noOfCell: "", roomId: "" });
-      setEditingRackId(null);
+      setRack({ rackNumber: "", noOfCell: "", roomId: "" }); // Reset the form
+      setEditingRackId(null); // Clear editing state
+      setActiveKey("1"); // Open the table section
     } catch (error) {
       console.error("Error saving data:", error);
       toast.error("Failed to save data.");
@@ -222,7 +207,6 @@ const ManageRack = () => {
     setEditingRackId(null);
   };
 
-  // Define columns for DataTable
   const columns = [
     { name: "Sl", selector: (row, index) => index + 1, sortable: true, width: "60px" },
     { name: "Rack Number", selector: (row) => row.rackNumber, sortable: true },
@@ -237,29 +221,26 @@ const ManageRack = () => {
       name: "Actions",
       cell: (row) => (
         <div>
-      {/* Use Material UI Button for toggling status */}
-      <Button
-        variant="contained"
-        color={row.isActive ?  "error" : "success"}
-        size="small"
-        sx={{ minWidth: "auto" }}
-        onClick={() => handleStatusToggle(row)}
-        startIcon={row.isActive ? <FaLock /> : <FaLockOpen />}
-        title={row.isActive ? "In-Active" : "Active"}
-      />
-      
-      {/* Use Material UI Button for editing */}
-      <Button
-        variant="outlined"
-        color="warning"
-        size="small"
-        sx={{ minWidth: "auto" }}
-        onClick={() => handleEdit(row)}
-        startIcon={<FaEdit />}
-        className="ms-2"
-        title="Edit"
-      />
-    </div>
+          <Button
+            variant="contained"
+            color={row.isActive ? "error" : "success"}
+            size="small"
+            sx={{ minWidth: "auto" }}
+            onClick={() => handleStatusToggle(row)}
+            startIcon={row.isActive ? <FaLock /> : <FaLockOpen />}
+            title={row.isActive ? "In-Active" : "Active"}
+          />
+          <Button
+            variant="outlined"
+            color="warning"
+            size="small"
+            sx={{ minWidth: "auto" }}
+            onClick={() => handleEdit(row)}
+            startIcon={<FaEdit />}
+            className="ms-2"
+            title="Edit"
+          />
+        </div>
       ),
       ignoreRowClick: true,
     },
@@ -270,16 +251,16 @@ const ManageRack = () => {
       <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
         <Accordion.Item eventKey="0">
           <Accordion.Header onClick={() => setIsFormOpen((prev) => !prev)} className="custbg">
-          <div className="mstaccodion d-flex" style={{justifyContent:"space-between", width:"100%"}}>
-            <span className="accordion-title">
-              {editingRackId ? "Edit Rack Details" : "Add Rack Details"}
-            </span>
-            <span className="accordion-icon">{isFormOpen ? <FaPlus /> : <FaMinus /> }</span>
+            <div className="mstaccodion d-flex" style={{ justifyContent: "space-between", width: "100%" }}>
+              <span className="accordion-title">
+                {editingRackId ? "Edit Rack Details" : "Add Rack Details"}
+              </span>
+              <span className="accordion-icon">{isFormOpen ? <FaPlus /> : <FaMinus />}</span>
             </div>
           </Accordion.Header>
           <Accordion.Body>
-          <form onSubmit={handleSubmit} className="row">
-            <div className="form-group col-md-3">
+            <form onSubmit={handleSubmit} className="row">
+              <div className="form-group col-md-3">
                 <FormControl fullWidth style={{ marginTop: "17px" }}>
                   <Autocomplete
                     options={roomList}
@@ -351,23 +332,19 @@ const ManageRack = () => {
 
         <Accordion.Item eventKey="1" className="mt-3">
           <Accordion.Header onClick={() => setIsTableOpen((prev) => !prev)} className="custbg">
-          <div className="mstaccodion d-flex" style={{justifyContent:"space-between", width:"100%"}}>
-            <span className="accordion-title">View Racks</span>
-            <span className="accordion-icon">{isTableOpen ? <FaMinus /> : <FaPlus />}</span>
+            <div className="mstaccodion d-flex" style={{ justifyContent: "space-between", width: "100%" }}>
+              <span className="accordion-title">View Racks</span>
+              <span className="accordion-icon">{isTableOpen ? <FaMinus /> : <FaPlus />}</span>
             </div>
           </Accordion.Header>
           <Accordion.Body>
-            <DataTable columns={columns} data={rackData} pagination highlightOnHover customStyles={customStyles}
-            //  paginationServer
-            // //  paginationTotalRows={totalRows} // Set total rows for server-side pagination
-            //  paginationPerPage={rowSize}
-            //  paginationDefaultPage={pageNo}
-            //  onChangePage={(page) => setPageNo(page)} // Update page state
-            //  onChangeRowsPerPage={(newRowSize) => {
-            //    setRowSize(newRowSize);
-            //    setPageNo(1); // Reset to first page when changing rows per page
-            //  }} 
-             />
+            <DataTable
+              columns={columns}
+              data={rackData}
+              pagination
+              highlightOnHover
+              customStyles={customStyles}
+            />
           </Accordion.Body>
         </Accordion.Item>
       </Accordion>

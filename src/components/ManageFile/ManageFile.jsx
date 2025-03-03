@@ -8,19 +8,7 @@ import useAuthStore from "../../store/Store";
 import NewRequest from "../NewRequest/NewRequest";
 import RequestStatus from "../RequestStatus/RequestStatus";
 import { toast } from "react-toastify";
-import {
-  Autocomplete,
-  TextField,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  DialogTitle,
-} from "@mui/material";
+import { Autocomplete, TextField, Button, MenuItem } from "@mui/material";
 import {
   Accordion,
   AccordionSummary,
@@ -50,7 +38,7 @@ const ManageFile = () => {
   const [formFileName, setFormFileName] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  const [modalMessage, setModalMessage] = useState('');
+  const [modalMessage, setModalMessage] = useState("");
   // console.log("formFileName:", formFileName);
 
   const [formSubject, setFormSubject] = useState("");
@@ -65,6 +53,7 @@ const ManageFile = () => {
 
   const [roomData, setRoomData] = useState([]);
   const [rackData, setRackData] = useState([]);
+  const [shouldRefreshNewRequest, setShouldRefreshNewRequest] = useState(false);
 
   const naviget = useNavigate();
 
@@ -129,6 +118,7 @@ const ManageFile = () => {
     fetchRackData();
   }, [selectedRoom]);
 
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -137,7 +127,8 @@ const ManageFile = () => {
     // Validate form fields
     if (!selectedOffice) return toast.error("Please select an office.");
     if (!selectedDepartment) return toast.error("Please select a department.");
-    if (!selectedFileRTL) return toast.error("Please select a file related to.");
+    if (!selectedFileRTL)
+      return toast.error("Please select a file related to.");
     if (!formTitle.trim()) return toast.error("Please enter a title.");
     if (!formSubject.trim()) return toast.error("Please enter a subject.");
     if (!formFileName.trim()) return toast.error("Please enter a file name.");
@@ -161,7 +152,6 @@ const ManageFile = () => {
     };
 
     try {
-      debugger;
       const token = useAuthStore.getState().token;
       const encryptedMessage = encryptPayload(payload);
 
@@ -175,15 +165,17 @@ const ManageFile = () => {
         }
       );
 
-      if (response.data.outcome == true) {
+      if (response.data.outcome === true) {
         setModalMessage(response.data.message);
         toast.success(response.data.message);
         resetForm();
+        setShouldRefreshNewRequest(prev => !prev)
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
       console.error("Error saving data:", error);
+      toast.error("Failed to create file");
     } finally {
       setIsSubmitting(false);
     }
@@ -222,30 +214,29 @@ const ManageFile = () => {
   const handleSelectChange = (event) => {
     const selectedActivity = event.target.value;
     setSelectedActivity(selectedActivity);
-  
+
     if (!activities || activities.length === 0) {
       console.error("Activities data is still loading or empty.");
       return;
     }
-  
-    const selectedActivityObj = Array.isArray(activities) 
-  ? activities.find(
-      (activity) => activity.activityId === Number(selectedActivity)
-    )
-  : null;  // If activities is not an array, return null or handle as needed
 
-  
+    const selectedActivityObj = Array.isArray(activities)
+      ? activities.find(
+          (activity) => activity.activityId === Number(selectedActivity)
+        )
+      : null; // If activities is not an array, return null or handle as needed
+
     console.log("Selected Activity Object:", selectedActivityObj);
-  
+
     if (formTitle && formSubject && selectedActivityObj) {
       setFormFileName(
         `${formTitle}/${formSubject}/${selectedActivityObj.activityName}`
       );
     } else {
-      setFormFileName(""); 
+      setFormFileName("");
     }
   };
-  
+
   return (
     <div>
       <Box>
@@ -447,7 +438,6 @@ const ManageFile = () => {
                     id="keywordInput"
                     variant="outlined"
                     label="Keyword"
-                         
                     fullWidth
                     value={formKeyword}
                     onChange={(e) => setFormKeyword(e.target.value)}
@@ -475,25 +465,18 @@ const ManageFile = () => {
 
                 {/* Custodian */}
                 <div className="form-group col-md-3 mt-3">
-                  {/* <label htmlFor="custodianSelect">Select Custodian</label> */}
                   <Autocomplete
                     id="custodianSelect"
                     options={custodians}
-                    getOptionLabel={(option) =>
-                      `${option.employee.firstName} ${
-                        option.employee.middleName || ""
-                      } ${option.employee.lastName} (${
-                        option.office.officeName
-                      } / ${option.department.departmentName})`
-                    }
+                    getOptionLabel={(option) => option.empNameWithDesgAndDept} // Display empNameWithDesgAndDept in the options
                     value={
                       custodians.find(
-                        (c) => c.employeeDeptMapId === selectedCustodian
+                        (c) => c.empDeptRoleId === selectedCustodian
                       ) || null
                     }
                     onChange={(event, newValue) =>
                       setSelectedCustodian(
-                        newValue ? newValue.employeeDeptMapId : ""
+                        newValue ? newValue.empDeptRoleId : "" // Set empDeptRoleId as the value
                       )
                     }
                     renderInput={(params) => (
@@ -501,7 +484,8 @@ const ManageFile = () => {
                         {...params}
                         label={
                           <span>
-                            Select Custodian <span style={{ color: "red" }}>*</span>
+                            Select Custodian{" "}
+                            <span style={{ color: "red" }}>*</span>
                           </span>
                         }
                         variant="outlined"
@@ -527,11 +511,7 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label={
-                          <span>
-                            Select Room
-                          </span>
-                        }
+                        label={<span>Select Room</span>}
                         variant="outlined"
                         fullWidth
                       />
@@ -555,11 +535,7 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label={
-                          <span>
-                            Select Rack
-                          </span>
-                        }
+                        label={<span>Select Rack</span>}
                         variant="outlined"
                         fullWidth
                       />
@@ -580,11 +556,7 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label={
-                          <span>
-                            Select Cell
-                          </span>
-                        }
+                        label={<span>Select Cell</span>}
                         variant="outlined"
                         fullWidth
                       />
@@ -724,7 +696,9 @@ const ManageFile = () => {
               <div className="tab-content mt-3">
                 {activeTab === "tab1" && (
                   <div className="tab-pane fade show active">
-                    <NewRequest />
+                    <NewRequest
+                      handelRefecthNew={shouldRefreshNewRequest}
+                    />
                   </div>
                 )}
 
@@ -744,9 +718,6 @@ const ManageFile = () => {
           </AccordionDetails>
         </Accordion>
       </Box>
-
-    
-
     </div>
   );
 };

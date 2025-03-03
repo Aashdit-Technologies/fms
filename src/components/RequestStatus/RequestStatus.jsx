@@ -22,6 +22,8 @@ import {
 } from "@mui/material";
 import { encryptPayload } from "../../utils/encrypt.js";
 import dayjs from "dayjs";
+import { PageLoader } from "../pageload/PageLoader";
+import { useNavigate } from "react-router-dom";
 
 const customStyles = {
   table: {
@@ -110,6 +112,7 @@ const RequestStatus = () => {
  const [rowSize, setRowSize] = useState(10);
   const [pageNo, setPageNo] = useState(1);
 
+  const Navigate = useNavigate();
 
   useEffect(() => {
     fetchFilteredData(fromDate, toDate);
@@ -149,6 +152,7 @@ const RequestStatus = () => {
 
 
   const handleCallFor = async (fileId, fileReceiptId) => {
+    setLoading(true);
     try {
       const token = useAuthStore.getState().token;
       // const payload = encryptPayload({ fileId, fileReceiptId });
@@ -171,10 +175,13 @@ const RequestStatus = () => {
       }
     } catch (error) {
       console.error("Error in Call For request:", error);
+    }finally{
+      setLoading(false);
     }
   };
 
   const handleReCall = async (fileId, fileReceiptId) => {
+    setLoading(true);
     try {
       const token = useAuthStore.getState().token;
       // const payload = encryptPayload({ fileId, fileReceiptId });
@@ -196,6 +203,8 @@ const RequestStatus = () => {
       }
     } catch (error) {
       console.error("Error in Call For request:", error);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -203,7 +212,14 @@ const RequestStatus = () => {
     setFileDetails(file);
     setFileDetailsModalVisible(true);
   };
+  const handleViewStatus = (file,tabPanelId) => {
+    setLoading(true);
+    console.log("Edit Clicked:view", file);
+    
+    if (!file) return;
 
+    Navigate("/main-file", { state: { file: file,tabPanelId:2 } }, { replace: true });
+  };
   const columns = [
     {
       name: "SL",
@@ -229,19 +245,19 @@ const RequestStatus = () => {
           <span className="bg-primary rounded text-white p-1">{row.priority}</span>
         </div>
       ),
-      width: "350px",
+      width: "250px",
     },
     {
       name: "File Name",
       selector: (row) => row.fileName,
       sortable: true,
-      width: "200px",
+      width: "150px",
     },
     {
       name: "From",
       selector: (row) => row.fromEmployee,
       sortable: true,
-      width: "170px",
+      width: "150px",
     },
     {
       name: "Send On",
@@ -266,7 +282,7 @@ const RequestStatus = () => {
           {row.status}
         </span>
       ),
-      width: "120px",
+      width: "110px",
     },
     {
       name: "Action",
@@ -292,9 +308,18 @@ const RequestStatus = () => {
           >
             Recall
           </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            title="View"
+            className="ms-2"
+            onClick={() => handleViewStatus(row)}
+          >
+            View
+          </Button>
         </div>
       ),
-      width: "230px",
     },
   ];
 
@@ -302,21 +327,20 @@ const RequestStatus = () => {
   const handleFromDateChange = (newValue) => {
     setFromDate(newValue);
     if (toDate && newValue && dayjs(newValue).isAfter(dayjs(toDate))) {
-      setToDate(null); // Reset toDate if it's before fromDate
+      setToDate(null); 
       setError("To Date cannot be before From Date");
     } else {
-      setError(""); // Clear error
+      setError("");
     }
   };
 
   const handleToDateChange = (newValue) => {
-    debugger
     if (fromDate && newValue && dayjs(newValue).isBefore(dayjs(fromDate))) {
-      alert("To Date cannot be before From Date");
+      toast.error("To Date cannot be before From Date");
       setToDate(null);
     } else {
       setToDate(newValue);
-      setError(""); // Clear error when valid
+      setError(""); 
     }
   };
 
@@ -355,7 +379,7 @@ const RequestStatus = () => {
         </div>
       </div>
     </LocalizationProvider>
-
+      {loading && <PageLoader />}
       <DataTable
         columns={columns}
         data={rqstStsData}

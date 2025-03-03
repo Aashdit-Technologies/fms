@@ -3,6 +3,9 @@ import { Accordion, Overlay } from "react-bootstrap";
 import { FaPlus, FaMinus } from "react-icons/fa";
 import "./FileDetails.css";
 import { Modal, Box, Typography, Button, Grid } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { IoMdArrowBack } from "react-icons/io";
+import { toast } from "react-toastify";
 
 const DetailItem = ({ label, value }) => (
   <Box sx={{ mb: 1.5, borderBottom: "1px solid #ccc", pb: 1 }}>
@@ -19,9 +22,14 @@ const FileDetails = ({ fileDetails }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const allDetails = fileDetails?.data || {};
+  const navigate = useNavigate();
 
   const handleShowDetails = () => {
     setIsModalOpen(true);
+  };
+  const handleCancel = () => {
+    navigate("/file");
+    // toast.warning("Task cancelled!");
   };
 
   return (
@@ -35,7 +43,15 @@ const FileDetails = ({ fileDetails }) => {
             >
               <div className="d-flex align-items-center w-100 justify-content-between">
                 <h5 className="mb-0">File Details</h5>
-                <span className="toggle-icon me-2">
+                <span className="toggle-icon me-2 d-flex gap-5 align-items-center">
+                <Button
+                    variant="contained"
+                    color="warning"
+                    startIcon={<IoMdArrowBack />}
+                    onClick={handleCancel}
+                  >
+                    Back
+                  </Button>
                   {isOpen ? <FaMinus /> : <FaPlus />}
                 </span>
               </div>

@@ -20,7 +20,8 @@ import {
   TableHead,
 } from "@mui/material";
 import { encryptPayload } from "../../utils/encrypt.js";
-
+import { FaEye } from "react-icons/fa6";
+import { PageLoader } from "../pageload/PageLoader.jsx";
 
 const customStyles = {
   table: {
@@ -98,35 +99,35 @@ const customStyles = {
   },
 };
 
-
 const CompleteList = () => {
   const [completeListData, setCompleteListData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-   const [fileDetails, setFileDetails] = useState(null);
+  const [fileDetails, setFileDetails] = useState(null);
   const [fileDetailsModalVisible, setFileDetailsModalVisible] = useState(false);
 
   const [rowSize, setRowSize] = useState(10);
   const [pageNo, setPageNo] = useState(1);
+  
 
   const Navigate = useNavigate();
   useEffect(() => {
     fetchData();
   }, [pageNo, rowSize]);
-
+  const navigate = useNavigate();
 
   const handleFileDetailsClick = (file) => {
     setFileDetails(file);
     setFileDetailsModalVisible(true);
   };
 
-
   const fetchFileDetails = async (file) => {
+    setLoading(true);
     if (!file) return;
     const token = sessionStorage.getItem("token");
     try {
       setLoading(true);
-      
+
       const payload1 = encryptPayload({
         tabPanelId: 1,
         fileId: file.fileId,
@@ -137,7 +138,7 @@ const CompleteList = () => {
         fileId: file.fileId,
         lastFileSentDate: "",
       });
-  
+
       const [response1, response2, response3, response4] = await Promise.all([
         api.post(
           "/file/basic-details",
@@ -160,21 +161,20 @@ const CompleteList = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         ),
       ]);
-  
+
       const fileData = {
         fileDetails: response1.data,
         additionalDetails: response2.data,
         correspondence: response3.data,
         noteSheets: response4.data,
       };
-  
+
       setFileDetails(fileData.fileDetails);
-  
+
       Navigate("/main-file", {
         state: fileData,
         replace: true,
       });
-  
     } catch (error) {
       console.error("Error fetching file details:", error);
     } finally {
@@ -185,9 +185,8 @@ const CompleteList = () => {
     fetchFileDetails(file);
   };
 
-
   const handleVolumeFile = async (fileDetails) => {
-    debugger;
+    setLoading(true);
     const payload = { fileId: fileDetails.fileId };
 
     try {
@@ -208,13 +207,15 @@ const CompleteList = () => {
       } else {
         toast.error(response?.data?.message || "An error occurred");
       }
-      
     } catch (error) {
       console.error("Error fetching:", error);
+    }finally{
+      setLoading(false);
     }
   };
 
   const handlePartFile = async (fileDetails) => {
+    setLoading(true);
     const payload = { fileReceiptId: fileDetails.fileReceiptId };
 
     try {
@@ -235,34 +236,65 @@ const CompleteList = () => {
       } else {
         toast.error(response?.data?.message || "An error occurred");
       }
-      
     } catch (error) {
       console.error("Error fetching:", error);
+    }finally{
+      setLoading(false);
     }
   };
 
   const fetchData = async () => {
     setLoading(true);
     try {
+      const payload = {
+        pageNo: pageNo,
+        rowSize: rowSize,
+      };
 
-            const payload = {
-              pageNo: pageNo,
-              rowSize:rowSize,
-            };
-      
-            const encryptedMessage = encryptPayload(payload);
+      const encryptedMessage = encryptPayload(payload);
       const token = useAuthStore.getState().token;
 
       const response = await api.get("/file/complete-list", {
         headers: { Authorization: `Bearer ${token}` },
         params: { dataObject: encryptedMessage },
       });
-     
 
       setCompleteListData(response.data.data || []);
     } catch (error) {
       console.error("Error fetching complete list data:", error);
     } finally {
+      setLoading(false);
+    }
+  };
+  const handleReopenFile = async (row) => {
+    setLoading(true);
+    try {
+      const token = useAuthStore.getState().token;
+      const payload = {
+        fileId: row.fileId,
+        fileReceiptId: row.fileReceiptId
+      };
+  
+      const encryptedMessage = encryptPayload(payload);
+  
+      const response = await api.post(
+        "/file/reopen-file",
+        { dataObject: encryptedMessage },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+  
+      if (response?.data?.outcome === true) {
+        toast.success(response.data.message || "File reopened successfully");
+
+      } else {
+        toast.error(response?.data?.message || "Failed to reopen file");
+      }
+    } catch (error) {
+      console.error("Error reopening file:", error);
+      toast.error(error.message || "An error occurred while reopening the file");
+    }finally{
       setLoading(false);
     }
   };
@@ -272,16 +304,26 @@ const CompleteList = () => {
       name: "SL",
       selector: (row, index) => index + 1,
       sortable: true,
+       width: '70px'
     },
     {
       name: "File Number",
       selector: (row) => row.fileNo, // This correctly selects fileNo
       cell: (row) => (
-        <div style={{ display: "flex", flexDirection:"column", alignItems: "start", gap: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "start",
+            gap: "8px",
+          }}
+        >
           <a href="#" onClick={() => handleFileDetailsClick(row)}>
             {row.fileNo}
           </a>
-          <span className="bg-primary rounded text-white p-1">{row.priority}</span>
+          <span className="bg-primary rounded text-white p-1">
+            {row.priority}
+          </span>
         </div>
       ),
       sortable: true,
@@ -305,49 +347,69 @@ const CompleteList = () => {
       name: "Status",
       selector: (row) => row.status,
       sortable: true,
+      width: '120px'
     },
     {
       name: "Action",
+      style: { justifyContent: "center", gap: "8px" },
       cell: (row) => (
         <>
           <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      title="Edit"
-                      className="ms-2"
-                      startIcon={<FaEdit />}
-                      onClick={() => handleEditClick(row)}
-                    ></Button>
+            variant="contained"
+            color="primary"
+            title="Edit"
+            style={{ minWidth: "0" }}
+            onClick={() => handleEditClick(row)}
+          >
+            <FaEdit  />
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => handleReopenFile(row)}
+            title="View"
+            style={{ minWidth: "0" }}
+          >
+            <FaEye />
+          </Button>
           {/* <Button variant="contained" color="error" size="small">
             Delete
           </Button> */}
         </>
       ),
+      
     },
   ];
+  // const handleEditClick = (file) => {
+  //   setLoading(true);
+  //   console.log("Edit Clicked:edit", file);
+    
 
+  //   if (!file) return;
+
+  //   Navigate("/main-file", { state: { file: file,tabPanelId:1 } }, { replace: true });
+  // };
   return (
     <div>
+      {loading && <PageLoader/>}
       <DataTable
         columns={columns}
         data={completeListData}
-        progressPending={loading}
+        progressComponent={<PageLoader />}
         pagination
         highlightOnHover
-        paginationServer 
-        customStyles={customStyles}  
-        paginationPerPage={rowSize} 
+        paginationServer
+        customStyles={customStyles}
+        paginationPerPage={rowSize}
         paginationDefaultPage={pageNo}
         onChangePage={(page) => setPageNo(page)}
         onChangeRowsPerPage={(newRowSize) => {
           setRowSize(newRowSize);
-          setPageNo(1);  
+          setPageNo(1);
         }}
       />
 
-
-{/* {fileDetailsModalVisible && fileDetails && (
+      {/* {fileDetailsModalVisible && fileDetails && (
         <div
           className="modal d-block"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
@@ -438,49 +500,69 @@ const CompleteList = () => {
         </div>
       )} */}
 
-<Modal open={fileDetailsModalVisible} onClose={() => setFileDetailsModalVisible(false)}>
-      <Dialog open={fileDetailsModalVisible} onClose={() => setFileDetailsModalVisible(false)} maxWidth="md" fullWidth>
-        <DialogTitle>File Details</DialogTitle>
-        <DialogContent>
-          {fileDetails && (
-            <Table>
-              <TableBody>
-                {Object.entries({
-                  "File No": fileDetails.fileNo,
-                  "File Name": fileDetails.fileName,
-                  "From Employee": fileDetails.fromEmployee,
-                  "Sent On": fileDetails.sentOn,
-                  Status: fileDetails.status,
-                  Priority: fileDetails.priority,
-                  "File Module": fileDetails.fileType,
-                  Room: fileDetails.roomNumber,
-                  Rack: fileDetails.rackNumber,
-                  Cell: fileDetails.cellNumber,
-                }).map(([key, value]) => (
-                  <TableRow key={key}>
-                    <TableCell component="th" scope="row">
-                      {key}
-                    </TableCell>
-                    <TableCell>{value}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" color="success" onClick={() => handleVolumeFile(fileDetails)}>
-            Create New Volume
-          </Button>
-          <Button variant="contained" color="success" onClick={() => handlePartFile(fileDetails)}>
-            Create Part File
-          </Button>
-          <Button variant="contained" color="secondary" onClick={() => setFileDetailsModalVisible(false)}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Modal>
+      <Modal
+        open={fileDetailsModalVisible}
+        onClose={() => setFileDetailsModalVisible(false)}
+      >
+        <Dialog
+          open={fileDetailsModalVisible}
+          onClose={() => setFileDetailsModalVisible(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>File Details</DialogTitle>
+          <DialogContent>
+            {fileDetails && (
+              <Table>
+                <TableBody>
+                  {Object.entries({
+                    "File No": fileDetails.fileNo,
+                    "File Name": fileDetails.fileName,
+                    "From Employee": fileDetails.fromEmployee,
+                    "Sent On": fileDetails.sentOn,
+                    Status: fileDetails.status,
+                    Priority: fileDetails.priority,
+                    "File Module": fileDetails.fileType,
+                    Room: fileDetails.roomNumber,
+                    Rack: fileDetails.rackNumber,
+                    Cell: fileDetails.cellNumber,
+                  }).map(([key, value]) => (
+                    <TableRow key={key}>
+                      <TableCell component="th" scope="row">
+                        {key}
+                      </TableCell>
+                      <TableCell>{value}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant="contained"
+              color="success"
+              onClick={() => handleVolumeFile(fileDetails)}
+            >
+              Create New Volume
+            </Button>
+            <Button
+              variant="contained"
+              color="success"
+              onClick={() => handlePartFile(fileDetails)}
+            >
+              Create Part File
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => setFileDetailsModalVisible(false)}
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Modal>
     </div>
   );
 };
