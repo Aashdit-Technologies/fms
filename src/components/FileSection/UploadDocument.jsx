@@ -815,12 +815,13 @@ const UploadDocument = ({
 
                 <Grid container spacing={2} sx={{ mt: 4 }}>
                   <Grid item xs={6}>
-                    <FormControl fullWidth sx={{ height: "40px" }}>
+                    <FormControl fullWidth >
                       <InputLabel>File Priority</InputLabel>
                       <Select
                         value={filePriority}
                         onChange={(e) => setFilePriority(e.target.value)}
                         label="File Priority"
+                        size="small"
                       >
                         <MenuItem value="Normal">Normal</MenuItem>
                         <MenuItem value="Urgent">Urgent</MenuItem>

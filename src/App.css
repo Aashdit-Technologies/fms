@@ -19,12 +19,18 @@ textarea,
 .MuiInputBase-input {
   text-transform: inherit !important;
 }
-
+button#panel1a-header{
+  padding: 24px;
+  height: 0px;
+}
 .no-capitalize {
   text-transform: none !important;
 }
 .css-1dune0f-MuiInputBase-input-MuiOutlinedInput-input{
   padding: 9px 14px !important;
+}
+.css-19qnlrw-MuiFormLabel-root-MuiInputLabel-root{
+  transform: translate(14px, 8px) scale(1) !important;
 }
   /* .admin-main.collapsed {
     margin-left: 60px;

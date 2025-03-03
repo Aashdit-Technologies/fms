@@ -519,12 +519,13 @@ const ExistingFile = () => {
       ignoreRowClick: true,
       allowOverflow: true,
       button: true,
-      width: "100px",
+      width: "70px",
     },
     {
       name: "SL NO",
       selector: (row, index) => index + 1,
       sortable: true,
+      width:"80px"
     },
     {
       name: "File Number",
@@ -556,11 +557,13 @@ const ExistingFile = () => {
       name: "Send On",
       selector: (row) => row.sentOn,
       sortable: true,
+      width:"100px"
     },
     {
       name: "Status",
       selector: (row) => row.status,
       sortable: true,
+      width:"150px",
       cell: (row) => (
         <span className="bg-warning text-white rounded p-1">
           {row.status}
@@ -570,35 +573,50 @@ const ExistingFile = () => {
     },
     {
       name: "Action",
-      width:"250px",
+      width:"150px",
       cell: (row) => (
         <>
           <Button
             variant="contained"
             color="warning"
-            size="small"
             title="Send to Rack"
-            startIcon={<MdOutlineMoveDown />}
+            sx={{
+              minWidth: "auto",
+              padding: "6px 10px",
+              marginRight: "8px",
+            }}
+            size="small"
             onClick={() => handleSendToRack(row)}
-          ></Button>
+          >
+            <MdOutlineMoveDown />
+          </Button>
           <Button
             variant="contained"
             color="primary"
-            size="small"
             title="Edit"
-            className="ms-2"
-            startIcon={<FaEdit />}
+            sx={{
+              minWidth: "auto",
+              padding: "6px 10px",
+              marginRight: "8px",
+            }}
+            size="small"
             onClick={() => handleEditClick(row)}
-          ></Button>
+          >
+            <FaEdit />
+          </Button>
           <Button
             variant="contained"
             color="secondary"
+            sx={{
+              minWidth: "auto",
+              padding: "6px 10px",
+              marginRight: "8px",
+            }}
             size="small"
             title="Edit"
-            className="ms-2"
-            startIcon={<FaHistory />}
             onClick={() => handleHistoryClick(row)}
           >
+            <FaHistory />
           </Button>
         </>
       ),
@@ -617,6 +635,7 @@ const ExistingFile = () => {
           
           <Autocomplete
             id="prioritySelect"
+            size="small"
             options={["All", ...prioritylyst]}
             getOptionLabel={(option) => option}
             value={priority || null}
@@ -637,6 +656,7 @@ const ExistingFile = () => {
 
           <Autocomplete
             id="fileModuleSelect"
+            size="small"
             options={[{ moduleId: "0", moduleName: "All" }, ...fileModules]}
             getOptionLabel={(option) => option.moduleName}
             value={

@@ -264,9 +264,7 @@ export const UploadModal = ({
         );
         if (response.data.outcome === true) {
           setRows([{ type: "", name: "", file: null, fileName: "" }]);
-          if (refetchGet && typeof refetchGet === "function") {
-            refetchGet();
-          }
+          await refetchGet();
           toast.success("Upload successful!");
           return response.data;
         } else {
@@ -388,14 +386,12 @@ export const UploadModal = ({
         }
       );
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `enclosure_${enc.enclosureId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 100);
     } catch (error) {
       toast.error("Download failed. Please try again.");
       console.error("Download error:", error);
@@ -441,7 +437,7 @@ export const UploadModal = ({
           <Box display="flex" justifyContent="flex-end" gap={1} mb={2}>
             <Button
               onClick={addRow}
-              color="success"
+              color="secondary"
               variant="contained"
               startIcon={<FaPlus />}
             ></Button>
@@ -514,6 +510,7 @@ export const UploadModal = ({
                           style={{ width: "190px" }}
                           variant="outlined"
                           label="Enclosure Type"
+                          size="small"
                           value={row.type}
                           onChange={(e) =>
                             handleChange(index, "type", e.target.value)
@@ -533,6 +530,7 @@ export const UploadModal = ({
                           variant="outlined"
                           label="Name"
                           fullWidth
+                          size="small"
                           value={row.name}
                           onChange={(e) =>
                             handleChange(index, "name", e.target.value)
@@ -547,14 +545,28 @@ export const UploadModal = ({
                         sx={{ backgroundColor: "primary" }}
                         component="label"
                       >
-                        Choose File
+                        {
+                          <Typography
+                            noWrap
+                            sx={{
+                              minWidth: "150px",
+                              maxWidth: "150px",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {row.fileName ? row.fileName : "Upload File"}
+                            <span style={{ color: "red" }}>*</span>
+                          </Typography>
+                        }
                         <input
                           type="file"
                           hidden
                           onChange={(e) => handleFileChange(index, e)}
                         />
+                        
                       </Button>
-                      {/* {row.fileName && <Typography variant="body2" color="textSecondary">{row.fileName}</Typography>} */}
                     </TableCell>
                   </TableRow>
                 ))}

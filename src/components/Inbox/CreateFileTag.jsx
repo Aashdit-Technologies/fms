@@ -237,6 +237,7 @@ const ManageFile = () => {
       <div className="form-group col-md-3">
         <Autocomplete
           id="officeSelect"
+          size="small"
           options={office}
           getOptionLabel={(option) => option.officeOrgName}
           value={office.find((o) => o.officeOrgId === selectedOffice) || null}
@@ -258,6 +259,7 @@ const ManageFile = () => {
       <div className="form-group col-md-3">
         <Autocomplete
           id="departmentSelect"
+          size="small"
           options={departments}
           getOptionLabel={(option) => option.departmentName}
           value={departments.find((d) => d.departmentId === selectedDepartment) || null}
@@ -279,6 +281,7 @@ const ManageFile = () => {
       <div className="form-group col-md-3">
         <Autocomplete
           id="fileRTLSelect"
+          size="small"
           options={fileRelatedToList}
           getOptionLabel={(option) => option.fileRelatedName}
           value={fileRelatedToList.find((f) => f.fileRelatedId === selectedFileRTL) || null}
@@ -300,6 +303,7 @@ const ManageFile = () => {
       <div className="form-group col-md-3">
         <TextField
           id="titleInput"
+          size="small"
           label={
             <span>
               Title <span style={{ color: "red" }}>*</span>
@@ -315,6 +319,7 @@ const ManageFile = () => {
       <div className="form-group col-md-3 mt-3">
         <TextField
           id="subjectInput"
+          size="small"
           label={
             <span>
               Subject <span style={{ color: "red" }}>*</span>
@@ -332,6 +337,7 @@ const ManageFile = () => {
              <div className="form-group col-md-3 mt-3">
                <TextField
                             id="activitySelect"
+                            size="small"
                             select
                             label={
                               <span>
@@ -359,6 +365,7 @@ const ManageFile = () => {
              <TextField
                id="keywordInput"
                variant="outlined"
+               size="small"
                label={
                 <span>
                   Keyword <span style={{ color: "red" }}>*</span>
@@ -376,6 +383,7 @@ const ManageFile = () => {
         <TextField
           id="fileNameInput"
           variant="outlined"
+          size="small"
           label={
             <span>
               File Name <span style={{ color: "red" }}>*</span>
@@ -391,6 +399,7 @@ const ManageFile = () => {
       <div className="form-group col-md-3 mt-3">
         <Autocomplete
           id="custodianSelect"
+          size="small"
           options={custodians}
           getOptionLabel={(option) => `${option.employee.firstName} ${option.employee.middleName || ""} ${option.employee.lastName} (${option.office.officeName} / ${option.department.departmentName})`}
           value={custodians.find((c) => c.employeeDeptMapId === selectedCustodian) || null}
@@ -411,6 +420,7 @@ const ManageFile = () => {
             
             <Autocomplete
               id="roomSelect"
+              size="small"
               options={roomData}
               getOptionLabel={(option) => option.roomNumber}
               value={roomData.find((r) => r.docRoomId === selectedRoom) || null}
@@ -424,6 +434,7 @@ const ManageFile = () => {
           <div className="form-group col-md-3 mt-3">
                 <Autocomplete
                   id="rackSelect"
+                  size="small"
                   options={rackData}
                   getOptionLabel={(option) => option.rackNumber}
                   value={rackData.find((r) => r.rackId === selectedRack) || null}
@@ -438,6 +449,7 @@ const ManageFile = () => {
                
                 <Autocomplete
                   id="cellSelect"
+                  size="small"
                   options={[1, 2, 3, 4, 5]}
                   getOptionLabel={(option) => option.toString()}
                   value={selectedCell || null}
@@ -452,6 +464,7 @@ const ManageFile = () => {
       <div className="form-group col-md-3 mt-3">
         <Autocomplete
           id="fileModuleSelect"
+          size="small"
           options={fileModules}
           getOptionLabel={(option) => option.moduleName}
           value={fileModules.find((f) => f.moduleId === selectedFileModule) || null}

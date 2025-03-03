@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useCallback } from "react";
 import DataTable from "react-data-table-component";
 import { Box, Button, TextField, Tooltip, Typography } from "@mui/material";
 import {
@@ -142,6 +142,7 @@ const Correspondence = ({
   const [organizationsData, setOrganizationsData] = useState([]);
   const [editMalady, setEditMalady] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [shouldRefresh, setShouldRefresh] = useState(false);
 
   // Configure letter content query
   const {
@@ -187,21 +188,7 @@ const Correspondence = ({
     }
   }, [offices]);
 
-  const fetchHistoryData = async (draftNo, token) => {
-    setLoading(true);
-    const encryptedData = encryptPayload({ draftNo: draftNo });
-    const response = await api.post(
-      "file/file-corr-history",
-      { dataObject: encryptedData },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    return response.data;
-  };
+ 
 
   const fetchEnclosuresData = async (corrId) => {
     setLoading(true);
@@ -225,9 +212,22 @@ const Correspondence = ({
     }
   };
 
-  const refetchGet = async () => {
-    await fetchEnclosuresData(corrId);
-  };
+  const refetchGet = useCallback(async () => {
+    try {
+      setShouldRefresh(true);
+      const data = await fetchEnclosuresData(selectedCorrId);
+      setEnclosuresData(data);
+    } catch (error) {
+      console.error("Error in refetchGet:", error);
+    } finally {
+      setShouldRefresh(false);
+    }
+  }, [selectedCorrId]);
+  useEffect(() => {
+    if (shouldRefresh) {
+      fetchEnclosuresData(selectedCorrId);
+    }
+  }, [shouldRefresh, selectedCorrId]);
 
   const { mutate: fetchEnclosures, isLoading: isLoadingEnclosures } =
     useMutation({
@@ -266,16 +266,7 @@ const Correspondence = ({
     },
   });
 
-  const { mutate: fetchHistory, isLoading: isLoadingHistory } = useMutation({
-    mutationFn: fetchHistoryData,
-    onSuccess: (data) => {
-      setHistoryData(data);
-      setHistoryModalOpen(true);
-    },
-    onError: (error) => {
-      console.error("Error fetching history", error);
-    },
-  });
+
 
   const handleUploadClick = (row) => {
     setSelectedCorrId(row.corrId);
@@ -295,7 +286,46 @@ const Correspondence = ({
     });
   };
 
+  const { mutate: fetchHistory, isLoading: isLoadingHistory } = useMutation({
+    mutationFn: async (draftNo) => {
+      setLoading(true);
+      try {
+        const encryptedData = encryptPayload({ draftNo: draftNo });
+        const response = await api.post(
+          "file/file-corr-history",
+          { dataObject: encryptedData },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching history:", error);
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    onSuccess: (data) => {
+      console.log("History data received:", data); // Debug log
+      setHistoryData(data);
+      setHistoryModalOpen(true); // Open modal after data is set
+    },
+    onError: (error) => {
+      console.error("Error fetching history:", error);
+      toast.error("Failed to fetch history data");
+    }
+  });
+  
+  // Update the handleHistoryClick function
   const handleHistoryClick = (row) => {
+    console.log("History clicked for draft:", row.draftNo); // Debug log
+    if (!row.draftNo) {
+      toast.error("No draft number available");
+      return;
+    }
     fetchHistory(row.draftNo);
   };
   const printDraft = async (row) => {
@@ -730,7 +760,10 @@ const Correspondence = ({
       {loading && <PageLoader />}
       <UploadModal
         open={uploadModalOpen}
-        onClose={() => setUploadModalOpen(false)}
+        onClose={() => {
+          setUploadModalOpen(false);
+          setShouldRefresh(false);
+        }}
         enclosuresData={enclosuresData}
         isLoading={isLoadingEnclosures}
         allDetails={allDetails}
@@ -741,7 +774,10 @@ const Correspondence = ({
       />
       <HistoryModal
         open={historyModalOpen}
-        onClose={() => setHistoryModalOpen(false)}
+        onClose={() => {
+          setHistoryModalOpen(false);
+          setHistoryData(null); 
+        }}
         historyData={historyData}
         isLoading={isLoadingHistory}
         correspondence={correspondence}

@@ -61,7 +61,7 @@ const LoginPage = () => {
                 <form onSubmit={handleSubmit}>
                   <div className="inputBox">
                     <TextField
-                      label="Email"
+                      label="User Id"
                       variant="outlined"
                       fullWidth
                       value={userName}

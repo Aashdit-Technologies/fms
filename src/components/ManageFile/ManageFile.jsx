@@ -281,6 +281,7 @@ const ManageFile = () => {
                   <Autocomplete
                     id="officeSelect"
                     options={office}
+                    size="small"
                     getOptionLabel={(option) => option.officeOrgName}
                     value={
                       office.find((o) => o.officeOrgId === selectedOffice) ||
@@ -311,6 +312,7 @@ const ManageFile = () => {
                   <Autocomplete
                     id="departmentSelect"
                     options={departments}
+                    size="small"
                     getOptionLabel={(option) => option.departmentName}
                     value={
                       departments.find(
@@ -343,6 +345,7 @@ const ManageFile = () => {
                   {/* <label htmlFor="fileRTLSelect">File Related To</label> */}
                   <Autocomplete
                     id="fileRTLSelect"
+                    size="small"
                     options={fileRelatedToList}
                     getOptionLabel={(option) => option.fileRelatedName}
                     value={
@@ -373,6 +376,7 @@ const ManageFile = () => {
                 <div className="form-group col-md-3">
                   <TextField
                     id="titleInput"
+                    size="small"
                     label={
                       <span>
                         Title <span style={{ color: "red" }}>*</span>
@@ -390,6 +394,7 @@ const ManageFile = () => {
                   {/* <label htmlFor="subjectInput">Subject</label> */}
                   <TextField
                     id="subjectInput"
+                    size="small"
                     label={
                       <span>
                         Subject <span style={{ color: "red" }}>*</span>
@@ -406,6 +411,7 @@ const ManageFile = () => {
                 <div className="form-group col-md-3 mt-3">
                   <TextField
                     id="activitySelect"
+                    size="small"
                     select
                     label={
                       <span>
@@ -436,6 +442,7 @@ const ManageFile = () => {
                   {/* <label htmlFor="keywordInput">Keyword</label> */}
                   <TextField
                     id="keywordInput"
+                    size="small"
                     variant="outlined"
                     label="Keyword"
                     fullWidth
@@ -451,6 +458,7 @@ const ManageFile = () => {
                   <TextField
                     id="fileNameInput"
                     variant="outlined"
+                    size="small"
                     label={
                       <span>
                         File Name <span style={{ color: "red" }}>*</span>
@@ -467,6 +475,7 @@ const ManageFile = () => {
                 <div className="form-group col-md-3 mt-3">
                   <Autocomplete
                     id="custodianSelect"
+                    size="small"
                     options={custodians}
                     getOptionLabel={(option) => option.empNameWithDesgAndDept} // Display empNameWithDesgAndDept in the options
                     value={
@@ -500,6 +509,7 @@ const ManageFile = () => {
                   {/* <label htmlFor="roomSelect">Select Room</label> */}
                   <Autocomplete
                     id="roomSelect"
+                    size="small"
                     options={roomData}
                     getOptionLabel={(option) => option.roomNumber}
                     value={
@@ -524,6 +534,7 @@ const ManageFile = () => {
                   {/* <label htmlFor="rackSelect">Select Rack</label> */}
                   <Autocomplete
                     id="rackSelect"
+                    size="small"
                     options={rackData}
                     getOptionLabel={(option) => option.rackNumber}
                     value={
@@ -547,6 +558,7 @@ const ManageFile = () => {
                   {/* <label htmlFor="cellSelect">Select Cell No</label> */}
                   <Autocomplete
                     id="cellSelect"
+                    size="small"
                     options={[1, 2, 3, 4, 5]}
                     getOptionLabel={(option) => option.toString()}
                     value={selectedCell || null}
@@ -567,6 +579,7 @@ const ManageFile = () => {
                 <div className="form-group col-md-3 mt-3">
                   <Autocomplete
                     id="fileModuleSelect"
+                    size="small"
                     options={fileModules}
                     getOptionLabel={(option) => option.moduleName}
                     value={
