@@ -15,7 +15,7 @@ import { PageLoader } from "../pageload/PageLoader";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
-
+import { toast } from "react-toastify";
 const tabComponents = [
   { key: "BASIC_DETAILS", label: "Basic Details", component: <BasicDetails /> },
   { key: "EMPLOYMENT_DETAILS", label: "Employment Details", component: <EmploymentDetails /> },
@@ -51,7 +51,7 @@ const EmployeeForm = () => {
         const token = useAuthStore.getState().token;
         const payload = {
           employeeId: employeeId,
-          tabCode: newValue, // Pass the selected tab key
+          tabCode: newValue, 
         };
   
         const response = await api.post(
@@ -90,7 +90,7 @@ const EmployeeForm = () => {
         }
       } catch (error) {
         console.error("Error fetching employee details:", error);
-        alert("Error fetching employee details");
+        toast.error("Error fetching employee details");
       }finally{
         setIsLoading(false);
       }

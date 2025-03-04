@@ -18,6 +18,8 @@ import useAuthStore from "../../store/Store";
 import { PageLoader } from "../pageload/PageLoader";
 import { encryptPayload } from "../../utils/encrypt";
 import {toast } from "react-toastify";
+
+
 const fetchDropdownData = async () => {
   const endpoints = [
     "common/organization-list",
@@ -29,12 +31,23 @@ const fetchDropdownData = async () => {
     "common/get-office-list"
   ];
 
-  const requests = endpoints.map((endpoint) => api.get(endpoint));
-  const responses = await Promise.all(requests);
-  return responses.map((res) => res.data.data);
+  const requests = endpoints.map(endpoint => api.get(endpoint)
+    .then(res => ({ success: true, data: res.data.data }))
+    .catch(error => {
+      console.error(`Error fetching ${endpoint}:`, error);
+      return { success: false, data: null }; // Handle failure
+    })
+  );
+
+  const responses = await Promise.allSettled(requests);
+
+  // Extract only successful responses
+  return responses.map((res, index) => 
+    res.status === "fulfilled" && res.value.success ? res.value.data : []
+  );
 };
 
-const EmploymentDetails = () => {
+const EmploymentDetails = ({  handleTabChange }) => {
   
   const { activeTab, updateFormData, setActiveTab ,formData,setEmployeeCode} = useFormStore();
   const [isLoading, setIsLoading] = useState(false);
@@ -102,9 +115,16 @@ const EmploymentDetails = () => {
 
  
 
+
   const handleBack = () => {
-    updateFormData("employmentDetails", rows);
-    setActiveTab('BASIC_DETAILS');
+    console.log("handleBack clicked");
+
+    if (typeof handleTabChange !== "function") {
+      console.error("handleTabChange is not a function! Received:", handleTabChange);
+      return;
+    }
+
+    handleTabChange(null, "BASIC_DETAILS"); 
   };
 
  
@@ -163,7 +183,7 @@ const EmploymentDetails = () => {
         toast.error(response.data?.message || "Failed to save employment details.");
       }
     } catch (error) {
-      console.error("Error saving employment details:", error);
+     
       toast.error("An error occurred while saving. Please try again.");
     }finally{
       setIsLoading(false)
@@ -294,20 +314,22 @@ const EmploymentDetails = () => {
             </Grid>
 
             <Grid item xs={3} sx={{mb:3}}>
-              <TextField
-                select
-                fullWidth
-                label="Office"
-                value={row.office}
-                InputProps={{ sx: { height: '50px' } }}
-                onChange={(e) => handleChange(index, "office", e.target.value)}
-              >
-                { offices.map((ofc) => (
-                  <MenuItem key={ofc.officeId} value={ofc.officeId}>
-                    {ofc.officeName}
-                  </MenuItem>
-                ))}
-              </TextField>
+            <TextField
+              select
+              fullWidth
+              label="Office"
+              value={row.office || ""}
+              InputProps={{ sx: { height: '50px' } }}
+              onChange={(e) => handleChange(index, "office", e.target.value)}
+            >
+              {/* Ensure `offices` is always an array before mapping */}
+              {(offices ?? []).map((ofc) => (
+                <MenuItem key={ofc.officeId} value={ofc.officeId}>
+                  {ofc.officeName}
+                </MenuItem>
+              ))}
+            </TextField>
+
             </Grid>
 
             <Grid item xs={3} sx={{mb:3}}>

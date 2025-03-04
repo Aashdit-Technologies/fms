@@ -72,7 +72,7 @@ const PreviousEmployment = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ p: 3 }}>
+      <Box>
         {experienceFields.map((field, index) => (
           <Grid container spacing={3} alignItems="center" key={index} sx={{ mb: 3 }}>
             {/* Organisation */}
@@ -83,6 +83,7 @@ const PreviousEmployment = () => {
                 value={field.organisation}
                 onChange={(e) => handleChange(index, "organisation", e.target.value)}
                 fullWidth
+                InputProps={{ sx: { height: '50px' }}}
               >
                 {organisations.map((org) => (
                   <MenuItem key={org} value={org}>
@@ -100,6 +101,7 @@ const PreviousEmployment = () => {
                 value={field.country}
                 onChange={(e) => handleChange(index, "country", e.target.value)}
                 fullWidth
+                InputProps={{ sx: { height: '50px' }}}
               >
                 {countries.map((country) => (
                   <MenuItem key={country} value={country}>
@@ -117,6 +119,7 @@ const PreviousEmployment = () => {
                 value={field.state}
                 onChange={(e) => handleChange(index, "state", e.target.value)}
                 fullWidth
+                InputProps={{ sx: { height: '50px' }}}
               >
                 {states.map((state) => (
                   <MenuItem key={state} value={state}>
@@ -134,6 +137,7 @@ const PreviousEmployment = () => {
                 value={field.city}
                 onChange={(e) => handleChange(index, "city", e.target.value)}
                 fullWidth
+                InputProps={{ sx: { height: '50px' }}}
               >
                 {cities.map((city) => (
                   <MenuItem key={city} value={city}>
@@ -151,6 +155,7 @@ const PreviousEmployment = () => {
                 value={field.designation}
                 onChange={(e) => handleChange(index, "designation", e.target.value)}
                 fullWidth
+                InputProps={{ sx: { height: '50px' }}}
               >
                 {designations.map((designation) => (
                   <MenuItem key={designation} value={designation}>
@@ -171,6 +176,11 @@ const PreviousEmployment = () => {
         textField: {
           fullWidth: true,
           sx: { width: "100%" },
+          sx: {
+            '& .MuiInputBase-root': {
+              height: '50px', 
+            },
+          },
         },
       }}
     />
@@ -187,6 +197,11 @@ const PreviousEmployment = () => {
         textField: {
           fullWidth: true,
           sx: { width: "100%" },
+          sx: {
+            '& .MuiInputBase-root': {
+              height: '50px', 
+            },
+          },
         },
       }}
     />
@@ -201,6 +216,7 @@ const PreviousEmployment = () => {
                 fullWidth
                 multiline
                 rows={1}
+                InputProps={{ sx: { height: '50px' }}}
               />
             </Grid>
 

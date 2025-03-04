@@ -1,8 +1,5 @@
-
-
-
 import React, { useState, useEffect } from 'react';
-import { Box, TextField, Button, Grid, InputAdornment, Typography, InputLabel, Select, MenuItem } from '@mui/material';
+import { Box, TextField, Button, Grid, InputAdornment, Typography} from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider, MobileDatePicker } from '@mui/x-date-pickers';
 import { CalendarToday } from '@mui/icons-material';
@@ -11,9 +8,10 @@ import useFormStore from '../EmployeeMaster/store';
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { PageLoader } from "../pageload/PageLoader";
+
 const BasicDetails = () => {
   const { updateFormData, setActiveTab, formData, activeTab } = useFormStore();
   const storedData = formData?.basicDetails || {};
@@ -41,7 +39,7 @@ const BasicDetails = () => {
     serviceStatus: storedData?.serviceStatus || null,
     staffCode: storedData?.staffCode || null,
   });
-console.log("data response ",data)
+
   const [errors, setErrors] = useState({});
 
   const token = useAuthStore.getState().token;
@@ -60,31 +58,52 @@ console.log("data response ",data)
     }
   }, [activeTab]);
 
+
+
   const handleChange = (e) => {
-    setData({ ...data, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setData({ ...data, [name]: value });
+   
+    setErrors((prevErrors) => ({ ...prevErrors, [name]: "" }));
   };
 
   const handleDateChange = (field, newValue) => {
+    
     if (newValue && dayjs(newValue, "DD-MM-YYYY").isValid()) {
       setData((prevData) => ({
         ...prevData,
-        [field]: newValue, 
+        [field]: newValue,
       }));
+  
+      setErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
     }
   };
 
+
+
   const validateForm = () => {
+    
     const newErrors = {};
     let isValid = true;
+    const requiredFields = [
+      "firstName",
+      "lastName",
+      "dateBirth",
+      "officeEmail",
+      "officePhone",
+      "joiningDate",
+    ];
 
-    Object.keys(data).forEach((key) => {
-      const error = validateField(key, data[key]);
+    requiredFields.forEach((field) => {
+      const error = validateField(field, data[field]);
+     
       if (error) {
         isValid = false;
-        newErrors[key] = error;
+        newErrors[field] = error;
       }
     });
 
+    
     setErrors(newErrors);
     return isValid;
   };
@@ -117,9 +136,11 @@ console.log("data response ",data)
         return "";
     }
   };
+
   const handleSaveAndNext = async () => {
-    
+ 
     if (!validateForm()) {
+      
       toast.error("Please fill all the required fields.");
       return;
     }
@@ -134,8 +155,7 @@ console.log("data response ",data)
       };
   
       const payload = { ...formattedData };
-      console.log("Payload being sent:", payload); 
-  
+    
       const response = await api.post(
         "governance/save-or-update-employee",
         { dataObject: encryptPayload(payload) },
@@ -153,14 +173,7 @@ console.log("data response ",data)
         useFormStore.getState().setEmployeeId(EmployeeId);
         updateFormData("basicDetails", { ...data, employeeId: EmployeeId });
   
-        toast.success("Data saved successfully!", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
+        toast.success("Data saved successfully!");
   
         setActiveTab('EMPLOYMENT_DETAILS');
       }
@@ -170,14 +183,7 @@ console.log("data response ",data)
       if (error.response && error.response.data && error.response.data.error_msg) {
         errorMessage = error.response.data.error_msg; 
       }
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      toast.error(errorMessage);
     }
     finally{
       setIsLoading(false)
@@ -189,7 +195,6 @@ console.log("data response ",data)
     {isLoading && <PageLoader />}
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box >
-        <ToastContainer /> 
         <Grid container spacing={2} sx={{mt:5}}>
           <Grid item xs={3} sx={{mb:2}}>
             <TextField
@@ -231,8 +236,8 @@ console.log("data response ",data)
               onChange={handleChange}
               InputProps={{ sx: { height: '50px' } }}
               InputLabelProps={{ shrink: true }} 
-              error={!!errors.lastName} // Add error state
-              helperText={errors.lastName} // Display error message
+              error={!!errors.lastName} 
+              helperText={errors.lastName}
             />
           </Grid>
 
@@ -315,8 +320,8 @@ console.log("data response ",data)
               onChange={handleChange}
               InputProps={{ sx: { height: '50px' } }}
               InputLabelProps={{ shrink: true }} 
-              error={!!errors.officeEmail} // Add error state
-              helperText={errors.officeEmail} // Display error message
+              error={!!errors.officeEmail} 
+              helperText={errors.officeEmail} 
             />
           </Grid>
 
@@ -333,8 +338,8 @@ console.log("data response ",data)
               onChange={handleChange}
               InputProps={{ sx: { height: '50px' } }}
               InputLabelProps={{ shrink: true }} 
-              error={!!errors.officePhone} // Add error state
-              helperText={errors.officePhone} // Display error message
+              error={!!errors.officePhone} 
+              helperText={errors.officePhone} 
             />
           </Grid>
 
@@ -366,12 +371,12 @@ console.log("data response ",data)
                       height: '50px',
                     },
                   },
-                  error: !!errors.joiningDate, // Add error state
-                  helperText: errors.joiningDate, // Display error message
+                  error: !!errors.joiningDate, 
+                  helperText: errors.joiningDate, 
                 },
 
               actionBar: {
-        actions: [], // Removes both "OK" and "Clear" buttons
+        actions: [], 
       },
     }}
     closeOnSelect={true}
@@ -404,7 +409,7 @@ console.log("data response ",data)
                   },
                 },
                 actionBar: {
-                  actions: [], // Removes both "OK" and "Clear" buttons
+                  actions: [], 
                 },
               }}
               closeOnSelect={true}

@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   TextField,
@@ -7,20 +6,30 @@ import {
   Grid,
   MenuItem,
   IconButton,
+  InputAdornment,
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider, MobileDatePicker } from "@mui/x-date-pickers";
 import { CalendarToday, AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import dayjs from "dayjs";
 import useFormStore from "../EmployeeMaster/store";
+import api from "../../Api/Api";
+import useAuthStore from "../../store/Store";
+import { encryptPayload } from "../../utils/encrypt";
+import { toast } from "react-toastify";
+import { PageLoader } from "../pageload/PageLoader";
 
 const FamilyDetails = () => {
-  const { updateFormData, setActiveTab } = useFormStore();
- 
+  const { updateFormData, setActiveTab, formData, activeTab } = useFormStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const [relationship,setRelationship]=useState([]);
+
 
   const [rows, setRows] = useState([
-    { firstName: "", lastName: "", birthDate: "", relationship: "" },
+    { firstName: "", lastName: "", dateOfBirth: "", relationshipId : "", employeeId: null, },
   ]);
+
+   const token = useAuthStore.getState().token;
 
   const handleChange = (index, field, value) => {
     const updatedRows = [...rows];
@@ -29,7 +38,7 @@ const FamilyDetails = () => {
   };
 
   const addRow = () => {
-    setRows([...rows, { firstName: "", lastName: "", birthDate: "", relationship: "" }]);
+    setRows([...rows, { firstName: "", lastName: "", dateOfBirth: "", relationshipId : "" , employeeId: null,}]);
   };
 
   const removeRow = (index) => {
@@ -39,21 +48,130 @@ const FamilyDetails = () => {
     }
   };
 
-  const handleNext = () => {
-    updateFormData("employmentDetails", rows);
-    setActiveTab(3);
-  };
+  
 
   const handleBack = () => {
-    updateFormData("employmentDetails", rows);
+    updateFormData("familyDetails", rows);
     setActiveTab(1);
   };
 
-  return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ p: 3 }}>
-     
+  const fetchrelationData = async () => {
+    setIsLoading(true);
+    try {
+      const token = useAuthStore.getState().token; 
+      if (!token) {
+        console.error("Token is missing");
+        return;
+      }
 
+      const response = await api.get(
+        "governance/relationship-list",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+    setRelationship(response.data.data)
+    
+    } catch (error) {
+      console.error("Error fetching family  data:", error);
+    }
+    finally{
+      setIsLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchrelationData();
+}, []);
+
+
+
+const handleSaveAndNext = async () => {
+  const storedEmployeeId = useFormStore.getState().employeeId;
+
+  if (!rows || rows.length === 0) {
+    toast.error("No family details provided.");
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const payload = {
+      employeeId: storedEmployeeId ?? null,
+      familyDetails: rows.map((row) => ({
+        familyId :row?.familyId ?? null,
+        firstName: row?.firstName ?? null,
+        lastName: row?.lastName ?? null,
+        dateOfBirth : row?.dateOfBirth ?? null,
+        relationshipId : row?.relationshipId ?? null,
+      })),
+    };
+
+    const encryptedPayload = encryptPayload(payload);
+
+    const response = await api.post(
+      "governance/save-or-update-employee-family-details",
+      { dataObject: encryptedPayload },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (response.data?.outcome) {
+      const { employeeCode, employeeId } = response.data.data;
+
+      useFormStore.getState().setEmployeeCode(employeeCode);
+      useFormStore.getState().setEmployeeId(employeeId);
+
+      updateFormData("familyDetails", payload.familyDetails); 
+
+
+      toast.success("Family details saved successfully!", { position: "top-right", autoClose: 3000 });
+
+      setActiveTab("ADDRESS");
+    } else {
+      toast.error(response.data?.message || "Failed to save family details.");
+    }
+  } catch (error) {
+    console.error("Error saving family details:", error);
+    toast.error("An error occurred while saving. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+useEffect(() => {
+ 
+
+  if (activeTab === "FAMILY_DETAILS") {
+    const storedData = formData?.familyDetails?.familyDetails || [];
+
+  
+
+    if (storedData.length > 0) {
+      const formattedRows = storedData.map((row) => ({
+        familyId: row?.familyId ?? null,
+        firstName: row?.firstName ?? "",
+        lastName: row?.lastName ?? "",
+        dateOfBirth: row?.dateOfBirth ? dayjs(row.dateOfBirth).format("YYYY-MM-DD") : "",
+        relationshipId: row?.relationsipId ?? "",
+        employeeId: row?.employeeId ?? null,
+      }));
+
+     
+      setRows(formattedRows);
+    } else {
+      
+      setRows([{ firstName: "", lastName: "", dateOfBirth: "", relationshipId: "", employeeId: null }]);
+    }
+  }
+}, [activeTab, formData]);
+
+
+  return (
+    <>
+     {isLoading && <PageLoader/>}
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box sx={{ mt:5 }}>
         {rows.map((row, index) => (
           <Grid
             container
@@ -69,6 +187,7 @@ const FamilyDetails = () => {
                 label="First Name"
                 value={row.firstName}
                 onChange={(e) => handleChange(index, "firstName", e.target.value)}
+                InputProps={{ sx: { height: '50px' } }}
               />
             </Grid>
 
@@ -79,26 +198,41 @@ const FamilyDetails = () => {
                 label="Last Name"
                 value={row.lastName}
                 onChange={(e) => handleChange(index, "lastName", e.target.value)}
+                InputProps={{ sx: { height: '50px' } }}
               />
             </Grid>
 
             {/* Birth Date */}
             <Grid item xs={3}>
               <MobileDatePicker
-                label="Birth Date"
-                value={row.birthDate ? dayjs(row.birthDate) : null}
+                label="Date Of Birth"
+                value={row.dateOfBirth ? dayjs(row.dateOfBirth) : null}
                 onChange={(newValue) =>
-                  handleChange(index, "birthDate", newValue ? newValue.format("YYYY-MM-DD") : "")
+                  handleChange(index, "dateOfBirth", newValue ? newValue.format("YYYY-MM-DD") : "")
                 }
                 format="YYYY-MM-DD"
                 slotProps={{
                   textField: {
                     fullWidth: true,
                     InputProps: {
-                      endAdornment: <CalendarToday color="action" />,
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <CalendarToday />
+                        </InputAdornment>
+                      ),
                     },
+                    sx: {
+                      '& .MuiInputBase-root': {
+                        height: '50px', 
+                      },
+                    },
+                    
+                  },
+                  actionBar: {
+                    actions: [], 
                   },
                 }}
+                closeOnSelect={true}
               />
             </Grid>
 
@@ -108,12 +242,13 @@ const FamilyDetails = () => {
                 select
                 fullWidth
                 label="Relationship"
-                value={row.relationship}
-                onChange={(e) => handleChange(index, "relationship", e.target.value)}
+                value={row.relationshipId}
+                onChange={(e) => handleChange(index, "relationshipId", e.target.value)}
+                InputProps={{ sx: { height: '50px' } }}
               >
-                {["Father", "Mother", "Spouse", "Sibling", "Child"].map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
+                {relationship.map((option) => (
+                  <MenuItem key={option.relationshipId} value={option.relationshipId}>
+                    {option.relationshipName}
                   </MenuItem>
                 ))}
               </TextField>
@@ -140,12 +275,13 @@ const FamilyDetails = () => {
           <Button variant="contained" color="secondary" onClick={handleBack}>
             Back
           </Button>
-          <Button variant="contained" color="primary" onClick={handleNext}>
+          <Button variant="contained" color="primary" onClick={handleSaveAndNext}>
             Save & Next
           </Button>
         </Box>
       </Box>
     </LocalizationProvider>
+    </>
   );
 };
 
