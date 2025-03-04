@@ -312,7 +312,8 @@ export const UploadModal = ({
 
   const handleCancel = () => {
     setRows([{ type: "", name: "", file: null, fileName: "" }]);
-    toast.info("Form reset");
+    // toast.info("Form reset");
+    onClose();
   };
 
   const addRow = () => {

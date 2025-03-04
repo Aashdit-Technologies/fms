@@ -23,8 +23,8 @@ import LogViewer from "../LogViewer/LogViewer";
 import NoteSheetPreview from "../FileSection/notesheetpreview/NoteSheetPreview";
 
 const Admin = () => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [menuItems, setMenuItems] = useState([]); // Store API menu items
+  const [collapsed, setCollapsed] = useState(true);
+  const [menuItems, setMenuItems] = useState([]); 
 
   const handleMenuData = (data) => {
     setMenuItems(data);

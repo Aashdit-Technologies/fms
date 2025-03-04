@@ -397,24 +397,36 @@ const ManageFile = () => {
 
      
       <div className="form-group col-md-3 mt-3">
-        <Autocomplete
-          id="custodianSelect"
-          size="small"
-          options={custodians}
-          getOptionLabel={(option) => `${option.employee.firstName} ${option.employee.middleName || ""} ${option.employee.lastName} (${option.office.officeName} / ${option.department.departmentName})`}
-          value={custodians.find((c) => c.employeeDeptMapId === selectedCustodian) || null}
-          onChange={(event, newValue) => setSelectedCustodian(newValue ? newValue.employeeDeptMapId : "")}
-          renderInput={(params) => (
-            <TextField {...params}
-            label={
-              <span>
-                Select Custodian <span style={{ color: "red" }}>*</span>
-              </span>
-            }
-             variant="outlined" fullWidth />
-          )}
-        />
-      </div>
+                  <Autocomplete
+                    id="custodianSelect"
+                    size="small"
+                    options={custodians}
+                    getOptionLabel={(option) => option.empNameWithDesgAndDept} 
+                    value={
+                      custodians.find(
+                        (c) => c.empDeptRoleId === selectedCustodian
+                      ) || null
+                    }
+                    onChange={(event, newValue) =>
+                      setSelectedCustodian(
+                        newValue ? newValue.empDeptRoleId : "" // Set empDeptRoleId as the value
+                      )
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={
+                          <span>
+                            Select Custodian{" "}
+                            <span style={{ color: "red" }}>*</span>
+                          </span>
+                        }
+                        variant="outlined"
+                        fullWidth
+                      />
+                    )}
+                  />
+                </div>
 
       <div className="form-group col-md-3 mt-3 mt-3">
             

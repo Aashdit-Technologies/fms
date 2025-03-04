@@ -36,6 +36,7 @@ import {
   Select,
   Chip,
   InputAdornment,
+  Tooltip,
  
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -1142,7 +1143,8 @@ const handleremarksChange = (e) => {
   };
 
   const handleSave = (savensendValue) => {
-    if (!formData.letterNumber || !formData.subject || !formData.senderDate) {
+  
+    if (!formData.senderAddbookIdHidden || !formData.letterNumber || !formData.subject || !formData.senderDate) {
       toast.warn("Please fill all required fields.", { autoClose: 3000 });
       return;
     }
@@ -2091,7 +2093,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `${fileName}`); 
+    link.setAttribute("download", row.fileName); 
     document.body.appendChild(link);
     link.click();
     
@@ -3067,6 +3069,8 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     helperText={errors.groupName}
                     autoComplete="off"
                     inputProps={{
+                      maxLength: 40,
+                      pattern: "^[A-Za-z][A-Za-z0-9 ]{0,39}$", 
                       autoComplete: 'off',
                       form: {
                         autoComplete: 'off',
@@ -3091,6 +3095,8 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     helperText={errors.name}
                     autoComplete="off"
                     inputProps={{
+                      maxLength: 40,
+                      pattern: "^[A-Za-z][A-Za-z0-9 ]{0,39}$", 
                       autoComplete: 'off',
                       form: {
                         autoComplete: 'off',
@@ -3115,6 +3121,8 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     helperText={errors.address}
                     autoComplete="off"
                     inputProps={{
+                      maxLength: 50,
+                      pattern: "^[A-Za-z][A-Za-z0-9 ]{0,49}$", 
                       autoComplete: 'off',
                       form: {
                         autoComplete: 'off',
@@ -3140,6 +3148,8 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     helperText={errors.mobile}
                     autoComplete="off"
                     inputProps={{
+                      maxLength: 10,
+                      pattern: "^[0-9]*$",
                       autoComplete: 'off',
                       form: {
                         autoComplete: 'off',
@@ -3165,6 +3175,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     helperText={errors.email}
                     autoComplete="off"
                     inputProps={{
+                      maxLength: 30,
                       autoComplete: 'off',
                       form: {
                         autoComplete: 'off',
@@ -3209,6 +3220,8 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     helperText={errors.district}
                     autoComplete="off"
                     inputProps={{
+                      maxLength: 20,
+                      pattern: "^[A-Za-z]{1,20}$", 
                       autoComplete: 'off',
                       form: {
                         autoComplete: 'off',
@@ -3548,14 +3561,29 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                                 </FormControl>
                               </TableCell>
                               <TableCell>
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                 
-                                value={row.enclosureName}
-                                placeholder="Enter Enclosure Name"
-                                onChange={(e) => handleTableEnclosureRowChange(index, "enclosureName", e.target.value)}
-                              />
+                              <TextField
+                                    fullWidth
+                                    size="small"
+                                    value={row.enclosureName}
+                                    placeholder="Enter Enclosure Name"
+                                    onChange={(e) => {
+                                      let newValue = e.target.value;
+
+                                      // Prevent space as the first character
+                                      if (newValue.startsWith(" ")) {
+                                        newValue = newValue.trimStart();
+                                      }
+
+                                      // Limit to 30 characters
+                                      newValue = newValue.slice(0, 30);
+
+                                      handleTableEnclosureRowChange(index, "enclosureName", newValue);
+                                    }}
+                                    inputProps={{
+                                      maxLength: 30, // Enforce length restriction at HTML level
+                                    }}
+                                  />
+
                               </TableCell>
                               <TableCell>
                             <input
@@ -3569,6 +3597,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                             
                             </TableCell>
                             <TableCell align="center">
+                            
                               <IconButton
                                 onClick={() => handleRemoveTableEnclosureRow(index)}
                                 size="small"
@@ -3582,6 +3611,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                               >
                                 <FaMinus size={12} />
                               </IconButton>
+                              
                             </TableCell>
                           </TableRow>
                         ))}
@@ -3649,6 +3679,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                               <TableCell>{row.enclosureType}</TableCell>
                               <TableCell>{row.enclosureName}</TableCell>
                               <TableCell>
+                              <Tooltip title="Download">
                                 <IconButton
                                   onClick={() => handleDownload (row)}
                                   sx={{ 
@@ -3665,6 +3696,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                                 >
                             <GetAppIcon/>
                                 </IconButton>
+                                </Tooltip>
                               </TableCell>
                             </TableRow>
                       ))
@@ -3806,7 +3838,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
 
       <Modal.Header style={{ backgroundColor: "#207785", color: "#fff" }}>
         <div className="w-100 d-flex justify-content-between align-items-center">
-          <h6 className="mb-0">Letter Detail</h6>
+          <h6 className="mb-0">Letter Details</h6>
           <div>
             <Button
               variant="link"
@@ -3904,7 +3936,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                   }}
                 >
                   <Typography variant="subtitle1" sx={{ mb: 2 }}>
-                    Note
+                    Notes
                   </Typography>
                   {Array.isArray(selectedLetterDetails?.letterNotesArrays) &&
                   selectedLetterDetails.letterNotesArrays.length > 0 ? (

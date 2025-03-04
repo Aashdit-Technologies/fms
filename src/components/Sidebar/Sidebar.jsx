@@ -18,8 +18,7 @@ import { PageLoader } from "../pageload/PageLoader";
 const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
   const [openMenus, setOpenMenus] = useState({}); 
   const location = useLocation();
-  const token =
-    useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  const token = useAuthStore((state) => state.token) || sessionStorage.getItem("token");
 
   const {
     data: apiResponse,

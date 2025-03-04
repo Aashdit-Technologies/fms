@@ -196,10 +196,10 @@ const NewRequest = ({ handelRefecthNew }) => {
 
   const conditionalRowStyles = [
     {
-      when: (row) => row.seenFile === "No", // Condition: Apply style if seenFile is "no"
+      when: (row) => row.seenFile === "No",
 
       style: {
-        backgroundColor: "#b2c0ff82", // Light red background
+        backgroundColor: "#b2c0ff82", 
 
         color: "#000000", // Black text color
       },

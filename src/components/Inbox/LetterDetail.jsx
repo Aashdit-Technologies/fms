@@ -650,13 +650,13 @@ const handleConfirmUrgent = async () => {
     }
     };
 
-    const handleDownloadenclosure = async () => {
+    const handleDownloadenclosure = async (fileName,filePath) => {
       setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
       const payload = {
-      documentName: encloserFileName,
-      documentPath: encloserFilePath,
+      documentName: fileName,
+      documentPath: filePath,
       };
       
       const encryptedPayload = encryptPayload(payload);
@@ -673,13 +673,12 @@ const handleConfirmUrgent = async () => {
       );
       
       if (response.status === 200) {
-      console.log('Full PDF Response:', response.data);
-      toast.success("PDF successfully downloaded");
+  
       // Create a download link and trigger download
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `${encloserFileName}`); 
+      link.setAttribute("download", fileName); 
       document.body.appendChild(link);
       link.click();
       
@@ -706,7 +705,7 @@ const handleConfirmUrgent = async () => {
     {isLoading && <PageLoader />}
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ m: 0, p: 2, bgcolor: '#f5f5f5' }}>
-        <Typography variant="h6"   component="span" sx={{ fontWeight: 500, color: '#666' }}>Letter Detail</Typography>
+        <Typography variant="h6"   component="span" sx={{ fontWeight: 500, color: '#666' }}>Letter Details</Typography>
         <IconButton
           aria-label="close"
           onClick={onClose}
@@ -749,9 +748,13 @@ const handleConfirmUrgent = async () => {
                   rows={3}
                   value={marginalNote}
                   onChange={(e) => setMarginalNote(e.target.value)}
+                  
                   variant="outlined"
                   size="small"
                   sx={{ mb: 3 }}
+                  inputProps={{
+                    maxLength: 250,
+                  }}
                 />
                           </>
                         )}
@@ -931,7 +934,7 @@ const handleConfirmUrgent = async () => {
           {/* Bottom Left: Note */}  
      <Box>
       <Typography variant="subtitle1" sx={{ mb: 1 }}>
-        Note
+        Notes
       </Typography>
       <Box>
         {letterDataView?.letterNotesArrays?.map((note, index) => (
@@ -1012,7 +1015,7 @@ const handleConfirmUrgent = async () => {
                                 textDecoration: "underline",
                                 cursor: "pointer",
                               }}
-                              onClick={() => handleDownloadenclosure(enclosure.enclosureName, enclosure.enclosurePath)}
+                              onClick={() => handleDownloadenclosure(enclosure.fileName, enclosure.filePath)}
                             >
                               {enclosure.enclosureName}
                             </button>
@@ -1167,7 +1170,7 @@ const handleConfirmUrgent = async () => {
               }}
             >
               <Typography variant="h6" component="h2">
-                Recipient
+                Recipients
               </Typography>
               <IconButton onClick={handleCloseModal} sx={{ color: "white" }}>
                 <CloseIcon />

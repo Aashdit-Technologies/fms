@@ -373,7 +373,19 @@ const NewLettercolumns = [
     name: 'Updated Date & Time',
     selector: row => row.updatedDateTime || 'NA',
     sortable: true,
-    // width: '170px',
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '150px'
+        }} 
+        title={row.updatedDateTime || ''}
+      >
+        {row.updatedDateTime || ''}
+      </div>
+    ),
   },
   {
     name: 'Memo No. & Date',

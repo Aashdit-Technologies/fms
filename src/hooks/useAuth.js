@@ -43,13 +43,12 @@ export const useAuth = () => {
         // toast.success(data.message || 'Login successful!');
         navigate('/');
       } else {
-        // ✅ Show a toast for failed login attempt (e.g., "Account is Locked")
+        
         toast.error(data.message || 'Login failed.');
       }
     },
   
     onError: (error) => {
-      // ✅ More reliable error handling
       toast.error(error.message || 'Login failed.');
     },
   });
