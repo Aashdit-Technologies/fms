@@ -21,6 +21,7 @@ import ManageCustodian from "../ManageCustodian/ManageCustodian";
 import EmployeeList from "../EmployeeList/EmployeeList";
 import LogViewer from "../LogViewer/LogViewer";
 import NoteSheetPreview from "../FileSection/notesheetpreview/NoteSheetPreview";
+import RoleMenu from "../RoleMenu/RoleMenu";
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(true);
@@ -191,6 +192,14 @@ const Admin = () => {
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <LogViewer/>
+                </React.Suspense>
+              }
+            />
+              <Route
+              path="role-menu"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <RoleMenu/>
                 </React.Suspense>
               }
             />
