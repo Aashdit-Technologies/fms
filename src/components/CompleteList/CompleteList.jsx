@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import { Button } from "@mui/material";
-import { FaEdit } from "react-icons/fa";
+import { FaEdit, FaHistory } from "react-icons/fa";
 import useAuthStore from "../../store/Store";
 import api from "../../Api/Api";
 import MainFile from "../FileSection/MainFile.jsx";
@@ -356,16 +356,16 @@ const CompleteList = () => {
         <>
           <Button
             variant="contained"
-            color="primary"
+            color="secondary"
             title="Edit"
             style={{ minWidth: "0" }}
-            onClick={() => handleEditClick(row)}
+            // onClick={() => handleEditClick(row)}
           >
-            <FaEdit  />
+            <FaHistory />
           </Button>
           <Button
             variant="contained"
-            color="secondary"
+            color="success"
             onClick={() => handleReopenFile(row)}
             title="View"
             style={{ minWidth: "0" }}

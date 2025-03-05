@@ -3,13 +3,12 @@ import { Card } from "react-bootstrap";
 import { Button } from "@mui/material";
 import { MdNote } from "react-icons/md";
 import SunEditorComponent from "./SunEditorComponent";
-import { add, debounce, set } from "lodash";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
 import api from "../../Api/Api";
 import { PageLoader } from "../pageload/PageLoader";
+import debounce from "lodash/debounce";
 
 const NoteSheet = ({
   noteSheets,
@@ -22,11 +21,10 @@ const NoteSheet = ({
   const [zoomIn, setZoomIn] = useState(false);
   const [writeNote, setWriteNote] = useState(false);
   const [editorContent, setEditorContent] = useState(content || "");
+  const [lastSyncedContent, setLastSyncedContent] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const token =
-    useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  const token = useAuthStore((state) => state.token) || sessionStorage.getItem("token");
 
   // Update editor content when props change
   useEffect(() => {
@@ -37,6 +35,15 @@ const NoteSheet = ({
     }
   }, [content, additionalDetails]);
 
+  // Load saved content from sessionStorage when writeNote is enabled
+  useEffect(() => {
+    const savedContent = sessionStorage.getItem("noteSheetContent");
+    if (savedContent && writeNote) {
+      setEditorContent(savedContent);
+      onContentChange?.(savedContent);
+    }
+  }, [writeNote]);
+
   // Update notes when noteSheets change
   useEffect(() => {
     if (noteSheets && Array.isArray(noteSheets.data)) {
@@ -46,24 +53,43 @@ const NoteSheet = ({
     }
   }, [noteSheets]);
 
-  // Debounce onContentChange to reduce re-renders
-  const debouncedOnContentChange = useCallback(
-    debounce((newContent) => {
-      console.log("NoteSheet content changed:", newContent);
+
+
+ const handleEditorChange = useCallback(
+    (newContent) => {
+      setEditorContent(newContent);
       onContentChange?.(newContent);
-    }, 300),
+      sessionStorage.setItem("noteSheetContent", newContent || ""); // Handle empty content
+    },
     [onContentChange]
   );
 
-  const handleEditorChange = (newContent) => {
-    setEditorContent(newContent);
-    debouncedOnContentChange(newContent);
+  const handleWriteNoteClick = () => {
+    const savedContent = sessionStorage.getItem("noteSheetContent") || content;
+    if (savedContent) {
+      setEditorContent(savedContent || "");
+      onContentChange?.(savedContent);
+      setLastSyncedContent(savedContent);
+    }
+    setWriteNote(true);
   };
 
-  const handleEditorBlur = () => {
-    console.log("Editor blurred, saving content:", editorContent);
-    onContentChange?.(editorContent);
+  const handleCloseWriteNote = () => {
+    if (editorContent) {
+      sessionStorage.setItem("noteSheetContent", editorContent);
+      setLastSyncedContent(editorContent);
+    }
+    setWriteNote(false);
   };
+
+  // Clean up sessionStorage on component unmount
+  useEffect(() => {
+    return () => {
+      if (editorContent) {
+        sessionStorage.setItem("noteSheetContent", editorContent);
+      }
+    };
+  }, [editorContent]);
 
   const togglePreview = async () => {
     setIsLoading(true);
@@ -72,21 +98,22 @@ const NoteSheet = ({
         fileId: fileDetails.data.fileId,
       });
 
-      console.log("Payload:", encryptedDload);
-
       const response = await api.post(
         "/file/notesheet-preview",
         { dataObject: encryptedDload },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data.outcome) {
-        console.log("Preview data:", response.data);
-        navigate("/note-sheet-preview", {
-          state: { previewData: response.data },
-        });
+        const previewWindow = window.open("/note-sheet-preview", "_blank");
+        if (previewWindow) {
+          sessionStorage.setItem(
+            "noteSheetPreviewData",
+            JSON.stringify(response.data)
+          );
+        } else {
+          toast.error("Popup blocked. Please allow popups for this site.");
+        }
       }
     } catch (error) {
       toast.error("Preview failed. Please try again.");
@@ -153,32 +180,31 @@ const NoteSheet = ({
             <div>
               {!showPreview && (
                 <>
-                {fileDetails && fileDetails?.data.tabPanelId === 1 && (
-                  <>
-                   {writeNote ? (
-                    <Button
-                      variant="contained"
-                      color="error"
-                      className="me-2"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => setWriteNote(false)}
-                    >
-                      Close View
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      color="success"
-                      className="me-2"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => setWriteNote(true)}
-                    >
-                      Write Note
-                    </Button>
+                  {fileDetails && fileDetails?.data.tabPanelId === 1 && (
+                    <>
+                      {writeNote ? (
+                        <Button
+                          variant="contained"
+                          color="error"
+                          className="me-2"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={handleCloseWriteNote}
+                        >
+                          Close View
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          className="me-2"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={handleWriteNoteClick}
+                        >
+                          Write Note
+                        </Button>
+                      )}
+                    </>
                   )}
-                  </>
-                )}
-                  
 
                   {!writeNote && (
                     <Button
@@ -198,7 +224,6 @@ const NoteSheet = ({
                 variant="contained"
                 color="secondary"
                 className="me-2"
-                // onMouseDown={(e) => e.preventDefault()}
                 onClick={togglePreview}
                 disabled={isLoading}
               >
@@ -218,25 +243,26 @@ const NoteSheet = ({
               {notes.length > 0 ? renderedNotes : <p>No notes available</p>}
             </div>
 
-            {(writeNote || showPreview) && (
-              <div className="editor-container half-width">
-                {showPreview ? (
-                  <div className="preview-content">
-                    <div
-                      dangerouslySetInnerHTML={{ __html: editorContent || "" }}
+            <div className="editor-container half-width">
+              {showPreview ? (
+                <div className="preview-content">
+                  <div
+                    dangerouslySetInnerHTML={{ __html: editorContent || "" }}
+                  />
+                </div>
+              ) : (
+                writeNote && (
+                  <div className="sun-editor-wrapper">
+                    <SunEditorComponent
+                      key={`note-editor-${writeNote}`}
+                      content={editorContent}
+                      onContentChange={handleEditorChange}
+                      // placeholder="Enter your note here..."
                     />
                   </div>
-                ) : (
-                  <SunEditorComponent
-                    key={writeNote ? "write-mode" : "preview-mode"}
-                    content={editorContent}
-                    placeholder="Enter your task action here..."
-                    onContentChange={handleEditorChange}
-                    onBlur={handleEditorBlur}
-                  />
-                )}
-              </div>
-            )}
+                )
+              )}
+            </div>
           </div>
         </Card>
 
@@ -279,6 +305,7 @@ const NoteSheet = ({
           overflow-y: auto;
           padding: 20px;
           overflow-x: hidden;
+          min-width:100%;
         }
         .note-sheet-container.zoom-in .notes-container {
           max-height: calc(100vh - 100px);

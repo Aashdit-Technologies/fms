@@ -368,16 +368,14 @@ export const UploadModal = ({
     }
   }, [open]);
 
-  const handleDownload = async (enc) => {
+  const handleDownload = async (enc, action = 'view') => {
     setLoading(true);
     try {
       const encryptedDload = encryptPayload({
         documentName: enc.docFilename,
         documentPath: enc.path,
       });
-
-      console.log("Payload:", encryptedDload);
-
+  
       const response = await api.post(
         "/download/download-document",
         { dataObject: encryptedDload },
@@ -386,16 +384,32 @@ export const UploadModal = ({
           responseType: "blob",
         }
       );
-
+  
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
+  
+      if (action === 'download' && (enc.enclosuretype?.toLowerCase() === "letter" || 
+          enc.enclosuretype?.toLowerCase() === "draft")) {
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = enc.docFilename || 'document.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        
+        window.open(url, '_blank');
+      }
+  
+      
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
       }, 100);
+  
     } catch (error) {
-      toast.error("Download failed. Please try again.");
-      console.error("Download error:", error);
+      toast.error("Failed to process document. Please try again.");
+      console.error("Document processing error:", error);
     } finally {
       setLoading(false);
     }
@@ -566,7 +580,6 @@ export const UploadModal = ({
                           hidden
                           onChange={(e) => handleFileChange(index, e)}
                         />
-                        
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -642,19 +655,36 @@ export const UploadModal = ({
                       <TableCell>{enc.enclosuretype}</TableCell>
                       <TableCell>{enc.enclosureName}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          startIcon={
-                            <FaDownload style={{ margin: "0 !important" }} />
-                          }
-                          onClick={() => handleDownload(enc)}
-                          sx={{
-                            fontWeight: "light",
-                          }}
-                        >
-                          Download
-                        </Button>
+                        {enc.enclosuretype?.toLowerCase() === "letter" ||
+                        enc.enclosuretype?.toLowerCase() === "draft" ? (
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={
+                              <FaDownload style={{ margin: "0 !important" }} />
+                            }
+                            onClick={() => handleDownload(enc, "download")}
+                            sx={{
+                              fontWeight: "light",
+                            }}
+                          >
+                            Download
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={
+                              <FaEye style={{ margin: "0 !important" }} />
+                            }
+                            onClick={() => handleDownload(enc, "view")}
+                            sx={{
+                              fontWeight: "light",
+                            }}
+                          >
+                            View
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -19,7 +19,10 @@ const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
   const [openMenus, setOpenMenus] = useState({}); 
   const location = useLocation();
   const token = useAuthStore((state) => state.token) || sessionStorage.getItem("token");
-
+  const handleLinkClick = () => {
+    setCollapsed(true); // Close sidebar
+    setOpenMenus({}); // Reset open menus
+  };
   const {
     data: apiResponse,
     isLoading,
@@ -96,6 +99,7 @@ const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
           <Link
             to={menu.menuURL}
             className={`menu-title ${isActiveLink(menu.menuURL) ? "active" : ""}`}
+            onClick={handleLinkClick}
           >
             <div className="menu-content">
               <i className={menu.menuIcon}></i>
@@ -138,6 +142,7 @@ const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
                     className={`submenu-item ${
                       isActiveLink(submenu.menuURL) ? "active" : ""
                     }`}
+                    onClick={handleLinkClick}
                   >
                     <i className={submenu.menuIcon}></i>
                     <span>{submenu.menuText}</span>

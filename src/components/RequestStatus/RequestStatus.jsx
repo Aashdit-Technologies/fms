@@ -151,34 +151,34 @@ const RequestStatus = () => {
   };
 
 
-  const handleCallFor = async (fileId, fileReceiptId) => {
-    setLoading(true);
-    try {
-      const token = useAuthStore.getState().token;
-      // const payload = encryptPayload({ fileId, fileReceiptId });
+  // const handleCallFor = async (fileId, fileReceiptId) => {
+  //   setLoading(true);
+  //   try {
+  //     const token = useAuthStore.getState().token;
+  //     // const payload = encryptPayload({ fileId, fileReceiptId });
 
-      const payload = { fileReceiptId: fileReceiptId, fileId: fileId, calltype:"callfor"};
-      const encryptedMessage = encryptPayload(payload);
-      const response = await api.post("file/call-for-recall",
-        { dataObject: encryptedMessage },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  //     const payload = { fileReceiptId: fileReceiptId, fileId: fileId, calltype:"callfor"};
+  //     const encryptedMessage = encryptPayload(payload);
+  //     const response = await api.post("file/call-for-recall",
+  //       { dataObject: encryptedMessage },
+  //       {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
       
-      if(response.data.outcome == true){
-        toast.success(response.data.message);
-        fetchFilteredData();
-      }
-      else{
-        toast.error(response.data.message);
-      }
-    } catch (error) {
-      console.error("Error in Call For request:", error);
-    }finally{
-      setLoading(false);
-    }
-  };
+  //     if(response.data.outcome == true){
+  //       toast.success(response.data.message);
+  //       fetchFilteredData();
+  //     }
+  //     else{
+  //       toast.error(response.data.message);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error in Call For request:", error);
+  //   }finally{
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleReCall = async (fileId, fileReceiptId) => {
     setLoading(true);
@@ -288,7 +288,7 @@ const RequestStatus = () => {
       name: "Action",
       cell: (row) => (
         <div className="d-flex">
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             size="small"
@@ -297,7 +297,7 @@ const RequestStatus = () => {
             onClick={() => handleCallFor(row.fileId, row.fileReceiptId)}
           >
             Call For
-          </Button>
+          </Button> */}
           <Button
             variant="contained"
             color="secondary"

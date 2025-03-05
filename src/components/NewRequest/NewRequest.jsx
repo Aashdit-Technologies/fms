@@ -199,7 +199,7 @@ const NewRequest = ({ handelRefecthNew }) => {
       when: (row) => row.seenFile === "No",
 
       style: {
-        backgroundColor: "#b2c0ff82", 
+        backgroundColor: "#b2c0ff82",
 
         color: "#000000", // Black text color
       },
@@ -223,7 +223,7 @@ const NewRequest = ({ handelRefecthNew }) => {
         setRoomData(response.data.data || []);
       } catch (error) {
         console.error("Error fetching room data:", error);
-      }finally {
+      } finally {
         setLoading(false);
       }
     };
@@ -262,7 +262,7 @@ const NewRequest = ({ handelRefecthNew }) => {
         console.error("Error fetching rack data:", error);
 
         setRackData([]);
-      }finally {
+      } finally {
         setLoading(false);
       }
     };
@@ -286,7 +286,6 @@ const NewRequest = ({ handelRefecthNew }) => {
         rowSize: rowSize,
       };
 
-
       const encryptedMessage = encryptPayload(payload);
 
       // Send the encrypted data as a parameter
@@ -301,7 +300,6 @@ const NewRequest = ({ handelRefecthNew }) => {
 
       setPrioritylyst(response.data.data.prioritylst || []);
 
-    
       console.log(response.data.data);
     } catch (error) {
       console.error("Error fetching filtered data:", error);
@@ -311,9 +309,9 @@ const NewRequest = ({ handelRefecthNew }) => {
   };
 
   useEffect(() => {
-      fetchFilteredData(priority, selectedFileModule);
-  }, [priority, selectedFileModule, pageNo, rowSize,]);
- 
+    fetchFilteredData(priority, selectedFileModule);
+  }, [priority, selectedFileModule, pageNo, rowSize]);
+
   useEffect(() => {
     if (handelRefecthNew) {
       fetchFilteredData(priority, selectedFileModule);
@@ -323,11 +321,14 @@ const NewRequest = ({ handelRefecthNew }) => {
   const handleEditClick = (file) => {
     setLoading(true);
     console.log("Edit Clicked:edit", file);
-    
 
     if (!file) return;
 
-    Navigate("/main-file", { state: { file: file,tabPanelId:1 } }, { replace: true });
+    Navigate(
+      "/main-file",
+      { state: { file: file, tabPanelId: 1 } },
+      { replace: true }
+    );
   };
 
   const handleSelectChange = (setter, event) => {
@@ -424,10 +425,12 @@ const NewRequest = ({ handelRefecthNew }) => {
     }
   };
 
-  const handleFileDetailsClick = (file) => {
+  const handleFileDetailsClick = (file, e) => {
+    e.preventDefault();
     setFileDetails(file);
 
     setFileDetailsModalVisible(true);
+    toggleBodyScroll(false);
   };
 
   const handleVolumeFile = async (fileDetails) => {
@@ -510,7 +513,13 @@ const NewRequest = ({ handelRefecthNew }) => {
       setLoading(false);
     }
   };
-
+  const toggleBodyScroll = (disable) => {
+    if (disable) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+  };
   const columns = [
     {
       name: "SL",
@@ -541,10 +550,20 @@ const NewRequest = ({ handelRefecthNew }) => {
             gap: "8px",
           }}
         >
-          <a href="#" onClick={() => handleFileDetailsClick(row)}>
+          <button
+            onClick={(e) => handleFileDetailsClick(row, e)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#0066cc",
+              cursor: "pointer",
+              padding: 0,
+              textDecoration: "underline",
+              textAlign: "left",
+            }}
+          >
             {row.fileNo}
-          </a>
-
+          </button>
           <span className="bg-primary rounded text-white p-1">
             {row.priority}
           </span>
@@ -931,7 +950,10 @@ const NewRequest = ({ handelRefecthNew }) => {
       >
         <Dialog
           open={fileDetailsModalVisible}
-          onClose={() => setFileDetailsModalVisible(false)}
+          onClose={() => {
+            setFileDetailsModalVisible(false);
+            toggleBodyScroll(false); // Enable scroll when closing modal
+          }}
           maxWidth="md"
           fullWidth
         >
@@ -999,7 +1021,10 @@ const NewRequest = ({ handelRefecthNew }) => {
             <Button
               variant="contained"
               color="secondary"
-              onClick={() => setFileDetailsModalVisible(false)}
+              onClick={() => {
+                setFileDetailsModalVisible(false);
+                toggleBodyScroll(false);
+              }}
             >
               Close
             </Button>

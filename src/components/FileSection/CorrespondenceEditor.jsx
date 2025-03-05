@@ -6,45 +6,78 @@ const CorrespondenceEditor = ({ defaultText, onTextUpdate, placeholder }) => {
   const editorRef = useRef(null);
   const isUpdatingRef = useRef(false);
   const editorInstanceRef = useRef(null);
+  const cursorPositionRef = useRef(null);
 
+  // Update content when defaultText changes
   useEffect(() => {
     if (defaultText !== contents && !isUpdatingRef.current) {
       setContents(defaultText || "");
     }
   }, [defaultText]);
 
-  const handleEditorChange = useCallback((newContent) => {
-    setContents(newContent);
-    // Notify parent immediately to keep editors in sync
-    onTextUpdate?.(newContent);
-  }, [onTextUpdate]);
+  // Handle editor content changes
+  const handleEditorChange = useCallback(
+    (newContent) => {
+      if (!isUpdatingRef.current) {
+        isUpdatingRef.current = true;
 
+        // Save cursor position before updating content
+        if (editorInstanceRef.current) {
+          cursorPositionRef.current = editorInstanceRef.current.selection.save();
+        }
+
+        setContents(newContent);
+        onTextUpdate?.(newContent);
+
+        // Restore cursor position after updating content
+        if (editorInstanceRef.current && cursorPositionRef.current) {
+          requestAnimationFrame(() => {
+            editorInstanceRef.current.selection.restore(cursorPositionRef.current);
+            editorInstanceRef.current.selection.focus();
+            isUpdatingRef.current = false;
+          });
+        } else {
+          isUpdatingRef.current = false;
+        }
+      }
+    },
+    [onTextUpdate]
+  );
+
+  // Handle editor focus
   const handleEditorFocus = useCallback(() => {
-    if (editorRef.current?.editor) {
-      editorInstanceRef.current = editorRef.current.editor;
-      editorInstanceRef.current.selection?.focus();
+    if (editorInstanceRef.current) {
+      editorInstanceRef.current.selection.focus();
     }
   }, []);
 
-  const config = useMemo(() => ({
-    readonly: false,
-    placeholder: placeholder || "Start typing...",
-    height: 400,
-    // Improve focus handling
-    events: {
-      afterInit: (jodit) => {
-        editorInstanceRef.current = jodit;
-        jodit.e.on('blur', () => {
-          // Prevent focus from jumping to toolbar
-          setTimeout(() => {
-            if (document.activeElement.tagName === 'BODY') {
-              jodit.selection.focus();
-            }
-          }, 0);
-        });
-      }
-    }
-  }), [placeholder]);
+  // Editor configuration
+  const config = useMemo(
+    () => ({
+      readonly: false,
+      placeholder: '',
+      height: 400,
+      saveCursorPosition: true, 
+      events: {
+        afterInit: (jodit) => {
+          editorInstanceRef.current = jodit;
+          jodit.e.on("blur", () => {
+            setTimeout(() => {
+              if (document.activeElement.tagName === "BODY") {
+                jodit.selection.focus();
+              }
+            }, 0);
+          });
+        },
+        afterBlur: () => {
+          if (document.activeElement.tagName === "BODY") {
+            editorInstanceRef.current?.selection.focus();
+          }
+        },
+      },
+    }),
+    []
+  );
 
   return (
     <JoditEditor
@@ -53,7 +86,7 @@ const CorrespondenceEditor = ({ defaultText, onTextUpdate, placeholder }) => {
       config={config}
       onChange={handleEditorChange}
       onFocus={handleEditorFocus}
-      onBlur={handleEditorFocus}
+      onBlur={handleEditorFocus} 
     />
   );
 };

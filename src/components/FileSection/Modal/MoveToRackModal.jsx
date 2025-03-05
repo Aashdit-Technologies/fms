@@ -33,8 +33,12 @@ const MoveToRackModal = ({ open, onClose, fileDetails }) => {
   const [selectedCell, setSelectedCell] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [currentRackCells, setCurrentRackCells] = useState(0);
   const navigate = useNavigate();
-  const token = useAuthStore.getState().token || sessionStorage.getItem("token");
+  const token =
+    useAuthStore.getState().token || sessionStorage.getItem("token");
+  const rackAlldata = rackData || [];
+  console.log("fileDetails", rackAlldata);
 
   const moveToRackMutation = useMutation({
     mutationFn: async () => {
@@ -42,13 +46,13 @@ const MoveToRackModal = ({ open, onClose, fileDetails }) => {
         actionTaken: details.actionTaken || "APPROVED",
         fileId: details.fileId,
         fileRecptId: details.fileReceiptId,
-        roomId: selectedRoom || details.roomId, 
+        roomId: selectedRoom || details.roomId,
         rackId: selectedRack || details.rackId,
         cellNo: selectedCell || details.cell,
         checkFlag: isChecked ? "Y" : "N",
       };
       console.log("sendfilepayload", sendfilepayload);
-      
+
       const encryptedDataObject = encryptPayload(sendfilepayload);
       const formData = new FormData();
       formData.append("dataObject", encryptedDataObject);
@@ -146,6 +150,19 @@ const MoveToRackModal = ({ open, onClose, fileDetails }) => {
     }
   }, [selectedRoom]);
 
+  const handleRackChange = (e) => {
+    const selectedRackId = e.target.value;
+    setSelectedRack(selectedRackId);
+    setSelectedCell("");
+  
+    const selectedRackData = rackData.find(rack => rack.rackId === selectedRackId);
+    if (selectedRackData) {
+      setCurrentRackCells(selectedRackData.noOfCell);
+    } else {
+      setCurrentRackCells(0);
+    }
+  };
+
   const handleRoomChange = (e) => {
     const roomId = e.target.value;
     setSelectedRoom(roomId);
@@ -200,14 +217,13 @@ const MoveToRackModal = ({ open, onClose, fileDetails }) => {
           ))}
         </Select>
       </FormControl>
-
       <FormControl fullWidth size="small">
         <Typography variant="subtitle2" mb={1}>
           Rack
         </Typography>
         <Select
           value={selectedRack}
-          onChange={(e) => setSelectedRack(e.target.value)}
+          onChange={handleRackChange} 
           disabled={!selectedRoom || isLoading}
         >
           <MenuItem value="">Select Rack</MenuItem>
@@ -218,7 +234,6 @@ const MoveToRackModal = ({ open, onClose, fileDetails }) => {
           ))}
         </Select>
       </FormControl>
-
       <FormControl fullWidth size="small">
         <Typography variant="subtitle2" mb={1}>
           Cell
@@ -229,11 +244,12 @@ const MoveToRackModal = ({ open, onClose, fileDetails }) => {
           disabled={!selectedRack || isLoading}
         >
           <MenuItem value="">Select Cell</MenuItem>
-          {[1, 2, 3, 4, 5].map((cellValue) => (
-            <MenuItem key={cellValue} value={cellValue}>
-              {cellValue}
-            </MenuItem>
-          ))}
+          {currentRackCells > 0 &&
+            [...Array(currentRackCells)].map((_, index) => (
+              <MenuItem key={index + 1} value={index + 1}>
+                 {index + 1}
+              </MenuItem>
+            ))}
         </Select>
       </FormControl>
     </Box>
@@ -246,6 +262,7 @@ const MoveToRackModal = ({ open, onClose, fileDetails }) => {
     setSelectedCell("");
     setRoomData([]);
     setRackData([]);
+    setCurrentRackCells(0);
   };
 
   return (
@@ -322,7 +339,8 @@ const MoveToRackModal = ({ open, onClose, fileDetails }) => {
                 variant="contained"
                 color="success"
                 disabled={
-                  (isChecked && (!selectedRoom || !selectedRack || !selectedCell)) ||
+                  (isChecked &&
+                    (!selectedRoom || !selectedRack || !selectedCell)) ||
                   moveToRackMutation.isLoading
                 }
                 onClick={handleMoveToRack}
@@ -347,11 +365,19 @@ const MoveToRackModal = ({ open, onClose, fileDetails }) => {
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>Confirm Move</DialogTitle>
         <DialogContent>
-          <Typography>Do you want to close the file and send it to Rack?</Typography>
+          <Typography>
+            Do you want to close the file and send it to Rack?
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button color="error" variant="contained" onClick={() => setConfirmOpen(false)}>No</Button>
-          <Button variant="contained" color="primary" onClick={handleConfirm} >
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => setConfirmOpen(false)}
+          >
+            No
+          </Button>
+          <Button variant="contained" color="primary" onClick={handleConfirm}>
             Yes
           </Button>
         </DialogActions>

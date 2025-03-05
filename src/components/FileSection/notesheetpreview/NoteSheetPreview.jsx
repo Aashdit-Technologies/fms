@@ -1,16 +1,23 @@
-import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import { FaPrint } from "react-icons/fa";
 import { Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
 import "./NoteSheetPreview.css";
 import { toast } from "react-toastify";
 
 const NoteSheetPreview = () => {
-  const location = useLocation();
-  const previewData = location.state?.previewData?.data || [];
+  const previewDataString = sessionStorage.getItem('noteSheetPreviewData');
+  const previewData = previewDataString ? 
+    JSON.parse(previewDataString)?.data || [] : 
+    [];
   const [selectedNotes, setSelectedNotes] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [searchText, setSearchText] = useState("");
+
+  useEffect(() => {
+    return () => {
+      sessionStorage.removeItem('noteSheetPreviewData');
+    };
+  }, []);
 
   const handleSelectAll = () => {
     if (selectAll) {

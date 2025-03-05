@@ -21,6 +21,7 @@ import api from "../../Api/Api";
 import { toast } from "react-toastify";
 import useAuthStore from "../../store/Store";
 import { useMutation } from "@tanstack/react-query";
+import { PageLoader } from "../pageload/PageLoader";
 
 const CreateDraftModal = ({
   open,
@@ -37,6 +38,7 @@ const CreateDraftModal = ({
   const [data, setData] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [contents, setContents] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [selectedValues, setSelectedValues] = useState({
     organization: null,
@@ -347,87 +349,181 @@ const CreateDraftModal = ({
   });
 
   const handleSelectionChange = (field, selectedOption) => {
-    setSelectedValues((prev) => ({ ...prev, [field]: selectedOption }));
+    // Update selected values based on field hierarchy
+    setSelectedValues((prev) => {
+      const newValues = { ...prev };
+      switch (field) {
+        case "organization":
+          newValues.organization = selectedOption;
+          newValues.company = null;
+          newValues.office = null;
+          newValues.department = null;
+          newValues.designation = null;
+          newValues.authorities = null;
+          break;
+        case "company":
+          newValues.company = selectedOption;
+          newValues.office = null;
+          newValues.department = null;
+          newValues.designation = null;
+          newValues.authorities = null;
+          break;
+        case "office":
+          newValues.office = selectedOption;
+          newValues.department = null;
+          newValues.designation = null;
+          newValues.authorities = null;
+          break;
+        case "department":
+          newValues.department = selectedOption;
+          newValues.designation = null;
+          newValues.authorities = null;
+          break;
+        case "designation":
+          newValues.designation = selectedOption;
+          newValues.authorities = null;
+          break;
+        default:
+          newValues[field] = selectedOption;
+      }
+      return newValues;
+    });
 
-    if (field === "organization") {
-      setOptions({
-        companies: [],
-        offices: [],
-        departments: [],
-        designations: [],
-      });
-      fetchData.mutate({
-        endpoint: "/level/get-companies",
-        payload: { organizationId: selectedOption.value },
-      });
-      fetchData.mutate({
-        endpoint: "/file/get-send-to-list",
-        payload: {
-          organizationId: selectedOption?.value || 0,
-          companyId: selectedValues.company?.value || 0,
-          officeId: selectedValues.office?.value || 0,
-          departmentId: selectedValues.department?.value || 0,
-          designationId: selectedValues.designation?.value || 0,
-          action: "DRAFT",
-        },
-      });
-    } else if (field === "company") {
-      setOptions((prev) => ({
-        ...prev,
-        offices: [],
-        departments: [],
-        designations: [],
-        authorities: [],
-      }));
-      fetchData.mutate({
-        endpoint: "/level/get-offices",
-        payload: {
-          organizationId: selectedValues.organization.value,
-          companyId: selectedOption.value,
-        },
-      });
-      setSelectedValues((prev) => ({
-        ...prev,
-        authorities: "",
-      }));
-    } else if (field === "office") {
-      setOptions((prev) => ({
-        ...prev,
-        departments: [],
-        designations: [],
-        authorities: [],
-      }));
-      fetchData.mutate({
-        endpoint: "/level/get-departments",
-        payload: {
-          organizationId: selectedValues.organization.value,
-          companyId: selectedValues.company.value,
-          officeId: selectedOption.value,
-        },
-      });
-    } else if (field === "department") {
-      setOptions((prev) => ({ ...prev, designations: [], authorities: [] }));
-      fetchData.mutate({
-        endpoint: "/level/get-designations",
-        payload: {
-          organizationId: selectedValues.organization.value,
-          companyId: selectedValues.company.value,
-          officeId: selectedValues.office.value,
-          departmentId: selectedOption.value,
-        },
-      });
-    } else if (field === "designation") {
-      fetchData.mutate({
-        endpoint: "/file/get-send-to-list",
-        payload: {
-          organizationId: selectedValues.organization?.value || 0,
-          companyId: selectedValues.company?.value || 0,
-          officeId: selectedValues.office?.value || 0,
-          departmentId: selectedValues.department?.value || 0,
-          designationId: selectedOption?.value || 0,
-          action: "DRAFT",
-        },
-      });
+    // Reset options and fetch new data based on selection
+    switch (field) {
+      case "organization":
+        setOptions({
+          companies: [],
+          offices: [],
+          departments: [],
+          designations: [],
+          authorities: [],
+        });
+        fetchData.mutate({
+          endpoint: "/level/get-companies",
+          payload: { organizationId: selectedOption?.value },
+        });
+        fetchData.mutate({
+          endpoint: "/file/get-send-to-list",
+          payload: {
+            organizationId: selectedOption?.value || 0,
+            companyId: 0,
+            officeId: 0,
+            departmentId: 0,
+            designationId: 0,
+            action: "DRAFT",
+          },
+        });
+        break;
+
+      case "company":
+        setOptions((prev) => ({
+          ...prev,
+          offices: [],
+          departments: [],
+          designations: [],
+          authorities: [],
+        }));
+        if (selectedOption) {
+          fetchData.mutate({
+            endpoint: "/level/get-offices",
+            payload: {
+              organizationId: selectedValues.organization?.value,
+              companyId: selectedOption.value,
+            },
+          });
+          fetchData.mutate({
+            endpoint: "/file/get-send-to-list",
+            payload: {
+              organizationId: selectedValues.organization?.value || 0,
+              companyId: selectedOption.value || 0,
+              officeId: 0,
+              departmentId: 0,
+              designationId: 0,
+              action: "DRAFT",
+            },
+          });
+        }
+        break;
+
+      case "office":
+        setOptions((prev) => ({
+          ...prev,
+          departments: [],
+          designations: [],
+          authorities: [],
+        }));
+        if (selectedOption) {
+          fetchData.mutate({
+            endpoint: "/level/get-departments",
+            payload: {
+              organizationId: selectedValues.organization?.value,
+              companyId: selectedValues.company?.value,
+              officeId: selectedOption.value,
+            },
+          });
+          fetchData.mutate({
+            endpoint: "/file/get-send-to-list",
+            payload: {
+              organizationId: selectedValues.organization?.value || 0,
+              companyId: selectedValues.company?.value || 0,
+              officeId: selectedOption.value || 0,
+              departmentId: 0,
+              designationId: 0,
+              action: "DRAFT",
+            },
+          });
+        }
+        break;
+
+      case "department":
+        setOptions((prev) => ({
+          ...prev,
+          designations: [],
+          authorities: [],
+        }));
+        if (selectedOption) {
+          fetchData.mutate({
+            endpoint: "/level/get-designations",
+            payload: {
+              organizationId: selectedValues.organization?.value,
+              companyId: selectedValues.company?.value,
+              officeId: selectedValues.office?.value,
+              departmentId: selectedOption.value,
+            },
+          });
+          fetchData.mutate({
+            endpoint: "/file/get-send-to-list",
+            payload: {
+              organizationId: selectedValues.organization?.value || 0,
+              companyId: selectedValues.company?.value || 0,
+              officeId: selectedValues.office?.value || 0,
+              departmentId: selectedOption.value || 0,
+              designationId: 0,
+              action: "DRAFT",
+            },
+          });
+        }
+        break;
+
+      case "designation":
+        if (selectedOption) {
+          fetchData.mutate({
+            endpoint: "/file/get-send-to-list",
+            payload: {
+              organizationId: selectedValues.organization?.value || 0,
+              companyId: selectedValues.company?.value || 0,
+              officeId: selectedValues.office?.value || 0,
+              departmentId: selectedValues.department?.value || 0,
+              designationId: selectedOption.value || 0,
+              action: "DRAFT",
+            },
+          });
+        }
+        break;
+
+      default:
+        break;
     }
   };
   const validateForm = () => {
@@ -445,16 +541,18 @@ const CreateDraftModal = ({
     else if (!selectedValues.authorities)
       errors.push("Approving Authority is required");
     else if (!updatedContentRef.current)
-      errors.push("Letter content is required");
+      errors.push("Letter Template is required");
 
     return errors;
   };
   const handleSave = async (action) => {
     const errors = validateForm();
+
     if (errors.length > 0) {
       errors.forEach((error) => toast.error(error));
       return;
     }
+    setIsLoading(true);
     const payload = {
       correspondenceId: editMalady?.correspondenceId || null,
       fileId: allDetails?.fileId,
@@ -519,6 +617,8 @@ const CreateDraftModal = ({
     } catch (error) {
       console.error("Error saving draft:", error);
       toast.error("Failed to save draft");
+    }finally{
+      setIsLoading(false);
     }
   };
 
@@ -537,10 +637,7 @@ const CreateDraftModal = ({
     ];
   }, [data]);
 
-  useEffect(() => {
-    console.log("Letter Content Options:", officeOptions);
-    console.log("Selected Template:", formData.office);
-  }, [officeOptions, formData.office]);
+  useEffect(() => {}, [officeOptions, formData.office]);
 
   const handleOfficeChange = (selectedOption) => {
     if (selectedOption) {
@@ -598,345 +695,396 @@ const CreateDraftModal = ({
     onClose();
   };
 
-  return (
-    <Modal
-      open={open}
-      onClose={(event, reason) => {
-        if (reason && reason === "backdropClick") {
-          return;
-        }
-        onClose();
-      }}
-    >
-      <Box
-        sx={{
-          width: 1000,
-          bgcolor: "white",
-          p: 3,
-          borderRadius: 2,
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          boxShadow: 24,
-          height: "80vh",
-          overflow: "auto",
+  return (<>
+      {isLoading && <PageLoader />}
+      <Modal
+        open={open}
+        onClose={(event, reason) => {
+          if (reason && reason === "backdropClick") {
+            return;
+          }
+          onClose();
         }}
       >
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            width: 1000,
+            bgcolor: "white",
+            p: 3,
+            borderRadius: 2,
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            boxShadow: 24,
+            height: "80vh",
+            overflow: "auto",
           }}
         >
-          <Typography variant="h6" style={{ color: "#052C65", fontWeight: "bold" }}>
-            {editMalady ? "Edit Draft" : "Create Draft"}
-          </Typography>
-          <IconButton onClick={() => setShowForm(!showForm)} sx={{ color: "#207785" }}>
-            {showForm ? <FaMinus /> : <FaPlus />}
-          </IconButton>
-        </Box>
-
-        {showForm && (
-          <Box sx={{ mt: 2, display: "grid", gap: 2 }}>
-            
-            <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <label>Letter Content</label>
-              <ReactSelect
-                options={officeOptions}
-                value={officeOptions.find(
-                  (option) => option.value === formData.office
-                )}
-                onChange={handleOfficeChange}
-                isSearchable
-                isClearable={true}
-                styles={{
-                  control: (base) => ({
-                    ...base,
-                    fontSize: "14px",
-                  }),
-                  option: (base) => ({
-                    ...base,
-                    fontSize: "14px",
-                  }),
-                  singleValue: (base) => ({
-                    ...base,
-                    fontSize: "14px",
-                  }),
-                }}
-              />
-            </Grid>
-              <Grid item xs={6}>
-                <label htmlFor="subject">Subject <span style={{ color: "red", marginLeft: "5px" }}>*</span></label>
-                <textarea
-                  id="subject"
-                  value={contents}
-                  onChange={(e) => setContents(e.target.value)}
-                  rows={1}
-                  placeholder="Enter content..."
-                 
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <label>Organization <span style={{ color: "red", marginLeft: "5px" }}>*</span></label>
-                <ReactSelect
-                  options={
-                    organizations?.map((org) => ({
-                      value: org.organizationId,
-                      label: org.organizationName,
-                    })) || []
-                  }
-                  value={selectedValues.organization}
-                  onChange={(option) =>
-                    handleSelectionChange("organization", option)
-                  }
-                  isSearchable
-                  isClearable={true}
-                  styles={{
-                    control: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    option: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    singleValue: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={6}>
-                <label>Company {selectedValues.company?<span style={{ color: "red", marginLeft: "5px" }}>*</span>:""}</label>
-                <ReactSelect
-                  options={
-                    options.companies?.map((comp) => ({
-                      value: comp.companyId,
-                      label: comp.name,
-                    })) || []
-                  }
-                  value={selectedValues.company}
-                  onChange={(option) =>
-                    handleSelectionChange("company", option)
-                  }
-                  isSearchable
-                  isClearable={true}
-                  isDisabled={!selectedValues.organization}
-                  styles={{
-                    control: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    option: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    singleValue: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={6}>
-                <label>Office {selectedValues.organization && selectedValues.company?<span style={{ color: "red", marginLeft: "5px" }}>*</span>:""}</label>
-                <ReactSelect
-                  options={
-                    options.offices?.map((office) => ({
-                      value: office.officeId,
-                      label: office.officeName,
-                    })) || []
-                  }
-                  value={selectedValues.office}
-                  onChange={(option) => handleSelectionChange("office", option)}
-                  isSearchable
-                  isClearable={true}
-                  isDisabled={!selectedValues.company}
-                  styles={{
-                    control: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    option: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    singleValue: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={6}>
-                <label>Department {selectedValues.organization && selectedValues.company?<span style={{ color: "red", marginLeft: "5px" }}>*</span>:""}</label>
-                <ReactSelect
-                  options={
-                    options.departments?.map((dept) => ({
-                      value: dept.departmentId,
-                      label: dept.departmentName,
-                    })) || []
-                  }
-                  value={selectedValues.department}
-                  onChange={(option) =>
-                    handleSelectionChange("department", option)
-                  }
-                  isSearchable
-                  isClearable={true}
-                  isDisabled={!selectedValues.office}
-                  styles={{
-                    control: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    option: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    singleValue: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={6}>
-                <label>Designation {selectedValues.organization && selectedValues.company ?<span style={{ color: "red", marginLeft: "5px" }}>*</span>:""}</label>
-                <ReactSelect
-                  options={
-                    options.designations?.map((desig) => ({
-                      value: desig.id,
-                      label: desig.name,
-                    })) || []
-                  }
-                  value={selectedValues.designation}
-                  onChange={(option) =>
-                    handleSelectionChange("designation", option)
-                  }
-                  isSearchable
-                  isClearable={true}
-                  isDisabled={!selectedValues.department}
-                  styles={{
-                    control: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    option: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    singleValue: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <label>Approving Authority {selectedValues.organization?<span style={{ color: "red", marginLeft: "5px" }}>*</span>:""}</label>
-                <ReactSelect
-                  options={options.authorities}
-                  value={selectedValues.authorities}
-                  onChange={(option) =>
-                    setSelectedValues((prev) => ({
-                      ...prev,
-                      authorities: option,
-                    }))
-                  }
-                  isSearchable
-                  isClearable={true}
-                  isDisabled={
-                    (!selectedValues.designation &&
-                      !selectedValues.organization &&
-                      !selectedValues.company &&
-                      !selectedValues.office &&
-                      !selectedValues.department) ||
-                    (selectedValues.company &&
-                      selectedValues.organization &&
-                      !selectedValues.designation)
-                  }
-                  styles={{
-                    control: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    option: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                    singleValue: (base) => ({
-                      ...base,
-                      fontSize: "14px",
-                    }),
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        )}
-
-        <Box sx={{ mt: 2 }} className="editor-containers">
-          <ModalEditor
-            defaultText={formData.contentss}
-            onTextUpdate={handleTextUpdate}
-          />
-        </Box>
-
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}
-        >
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() => handleSave("SAVE")}
-          >
-            Save
-          </Button>
-
-          {editMalady?.correspondenceId &&
-            editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId && (
-              <Button
-                variant="contained"
-                color="success"
-                onClick={() => handleSave("APPROVE")}
-                title="Approve Draft"
-              >
-                Approve
-              </Button>
-            )}
-
-          <Button
-            variant="contained"
-            color="warning"
-            onClick={() => {
-              setFormData({
-                subject: "",
-                referenceNo: "",
-                addedBy: "",
-                contentss: "",
-                office: "",
-                tempType: "",
-              });
-              updatedContentRef.current = "";
-              resetForm();
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            Reset
-          </Button>
-          <Button variant="contained" color="error" onClick={handleClickClose}>
-            Cancel
-          </Button>
+            <Typography
+              variant="h6"
+              style={{ color: "#052C65", fontWeight: "bold" }}
+            >
+              {editMalady ? "Edit Draft" : "Create Draft"}
+            </Typography>
+            <IconButton
+              onClick={() => setShowForm(!showForm)}
+              sx={{ color: "#207785" }}
+            >
+              {showForm ? <FaMinus /> : <FaPlus />}
+            </IconButton>
+          </Box>
+
+          {showForm && (
+            <Box sx={{ mt: 2, display: "grid", gap: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <label>Letter Template</label>
+                  <ReactSelect
+                    options={officeOptions}
+                    value={officeOptions.find(
+                      (option) => option.value === formData.office
+                    )}
+                    onChange={handleOfficeChange}
+                    isSearchable
+                    isClearable={true}
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      option: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      singleValue: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <label htmlFor="subject">
+                    Subject{" "}
+                    <span style={{ color: "red", marginLeft: "5px" }}>*</span>
+                  </label>
+                  <textarea
+                    id="subject"
+                    value={contents}
+                    onChange={(e) => setContents(e.target.value)}
+                    rows={1}
+                    placeholder="Enter content..."
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <label>
+                    Organization{" "}
+                    <span style={{ color: "red", marginLeft: "5px" }}>*</span>
+                  </label>
+                  <ReactSelect
+                    options={
+                      organizations?.map((org) => ({
+                        value: org.organizationId,
+                        label: org.organizationName,
+                      })) || []
+                    }
+                    value={selectedValues.organization}
+                    onChange={(option) =>
+                      handleSelectionChange("organization", option)
+                    }
+                    isSearchable
+                    isClearable={true}
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      option: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      singleValue: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={6}>
+                  <label>
+                    Company{" "}
+                    {selectedValues.company ? (
+                      <span style={{ color: "red", marginLeft: "5px" }}>*</span>
+                    ) : (
+                      ""
+                    )}
+                  </label>
+                  <ReactSelect
+                    options={
+                      options.companies?.map((comp) => ({
+                        value: comp.companyId,
+                        label: comp.name,
+                      })) || []
+                    }
+                    value={selectedValues.company}
+                    onChange={(option) =>
+                      handleSelectionChange("company", option)
+                    }
+                    isSearchable
+                    isClearable={true}
+                    isDisabled={!selectedValues.organization}
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      option: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      singleValue: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={6}>
+                  <label>
+                    Office{" "}
+                    {selectedValues.organization && selectedValues.company ? (
+                      <span style={{ color: "red", marginLeft: "5px" }}>*</span>
+                    ) : (
+                      ""
+                    )}
+                  </label>
+                  <ReactSelect
+                    options={
+                      options.offices?.map((office) => ({
+                        value: office.officeId,
+                        label: office.officeName,
+                      })) || []
+                    }
+                    value={selectedValues.office}
+                    onChange={(option) => handleSelectionChange("office", option)}
+                    isSearchable
+                    isClearable={true}
+                    isDisabled={!selectedValues.company}
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      option: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      singleValue: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={6}>
+                  <label>
+                    Department{" "}
+                    {selectedValues.organization && selectedValues.company ? (
+                      <span style={{ color: "red", marginLeft: "5px" }}>*</span>
+                    ) : (
+                      ""
+                    )}
+                  </label>
+                  <ReactSelect
+                    options={
+                      options.departments?.map((dept) => ({
+                        value: dept.departmentId,
+                        label: dept.departmentName,
+                      })) || []
+                    }
+                    value={selectedValues.department}
+                    onChange={(option) =>
+                      handleSelectionChange("department", option)
+                    }
+                    isSearchable
+                    isClearable={true}
+                    isDisabled={!selectedValues.office}
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      option: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      singleValue: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={6}>
+                  <label>
+                    Designation{" "}
+                    {selectedValues.organization && selectedValues.company ? (
+                      <span style={{ color: "red", marginLeft: "5px" }}>*</span>
+                    ) : (
+                      ""
+                    )}
+                  </label>
+                  <ReactSelect
+                    options={
+                      options.designations?.map((desig) => ({
+                        value: desig.id,
+                        label: desig.name,
+                      })) || []
+                    }
+                    value={selectedValues.designation}
+                    onChange={(option) =>
+                      handleSelectionChange("designation", option)
+                    }
+                    isSearchable
+                    isClearable={true}
+                    isDisabled={!selectedValues.department}
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      option: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      singleValue: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <label>
+                    Approving Authority{" "}
+                    {selectedValues.organization ? (
+                      <span style={{ color: "red", marginLeft: "5px" }}>*</span>
+                    ) : (
+                      ""
+                    )}
+                  </label>
+                  <ReactSelect
+                    options={options.authorities}
+                    value={selectedValues.authorities}
+                    onChange={(option) =>
+                      setSelectedValues((prev) => ({
+                        ...prev,
+                        authorities: option,
+                      }))
+                    }
+                    isSearchable
+                    isClearable={true}
+                    isDisabled={
+                      (!selectedValues.designation &&
+                        !selectedValues.organization &&
+                        !selectedValues.company &&
+                        !selectedValues.office &&
+                        !selectedValues.department) ||
+                      (selectedValues.company &&
+                        selectedValues.organization &&
+                        !selectedValues.designation)
+                    }
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      option: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                      singleValue: (base) => ({
+                        ...base,
+                        fontSize: "14px",
+                      }),
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+
+          <Box sx={{ mt: 2 }} className="editor-containers">
+            <ModalEditor
+              defaultText={formData.contentss}
+              onTextUpdate={handleTextUpdate}
+            />
+          </Box>
+
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}
+          >
+            <Button
+              variant="contained"
+              color="success"
+              onClick={() => handleSave("SAVE")}
+              disabled={isLoading}
+            >
+              {editMalady?.correspondenceId &&
+              editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId
+                ? "Update"
+                : "Save"}
+            </Button>
+
+            {editMalady?.correspondenceId &&
+              editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => handleSave("APPROVE")}
+                  title="Approve Draft"
+                >
+                  Approve
+                </Button>
+              )}
+
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={() => {
+                setFormData({
+                  subject: "",
+                  referenceNo: "",
+                  addedBy: "",
+                  contentss: "",
+                  office: "",
+                  tempType: "",
+                });
+                updatedContentRef.current = "";
+                resetForm();
+              }}
+            >
+              Reset
+            </Button>
+            <Button variant="contained" color="error" onClick={handleClickClose}>
+              Cancel
+            </Button>
+          </Box>
         </Box>
-      </Box>
-    </Modal>
+      </Modal>
+  </>
   );
 };
 

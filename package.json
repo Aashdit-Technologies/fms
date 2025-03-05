@@ -33,6 +33,7 @@
     "crypto-js": "^4.2.0",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.13",
+    "express": "^4.21.2",
     "jodit-react": "^5.2.4",
     "jointjs": "^3.7.7",
     "jquery": "^3.7.1",
@@ -48,6 +49,7 @@
     "react-toastify": "^11.0.2",
     "react-tooltip": "^5.28.0",
     "styled-components": "^6.1.15",
+    "uninstall": "^0.0.0",
     "zustand": "^5.0.3"
   },
   "devDependencies": {

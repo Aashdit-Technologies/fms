@@ -74,7 +74,7 @@ const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, re
     document.addEventListener("click", handleNoteClick);
 
     return () => {
-      document.removeEventListener("click", handleNoteClick); // ✅ Cleanup on unmount
+      document.removeEventListener("click", handleNoteClick);
     };
   }, []);
   
@@ -156,7 +156,6 @@ const Ckeditor = ({ additionalDetails, fileDetails, content, onContentChange, re
             <Accordion.Body>
               <SunEditorComponent
                 content={editorContent}
-                placeholder="Enter your task action here..."
                 onContentChange={handleEditorChange}
                 // additionalDetails={additionalDetails}
               />

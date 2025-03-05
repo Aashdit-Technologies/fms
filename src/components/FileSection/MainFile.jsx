@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Ckeditor from "./Ckeditor";
 import api from "../../Api/Api";
 import Correspondence from "./Correspondence";
@@ -93,15 +93,36 @@ const MainFile = () => {
     await fetchData();
   };
 
-  const handleEditorContentChange = (newContent) => {
+  const handleEditorContentChange = useCallback((newContent) => {
     if (!isUpdatingContentRef.current) {
       isUpdatingContentRef.current = true;
       setSharedEditorContent(newContent);
-      setTimeout(() => {
+      sessionStorage.setItem('noteSheetContent', newContent);
+      requestAnimationFrame(() => {
         isUpdatingContentRef.current = false;
-      }, 100);
+      });
     }
-  };
+  }, []);
+  
+  // Update the initial content load effect
+  useEffect(() => {
+    const savedContent = sessionStorage.getItem('noteSheetContent');
+    if (savedContent && !isUpdatingContentRef.current) {
+      setSharedEditorContent(savedContent);
+    }
+    return () => {
+      sessionStorage.removeItem('noteSheetContent');
+    };
+  }, []);
+
+  // Clean up sessionStorage on component unmount
+  useEffect(() => {
+    // Load initial content from sessionStorage if exists
+    const savedContent = sessionStorage.getItem('noteSheetContent');
+    if (savedContent) {
+      setSharedEditorContent(savedContent);
+    }
+  }, []);
 
   return (
     <>

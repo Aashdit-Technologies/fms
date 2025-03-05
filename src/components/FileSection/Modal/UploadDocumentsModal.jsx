@@ -363,7 +363,9 @@ const UploadDocumentsModal = ({
               isSearchable
               isClearable={true}
               isDisabled={!selectedValues.company}
+              menuPortalTarget={document.body}
               styles={{
+                menuPortal: (base) => ({ ...base, zIndex: 1300 }),
                 control: (base) => ({
                   ...base,
                   fontSize: "14px",
@@ -562,7 +564,7 @@ const UploadDocumentsModal = ({
             onClick={() => handleSendFile("SENDTO")}
             disabled={loading}
           >
-            {loading ? <PageLoader /> : "SEND"}
+            {loading ? <PageLoader /> : "send"}
           </Button>
           <Button
             variant="contained"

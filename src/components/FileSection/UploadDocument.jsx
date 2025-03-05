@@ -48,6 +48,7 @@ import { useNavigate } from "react-router-dom";
 import UploadDocumentsModal from "./Modal/UploadDocumentsModal";
 import { PageLoader } from "../pageload/PageLoader";
 import MoveToRackModal from "./Modal/MoveToRackModal";
+import { CalendarToday } from "@mui/icons-material";
 const UploadDocument = ({
   fileDetails,
   initialContent,
@@ -566,7 +567,6 @@ const UploadDocument = ({
     },
   });
 
-
   return (
     <>
       {isLoading && <PageLoader />}
@@ -728,8 +728,8 @@ const UploadDocument = ({
                             shouldDisableDate={(date) =>
                               dayjs(date).isAfter(dayjs())
                             }
-                            closeOnSelect
-                            disableOpenPicker
+                            closeOnSelect={true}
+                            disableOpenPicker={true}
                             onAccept={(date) => {
                               if (date && date.isValid()) {
                                 handleInputChange(
@@ -739,16 +739,37 @@ const UploadDocument = ({
                                 );
                               }
                             }}
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+
+                                InputProps: {
+                                  endAdornment: (
+                                    <CalendarToday color="action" />
+                                  ),
+                                },
+                                sx: {
+                                  "& .MuiInputBase-root": {
+                                  },
+                                },
+                              },
+                              actionBar: {
+                                actions: [],
+                              },
+                              toolbar: {
+                                hidden: true,
+                              },
+                            }}
                             renderInput={(params) => (
                               <TextField
                                 {...params}
                                 fullWidth
                                 inputProps={{
                                   ...params.inputProps,
-                                  placeholder: "DD/MM/YYYY", 
+                                  placeholder: "DD/MM/YYYY",
                                 }}
                                 InputLabelProps={{
-                                  shrink: true, // ✅ Forces label to always stay above
+                                  shrink: true,
                                 }}
                               />
                             )}
@@ -815,7 +836,7 @@ const UploadDocument = ({
 
                 <Grid container spacing={2} sx={{ mt: 4 }}>
                   <Grid item xs={6}>
-                    <FormControl fullWidth >
+                    <FormControl fullWidth>
                       <InputLabel>File Priority</InputLabel>
                       <Select
                         value={filePriority}
@@ -938,7 +959,7 @@ const UploadDocument = ({
             </Card>
           </AccordionItem>
         </Accordion>
-        
+
         <Modal
           open={confirmationModalOpen}
           onClose={() => setConfirmationModalOpen(false)}
@@ -1088,7 +1109,6 @@ const UploadDocument = ({
           fileDetails={fileDetails}
         />
       </Box>
-      
     </>
   );
 };
