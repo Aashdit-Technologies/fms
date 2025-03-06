@@ -100,7 +100,11 @@ const customStyles = {
 
 const ManageRack = () => {
   const [activeKey, setActiveKey] = useState("1");
-  const [rack, setRack] = useState({ rackNumber: "", noOfCell: "", roomId: "" });
+  const [rack, setRack] = useState({
+    rackNumber: "",
+    noOfCell: "",
+    roomId: "",
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rackData, setRackData] = useState([]);
   const [roomList, setRoomList] = useState([]);
@@ -108,13 +112,58 @@ const ManageRack = () => {
   const [isFormOpen, setIsFormOpen] = useState(true);
   const [isTableOpen, setIsTableOpen] = useState(true);
 
+  const sortData = (data, field = "isActive", direction = "desc") => {
+    return [...data].sort((a, b) => {
+      // First sort by active status
+      if (field === "isActive") {
+        if (a.isActive !== b.isActive) {
+          return direction === "desc"
+            ? b.isActive
+              ? 1
+              : -1
+            : a.isActive
+            ? 1
+            : -1;
+        }
+      }
+
+      // Then sort by the selected field
+      if (field === "rackNumber") {
+        return direction === "desc"
+          ? b.rackNumber.localeCompare(a.rackNumber, undefined, {
+              numeric: true,
+            })
+          : a.rackNumber.localeCompare(b.rackNumber, undefined, {
+              numeric: true,
+            });
+      }
+
+      if (field === "noOfCell") {
+        return direction === "desc"
+          ? b.noOfCell - a.noOfCell
+          : a.noOfCell - b.noOfCell;
+      }
+
+      if (field === "room") {
+        const roomA = a.docRoom?.roomNumber || "";
+        const roomB = b.docRoom?.roomNumber || "";
+        return direction === "desc"
+          ? roomB.localeCompare(roomA)
+          : roomA.localeCompare(roomB);
+      }
+
+      return 0;
+    });
+  };
+
   const fetchRackData = async () => {
     try {
       const token = useAuthStore.getState().token;
       const response = await api.get("/manage-rack", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setRackData(response.data?.data?.rackList?.data || []);
+      const rawData = response.data?.data?.rackList?.data || [];
+      setRackData(sortData(rawData)); // Sort data before setting
       setRoomList(response.data?.data?.roomList || []);
     } catch (error) {
       console.error("Error fetching rack data:", error);
@@ -126,16 +175,64 @@ const ManageRack = () => {
     fetchRackData();
   }, []);
 
+  const validateInput = (value) => {
+    const regex = /^[a-zA-Z0-9.,/\-&() ]*$/;
+    return regex.test(value);
+  };
+
   const handleInputChange = (e) => {
-    setRack({ ...rack, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "noOfCell") {
+      if (/^\d*$/.test(value)) {
+        setRack((prev) => ({ ...prev, [name]: value }));
+      }
+      return;
+    }
+
+    if (name === "rackNumber") {
+      if (validateInput(value)) {
+        setRack((prev) => ({ ...prev, [name]: value }));
+      } else {
+        toast.warning("Only alphanumeric characters and .,/- & () are allowed");
+      }
+      return;
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!rack.rackNumber || rack.rackNumber <= 0 || !rack.noOfCell || !rack.roomId) {
-      toast.warning("Please fill out all fields correctly.");
+    if (!rack.roomId) {
+      toast.warning("Please select a room");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const selectedRoom = roomList.find(
+      (room) => room.docRoomId === rack.roomId
+    );
+    if (selectedRoom && !validateInput(selectedRoom.roomNumber.toString())) {
+      toast.error("Selected room contains invalid characters");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!rack.rackNumber || !rack.noOfCell) {
+      toast.warning("Please fill out all fields");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!validateInput(rack.rackNumber)) {
+      toast.error(
+        "Invalid characters in rack number. Only alphanumeric and .,/- & () are allowed"
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (isNaN(rack.noOfCell) || rack.noOfCell <= 0) {
+      toast.error("Number of cells must be greater than 0");
       setIsSubmitting(false);
       return;
     }
@@ -157,10 +254,14 @@ const ManageRack = () => {
       );
 
       fetchRackData(); // Refresh the table data
-      toast.success(editingRackId ? "Rack updated successfully!" : "Rack added successfully!");
+      toast.success(
+        editingRackId
+          ? "Rack updated successfully!"
+          : "Rack added successfully!"
+      );
       setRack({ rackNumber: "", noOfCell: "", roomId: "" }); // Reset the form
-      setEditingRackId(null); // Clear editing state
-      setActiveKey("1"); // Open the table section
+      setEditingRackId(null); 
+      setActiveKey("1"); 
     } catch (error) {
       console.error("Error saving data:", error);
       toast.error("Failed to save data.");
@@ -183,8 +284,15 @@ const ManageRack = () => {
           params: { dataObject: encryptedMessage },
         }
       );
-
-      toast.success(`Rack status updated to ${!rack.isActive ? "Active" : "Inactive"}!`);
+      const updatedData = rackData.map((item) =>
+        item.rackId === rack.rackId
+          ? { ...item, isActive: !item.isActive }
+          : item
+      );
+      setRackData(sortData(updatedData));
+      toast.success(
+        `Rack Status is ${rack.isActive ? "Activated" : "Inactivated "} successfully`
+      );
       fetchRackData();
     } catch (error) {
       console.error("Error updating rack status:", error);
@@ -208,15 +316,35 @@ const ManageRack = () => {
   };
 
   const columns = [
-    { name: "Sl", selector: (row, index) => index + 1, sortable: true, width: "60px" },
-    { name: "Rack Number", selector: (row) => row.rackNumber, sortable: true },
-    { name: "No of Cells", selector: (row) => row.noOfCell, sortable: true },
-    { name: "Room", selector: (row) => row.docRoom?.roomNumber || "N/A", sortable: true },
     {
-      name: "Active",
-      cell: (row) =>
-        row.isActive ? <FaCheck className="text-success" /> : <FaTimes className="text-danger" />,
+      name: "Sl",
+      selector: (row, index) => index + 1,
+      sortable: false,
+      width: "60px",
     },
+    {
+      name: "Rack Number",
+      selector: (row) => row.rackNumber,
+      sortable: true,
+      sortField: "rackNumber",
+    },
+    {
+      name: "No of Cells",
+      selector: (row) => row.noOfCell,
+      sortable: true,
+      sortField: "noOfCell",
+    },
+    {
+      name: "Room",
+      selector: (row) => row.docRoom?.roomNumber || "N/A",
+      sortable: true,
+      sortField: "room",
+    },
+    // {
+    //   name: "Active",
+    //   cell: (row) =>
+    //     row.isActive ? <FaCheck className="text-success" /> : <FaTimes className="text-danger" />,
+    // },
     {
       name: "Actions",
       cell: (row) => (
@@ -227,19 +355,21 @@ const ManageRack = () => {
             size="small"
             sx={{ minWidth: "auto" }}
             onClick={() => handleStatusToggle(row)}
-            startIcon={row.isActive ? <FaLock /> : <FaLockOpen />}
             title={row.isActive ? "In-Active" : "Active"}
-          />
+          >
+            {row.isActive ? <FaLock /> : <FaLockOpen />}
+          </Button>
           <Button
-            variant="outlined"
+            variant="contained"
             color="warning"
             size="small"
             sx={{ minWidth: "auto" }}
             onClick={() => handleEdit(row)}
-            startIcon={<FaEdit />}
             className="ms-2"
             title="Edit"
-          />
+          >
+            <FaEdit />
+          </Button>
         </div>
       ),
       ignoreRowClick: true,
@@ -250,12 +380,20 @@ const ManageRack = () => {
     <div className="rack-section-container">
       <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
         <Accordion.Item eventKey="0">
-          <Accordion.Header onClick={() => setIsFormOpen((prev) => !prev)} className="custbg">
-            <div className="mstaccodion d-flex" style={{ justifyContent: "space-between", width: "100%" }}>
+          <Accordion.Header
+            onClick={() => setIsFormOpen((prev) => !prev)}
+            className="custbg"
+          >
+            <div
+              className="mstaccodion d-flex"
+              style={{ justifyContent: "space-between", width: "100%" }}
+            >
               <span className="accordion-title">
                 {editingRackId ? "Edit Rack Details" : "Add Rack Details"}
               </span>
-              <span className="accordion-icon">{isFormOpen ? <FaPlus /> : <FaMinus />}</span>
+              <span className="accordion-icon">
+                {isFormOpen ? <FaPlus /> : <FaMinus />}
+              </span>
             </div>
           </Accordion.Header>
           <Accordion.Body>
@@ -263,21 +401,71 @@ const ManageRack = () => {
               <div className="form-group col-md-3">
                 <FormControl fullWidth style={{ marginTop: "17px" }}>
                   <Autocomplete
-                    options={roomList}
+                    options={roomList.filter((room) =>
+                      validateInput(room.roomNumber.toString())
+                    )}
                     getOptionLabel={(option) => option.roomNumber.toString()}
                     renderInput={(params) => (
-                      <TextField {...params} label="Select Room" variant="outlined" />
+                      <TextField
+                        {...params}
+                        label={
+                          <span>
+                            Select Room <span style={{ color: "red" }}>*</span>
+                          </span>
+                        }
+                        variant="outlined"
+                        // error={!rack.roomId}
+                        // helperText={!rack.roomId ? "Please select a room" : ""}
+                      />
                     )}
-                    value={roomList.find((room) => room.docRoomId === rack.roomId) || null}
+                    value={
+                      roomList.find((room) => room.docRoomId === rack.roomId) ||
+                      null
+                    }
                     onChange={(_, newValue) => {
-                      setRack({ ...rack, roomId: newValue ? newValue.docRoomId : "" });
+                      if (
+                        newValue &&
+                        validateInput(newValue.roomNumber.toString())
+                      ) {
+                        setRack({
+                          ...rack,
+                          roomId: newValue.docRoomId,
+                        });
+                      } else if (!newValue) {
+                        setRack({
+                          ...rack,
+                          roomId: "",
+                        });
+                      } else {
+                        toast.warning(
+                          "Room number contains invalid characters"
+                        );
+                      }
+                    }}
+                    isOptionEqualToValue={(option, value) =>
+                      option.docRoomId === value.docRoomId
+                    }
+                    filterOptions={(options, params) => {
+                      const filtered = options.filter(
+                        (option) =>
+                          validateInput(option.roomNumber.toString()) &&
+                          option.roomNumber
+                            .toString()
+                            .toLowerCase()
+                            .includes(params.inputValue.toLowerCase())
+                      );
+                      return filtered;
                     }}
                   />
                 </FormControl>
               </div>
               <div className="form-group col-md-3">
                 <TextField
-                  label="Rack Number"
+                  label={
+                    <span>
+                      rackNumber <span style={{ color: "red" }}>*</span>
+                    </span>
+                  }
                   id="rackNumber"
                   name="rackNumber"
                   value={rack.rackNumber}
@@ -286,11 +474,26 @@ const ManageRack = () => {
                   variant="outlined"
                   margin="normal"
                   placeholder="Enter rack number"
+                  error={
+                    !validateInput(rack.rackNumber) && rack.rackNumber !== ""
+                  }
+                  // helperText={
+                  //   !validateInput(rack.rackNumber) && rack.rackNumber !== ""
+                  //     ? "Only alphanumeric and .,/- & () characters allowed"
+                  //     : ""
+                  // }
+                  inputProps={{
+                    maxLength: 50,
+                  }}
                 />
               </div>
               <div className="form-group col-md-3">
                 <TextField
-                  label="Number of Cells"
+                  label={
+                    <span>
+                      Number of Cells <span style={{ color: "red" }}>*</span>
+                    </span>
+                  }
                   id="noOfCell"
                   name="noOfCell"
                   value={rack.noOfCell}
@@ -300,6 +503,14 @@ const ManageRack = () => {
                   margin="normal"
                   type="number"
                   placeholder="Enter number of cells"
+                  error={rack.noOfCell < 0}
+                  // helperText={
+                  //   rack.noOfCell < 0 ? "Number must be greater than 0" : ""
+                  // }
+                  inputProps={{
+                    min: 0,
+                    max: 9999,
+                  }}
                 />
               </div>
               <div className="col-md-12 text-center mt-3">
@@ -331,10 +542,18 @@ const ManageRack = () => {
         </Accordion.Item>
 
         <Accordion.Item eventKey="1" className="mt-3">
-          <Accordion.Header onClick={() => setIsTableOpen((prev) => !prev)} className="custbg">
-            <div className="mstaccodion d-flex" style={{ justifyContent: "space-between", width: "100%" }}>
+          <Accordion.Header
+            onClick={() => setIsTableOpen((prev) => !prev)}
+            className="custbg"
+          >
+            <div
+              className="mstaccodion d-flex"
+              style={{ justifyContent: "space-between", width: "100%" }}
+            >
               <span className="accordion-title">View Racks</span>
-              <span className="accordion-icon">{isTableOpen ? <FaMinus /> : <FaPlus />}</span>
+              <span className="accordion-icon">
+                {isTableOpen ? <FaMinus /> : <FaPlus />}
+              </span>
             </div>
           </Accordion.Header>
           <Accordion.Body>
@@ -342,8 +561,21 @@ const ManageRack = () => {
               columns={columns}
               data={rackData}
               pagination
+              paginationPerPage={10}
+              paginationRowsPerPageOptions={[10, 20, 30, 50]}
               highlightOnHover
               customStyles={customStyles}
+              defaultSortFieldId={2}
+              defaultSortAsc={false}
+              sortServer={false}
+              onSort={(column, direction) => {
+                const sortedData = sortData(
+                  rackData,
+                  column.sortField,
+                  direction
+                );
+                setRackData(sortedData);
+              }}
             />
           </Accordion.Body>
         </Accordion.Item>

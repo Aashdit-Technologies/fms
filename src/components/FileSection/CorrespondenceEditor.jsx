@@ -1,83 +1,124 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import JoditEditor from "jodit-react";
+import { debounce } from "lodash";
 
-const CorrespondenceEditor = ({ defaultText, onTextUpdate, placeholder }) => {
+const CorrespondenceEditor = ({ defaultText, onTextUpdate }) => {
   const [contents, setContents] = useState(defaultText || "");
   const editorRef = useRef(null);
   const isUpdatingRef = useRef(false);
   const editorInstanceRef = useRef(null);
   const cursorPositionRef = useRef(null);
 
-  // Update content when defaultText changes
-  useEffect(() => {
-    if (defaultText !== contents && !isUpdatingRef.current) {
-      setContents(defaultText || "");
-    }
-  }, [defaultText]);
-
-  // Handle editor content changes
-  const handleEditorChange = useCallback(
-    (newContent) => {
-      if (!isUpdatingRef.current) {
-        isUpdatingRef.current = true;
-
-        // Save cursor position before updating content
-        if (editorInstanceRef.current) {
-          cursorPositionRef.current = editorInstanceRef.current.selection.save();
-        }
-
-        setContents(newContent);
-        onTextUpdate?.(newContent);
-
-        // Restore cursor position after updating content
-        if (editorInstanceRef.current && cursorPositionRef.current) {
-          requestAnimationFrame(() => {
-            editorInstanceRef.current.selection.restore(cursorPositionRef.current);
-            editorInstanceRef.current.selection.focus();
-            isUpdatingRef.current = false;
-          });
-        } else {
-          isUpdatingRef.current = false;
-        }
-      }
-    },
+  // Debounced callback for onTextUpdate
+  const debouncedOnTextUpdate = useMemo(
+    () => debounce((newContent) => onTextUpdate?.(newContent), 300),
     [onTextUpdate]
   );
 
-  // Handle editor focus
-  const handleEditorFocus = useCallback(() => {
-    if (editorInstanceRef.current) {
-      editorInstanceRef.current.selection.focus();
-    }
-  }, []);
-
-  // Editor configuration
   const config = useMemo(
     () => ({
       readonly: false,
-      placeholder: '',
       height: 400,
-      saveCursorPosition: true, 
+      enableAutoFocus: true,
+      saveCaretPosition: true,
+      observer: {
+        timeout: 0,
+      },
+      askBeforePasteHTML: false,
+      askBeforePasteFromWord: false,
+      processPasteHTML: false,
+      beautifyHTML: false,
+      defaultActionOnPaste: "insert_clear_html",
+      toolbarSticky: false,
       events: {
-        afterInit: (jodit) => {
-          editorInstanceRef.current = jodit;
-          jodit.e.on("blur", () => {
-            setTimeout(() => {
-              if (document.activeElement.tagName === "BODY") {
-                jodit.selection.focus();
-              }
-            }, 0);
-          });
-        },
-        afterBlur: () => {
-          if (document.activeElement.tagName === "BODY") {
-            editorInstanceRef.current?.selection.focus();
+        beforeSetContent: () => {
+          const editor = editorInstanceRef.current;
+          if (editor) {
+            cursorPositionRef.current = editor.selection.save();
           }
+        },
+        afterSetContent: () => {
+          const editor = editorInstanceRef.current;
+          if (editor && cursorPositionRef.current) {
+            requestAnimationFrame(() => {
+              editor.selection.restore(cursorPositionRef.current);
+            });
+          }
+        },
+        change: () => {
+          const editor = editorInstanceRef.current;
+          if (editor) {
+            cursorPositionRef.current = editor.selection.save();
+          }
+        },
+        afterInit: (editor) => {
+          editorInstanceRef.current = editor;
+          editor.selection.focus();
         },
       },
     }),
     []
   );
+
+  const handleEditorChange = useCallback(
+    (newContent) => {
+      if (!isUpdatingRef.current) {
+        const editor = editorInstanceRef.current;
+        if (editor) {
+          isUpdatingRef.current = true;
+
+          // Save cursor position
+          cursorPositionRef.current = editor.selection.save();
+
+          // Update state and call debounced onTextUpdate
+          setContents(newContent);
+          debouncedOnTextUpdate(newContent);
+
+          // Restore cursor position
+          requestAnimationFrame(() => {
+            if (cursorPositionRef.current) {
+              editor.selection.restore(cursorPositionRef.current);
+            }
+            isUpdatingRef.current = false;
+          });
+        }
+      }
+    },
+    [debouncedOnTextUpdate]
+  );
+
+  // Handle external content updates
+  useEffect(() => {
+    if (defaultText !== contents && !isUpdatingRef.current) {
+      const editor = editorInstanceRef.current;
+      if (editor) {
+        isUpdatingRef.current = true;
+
+        // Save cursor position
+        cursorPositionRef.current = editor.selection.save();
+
+        // Update state
+        setContents(defaultText || "");
+
+        // Restore cursor position
+        requestAnimationFrame(() => {
+          if (cursorPositionRef.current) {
+            editor.selection.restore(cursorPositionRef.current);
+          }
+          isUpdatingRef.current = false;
+        });
+      } else {
+        setContents(defaultText || "");
+      }
+    }
+  }, [defaultText, contents]);
+
+  // Cleanup debounced function on unmount
+  useEffect(() => {
+    return () => {
+      debouncedOnTextUpdate.cancel();
+    };
+  }, [debouncedOnTextUpdate]);
 
   return (
     <JoditEditor
@@ -85,8 +126,12 @@ const CorrespondenceEditor = ({ defaultText, onTextUpdate, placeholder }) => {
       value={contents}
       config={config}
       onChange={handleEditorChange}
-      onFocus={handleEditorFocus}
-      onBlur={handleEditorFocus} 
+      onBlur={() => {
+        const editor = editorInstanceRef.current;
+        if (editor) {
+          cursorPositionRef.current = editor.selection.save();
+        }
+      }}
     />
   );
 };

@@ -243,7 +243,7 @@ const NoteSheet = ({
               {notes.length > 0 ? renderedNotes : <p>No notes available</p>}
             </div>
 
-            <div className="editor-container half-width">
+            <div className={`editor-container half-width ${writeNote ? "" : "d-none"}`}>
               {showPreview ? (
                 <div className="preview-content">
                   <div
@@ -305,7 +305,7 @@ const NoteSheet = ({
           overflow-y: auto;
           padding: 20px;
           overflow-x: hidden;
-          min-width:100%;
+          max-width:100%;
         }
         .note-sheet-container.zoom-in .notes-container {
           max-height: calc(100vh - 100px);

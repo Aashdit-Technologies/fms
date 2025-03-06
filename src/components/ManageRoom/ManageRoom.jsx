@@ -103,6 +103,7 @@ const ManageRoom = () => {
   const [roomData, setRoomData] = useState([]);
   const [editingRoomId, setEditingRoomId] = useState(null);
   const token = useAuthStore.getState().token;
+  const [totalRows, setTotalRows] = useState(0);
 
   // Fetch Room Data
   const fetchRoomData = useCallback(async () => {
@@ -114,6 +115,7 @@ const ManageRoom = () => {
         toast.error(data.message);
       }
       setRoomData(data.data || []);
+      setTotalRows(data.data?.length || 0);
     } catch (error) {
       console.error("Error fetching room data:", error);
     }
@@ -123,9 +125,19 @@ const ManageRoom = () => {
     fetchRoomData();
   }, [fetchRoomData]);
 
-  // Handle Input Changes
+  const isValidInput = (value) => {
+    const regex = /^[a-zA-Z0-9.,/\-&() ]*$/;
+    return regex.test(value);
+  };
+
   const handleInputChange = (e) => {
-    setRoom((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+
+    if (isValidInput(value)) {
+      setRoom((prev) => ({ ...prev, [name]: value }));
+    } else {
+      toast.warning("Only alphanumeric characters and .,/- & () are allowed");
+    }
   };
 
   // Reset Form
@@ -134,11 +146,17 @@ const ManageRoom = () => {
     setEditingRoomId(null);
   };
 
-  // Handle Submit (Add/Edit Room)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!room.roomNumber || room.roomNumber <= 0 || !room.description) {
-      toast.warning("Please fill in all fields correctly.");
+    if (!room.roomNumber.trim() || !room.description.trim()) {
+      toast.warning("Please fill in all required fields.");
+      return;
+    }
+
+    if (!isValidInput(room.roomNumber) || !isValidInput(room.description)) {
+      toast.error(
+        "Invalid characters detected. Only alphanumeric and .,/- & () are allowed"
+      );
       return;
     }
 
@@ -215,12 +233,12 @@ const ManageRoom = () => {
     setActiveKey("0");
   };
 
-  // Columns configuration for DataTable with Serial Number
   const columns = [
     {
       name: "Sl No.",
       selector: (row, index) => index + 1,
       sortable: false,
+      width: "80px",
     },
     {
       name: "Room Number",
@@ -236,16 +254,16 @@ const ManageRoom = () => {
       name: "Rack Count",
       selector: (row) => row.rackCount || "N/A",
     },
-    {
-      name: "Active",
-      cell: (row) =>
-        row.isActive ? (
-          <FaCheck className="text-success" title="Active" />
-        ) : (
-          <FaTimes className="text-danger" title="Inactive" />
-        ),
-      sortable: true,
-    },
+    // {
+    //   name: "Active",
+    //   cell: (row) =>
+    //     row.isActive ? (
+    //       <FaCheck className="text-success" title="Active" />
+    //     ) : (
+    //       <FaTimes className="text-danger" title="Inactive" />
+    //     ),
+    //   sortable: true,
+    // },
     {
       name: "Actions",
       cell: (row) => (
@@ -256,7 +274,7 @@ const ManageRoom = () => {
             size="small"
             sx={{ minWidth: "auto" }}
             onClick={() => handleStatusToggle(row)}
-            title={row.isActive ? "In-Active" : "Active"}
+            title={row.isActive ? "Inactivate" : "Activate"}
           >
             {row.isActive ? <FaLock /> : <FaLockOpen />}
           </Button>
@@ -314,6 +332,13 @@ const ManageRoom = () => {
                   value={room.roomNumber}
                   onChange={handleInputChange}
                   placeholder="Enter Room"
+                  // helperText="Only alphanumeric characters and .,/- & () are allowed"
+                  error={
+                    !isValidInput(room.roomNumber) && room.roomNumber !== ""
+                  }
+                  inputProps={{
+                    maxLength: 50,
+                  }}
                 />
               </div>
               <div className="form-group col-md-6">
@@ -333,6 +358,13 @@ const ManageRoom = () => {
                   value={room.description}
                   onChange={handleInputChange}
                   placeholder="Enter room description"
+                  // helperText="Only alphanumeric characters and .,/- & () are allowed"
+                  error={
+                    !isValidInput(room.description) && room.description !== ""
+                  }
+                  inputProps={{
+                    maxLength: 500,
+                  }}
                 />
               </div>
               <div className="col-md-12 text-center mt-3">
@@ -350,9 +382,9 @@ const ManageRoom = () => {
                     : "Save"}
                 </Button>
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   type="button"
-                  color="secondary"
+                  color="error"
                   className="ms-2"
                   onClick={handleReset}
                 >
@@ -385,6 +417,10 @@ const ManageRoom = () => {
               data={roomData}
               customStyles={customStyles}
               pagination
+              paginationServer={false}
+              paginationTotalRows={totalRows}
+              paginationPerPage={10}
+              paginationRowsPerPageOptions={[10, 20, 30, 50]}
               responsive
               highlightOnHover
               pointerOnHover
