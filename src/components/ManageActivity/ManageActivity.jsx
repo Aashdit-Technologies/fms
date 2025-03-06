@@ -8,10 +8,16 @@ import useAuthStore from "../../store/Store";
 import "./ManageActivity.css";
 import DataTable from "react-data-table-component"; // Import DataTable
 import { toast } from "react-toastify";
+import "./ManageActivity.css";
 
 // import { Button } from "@mui/material";
 
 const customStyles = {
+  textarea: {
+    minHeight: "50px",
+    resize: "vertical",
+    overflow: "auto",
+  },
   table: {
     style: {
       border: "1px solid #ddd",
@@ -87,7 +93,6 @@ const customStyles = {
   },
 };
 
-
 const ManageActivity = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isTableOpen, setIsTableOpen] = useState(true);
@@ -100,9 +105,11 @@ const ManageActivity = () => {
   const [activityData, setActivityData] = useState([]);
   const [editingActivityId, setEditingActivityId] = useState(null);
   const [activeKey, setActiveKey] = useState("1");
+  const [remarksRows, setRemarksRows] = useState(3);
   // const [rowSize, setRowSize] = useState(10);
   // const [pageNo, setPageNo] = useState(1);
   // const [totalRows, setTotalRows] = useState(0);
+
   const fetchActivityData = async () => {
     try {
       // const payload = {
@@ -111,13 +118,17 @@ const ManageActivity = () => {
       // };
 
       // Encrypt the payload
-// const encryptedMessage = encryptPayload(payload);
+      // const encryptedMessage = encryptPayload(payload);
       const token = useAuthStore.getState().token;
       const response = await api.get("/manage-activity", {
         headers: { Authorization: `Bearer ${token}` },
         // params: { dataObject: encryptedMessage },
       });
-      setActivityData(response.data.data);
+      const sortedData = response.data.data.sort((a, b) => {
+        return b.activityId - a.activityId;
+      });
+
+      setActivityData(sortedData);
     } catch (error) {
       console.error("Error fetching activity data:", error);
     }
@@ -127,12 +138,18 @@ const ManageActivity = () => {
     fetchActivityData();
   }, []);
 
+  const validateInput = (value) => {
+    const regex = /^[a-zA-Z0-9.,/\-&() ]*$/;
+    return regex.test(value);
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setActivity((prevActivity) => ({
-      ...prevActivity,
-      [name]: value,
-    }));
+    if (validateInput(value)) {
+      setActivity((prev) => ({ ...prev, [name]: value }));
+    } else {
+      toast.warning("Only alphanumeric characters and .,/- & () are allowed");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -141,6 +158,18 @@ const ManageActivity = () => {
 
     if (!activity.activityCode || !activity.activityName) {
       toast.warning("Please fill out all required fields.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (
+      !validateInput(activity.activityCode) ||
+      !validateInput(activity.activityName) ||
+      (activity.activityRemarks && !validateInput(activity.activityRemarks))
+    ) {
+      toast.error(
+        "Invalid characters detected. Only alphanumeric and .,/- & () are allowed"
+      );
       setIsSubmitting(false);
       return;
     }
@@ -170,7 +199,9 @@ const ManageActivity = () => {
           ? "Activity updated successfully!"
           : "Activity added successfully!"
       );
+      setActiveKey("1");
       fetchActivityData();
+      setIsTableOpen(true);
 
       setActivityData((prevData) =>
         editingActivityId
@@ -216,7 +247,9 @@ const ManageActivity = () => {
       );
 
       toast.success(
-        `Activity status updated to ${updatedStatus ? "Active" : "Inactive"}!`
+        `Activity Status is ${
+          updatedStatus ? "Activated" : "Inactivated"
+        } successfully`
       );
       setActivityData((prevData) =>
         prevData.map((item) =>
@@ -242,7 +275,6 @@ const ManageActivity = () => {
     setActiveKey("0");
   };
 
-
   const columns = [
     {
       name: "Sl",
@@ -264,11 +296,11 @@ const ManageActivity = () => {
       name: "Activity Remarks",
       selector: (row) => row.activityRemarks,
     },
-    {
-      name: "Active",
-      selector: (row) => (row.isActive ? "Yes" : "No"),
-      sortable: true,
-    },
+    // {
+    //   name: "Active",
+    //   selector: (row) => (row.isActive ? "Yes" : "No"),
+    //   sortable: true,
+    // },
     {
       name: "Actions",
       cell: (row) => (
@@ -279,22 +311,20 @@ const ManageActivity = () => {
             size="small"
             sx={{ minWidth: "auto" }}
             title={row.isActive ? "Deactivate" : "Activate"}
-            startIcon={row.isActive ? <FaLock /> : <FaLockOpen />}
             onClick={() => handleStatusToggle(row)}
           >
-            
+            {row.isActive ? <FaLock /> : <FaLockOpen />}
           </Button>
           <Button
-            variant="outlined"
-            color="warning"
+            variant="contained"
+            color="primary"
             size="small"
             title="Edit"
             sx={{ minWidth: "auto" }}
-            startIcon={<FaEdit />}
             onClick={() => handleEdit(row)}
             style={{ marginLeft: "8px" }}
           >
-            {/* Edit */}
+            <FaEdit />
           </Button>
         </div>
       ),
@@ -309,116 +339,183 @@ const ManageActivity = () => {
       <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
         {/* Add/Edit Activity Accordion */}
         <Accordion.Item eventKey="0">
-          <Accordion.Header onClick={() => setIsFormOpen((prev) => !prev)} className="custbg">
-          <div className="mstaccodion d-flex" style={{justifyContent:"space-between", width:"100%"}}>
-            <span className="accordion-title">
-              {editingActivityId
-                ? "Edit Activity Details"
-                : "Add Activity Details"}
-            </span>
-            <span className="accordion-icon">
-              {isFormOpen ? <FaMinus /> : <FaPlus />}
-            </span>
+          <Accordion.Header
+            onClick={() => setIsFormOpen((prev) => !prev)}
+            className="custbg"
+          >
+            <div
+              className="mstaccodion d-flex"
+              style={{ justifyContent: "space-between", width: "100%" }}
+            >
+              <span className="accordion-title">
+                {editingActivityId
+                  ? "Edit Activity Details"
+                  : "Add Activity Details"}
+              </span>
+              <span className="accordion-icon">
+                {isFormOpen ? <FaMinus /> : <FaPlus />}
+              </span>
             </div>
           </Accordion.Header>
           <Accordion.Body>
-            <form onSubmit={handleSubmit} className="row">
-              <div className="form-group col-md-3">
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Activity Code"
-                  variant="outlined"
-                  id="activityCode"
-                  name="activityCode"
-                  value={activity.activityCode}
-                  onChange={handleInputChange}
-                />
+            <div className="container">
+              <div className="row">
+                <form onSubmit={handleSubmit} className="row">
+                  <div className="form-group col-md-4">
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label={
+                        <span>
+                          Activity Code <span style={{ color: "red" }}>*</span>
+                        </span>
+                      }
+                      variant="outlined"
+                      id="activityCode"
+                      name="activityCode"
+                      value={activity.activityCode}
+                      onChange={handleInputChange}
+                      error={
+                        !validateInput(activity.activityCode) &&
+                        activity.activityCode !== ""
+                      }
+                      helperText={
+                        !validateInput(activity.activityCode) &&
+                        activity.activityCode !== ""
+                          ? "Only alphanumeric and .,/- & () characters allowed"
+                          : ""
+                      }
+                    />
+                  </div>
+                  <div className="form-group col-md-4">
+                    <TextField
+                      fullWidth
+                      label={
+                        <span>
+                          Activity Name <span style={{ color: "red" }}>*</span>
+                        </span>
+                      }
+                      variant="outlined"
+                      id="activityName"
+                      name="activityName"
+                      value={activity.activityName}
+                      onChange={handleInputChange}
+                      error={
+                        !validateInput(activity.activityName) &&
+                        activity.activityName !== ""
+                      }
+                      helperText={
+                        !validateInput(activity.activityName) &&
+                        activity.activityName !== ""
+                          ? "Only alphanumeric and .,/- & () characters allowed"
+                          : ""
+                      }
+                    />
+                  </div>
+                  <div className="form-group col-md-4">
+                    <TextField
+                      fullWidth
+                      label={
+                        <span>
+                          Activity Remarks{" "}
+                          <span style={{ color: "red" }}>*</span>
+                        </span>
+                      }
+                      variant="outlined"
+                      // multiline
+                      minRows={3}
+                      maxRows={10}
+                      id="activityRemarks"
+                      name="activityRemarks"
+                      value={activity.activityRemarks}
+                      onChange={handleInputChange}
+                      error={
+                        !validateInput(activity.activityRemarks) &&
+                        activity.activityRemarks !== ""
+                      }
+                      helperText={
+                        !validateInput(activity.activityRemarks) &&
+                        activity.activityRemarks !== ""
+                          ? "Only alphanumeric and .,/- & () characters allowed"
+                          : ""
+                      }
+                      InputProps={{
+                        style: customStyles.textarea,
+                      }}
+                      inputProps={{
+                        maxLength: 500,
+                        style: {
+                          resize: "vertical",
+                        },
+                      }}
+                    />
+                  </div>
+                  <div className="col-md-12 text-center mt-3">
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      color="primary"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting
+                        ? "Saving..."
+                        : editingActivityId
+                        ? "Update Activity"
+                        : "Save"}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      className="ms-2"
+                      onClick={handleReset}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </form>
               </div>
-              <div className="form-group col-md-3">
-                <TextField
-                  fullWidth
-                  label="Activity Name"
-                  variant="outlined"
-                  id="activityName"
-                  name="activityName"
-                  value={activity.activityName}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div className="form-group col-md-12 mt-3">
-                <TextField
-                  fullWidth
-                  label="Activity Remarks"
-                  variant="outlined"
-                  multiline
-                  rows={3}
-                  id="activityRemarks"
-                  name="activityRemarks"
-                  value={activity.activityRemarks}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div className="col-md-12 text-center mt-3">
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting
-                    ? "Saving..."
-                    : editingActivityId
-                    ? "Update Activity"
-                    : "Save"}
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  className="ms-2"
-                  onClick={handleReset}
-                >
-                  Reset
-                </Button>
-              </div>
-            </form>
+            </div>
           </Accordion.Body>
         </Accordion.Item>
 
         {/* View Activity Table Accordion */}
         <Accordion.Item eventKey="1" className="mt-3">
-          <Accordion.Header onClick={() => setIsTableOpen((prev) => !prev)} className="custbg">
-          <div className="mstaccodion d-flex" style={{justifyContent:"space-between", width:"100%"}}>
-            <span className="accordion-title">View Activities</span>
-            <span className="accordion-icon">
-              {isTableOpen ? <FaMinus /> : <FaPlus />}
-            </span>
+          <Accordion.Header
+            onClick={() => setIsTableOpen((prev) => !prev)}
+            className="custbg"
+          >
+            <div
+              className="mstaccodion d-flex"
+              style={{ justifyContent: "space-between", width: "100%" }}
+            >
+              <span className="accordion-title">View Activities</span>
+              <span className="accordion-icon">
+                {isTableOpen ? <FaMinus /> : <FaPlus />}
+              </span>
             </div>
           </Accordion.Header>
           <Accordion.Body>
             <div className="row">
               <div className="col-md-12">
                 <div className="table-responsive">
-                 
-
-                <DataTable
-                      columns={columns}
-                      data={activityData}
-                      pagination
-                      highlightOnHover
-                      responsive
-                      noDataComponent="No data available"
-                      customStyles={customStyles}
-                      // paginationServer
-                      // paginationTotalRows={totalRows} // Set total rows for server-side pagination
-                      // paginationPerPage={rowSize}
-                      // paginationDefaultPage={pageNo}
-                      // onChangePage={(page) => setPageNo(page)} // Update page state
-                      // onChangeRowsPerPage={(newRowSize) => {
-                      //   setRowSize(newRowSize);
-                      //   setPageNo(1); // Reset to first page when changing rows per page
-                      // }}
-                    />
+                  <DataTable
+                    columns={columns}
+                    data={activityData}
+                    pagination
+                    highlightOnHover
+                    responsive
+                    noDataComponent="No data available"
+                    customStyles={customStyles}
+                    // paginationServer
+                    // paginationTotalRows={totalRows} // Set total rows for server-side pagination
+                    // paginationPerPage={rowSize}
+                    // paginationDefaultPage={pageNo}
+                    // onChangePage={(page) => setPageNo(page)} // Update page state
+                    // onChangeRowsPerPage={(newRowSize) => {
+                    //   setRowSize(newRowSize);
+                    //   setPageNo(1); // Reset to first page when changing rows per page
+                    // }}
+                  />
                 </div>
               </div>
             </div>

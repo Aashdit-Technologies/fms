@@ -1,0 +1,9 @@
+.MuiInputBase-multiline {
+    resize: vertical !important;
+    min-height: 100px !important;
+  }
+  
+  .MuiInputBase-inputMultiline {
+    resize: vertical !important;
+    overflow: auto !important;
+  }

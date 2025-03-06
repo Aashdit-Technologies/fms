@@ -361,7 +361,7 @@ const ManageRack = () => {
           </Button>
           <Button
             variant="contained"
-            color="warning"
+            color="primary"
             size="small"
             sx={{ minWidth: "auto" }}
             onClick={() => handleEdit(row)}
