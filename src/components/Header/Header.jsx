@@ -8,6 +8,7 @@ import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
 import { toast} from "react-toastify";
 import { useNavigate } from 'react-router-dom';
+import { PageLoader } from "../pageload/PageLoader";
 import { Select, MenuItem, FormControl, InputLabel, CircularProgress } from "@mui/material";
 
 const Header = ({ collapsed }) => {
@@ -15,6 +16,7 @@ const Header = ({ collapsed }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const [isLoading, setIsLoading] = useState(false);
 
   const prefetchRoles = useCallback(async () => {
     if (!token) return;
@@ -26,6 +28,7 @@ const Header = ({ collapsed }) => {
   }, [token, queryClient]);
 
   const fetchRoles = async () => {
+    setIsLoading(true);
     try {
       const response = await api.get('get-roles', {
         headers: {
@@ -40,6 +43,8 @@ const Header = ({ collapsed }) => {
       console.error('Roles fetch error:', error);
       // toast.error('Failed to fetch roles. Please try again later.');
       throw error;
+    }finally{
+      setIsLoading(false);
     }
   };
 
@@ -64,6 +69,7 @@ const Header = ({ collapsed }) => {
 
   const changeRoleMutation = useMutation({
     mutationFn: async ({ employeeDeptMapId, employeeId }) => {
+      
       const payload = { employeeDeptMapId, employeeId };
       const encryptedPayload = encryptPayload(payload);
       
@@ -83,6 +89,7 @@ const Header = ({ collapsed }) => {
       return response.data;
     },
     onMutate: async ({ employeeDeptMapId }) => {
+      setIsLoading(true);
       await queryClient.cancelQueries(['roles']);
       await queryClient.cancelQueries(['menu']);
       
@@ -109,6 +116,7 @@ const Header = ({ collapsed }) => {
       }, 1100);
     },
     onError: (error, variables, context) => {
+      setIsLoading(false);
       if (context?.previousRoles) {
         queryClient.setQueryData(['roles'], context.previousRoles);
       }
@@ -124,7 +132,7 @@ const Header = ({ collapsed }) => {
     try {
       const selectedRoleId = event.target.value;
       if (!selectedRoleId) return;
-
+      setIsLoading(true);
       const selectedRole = rolesData?.find(
         role => role.employeeDeptMapId === parseInt(selectedRoleId)
       );
@@ -134,7 +142,10 @@ const Header = ({ collapsed }) => {
         employeeId: selectedRole?.employeeId
       });
     } catch (error) {
+      setIsLoading(false);
       console.error('Role change error:', error);
+    }finally{
+      setIsLoading(false);
     }
   };
   
@@ -171,6 +182,7 @@ const Header = ({ collapsed }) => {
               </div>
             </div>
           </div>
+          {isLoading && <PageLoader />}
           <div className="col-md-8">
             <div className="header-right-sec d-flex align-items-center justify-content-end">
               <div className="header-right-sec-1">

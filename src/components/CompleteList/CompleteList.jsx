@@ -327,6 +327,7 @@ const CompleteList = () => {
         </div>
       ),
       sortable: true,
+      width: '300px'
     },
     {
       name: "File Name",

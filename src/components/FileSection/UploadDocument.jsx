@@ -335,6 +335,7 @@ const UploadDocument = ({
 
   const mutation = useMutation({
     mutationFn: async (data) => {
+      setIsLoading(true);
       try {
         const encryptedDataObject = encryptPayload({
           fileId: fileDetails.data.fileId,
@@ -395,6 +396,8 @@ const UploadDocument = ({
         }
       } catch (error) {
         throw error;
+      }finally {
+        setIsLoading(false);
       }
     },
     onSuccess: (data) => {},
@@ -411,6 +414,7 @@ const UploadDocument = ({
 
   const markActionMutation = useMutation({
     mutationFn: async (action) => {
+      setIsLoading(true);
       try {
         const markupPayloads = {
           actionTaken: action,
@@ -435,6 +439,8 @@ const UploadDocument = ({
       } catch (error) {
         console.error("API Error:", error);
         throw error;
+      }finally {
+        setIsLoading(false);
       }
     },
     onSuccess: (data) => {
@@ -465,7 +471,7 @@ const UploadDocument = ({
         toast.error("File details or additional details are missing.");
         return;
       }
-
+      setIsLoading(true);
       const sendfilepayload = {
         actionTaken: data.action,
         fileId: fileDetails.data.fileId,
@@ -494,6 +500,7 @@ const UploadDocument = ({
       }
     },
     onError: (error) => {
+      setIsLoading(false);
       toast.error(error.message || "API call failed!");
     },
   });
@@ -505,6 +512,7 @@ const UploadDocument = ({
 
   const newEndpointMutation = useMutation({
     mutationFn: async () => {
+      setIsLoading(true);
       try {
         console.log("Validating form...");
 
@@ -552,6 +560,8 @@ const UploadDocument = ({
           error.message ||
           "Something went wrong during the API call";
         throw new Error(errorMessage);
+      }finally {
+        setIsLoading(false);
       }
     },
     onSuccess: (data) => {
@@ -562,7 +572,7 @@ const UploadDocument = ({
       }
     },
     onError: (error) => {
-      console.error("API Call Failed:", error);
+      setIsLoading(false);
       toast.error(error.message || "New API call failed!");
     },
   });

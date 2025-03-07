@@ -602,7 +602,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
 
       sortable: true,
 
-      width: "350px",
+      width: "400px",
     },
 
     {
@@ -611,8 +611,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       selector: (row) => row.fileName,
 
       sortable: true,
-
-      width: "250px",
+      width: "300px",
     },
     {
       name: "Send On",
@@ -620,8 +619,6 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       selector: (row) => row.sentOn,
 
       sortable: true,
-
-      width: "130px",
     },
 
     {
@@ -630,8 +627,6 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       selector: (row) => row.status,
 
       sortable: true,
-
-      width: "120px",
 
       cell: (row) => (
         <span className="bg-warning text-white rounded p-1">{row.status}</span>
@@ -709,6 +704,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
 
           <Autocomplete
             id="prioritySelect"
+            size="small"
             options={["All", ...prioritylyst]}
             getOptionLabel={(option) => option}
             value={priority || null}
@@ -728,6 +724,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
           {/* <label htmlFor="fileModuleSelect">File Module</label> */}
 
           <Autocomplete
+            size="small"
             id="fileModuleSelect"
             options={[{ moduleId: "0", moduleName: "All" }, ...fileModules]}
             getOptionLabel={(option) => option.moduleName}
@@ -748,7 +745,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
           />
         </div>
 
-        <div className="col-md-12 mt-5">
+        <div className="col-md-12 mt-3">
           <div className="table-responsive p-3">
             <DataTable
               columns={columns}
@@ -935,22 +932,26 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
                     ),
 
                     "File Name": fileDetails.fileName,
+                    Subject: fileDetails.subject || "NA",
+                    Title: fileDetails.title || "NA",
+                    Activity:fileDetails.activity || "NA",
+                    Custodian:fileDetails.custodian || "NA",
 
-                    "From Employee": fileDetails.fromEmployee,
+                    // "From Employee": fileDetails.fromEmployee,
 
-                    "Created Date": fileDetails.sentOn,
+                    // Status: fileDetails.status,
 
-                    Status: fileDetails.status,
+                    // Priority: fileDetails.priority,
 
-                    Priority: fileDetails.priority,
-
-                    "File Module": fileDetails.fileType,
+                    // "File Module": fileDetails.fileType,
 
                     Room: fileDetails.roomNumber,
 
                     Rack: fileDetails.rackNumber,
 
                     Cell: fileDetails.cellNumber,
+                    "Created By":fileDetails.createdBy || "NA",
+                    "Created Date": fileDetails.sentOn,
                   }).map(([key, value]) => (
                     <TableRow key={key}>
                       <TableCell component="th" scope="row">

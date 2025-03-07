@@ -101,32 +101,30 @@ const customStyles = {
   },
 };
 
-
 const RequestStatus = () => {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [rqstStsData, setRqstStsData] = useState([]);
   const [loading, setLoading] = useState(false);
-  
 
   const [fileDetails, setFileDetails] = useState(null);
   const [fileDetailsModalVisible, setFileDetailsModalVisible] = useState(false);
- const [rowSize, setRowSize] = useState(10);
+  const [rowSize, setRowSize] = useState(10);
   const [pageNo, setPageNo] = useState(1);
 
   const Navigate = useNavigate();
 
   const conditionalRowStyles = [
     {
-      when: row => row.status === "RECALLED" || row.isRecalled === true,
+      when: (row) => row.status === "RECALLED" || row.isRecalled === true,
       style: {
-        backgroundColor: '#e6f2f5 !important',
-        '&:hover': {
-          cursor: 'pointer',
-          backgroundColor: '#d1e9ed !important',
+        backgroundColor: "#e6f2f5 !important",
+        "&:hover": {
+          cursor: "pointer",
+          backgroundColor: "#d1e9ed !important",
         },
       },
-    }
+    },
   ];
 
   useEffect(() => {
@@ -147,7 +145,7 @@ const RequestStatus = () => {
         fromDate: params.fromDate,
         toDate: params.toDate,
         pageNo: pageNo,
-        rowSize:rowSize,
+        rowSize: rowSize,
       };
 
       const encryptedMessage = encryptPayload(payload);
@@ -156,14 +154,20 @@ const RequestStatus = () => {
         headers: { Authorization: `Bearer ${token}` },
         params: { dataObject: encryptedMessage },
       });
-      setRqstStsData(prevData => {
+      setRqstStsData((prevData) => {
         const newData = response.data.data || [];
-        return newData.map(newItem => {
-          const existingItem = prevData.find(item => item.fileId === newItem.fileId);
+        return newData.map((newItem) => {
+          const existingItem = prevData.find(
+            (item) => item.fileId === newItem.fileId
+          );
           return {
             ...newItem,
             status: existingItem ? existingItem.status : newItem.status,
             isRecalled: existingItem ? existingItem.isRecalled : false,
+            seenfile: newItem.seenfile || "No",
+            seenActive: newItem.seenActive || "N",
+            senderJobRoleId: newItem.senderJobRoleId,
+            currentUserJobRoleId: newItem.currentUserJobRoleId,
           };
         });
       });
@@ -174,7 +178,6 @@ const RequestStatus = () => {
       setLoading(false);
     }
   };
-
 
   // const handleCallFor = async (fileId, fileReceiptId) => {
   //   setLoading(true);
@@ -190,7 +193,7 @@ const RequestStatus = () => {
   //         headers: { Authorization: `Bearer ${token}` },
   //       }
   //     );
-      
+
   //     if(response.data.outcome == true){
   //       toast.success(response.data.message);
   //       fetchFilteredData();
@@ -211,35 +214,39 @@ const RequestStatus = () => {
       const token = useAuthStore.getState().token;
       // const payload = encryptPayload({ fileId, fileReceiptId });
 
-      const payload = { fileReceiptId: fileReceiptId, fileId: fileId, calltype:"recall"};
+      const payload = {
+        fileReceiptId: fileReceiptId,
+        fileId: fileId,
+        calltype: "recall",
+      };
       const encryptedMessage = encryptPayload(payload);
-      const response = await api.post("file/call-for-recall",
+      const response = await api.post(
+        "file/call-for-recall",
         { dataObject: encryptedMessage },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      if(response.data.outcome == true){
-        setRqstStsData(prevData => 
-          prevData.map(item => 
-            item.fileId === fileId 
-              ? { 
-                  ...item, 
+      if (response.data.outcome == true) {
+        setRqstStsData((prevData) =>
+          prevData.map((item) =>
+            item.fileId === fileId
+              ? {
+                  ...item,
                   status: "RECALLED",
-                  isRecalled: true, 
+                  isRecalled: true,
                 }
               : item
           )
         );
         toast.success(response.data.message);
-          fetchFilteredData();
-      }
-      else{
+        await fetchFilteredData(fromDate, toDate);
+      } else {
         toast.error(response.data.message);
       }
     } catch (error) {
       console.error("Error in Call For request:", error);
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -248,13 +255,17 @@ const RequestStatus = () => {
     setFileDetails(file);
     setFileDetailsModalVisible(true);
   };
-  const handleViewStatus = (file,tabPanelId) => {
+  const handleViewStatus = (file, tabPanelId) => {
     setLoading(true);
     console.log("Edit Clicked:view", file);
-    
+
     if (!file) return;
 
-    Navigate("/main-file", { state: { file: file,tabPanelId:2 } }, { replace: true });
+    Navigate(
+      "/main-file",
+      { state: { file: file, tabPanelId: 2 } },
+      { replace: true }
+    );
   };
   const columns = [
     {
@@ -267,27 +278,31 @@ const RequestStatus = () => {
       name: "File Number",
       selector: (row) => row.fileNo,
       sortable: true,
-      cell : (row) => (
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "start",
-          textAlign: "left",
-          gap: "8px",
-        }}>
+      cell: (row) => (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "start",
+            textAlign: "left",
+            gap: "8px",
+          }}
+        >
           <a href="#" onClick={() => handleFileDetailsClick(row)}>
             {row.fileNo}
           </a>
-          <span className="bg-primary rounded text-white p-1">{row.priority}</span>
+          <span className="bg-primary rounded text-white p-1">
+            {row.priority}
+          </span>
         </div>
       ),
-      width: "250px",
+      width: "400px",
     },
     {
       name: "File Name",
       selector: (row) => row.fileName,
       sortable: true,
-      width: "150px",
+      width: "200px",
     },
     {
       name: "From",
@@ -299,7 +314,7 @@ const RequestStatus = () => {
       name: "Send On",
       selector: (row) => row.sentOn,
       sortable: true,
-      width: "110px",
+      width: "200px",
     },
     {
       name: "Status",
@@ -322,48 +337,48 @@ const RequestStatus = () => {
     },
     {
       name: "Action",
-      cell: (row) => (
-        <div className="d-flex">
-          {/* <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            title="Call For"
-            className="ms-2"
-            onClick={() => handleCallFor(row.fileId, row.fileReceiptId)}
-          >
-            Call For
-          </Button> */}
-          <Button
-            variant="contained"
-            color="secondary"
-            size="small"
-            title="Recall"
-            className="ms-2"
-            onClick={() => handleReCall(row.fileId, row.fileReceiptId)}
-          >
-            Recall
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            size="small"
-            title="View"
-            className="ms-2"
-            onClick={() => handleViewStatus(row)}
-          >
-            View
-          </Button>
-        </div>
-      ),
+      cell: (row) => {
+        // Check if recall is allowed based on conditions
+        const canRecall =
+          !row.isRecalled && // Not already recalled
+          (row.seenfile === "No" || row.seenfile === "N") && // Not seen
+          (row.seenActive === "N" || row.seenActive === "") && // Not actively viewed
+          row.senderJobRoleId === row.currentUserJobRoleId; // Current user is sender
+
+        return (
+          <div className="d-flex">
+            {canRecall && (
+              <Button
+                variant="contained"
+                color="secondary"
+                size="small"
+                title="Recall"
+                className="ms-2"
+                onClick={() => handleReCall(row.fileId, row.fileReceiptId)}
+              >
+                Recall
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              color="secondary"
+              size="small"
+              title="View"
+              className="ms-2"
+              onClick={() => handleViewStatus(row)}
+            >
+              View
+            </Button>
+          </div>
+        );
+      },
     },
   ];
-
 
   const handleFromDateChange = (newValue) => {
     setFromDate(newValue);
     if (toDate && newValue && dayjs(newValue).isAfter(dayjs(toDate))) {
-      setToDate(null); 
+      setToDate(null);
       setError("To Date cannot be before From Date");
     } else {
       setError("");
@@ -376,45 +391,45 @@ const RequestStatus = () => {
       setToDate(null);
     } else {
       setToDate(newValue);
-      setError(""); 
+      setError("");
     }
   };
 
   return (
     <div>
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <div className="row mb-3">
-        <div className="form-group col-md-3">
-          <DatePicker
-            label="From Date"
-            value={fromDate}
-            onChange={handleFromDateChange}
-            format="DD/MM/YYYY"
-            renderInput={(params) => (
-              <TextField {...params} fullWidth variant="outlined" />
-            )}
-          />
-        </div>
+        <div className="row mb-3">
+          <div className="form-group col-md-3">
+            <DatePicker
+              label="From Date"
+              value={fromDate}
+              onChange={handleFromDateChange}
+              format="DD/MM/YYYY"
+              renderInput={(params) => (
+                <TextField {...params} fullWidth variant="outlined" />
+              )}
+            />
+          </div>
 
-        <div className="form-group col-md-3">
-          <DatePicker
-            label="To Date"
-            value={toDate}
-            onChange={handleToDateChange}
-            format="DD/MM/YYYY"
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                variant="outlined"
-                error={!!error}
-                helperText={error}
-              />
-            )}
-          />
+          <div className="form-group col-md-3">
+            <DatePicker
+              label="To Date"
+              value={toDate}
+              onChange={handleToDateChange}
+              format="DD/MM/YYYY"
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  variant="outlined"
+                  error={!!error}
+                  helperText={error}
+                />
+              )}
+            />
+          </div>
         </div>
-      </div>
-    </LocalizationProvider>
+      </LocalizationProvider>
       {loading && <PageLoader />}
       <DataTable
         columns={columns}
@@ -427,58 +442,70 @@ const RequestStatus = () => {
         paginationServer
         customStyles={customStyles}
         conditionalRowStyles={conditionalRowStyles}
-        paginationPerPage={rowSize} 
+        paginationPerPage={rowSize}
         paginationDefaultPage={pageNo}
         onChangePage={(page) => setPageNo(page)}
         onChangeRowsPerPage={(newRowSize) => {
           setRowSize(newRowSize);
-          setPageNo(1);  
+          setPageNo(1);
         }}
       />
 
-<Modal open={fileDetailsModalVisible} onClose={() => setFileDetailsModalVisible(false)}>
-      <Dialog open={fileDetailsModalVisible} onClose={() => setFileDetailsModalVisible(false)} maxWidth="md" fullWidth>
-        <DialogTitle>File Details</DialogTitle>
-        <DialogContent>
-          {fileDetails && (
-            <Table>
-              <TableBody>
-                {Object.entries({
-                  "File No": fileDetails.fileNo,
-                  "File Name": fileDetails.fileName,
-                  "From Employee": fileDetails.fromEmployee,
-                  "Sent On": fileDetails.sentOn,
-                  Status: fileDetails.status,
-                  Priority: fileDetails.priority,
-                  "File Module": fileDetails.fileType,
-                  Room: fileDetails.roomNumber,
-                  Rack: fileDetails.rackNumber,
-                  Cell: fileDetails.cellNumber,
-                }).map(([key, value]) => (
-                  <TableRow key={key}>
-                    <TableCell component="th" scope="row">
-                      {key}
-                    </TableCell>
-                    <TableCell>{value}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </DialogContent>
-        <DialogActions>
-          {/* <Button variant="contained" color="success" onClick={() => handleVolumeFile(fileDetails)}>
+      <Modal
+        open={fileDetailsModalVisible}
+        onClose={() => setFileDetailsModalVisible(false)}
+      >
+        <Dialog
+          open={fileDetailsModalVisible}
+          onClose={() => setFileDetailsModalVisible(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>File Details</DialogTitle>
+          <DialogContent>
+            {fileDetails && (
+              <Table>
+                <TableBody>
+                  {Object.entries({
+                    "File No": fileDetails.fileNo,
+                    "File Name": fileDetails.fileName,
+                    "From Employee": fileDetails.fromEmployee,
+                    "Sent On": fileDetails.sentOn,
+                    Status: fileDetails.status,
+                    Priority: fileDetails.priority,
+                    "File Module": fileDetails.fileType,
+                    Room: fileDetails.roomNumber,
+                    Rack: fileDetails.rackNumber,
+                    Cell: fileDetails.cellNumber,
+                  }).map(([key, value]) => (
+                    <TableRow key={key}>
+                      <TableCell component="th" scope="row">
+                        {key}
+                      </TableCell>
+                      <TableCell>{value}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </DialogContent>
+          <DialogActions>
+            {/* <Button variant="contained" color="success" onClick={() => handleVolumeFile(fileDetails)}>
             Create New Volume
           </Button>
           <Button variant="contained" color="success" onClick={() => handlePartFile(fileDetails)}>
             Create Part File
           </Button> */}
-          <Button variant="contained" color="secondary" onClick={() => setFileDetailsModalVisible(false)}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Modal>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => setFileDetailsModalVisible(false)}
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Modal>
     </div>
   );
 };

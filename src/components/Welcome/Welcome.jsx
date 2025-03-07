@@ -1,8 +1,10 @@
 import React from 'react';
 import { Box, Typography, Paper, Container } from '@mui/material';
 import { FolderOpen } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 const Welcome = () => {
+  const navigate = useNavigate();
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
       <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
@@ -27,6 +29,7 @@ const Welcome = () => {
                 cursor: 'pointer'
               }
             }}
+            onClick={() => navigate('/file')}
           >
             <Typography variant="h6" gutterBottom>
               Files
@@ -46,12 +49,13 @@ const Welcome = () => {
                 cursor: 'pointer'
               }
             }}
+            onClick={() => navigate('/letter')}
           >
             <Typography variant="h6" gutterBottom>
-              Documents
+              Letter
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Access and edit your documents
+              Access and edit your Letter
             </Typography>
           </Paper>
         </Box>
