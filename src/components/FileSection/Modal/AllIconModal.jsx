@@ -56,7 +56,7 @@ const tableCustomStyles = {
   },
   headRow: {
     style: {
-      backgroundColor: "#7B1FA2",
+      backgroundColor: "#207785",
       color: "white",
       fontWeight: 600,
     },
@@ -84,12 +84,13 @@ const tableCustomStyles = {
 export const HistoryModal = ({ open, onClose, historyData }) => {
   // console.log("History Data:", historyData);
   // console.log("Correspondence Data:", correspondence.data);
-
+  const [loading, setLoading] = useState(false);
   const data = historyData?.data || [];
   const isValidHistoryData = Array.isArray(data) && data.length > 0;
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
   const handleDownloads = async (row) => {
+    setLoading(true);
     if (!row || !row.correspondenceId) {
       console.error("Invalid row data for download");
       return;
@@ -121,6 +122,8 @@ export const HistoryModal = ({ open, onClose, historyData }) => {
       alert(
         "An error occurred while downloading the document. Please try again."
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -157,37 +160,45 @@ export const HistoryModal = ({ open, onClose, historyData }) => {
   ];
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <Box sx={modalStyle}>
-        <IconButton
-          aria-label="close"
-          onClick={onClose}
-          sx={{
-            position: "absolute",
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-        <Typography variant="h6" component="h2" gutterBottom sx={headingStyle}>
-          View History
-        </Typography>
-        {isValidHistoryData ? (
-          <DataTable
-            columns={columns}
-            data={data}
-            pagination
-            highlightOnHover
-            customStyles={tableCustomStyles}
-            style={{ width: "100%" }}
-          />
-        ) : (
-          <Typography>No history data available.</Typography>
-        )}
-      </Box>
-    </Modal>
+    <>
+      {loading && <PageLoader />}
+      <Modal open={open} onClose={onClose}>
+        <Box sx={modalStyle}>
+          <IconButton
+            aria-label="close"
+            onClick={onClose}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <Typography
+            variant="h6"
+            component="h2"
+            gutterBottom
+            sx={headingStyle}
+          >
+            View History
+          </Typography>
+          {isValidHistoryData ? (
+            <DataTable
+              columns={columns}
+              data={data}
+              pagination
+              highlightOnHover
+              customStyles={tableCustomStyles}
+              style={{ width: "100%" }}
+            />
+          ) : (
+            <Typography>No history data available.</Typography>
+          )}
+        </Box>
+      </Modal>
+    </>
   );
 };
 
@@ -368,14 +379,14 @@ export const UploadModal = ({
     }
   }, [open]);
 
-  const handleDownload = async (enc, action = 'view') => {
+  const handleDownload = async (enc, action = "view") => {
     setLoading(true);
     try {
       const encryptedDload = encryptPayload({
         documentName: enc.docFilename,
         documentPath: enc.path,
       });
-  
+
       const response = await api.post(
         "/download/download-document",
         { dataObject: encryptedDload },
@@ -384,29 +395,28 @@ export const UploadModal = ({
           responseType: "blob",
         }
       );
-  
+
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
-  
-      if (action === 'download' && (enc.enclosuretype?.toLowerCase() === "letter" || 
-          enc.enclosuretype?.toLowerCase() === "draft")) {
-        
-        const link = document.createElement('a');
+
+      if (
+        action === "download" &&
+        (enc.enclosuretype?.toLowerCase() === "letter" ||
+          enc.enclosuretype?.toLowerCase() === "draft")
+      ) {
+        const link = document.createElement("a");
         link.href = url;
-        link.download = enc.docFilename || 'document.pdf';
+        link.download = enc.docFilename || "document.pdf";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       } else {
-        
-        window.open(url, '_blank');
+        window.open(url, "_blank");
       }
-  
-      
+
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
       }, 100);
-  
     } catch (error) {
       toast.error("Failed to process document. Please try again.");
       console.error("Document processing error:", error);

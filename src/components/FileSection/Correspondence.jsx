@@ -143,6 +143,7 @@ const Correspondence = ({
   const [editMalady, setEditMalady] = useState(null);
   const [loading, setLoading] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
+  
 
   // Configure letter content query
   const {
@@ -329,6 +330,8 @@ const Correspondence = ({
     fetchHistory(row.draftNo);
   };
   const printDraft = async (row) => {
+    console.log("Print draft clicked for row:", row);
+    
     setLoading(true);
     if (!row || !row.corrId) {
       console.error("Invalid row data for download");
@@ -341,7 +344,7 @@ const Correspondence = ({
       });
 
       const response = await api.post(
-        "/file/cor-draft-print",
+        "/file/generate-corres-pdf",
         { dataObject: encryptedDload },
         {
           headers: {
@@ -350,7 +353,9 @@ const Correspondence = ({
           responseType: "blob",
         }
       );
-
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
       if (response.data && response.data.success) {
         console.log("Download successful!");
       } else {
@@ -639,15 +644,25 @@ const Correspondence = ({
               >
                 <FaCloudUploadAlt size={16} />
               </StyledButton>
-              <StyledButton
-                variant="contained"
-                style={{ backgroundColor: "#28a745" }}
-                onClick={() => download(row)}
-                title="Download"
-              >
-                <FaDownload size={16} />
-              </StyledButton>
-              <br />
+             {row.correspondencePath ? (
+                <StyledButton
+                  variant="contained"
+                  style={{ backgroundColor: "#28a745" }}
+                  onClick={() => download(row)}
+                  title="Download"
+                >
+                  <FaDownload size={16} />
+                </StyledButton>
+              ) : (
+                <StyledButton
+                  variant="contained"
+                  style={{ backgroundColor: "#28a745" }}
+                  onClick={() => printDraft(row)}
+                  title="View"
+                >
+                  <FaEye size={16} />
+                </StyledButton>
+              )}
               <StyledButton
                 variant="contained"
                 color="secondary"
@@ -694,7 +709,7 @@ const Correspondence = ({
                 onClick={() => printDraft(row)}
                 title="Download"
               >
-                <FaDownload size={16} />
+                <FaEye size={16} />
               </StyledButton>
               <StyledButton
                 variant="contained"

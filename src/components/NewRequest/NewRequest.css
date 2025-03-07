@@ -1,0 +1,13 @@
+.MuiPagination-root {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .MuiPaginationItem-root {
+    font-size: 1rem;
+  }
+  
+  .MuiPaginationItem-page.Mui-selected {
+    background-color: #1a5f6a;
+    color: white;
+  }

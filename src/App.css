@@ -1,6 +1,9 @@
 :root{
     --backgroundColor:#349124;
 }
+.jodit-status-bar-link {
+  display: none ! important;
+}
 .accordion-button::after{
     display: none;
 }

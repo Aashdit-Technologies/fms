@@ -27,12 +27,13 @@ const ManageFile = () => {
   const [selectedRack, setSelectedRack] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
-  const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedActivity, setSelectedActivity] = useState("");
   const [selectedCustodian, setSelectedCustodian] = useState("");
   const [selectedFileModule, setSelectedFileModule] = useState("");
   const [selectedFileRTL, setSelectedFileRTL] = useState("");
-  const [selectedOffice, setSelectedOffice] = useState("");
+  const [selectedOffice, setSelectedOffice] = useState("1");
+  const [selectedDepartment, setSelectedDepartment] = useState("1"); // Set your default department ID
+  const [isRoomSelected, setIsRoomSelected] = useState(false);
   const [formTitle, setFormTitle] = useState("");
   const [formKeyword, setFormKeyword] = useState("");
   const [formFileName, setFormFileName] = useState("");
@@ -56,6 +57,9 @@ const ManageFile = () => {
   const [shouldRefreshNewRequest, setShouldRefreshNewRequest] = useState(false);
 
   const naviget = useNavigate();
+  const switchToCompleteTab = () => {
+    setActiveTab("tab3");
+  };
 
   const {
     activities,
@@ -70,6 +74,13 @@ const ManageFile = () => {
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  useEffect(() => {
+    if (office.length > 0 && departments.length > 0) {
+      setSelectedOffice(office[0].officeOrgId);
+      setSelectedDepartment(departments[0].departmentId);
+    }
+  }, [office, departments]);
 
   useEffect(() => {
     const fetchRoomData = async () => {
@@ -117,7 +128,6 @@ const ManageFile = () => {
 
     fetchRackData();
   }, [selectedRoom]);
-
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -169,7 +179,7 @@ const ManageFile = () => {
         setModalMessage(response.data.message);
         toast.success(response.data.message);
         resetForm();
-        setShouldRefreshNewRequest(prev => !prev)
+        setShouldRefreshNewRequest((prev) => !prev);
       } else {
         toast.error(response.data.message);
       }
@@ -515,13 +525,24 @@ const ManageFile = () => {
                     value={
                       roomData.find((r) => r.docRoomId === selectedRoom) || null
                     }
-                    onChange={(event, newValue) =>
-                      setSelectedRoom(newValue ? newValue.docRoomId : "")
-                    }
+                    onChange={(event, newValue) => {
+                      setSelectedRoom(newValue ? newValue.docRoomId : "");
+                      setIsRoomSelected(!!newValue);
+                      if (!newValue) {
+                        setSelectedRack(null);
+                        setSelectedCell(null);
+                      }
+                    }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label={<span>Select Room</span>}
+                        label={
+                          <span>
+                            Select Room
+                            {selectedRoom &&
+                            <span style={{ color: "red" }}>*</span>}
+                          </span>
+                        }
                         variant="outlined"
                         fullWidth
                       />
@@ -546,9 +567,22 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label={<span>Select Rack</span>}
+                        label={
+                          <span>
+                            Select Rack{" "}
+                            {isRoomSelected && (
+                              <span style={{ color: "red" }}>*</span>
+                            )}
+                          </span>
+                        }
                         variant="outlined"
                         fullWidth
+                        error={isRoomSelected && !selectedRack}
+                        helperText={
+                          isRoomSelected && !selectedRack
+                            ? "Rack is required when room is selected"
+                            : ""
+                        }
                       />
                     )}
                   />
@@ -568,9 +602,22 @@ const ManageFile = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label={<span>Select Cell</span>}
+                        label={
+                          <span>
+                            Select Cell{" "}
+                            {isRoomSelected && (
+                              <span style={{ color: "red" }}>*</span>
+                            )}
+                          </span>
+                        }
                         variant="outlined"
                         fullWidth
+                        error={isRoomSelected && !selectedCell}
+                        helperText={
+                          isRoomSelected && !selectedCell
+                            ? "Cell is required when room is selected"
+                            : ""
+                        }
                       />
                     )}
                   />
@@ -709,9 +756,7 @@ const ManageFile = () => {
               <div className="tab-content mt-3">
                 {activeTab === "tab1" && (
                   <div className="tab-pane fade show active">
-                    <NewRequest
-                      handelRefecthNew={shouldRefreshNewRequest}
-                    />
+                    <NewRequest handelRefecthNew={shouldRefreshNewRequest}  onSwitchTab={switchToCompleteTab} />
                   </div>
                 )}
 

@@ -1,40 +1,20 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Accordion } from "react-bootstrap";
 import { FaPlus, FaMinus } from "react-icons/fa6";
 import { Select, MenuItem } from "@mui/material";
 import SunEditorComponent from "./SunEditorComponent";
 import UploadDocument from "./UploadDocument";
 
-const Ckeditor = ({
-  additionalDetails,
-  fileDetails,
-  content,
-  onContentChange,
-  refetchData,
-  notingNo,
-}) => {
+const Ckeditor = ({ additionalDetails, fileDetails, notingNo, content, onContentChange, refetchData }) => {
   const [selectedItem, setSelectedItem] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [editorContent, setEditorContent] = useState(content || "");
-  const isUpdatingRef = useRef(false);
+  const [editorContent, setEditorContent] = useState(content || '');
   const options = React.useMemo(() => {
     if (!notingNo || !notingNo.data || !Array.isArray(notingNo.data)) {
       return [];
     }
     return notingNo.data.map((item, index) => `Noting No-${index + 1}`);
   }, [notingNo]);
-
-  useEffect(() => {
-    if (content !== editorContent && !isUpdatingRef.current) {
-      const newContent = content || additionalDetails?.data?.note || "";
-      console.log("Ckeditor updating content:", newContent);
-      isUpdatingRef.current = true;
-      setEditorContent(newContent);
-      setTimeout(() => {
-        isUpdatingRef.current = false;
-      }, 100);
-    }
-  }, [content, additionalDetails, editorContent]);
 
   const handleSelectChange = useCallback(
     (event) => {
@@ -87,20 +67,20 @@ const Ckeditor = ({
     return () => document.removeEventListener('click', handleNotingClick);
   }, []);
 
-  const handleEditorChange = useCallback(
-    (newContent) => {
-      if (!isUpdatingRef.current) {
-        console.log("Ckeditor content changed:", newContent);
-        isUpdatingRef.current = true;
-        setEditorContent(newContent);
-        onContentChange?.(newContent);
-        setTimeout(() => {
-          isUpdatingRef.current = false;
-        }, 100);
-      }
-    },
-    [onContentChange]
-  );
+  // Update editor content when props change
+  useEffect(() => {
+    const newContent = content || additionalDetails?.data?.note || '';
+    console.log('Ckeditor updating content:', newContent);
+    setEditorContent(newContent);
+  }, [content, additionalDetails]);
+
+  
+
+  const handleEditorChange = useCallback((newContent) => {
+    console.log('Ckeditor content changed:', newContent);
+    setEditorContent(newContent);
+    onContentChange?.(newContent);
+  }, [onContentChange]);
 
   const toggleAccordion = useCallback((e) => {
     e.preventDefault();
@@ -115,49 +95,46 @@ const Ckeditor = ({
           <Accordion.Item eventKey="0">
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100">
-                <h5>Task Action</h5>
-                <div
-                  className="d-flex align-items-center z-3"
+                <h5>Take Action</h5>
+                <div 
+                  className="d-flex align-items-center" 
                   onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    e.preventDefault(); // Prevent focus loss
+                    e.stopPropagation(); // Prevent accordion toggle
                   }}
                 >
                   <Select
                     value={selectedItem}
-                    onClick={(e) => e.stopPropagation()}
                     onChange={handleSelectChange}
                     onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                      e.preventDefault(); // Prevent focus loss
+                      e.stopPropagation(); // Prevent accordion toggle
                     }}
                     MenuProps={{
                       anchorOrigin: {
-                        vertical: "bottom",
-                        horizontal: "left",
+                        vertical: 'bottom',
+                        horizontal: 'left',
                       },
                       transformOrigin: {
-                        vertical: "top",
-                        horizontal: "left",
+                        vertical: 'top',
+                        horizontal: 'left',
                       },
                       getContentAnchorEl: null,
                     }}
                     displayEmpty
                     size="small"
-                    style={{ minWidth: 200, marginRight: "10px" }}
+                    style={{ minWidth: 200, marginRight: '10px' }}
                   >
                     <MenuItem value="">--Select--</MenuItem>
                     {options.map((option, index) => (
-                      <MenuItem key={index} value={option}>
-                        {option}
-                      </MenuItem>
+                      <MenuItem key={index} value={option}>{option}</MenuItem>
                     ))}
                   </Select>
-                  <span
+                  <span 
                     className="toggle-icon"
                     onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                      e.preventDefault(); 
+                      e.stopPropagation(); 
                     }}
                     onClick={toggleAccordion}
                   >
@@ -169,8 +146,9 @@ const Ckeditor = ({
             <Accordion.Body>
               <SunEditorComponent
                 content={editorContent}
+                placeholder="Enter your task action here..."
                 onContentChange={handleEditorChange}
-                // additionalDetails={additionalDetails}
+                additionalDetails={additionalDetails}
               />
             </Accordion.Body>
           </Accordion.Item>

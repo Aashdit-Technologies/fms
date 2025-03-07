@@ -17,6 +17,7 @@ import MainFile from "../FileSection/MainFile.jsx";
 import { useNavigate } from "react-router-dom";
 
 import { toast } from "react-toastify";
+import "./NewRequest.css";
 
 import {
   Modal,
@@ -29,6 +30,7 @@ import {
   TableCell,
   TableRow,
   TableHead,
+  Pagination,
 } from "@mui/material";
 
 import DataTable from "react-data-table-component";
@@ -38,21 +40,24 @@ import { Autocomplete, TextField, Button } from "@mui/material";
 import { MdOutlineMoveDown } from "react-icons/md";
 
 import { PageLoader } from "../pageload/PageLoader";
+import SendToRackModal from "./SendToRackModal.jsx";
 
 const customStyles = {
   table: {
     style: {
       border: "1px solid #ddd",
-
       borderRadius: "10px",
-
-      overflowX: "auto",
-
-      boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
-
       backgroundColor: "#ffffff",
-
       marginBottom: "1rem",
+    },
+  },
+  tableWrapper: {
+    style: {
+      display: "block",
+      maxHeight: "450px",
+      overflowY: "auto",
+      boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+      // backgroundColor: "#ffffff",
     },
   },
 
@@ -153,7 +158,7 @@ const customStyles = {
   },
 };
 
-const NewRequest = ({ handelRefecthNew }) => {
+const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
   const [selectedFileModule, setSelectedFileModule] = useState("0");
 
   const [priority, setPriority] = useState("All");
@@ -188,9 +193,10 @@ const NewRequest = ({ handelRefecthNew }) => {
 
   const [fileDetailsModalVisible, setFileDetailsModalVisible] = useState(false);
 
-  const [rowSize, setRowSize] = useState(10);
-
+  const [rowSize, setRowSize] = useState(50);
   const [pageNo, setPageNo] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  console.log("filedetails", fileDetails);
 
   const Navigate = useNavigate();
 
@@ -270,7 +276,12 @@ const NewRequest = ({ handelRefecthNew }) => {
     fetchRackData();
   }, [roomId]);
 
-  const fetchFilteredData = async (priority, fileModule) => {
+  const fetchFilteredData = async (
+    priority,
+    fileModule,
+    page = pageNo,
+    size = rowSize
+  ) => {
     setLoading(true);
 
     try {
@@ -281,9 +292,8 @@ const NewRequest = ({ handelRefecthNew }) => {
 
         fileModule: fileModule || null,
 
-        pageNo: pageNo,
-
-        rowSize: rowSize,
+        pageNo: page,
+        rowSize: size,
       };
 
       const encryptedMessage = encryptPayload(payload);
@@ -297,8 +307,12 @@ const NewRequest = ({ handelRefecthNew }) => {
       });
 
       setNRData(response.data.data || []);
-
       setPrioritylyst(response.data.data.prioritylst || []);
+      // setTotalPages(response.data.totalPages || 0);
+      const totalRecords = response.data.data.totalPages;
+      console.log("totalRecords", totalRecords);
+
+      setTotalPages(totalRecords);
 
       console.log(response.data.data);
     } catch (error) {
@@ -309,8 +323,24 @@ const NewRequest = ({ handelRefecthNew }) => {
   };
 
   useEffect(() => {
-    fetchFilteredData(priority, selectedFileModule);
-  }, [priority, selectedFileModule, pageNo, rowSize]);
+    fetchFilteredData(priority, selectedFileModule, pageNo, rowSize);
+  }, [priority, selectedFileModule]);
+
+  // Update handlePageChange function
+  const handlePageChange = (event, newPage) => {
+    if (newPage !== pageNo) {
+      setPageNo(newPage);
+      fetchFilteredData(priority, selectedFileModule, newPage, rowSize);
+    }
+  };
+
+  // Update handleRowSizeChange function
+  const handleRowSizeChange = (event) => {
+    const newSize = parseInt(event.target.value, 10);
+    setRowSize(newSize);
+    setPageNo(1); // Reset to first page when changing row size
+    fetchFilteredData(priority, selectedFileModule, 1, newSize);
+  };
 
   useEffect(() => {
     if (handelRefecthNew) {
@@ -719,160 +749,86 @@ const NewRequest = ({ handelRefecthNew }) => {
         </div>
 
         <div className="col-md-12 mt-5">
-          <div className="table-responsive">
+          <div className="table-responsive p-3">
             <DataTable
               columns={columns}
               data={nRData.data || []}
-              pagination
-              highlightOnHover
               progressPending={loading}
               progressComponent={<PageLoader />}
               customStyles={customStyles}
               striped
               bordered
               noDataComponent={<div>No data available</div>}
-              paginationServer
-              paginationPerPage={rowSize}
-              paginationDefaultPage={pageNo}
-              onChangePage={(page) => setPageNo(page)}
-              onChangeRowsPerPage={(newRowSize) => {
-                setRowSize(newRowSize);
-
-                setPageNo(1);
-              }}
+              pagination={false}
               conditionalRowStyles={conditionalRowStyles}
               responsive
+              fixedHeader
+              fixedHeaderScrollHeight="450px"
             />
+            <div className="d-flex justify-content-end align-items-center mt-3 gap-2">
+              <div className="d-flex align-items-center">
+                <span className="me-2">Rows per page:</span>
+                <select
+                  value={rowSize}
+                  onChange={handleRowSizeChange}
+                  className="form-select form-select-sm"
+                  style={{ width: "80px", marginLeft: "8px" }}
+                >
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={150}>150</option>
+                </select>
+              </div>
+
+              <div className="d-flex align-items-center">
+                <Pagination
+                  count={totalPages}
+                  page={pageNo}
+                  onChange={handlePageChange}
+                  variant="outlined"
+                  color="primary"
+                  size="medium"
+                  showFirstButton
+                  showLastButton
+                  siblingCount={1}
+                  boundaryCount={1}
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      margin: "0 2px",
+                      minWidth: "32px",
+                      height: "32px",
+                    },
+                    "& .Mui-selected": {
+                      backgroundColor: "#1a5f6a !important",
+                      color: "white",
+                      "&:hover": {
+                        backgroundColor: "#1a5f6a",
+                      },
+                    },
+                  }}
+                />
+                <span className="ms-3">
+                  Page {pageNo} of {totalPages}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {modalVisible && selectedFile && (
-        <div
-          className="modal d-block"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Send to Rack</h5>
-
-                <button type="button" className="close" onClick={closeModal}>
-                  &times;
-                </button>
-              </div>
-
-              <form onSubmit={handleFormSubmit}>
-                <div className="modal-body">
-                  <div className="row">
-                    <div className="table-responsive">
-                      <table className="table">
-                        <thead>
-                          <tr>
-                            <th>File Number</th>
-
-                            <th>Room</th>
-
-                            <th>Rack</th>
-
-                            <th>Cell</th>
-                          </tr>
-                        </thead>
-
-                        <tbody>
-                          <tr>
-                            <td>{selectedFile.fileNo}</td>
-
-                            <td>{selectedFile.roomNumber}</td>
-
-                            <td>{selectedFile.rackNumber}</td>
-
-                            <td>{selectedFile.cellNumber}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="form-group col-md-4">
-                      <label htmlFor="roomSelect">Room</label>
-
-                      <select
-                        id="roomSelect"
-                        className="form-control"
-                        value={roomId}
-                        onChange={(e) => handleSelectChange(setRoom, e)}
-                      >
-                        <option value="">Select Room</option>
-
-                        {roomData.map((roomItem) => (
-                          <option
-                            key={roomItem.docRoomId}
-                            value={roomItem.docRoomId}
-                          >
-                            {roomItem.roomNumber}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-group col-md-4">
-                      <label htmlFor="rackSelect">Rack</label>
-
-                      <select
-                        id="rackSelect"
-                        className="form-control"
-                        value={rackId}
-                        onChange={(e) => handleSelectChange(setRack, e)}
-                      >
-                        <option value="">Select Rack</option>
-
-                        {rackData.map((rackItem) => (
-                          <option key={rackItem.rackId} value={rackItem.rackId}>
-                            {rackItem.rackNumber}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-group col-md-4">
-                      <label htmlFor="cellSelect">Cell</label>
-
-                      <select
-                        id="cellSelect"
-                        className="form-control"
-                        value={cellNo}
-                        onChange={(e) => handleSelectChange(setCell, e)}
-                        disabled={!rackId}
-                      >
-                        <option value="">Select Cell</option>
-
-                        {[1, 2, 3, 4, 5].map((cellValue) => (
-                          <option key={cellValue} value={cellValue}>
-                            {cellValue}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={closeModal}
-                  >
-                    Close
-                  </button>
-
-                  <button type="submit" className="btn btn-primary">
-                    Submit
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
+        <SendToRackModal
+          open={modalVisible}
+          onClose={() => {
+            setModalVisible(false);
+            setSelectedFile(null);
+          }}
+          selectedFile={selectedFile}
+          onSuccess={() => {
+            fetchFilteredData(priority, selectedFileModule);
+            onSwitchTab();
+          }}
+        />
       )}
 
       <Modal
@@ -965,12 +921,24 @@ const NewRequest = ({ handelRefecthNew }) => {
                 <TableBody>
                   {Object.entries({
                     "File No": fileDetails.fileNo,
+                    "File Type": (
+                      <span
+                        style={{
+                          backgroundColor: "#47A447",
+                          color: "white",
+                          padding: "5px",
+                          borderRadius: "5px",
+                        }}
+                      >
+                        {fileDetails.fileType}
+                      </span>
+                    ),
 
                     "File Name": fileDetails.fileName,
 
                     "From Employee": fileDetails.fromEmployee,
 
-                    "Sent On": fileDetails.sentOn,
+                    "Created Date": fileDetails.sentOn,
 
                     Status: fileDetails.status,
 

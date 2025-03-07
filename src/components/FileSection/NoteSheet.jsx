@@ -28,21 +28,12 @@ const NoteSheet = ({
 
   // Update editor content when props change
   useEffect(() => {
-    const newContent = content || additionalDetails?.data?.note || "";
-    if (newContent !== editorContent) {
-      console.log("NoteSheet updating content:", newContent);
+      const newContent = content || additionalDetails?.data?.note || '';
+      console.log('NoteSheet updating content:', newContent);
       setEditorContent(newContent);
-    }
-  }, [content, additionalDetails]);
+    }, [content, additionalDetails, writeNote]);
 
-  // Load saved content from sessionStorage when writeNote is enabled
-  useEffect(() => {
-    const savedContent = sessionStorage.getItem("noteSheetContent");
-    if (savedContent && writeNote) {
-      setEditorContent(savedContent);
-      onContentChange?.(savedContent);
-    }
-  }, [writeNote]);
+
 
   // Update notes when noteSheets change
   useEffect(() => {
@@ -55,41 +46,25 @@ const NoteSheet = ({
 
 
 
- const handleEditorChange = useCallback(
-    (newContent) => {
-      setEditorContent(newContent);
-      onContentChange?.(newContent);
-      sessionStorage.setItem("noteSheetContent", newContent || ""); // Handle empty content
-    },
-    [onContentChange]
-  );
+  const handleEditorChange = (newContent) => {
+    console.log('NoteSheet content changed:', newContent);
+    setEditorContent(newContent);
+    onContentChange?.(newContent);
+  };
+  const handleEditorBlur = () => {
+    console.log('Editor blurred, saving content:', editorContent);
+    onContentChange?.(editorContent); // Notify parent about the content change when editor loses focus
+  };
 
   const handleWriteNoteClick = () => {
-    const savedContent = sessionStorage.getItem("noteSheetContent") || content;
-    if (savedContent) {
-      setEditorContent(savedContent || "");
-      onContentChange?.(savedContent);
-      setLastSyncedContent(savedContent);
-    }
     setWriteNote(true);
   };
 
   const handleCloseWriteNote = () => {
-    if (editorContent) {
-      sessionStorage.setItem("noteSheetContent", editorContent);
-      setLastSyncedContent(editorContent);
-    }
     setWriteNote(false);
   };
 
-  // Clean up sessionStorage on component unmount
-  useEffect(() => {
-    return () => {
-      if (editorContent) {
-        sessionStorage.setItem("noteSheetContent", editorContent);
-      }
-    };
-  }, [editorContent]);
+ 
 
   const togglePreview = async () => {
     setIsLoading(true);
@@ -254,10 +229,11 @@ const NoteSheet = ({
                 writeNote && (
                   <div className="sun-editor-wrapper">
                     <SunEditorComponent
-                      key={`note-editor-${writeNote}`}
                       content={editorContent}
+                      // placeholder="Enter your task action here..."
                       onContentChange={handleEditorChange}
-                      // placeholder="Enter your note here..."
+                      additionalDetails={additionalDetails}
+                      onBlur={handleEditorBlur}
                     />
                   </div>
                 )

@@ -1,109 +1,49 @@
-import React, { useRef, useMemo, useState, useEffect, useCallback } from "react";
-import JoditEditor from "jodit-react";
-import debounce from "lodash/debounce";
+import React, { useRef, useMemo, useState, useEffect, useCallback } from 'react';
+import JoditEditor from 'jodit-react';
 
-const SunEditorComponent = ({ content, onContentChange, placeholder }) => {
+const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNote, additionalDetails }) => {
   const editor = useRef(null);
-  const [editorContent, setEditorContent] = useState(content || "");
-  const isUpdatingRef = useRef(false);
-  const lastSyncedContent = useRef(content || "");
-  const cursorPositionRef = useRef(null);
+  const [editorContent, setEditorContent] = useState(content || '');
+console.log('Editor content:', editorContent);
+
+  
+  // Initialize editor content
+  useEffect(() => {
+    const newContent = content || additionalDetails?.data?.note || selectedNote?.note || '';
+    console.log('Updating editor content:', newContent);
+    setEditorContent(newContent);
+  }, [content, additionalDetails, selectedNote]);
+
+  // Update editor value when it's ready
+  useEffect(() => {
+    if (editor.current?.editor) {
+      editor.current.editor.value = editorContent;
+    }
+  }, [editorContent, editor.current]);
 
   const config = useMemo(
     () => ({
       readonly: false,
-      height: "300px",
-      toolbarButtonSize: "medium",
+      placeholder: !editorContent ? placeholder : '',
+      height: '300px',
+      toolbarButtonSize: 'medium',
       enableDragAndDropFileToEditor: false,
       uploader: { insertImageAsBase64URI: true },
-      enableAutoFocus: true,
-      focus: true,
-      saveCaretPosition: true,
-      observer: false,
-      askBeforePasteHTML: false,
-      askBeforePasteFromWord: false,
-      processPasteHTML: false,
-      beautifyHTML: false,
-      defaultActionOnPaste: "insert_clear_html",
-      toolbarSticky: false,
-      placeholder: "",
-      events: {
-        beforeSetContent: (content) => {
-          if (cursorPositionRef.current) {
-            const currentEditor = editor.current?.jodit;
-            if (currentEditor) {
-              requestAnimationFrame(() => {
-                currentEditor.selection.restore(cursorPositionRef.current);
-              });
-            }
-          }
-          return content;
-        },
-      },
+      useSearch: false,
+      removeButtons: ['about'],
+      showCharsCounter: true,
+      showWordsCounter: true,
+      showXPathInStatusbar: false,
+      
     }),
-    []
+    [editorContent, placeholder]
   );
 
-  // Handle content updates from props
-  useEffect(() => {
-    if (content !== lastSyncedContent.current && !isUpdatingRef.current) {
-      const currentEditor = editor.current?.jodit;
-      if (currentEditor) {
-        cursorPositionRef.current = currentEditor.selection.save();
-      }
-
-      setEditorContent(content);
-      lastSyncedContent.current = content;
-
-      if (currentEditor && cursorPositionRef.current) {
-        requestAnimationFrame(() => {
-          currentEditor.selection.restore(cursorPositionRef.current);
-          currentEditor.selection.focus();
-        });
-      }
-    }
-  }, [content]);
-
-  // Debounced content change handler
-  const debouncedContentChange = useCallback(
-    debounce((newContent) => {
-      if (!isUpdatingRef.current) {
-        const currentEditor = editor.current?.jodit;
-
-        if (currentEditor) {
-          cursorPositionRef.current = currentEditor.selection.save();
-          isUpdatingRef.current = true;
-
-          setEditorContent(newContent);
-          onContentChange?.(newContent);
-          sessionStorage.setItem("noteSheetContent", newContent);
-          lastSyncedContent.current = newContent;
-
-          requestAnimationFrame(() => {
-            if (cursorPositionRef.current && currentEditor) {
-              currentEditor.selection.restore(cursorPositionRef.current);
-              currentEditor.selection.focus();
-            }
-            isUpdatingRef.current = false;
-          });
-        } else {
-          setEditorContent(newContent);
-          onContentChange?.(newContent); // Notify parent component
-          sessionStorage.setItem("noteSheetContent", newContent || ""); // Handle empty content
-          lastSyncedContent.current = newContent;
-          isUpdatingRef.current = false;
-        }
-      }
-    }, 300), // Adjust the debounce time as needed
-    [onContentChange]
-  );
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      debouncedContentChange.cancel();
-    };
-  }, [debouncedContentChange]);
+  const handleContentChange = useCallback((newContent) => {
+    console.log('Editor content changed:', newContent);
+    setEditorContent(newContent);
+    onContentChange?.(newContent);
+  }, [onContentChange]);
 
   return (
     <div className="editor-wrapper">
@@ -112,16 +52,28 @@ const SunEditorComponent = ({ content, onContentChange, placeholder }) => {
         value={editorContent}
         config={config}
         tabIndex={1}
-        onChange={debouncedContentChange}
-        onFocus={() => {
-          const currentEditor = editor.current?.jodit;
-          if (currentEditor) {
-            currentEditor.selection.focus();
-          }
+        onChange={handleContentChange}
+        onReady={(instance) => {
+          // Set initial content when editor is ready
+          instance.value = editorContent;
         }}
       />
+      <style jsx>{`
+        .editor-wrapper {
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        :global(.jodit-workplace) {
+          min-height: 400px;
+        }
+        :global(.jodit-status-bar) {
+          background: #f8f9fa;
+          border-top: 1px solid #ddd;
+        }
+      `}</style>
     </div>
   );
 };
 
-export default React.memo(SunEditorComponent);
+export default SunEditorComponent;

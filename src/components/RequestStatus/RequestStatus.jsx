@@ -101,11 +101,13 @@ const customStyles = {
   },
 };
 
+
 const RequestStatus = () => {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [rqstStsData, setRqstStsData] = useState([]);
   const [loading, setLoading] = useState(false);
+  
 
   const [fileDetails, setFileDetails] = useState(null);
   const [fileDetailsModalVisible, setFileDetailsModalVisible] = useState(false);
@@ -113,6 +115,19 @@ const RequestStatus = () => {
   const [pageNo, setPageNo] = useState(1);
 
   const Navigate = useNavigate();
+
+  const conditionalRowStyles = [
+    {
+      when: row => row.status === "RECALLED" || row.isRecalled === true,
+      style: {
+        backgroundColor: '#e6f2f5 !important',
+        '&:hover': {
+          cursor: 'pointer',
+          backgroundColor: '#d1e9ed !important',
+        },
+      },
+    }
+  ];
 
   useEffect(() => {
     fetchFilteredData(fromDate, toDate);
@@ -141,8 +156,18 @@ const RequestStatus = () => {
         headers: { Authorization: `Bearer ${token}` },
         params: { dataObject: encryptedMessage },
       });
-
-      setRqstStsData(response.data.data || []);
+      setRqstStsData(prevData => {
+        const newData = response.data.data || [];
+        return newData.map(newItem => {
+          const existingItem = prevData.find(item => item.fileId === newItem.fileId);
+          return {
+            ...newItem,
+            status: existingItem ? existingItem.status : newItem.status,
+            isRecalled: existingItem ? existingItem.isRecalled : false,
+          };
+        });
+      });
+      // setRqstStsData(response.data.data || []);
     } catch (error) {
       console.error("Error fetching filtered data:", error);
     } finally {
@@ -195,8 +220,19 @@ const RequestStatus = () => {
         }
       );
       if(response.data.outcome == true){
+        setRqstStsData(prevData => 
+          prevData.map(item => 
+            item.fileId === fileId 
+              ? { 
+                  ...item, 
+                  status: "RECALLED",
+                  isRecalled: true, 
+                }
+              : item
+          )
+        );
         toast.success(response.data.message);
-        fetchFilteredData();
+          fetchFilteredData();
       }
       else{
         toast.error(response.data.message);
@@ -390,6 +426,7 @@ const RequestStatus = () => {
         highlightOnHover
         paginationServer
         customStyles={customStyles}
+        conditionalRowStyles={conditionalRowStyles}
         paginationPerPage={rowSize} 
         paginationDefaultPage={pageNo}
         onChangePage={(page) => setPageNo(page)}
