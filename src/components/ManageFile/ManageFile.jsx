@@ -55,7 +55,8 @@ const ManageFile = () => {
   const [roomData, setRoomData] = useState([]);
   const [rackData, setRackData] = useState([]);
   const [shouldRefreshNewRequest, setShouldRefreshNewRequest] = useState(false);
-
+  const [currentRackCells, setCurrentRackCells] = useState(0);
+  console.log("currentRackCells-->", currentRackCells);
   const naviget = useNavigate();
   const switchToCompleteTab = () => {
     setActiveTab("tab3");
@@ -144,6 +145,11 @@ const ManageFile = () => {
     if (!formFileName.trim()) return toast.error("Please enter a file name.");
     if (!selectedCustodian) return toast.error("Please select a custodian.");
     if (!selectedFileModule) return toast.error("Please select a file module.");
+    if (selectedRoom && !selectedRack)
+      return toast.error("Please select rack.");
+    if (selectedRoom && !selectedCell)
+      return toast.error("Please select cell.");
+    if (!selectedFileModule) return toast.error("Please select a file module.");
 
     const payload = {
       rackId: selectedRack,
@@ -209,7 +215,24 @@ const ManageFile = () => {
   // const handleSelectChange = (setter, event) => {
   //   setter(event.target.value); // Update the state with the selected value
   // };
+  const handleRackChange = (event, newValue) => {
+    setSelectedRack(newValue ? newValue.rackId : "");
+    setSelectedCell(null);
 
+    if (newValue) {
+      setCurrentRackCells(newValue.noOfCell);
+    } else {
+      setCurrentRackCells(0);
+    }
+  };
+
+  const handleRoomChange = (event, newValue) => {
+    setSelectedRoom(newValue ? newValue.docRoomId : "");
+    setIsRoomSelected(!!newValue);
+    setSelectedRack(null);
+    setSelectedCell(null);
+    setCurrentRackCells(0);
+  };
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
   };
@@ -244,6 +267,26 @@ const ManageFile = () => {
       );
     } else {
       setFormFileName("");
+    }
+  };
+
+  const handleTitleChange = (e) => {
+    const newTitle = e.target.value;
+    setFormTitle(newTitle);
+    
+    // Call handleSelectChange with the current activity value
+    if (selectedActivity) {
+      handleSelectChange({ target: { value: selectedActivity } });
+    }
+  };
+
+  const handleSubjectChange = (e) => {
+    const newSubject = e.target.value;
+    setFormSubject(newSubject);
+    
+    // Call handleSelectChange with the current activity value
+    if (selectedActivity) {
+      handleSelectChange({ target: { value: selectedActivity } });
     }
   };
 
@@ -395,7 +438,7 @@ const ManageFile = () => {
                     variant="outlined"
                     fullWidth
                     value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
+                    onChange={handleTitleChange}
                   />
                 </div>
 
@@ -413,7 +456,7 @@ const ManageFile = () => {
                     variant="outlined"
                     fullWidth
                     value={formSubject}
-                    onChange={(e) => setFormSubject(e.target.value)}
+                    onChange={handleSubjectChange}
                   />
                 </div>
 
@@ -525,22 +568,16 @@ const ManageFile = () => {
                     value={
                       roomData.find((r) => r.docRoomId === selectedRoom) || null
                     }
-                    onChange={(event, newValue) => {
-                      setSelectedRoom(newValue ? newValue.docRoomId : "");
-                      setIsRoomSelected(!!newValue);
-                      if (!newValue) {
-                        setSelectedRack(null);
-                        setSelectedCell(null);
-                      }
-                    }}
+                    onChange={handleRoomChange}
                     renderInput={(params) => (
                       <TextField
                         {...params}
                         label={
                           <span>
                             Select Room
-                            {selectedRoom &&
-                            <span style={{ color: "red" }}>*</span>}
+                            {selectedRoom && (
+                              <span style={{ color: "red" }}>*</span>
+                            )}
                           </span>
                         }
                         variant="outlined"
@@ -561,9 +598,8 @@ const ManageFile = () => {
                     value={
                       rackData.find((r) => r.rackId === selectedRack) || null
                     }
-                    onChange={(event, newValue) =>
-                      setSelectedRack(newValue ? newValue.rackId : "")
-                    }
+                    onChange={handleRackChange}
+                    disabled={!selectedRoom}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -593,12 +629,13 @@ const ManageFile = () => {
                   <Autocomplete
                     id="cellSelect"
                     size="small"
-                    options={[1, 2, 3, 4, 5]}
+                    options={[...Array(currentRackCells)].map(
+                      (_, index) => index + 1
+                    )}
                     getOptionLabel={(option) => option.toString()}
-                    value={selectedCell || null}
-                    onChange={(event, newValue) =>
-                      setSelectedCell(newValue || "")
-                    }
+                    value={selectedCell}
+                    onChange={(event, newValue) => setSelectedCell(newValue)}
+                    disabled={!selectedRack}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -756,7 +793,10 @@ const ManageFile = () => {
               <div className="tab-content mt-3">
                 {activeTab === "tab1" && (
                   <div className="tab-pane fade show active">
-                    <NewRequest handelRefecthNew={shouldRefreshNewRequest}  onSwitchTab={switchToCompleteTab} />
+                    <NewRequest
+                      handelRefecthNew={shouldRefreshNewRequest}
+                      onSwitchTab={switchToCompleteTab}
+                    />
                   </div>
                 )}
 

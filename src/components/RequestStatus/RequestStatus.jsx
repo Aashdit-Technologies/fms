@@ -349,7 +349,7 @@ const RequestStatus = () => {
       name: "Send On",
       selector: (row) => row.sentOn,
       sortable: true,
-      width: "350px",
+      width: "155px",
     },
     {
       name: "Status",
@@ -368,7 +368,7 @@ const RequestStatus = () => {
           {row.status}
         </span>
       ),
-      width: "90px",
+      width: "110px",
     },
     {
       name: "Action",
