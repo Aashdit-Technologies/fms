@@ -99,16 +99,16 @@ const Ckeditor = ({ additionalDetails, fileDetails, notingNo, content, onContent
                 <div 
                   className="d-flex align-items-center" 
                   onMouseDown={(e) => {
-                    e.preventDefault(); // Prevent focus loss
-                    e.stopPropagation(); // Prevent accordion toggle
+                    e.preventDefault(); 
+                    e.stopPropagation(); 
                   }}
                 >
                   <Select
                     value={selectedItem}
                     onChange={handleSelectChange}
                     onMouseDown={(e) => {
-                      e.preventDefault(); // Prevent focus loss
-                      e.stopPropagation(); // Prevent accordion toggle
+                      e.preventDefault(); 
+                      e.stopPropagation();
                     }}
                     MenuProps={{
                       anchorOrigin: {

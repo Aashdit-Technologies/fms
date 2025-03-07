@@ -4,7 +4,7 @@ import JoditEditor from 'jodit-react';
 const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNote, additionalDetails }) => {
   const editor = useRef(null);
   const [editorContent, setEditorContent] = useState(content || '');
-console.log('Editor content:', editorContent);
+console.log('Editor content:', additionalDetails?.data?.note);
 
   
   // Initialize editor content
@@ -13,6 +13,7 @@ console.log('Editor content:', editorContent);
     console.log('Updating editor content:', newContent);
     setEditorContent(newContent);
   }, [content, additionalDetails, selectedNote]);
+
 
   // Update editor value when it's ready
   useEffect(() => {

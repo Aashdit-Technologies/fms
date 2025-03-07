@@ -207,7 +207,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       style: {
         backgroundColor: "#b2c0ff82",
 
-        color: "#000000", // Black text color
+        color: "#000000",
       },
     },
   ];
