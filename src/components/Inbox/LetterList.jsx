@@ -133,38 +133,6 @@ const LetterList = () => {
   const [activeTab, setActiveTab] = useState(TAB_CODES.NEW_LETTER);
 
  
-  // const fetchLetters = async (tabCode) => {
-  //   try {
-  //     const payload = {
-  //       rowsize: rowSize,
-  //       tabCode: tabCode,
-  //       pageNo: pageNo,
-  //     };
-  //     const response = await api.post(
-  //       "letter/manage-letter-receipents",
-  //       { dataObject: encryptPayload(payload) },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-  //     console.log("Raw API Response:", JSON.stringify(response.data, null, 2)); 
-  //     const responseData = response.data?.data?.letterList || []
-  //     setLetters(Array.isArray(responseData) ? responseData : []);
-  //     setTotalRows(response.data?.data?.totalRows || 0);
-  //   } catch (error) {
-  //     console.error("Error fetching letters:", error);
-  //     setLetters([]);
-  //   }
-  // };
-  
-
-  // useEffect(() => {
-  //   if (activeTab) {
-  //     fetchLetters(activeTab);
-  //   }
-  // }, [activeTab, pageNo, rowSize]);
  
     const fetchLetters = useCallback(async (tabCode) => {
       setIsLoading(true);
@@ -186,7 +154,7 @@ const LetterList = () => {
           }
         );
   
-        // console.log("Raw API Response:", JSON.stringify(response.data, null, 2));
+       
   
         const responseData = response.data?.data?.letterList || [];
         setLetters(Array.isArray(responseData) ? responseData : []);
@@ -221,7 +189,7 @@ const handleViewLetterDetail = async (row, tabCode) => {
       tabCode: tabCode,
     };
 
-    console.log("Payload being sent:", payload); 
+ 
 
     const response = await api.post(
       "letter/view-letter",
@@ -232,7 +200,7 @@ const handleViewLetterDetail = async (row, tabCode) => {
         },
       }
     );
-    console.log("all view letter respone",response.data.data)
+   
 
     if (!response.data || !response.data.data) {
       console.error("Error: API response is missing 'data'.", response.data);
@@ -322,9 +290,22 @@ const NewLettercolumns = [
   },
   {
     name: 'Letter No. & Date',
-    cell: (row) => `${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`,
-    sortable: true,
     
+    cell: (row) => (
+      <div
+        style={{
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          maxWidth: "200px",
+        }}
+        title={`${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`}
+      >
+        {`${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`}
+      </div>
+    ),
+    sortable: true,
+   
   },  
   {
     name: 'Letter Source',
@@ -336,20 +317,33 @@ const NewLettercolumns = [
           whiteSpace: 'nowrap', 
           overflow: 'hidden', 
           textOverflow: 'ellipsis', 
-          maxWidth: '150px'
+          maxWidth: '250px'
         }} 
         title={row.letterSource || ''}
       >
         {row.letterSource || ''}
       </div>
     ),
+    
   },
   
   {
     name: 'Send Date',
     selector: row => row.senderDate || '',
     sortable: true,
-    
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '150px'
+        }} 
+        title={row.senderDate  || ''}
+      >
+        {row.senderDate  || ''}
+      </div>
+    ),
   },
   {
     name: 'Sender',
@@ -391,27 +385,23 @@ const NewLettercolumns = [
     name: 'Memo No. & Date',
     selector: row => row.memoNo || '',
     sortable: true,
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '100px',
+          
+        }} 
+        title={row.memoNo || ''}
+      >
+        {row.memoNo || ''}
+      </div>
+    ),
    
   },
-  // {
-  //   name: 'Subject',
-  //   selector: row => row.subject || '',
-  //   sortable: true,
-   
-  //   cell: row => (
-  //     <div 
-  //       style={{
-  //         whiteSpace: 'nowrap', 
-  //         overflow: 'hidden', 
-  //         textOverflow: 'ellipsis', 
-  //         maxWidth: '150px'
-  //       }} 
-  //       title={row.subject || ''}
-  //     >
-  //       {row.subject || ''}
-  //     </div>
-  //   ),
-  // },
+
   {
     name: 'Action',
     cell: actionButton,
@@ -428,7 +418,20 @@ const SentLetterColumns = [
   },
   {
     name: 'Letter No. & Date',
-    cell: (row) => `${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`,
+    // cell: (row) => `${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`,
+    cell: (row) => (
+      <div
+        style={{
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          maxWidth: "200px",
+        }}
+        title={`${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`}
+      >
+        {`${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`}
+      </div>
+    ),
     sortable: true,
     
   },  
@@ -436,12 +439,38 @@ const SentLetterColumns = [
     name: 'Updated Date & Time',
     selector: row => row.updatedDateTime || 'NA',
     sortable: true,
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '150px'
+        }} 
+        title={row.updatedDateTime || ''}
+      >
+        {row.updatedDateTime || ''}
+      </div>
+    ),
   },
   {
     name: 'Memo No. & Date',
     selector: row => row.memoNo|| '',
     sortable: true,
     width: '130px',
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '150px'
+        }} 
+        title={row.memoNo || ''}
+      >
+        {row.memoNo || ''}
+      </div>
+    ),
   },
   {
     name: 'Send To',
@@ -485,6 +514,19 @@ const SentLetterColumns = [
     name: 'Send Date',
     selector: row => row.senderDate|| '',
     sortable: true,
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '200px'
+        }} 
+        title={row.senderDate || ''}
+      >
+        {row.senderDate || ''}
+      </div>
+    ),
   },
   {
     name: 'Action',
@@ -504,22 +546,74 @@ const MovedToFileColumns = [
     name: 'Diary No.',
     selector: row => row.diaryNumber || '',
     sortable: true,
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '200px'
+        }} 
+        title={row.diaryNumber|| ''}
+      >
+        {row.diaryNumber|| ''}
+      </div>
+    ),
   },
   {
     name: 'Letter No. & Date',
-    cell: (row) => `${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`,
+
+    cell: (row) => (
+      <div
+        style={{
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          maxWidth: "200px",
+        }}
+        title={`${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`}
+      >
+        {`${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`}
+      </div>
+    ),
     sortable: true,
-    // width: '170px',
+    
   },  
   {
     name: 'Updated Date & Time',
     selector: row => row.updatedDateTime || 'NA',
     sortable: true,
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '200px'
+        }} 
+        title={row.updatedDateTime || ''}
+      >
+        {row.updatedDateTime || ''}
+      </div>
+    ),
   },
   {
     name: 'Memo No. & Date',
     selector: row => row.memoNo || '',
     sortable: true,
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '200px'
+        }} 
+        title={row.memoNo || ''}
+      >
+        {row.memoNo || ''}
+      </div>
+    ),
   },
   {
     name: 'Subject',

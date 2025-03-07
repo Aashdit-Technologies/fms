@@ -24,6 +24,8 @@ import { encryptPayload } from "../../utils/encrypt.js";
 import dayjs from "dayjs";
 import { PageLoader } from "../pageload/PageLoader";
 import { useNavigate } from "react-router-dom";
+import { FaHistory } from "react-icons/fa";
+import { FaEye } from "react-icons/fa6";
 
 const customStyles = {
   table: {
@@ -111,6 +113,8 @@ const RequestStatus = () => {
   const [fileDetailsModalVisible, setFileDetailsModalVisible] = useState(false);
   const [rowSize, setRowSize] = useState(10);
   const [pageNo, setPageNo] = useState(1);
+  const [historyModalVisible, setHistoryModalVisible] = useState(false);
+  const [historyData, setHistoryData] = useState([]);
 
   const Navigate = useNavigate();
 
@@ -255,6 +259,37 @@ const RequestStatus = () => {
     setFileDetails(file);
     setFileDetailsModalVisible(true);
   };
+
+  const handleHistoryClick = async (file) => {
+    setLoading(true);
+
+    const payload = { fileId: file.fileId };
+
+    try {
+      const token = useAuthStore.getState().token;
+
+      const encryptedMessage = encryptPayload(payload);
+
+      const response = await api.get("file/view-file-history", {
+        headers: { Authorization: `Bearer ${token}` },
+
+        params: {
+          dataObject: encryptedMessage,
+        },
+      });
+
+      console.log("History Data Response:", response.data);
+
+      setHistoryData(response.data.fileHist || []);
+
+      setHistoryModalVisible(true);
+    } catch (error) {
+      console.error("Error fetching history:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleViewStatus = (file, tabPanelId) => {
     setLoading(true);
     console.log("Edit Clicked:view", file);
@@ -302,7 +337,7 @@ const RequestStatus = () => {
       name: "File Name",
       selector: (row) => row.fileName,
       sortable: true,
-      width: "200px",
+      width: "300px",
     },
     {
       name: "From",
@@ -314,7 +349,7 @@ const RequestStatus = () => {
       name: "Send On",
       selector: (row) => row.sentOn,
       sortable: true,
-      width: "200px",
+      width: "350px",
     },
     {
       name: "Status",
@@ -333,7 +368,7 @@ const RequestStatus = () => {
           {row.status}
         </span>
       ),
-      width: "110px",
+      width: "90px",
     },
     {
       name: "Action",
@@ -361,13 +396,33 @@ const RequestStatus = () => {
             )}
             <Button
               variant="contained"
-              color="secondary"
+              color="success"
               size="small"
               title="View"
-              className="ms-2"
+              sx={{
+                minWidth: "auto",
+                padding: "6px 10px",
+                marginRight: "8px",
+              }}
               onClick={() => handleViewStatus(row)}
             >
-              View
+              <FaEye />
+            </Button>
+
+            <Button
+              variant="contained"
+              color="secondary"
+              size="small"
+              title="History"
+              sx={{
+                minWidth: "auto",
+                padding: "6px 10px",
+                marginRight: "8px",
+              }}
+              onClick={() => handleHistoryClick(row)}
+              disabled={loading}
+            >
+              <FaHistory />
             </Button>
           </div>
         );
@@ -468,20 +523,46 @@ const RequestStatus = () => {
                 <TableBody>
                   {Object.entries({
                     "File No": fileDetails.fileNo,
+                    "File Type": (
+                      <span
+                        style={{
+                          backgroundColor: "#47A447",
+                          color: "white",
+                          padding: "5px",
+                          borderRadius: "5px",
+                        }}
+                      >
+                        {fileDetails.fileType}
+                      </span>
+                    ),
+
                     "File Name": fileDetails.fileName,
-                    "From Employee": fileDetails.fromEmployee,
-                    "Sent On": fileDetails.sentOn,
-                    Status: fileDetails.status,
-                    Priority: fileDetails.priority,
-                    "File Module": fileDetails.fileType,
+                    Subject: fileDetails.subject || "NA",
+                    Title: fileDetails.title || "NA",
+                    Activity: fileDetails.activity || "NA",
+                    Custodian: fileDetails.custodian || "NA",
+
+                    // "From Employee": fileDetails.fromEmployee,
+
+                    // Status: fileDetails.status,
+
+                    // Priority: fileDetails.priority,
+
+                    // "File Module": fileDetails.fileType,
+
                     Room: fileDetails.roomNumber,
+
                     Rack: fileDetails.rackNumber,
+
                     Cell: fileDetails.cellNumber,
+                    "Created By": fileDetails.createdBy || "NA",
+                    "Created Date": fileDetails.sentOn,
                   }).map(([key, value]) => (
                     <TableRow key={key}>
                       <TableCell component="th" scope="row">
                         {key}
                       </TableCell>
+
                       <TableCell>{value}</TableCell>
                     </TableRow>
                   ))}
@@ -500,6 +581,74 @@ const RequestStatus = () => {
               variant="contained"
               color="secondary"
               onClick={() => setFileDetailsModalVisible(false)}
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Modal>
+      <Modal
+        open={historyModalVisible}
+        onClose={() => setHistoryModalVisible(false)}
+      >
+        <Dialog
+          open={historyModalVisible}
+          onClose={() => setHistoryModalVisible(false)}
+          maxWidth="xl"
+          fullWidth
+        >
+          <DialogTitle>File History</DialogTitle>
+
+          <DialogContent>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Sl</TableCell>
+
+                  <TableCell>File Number</TableCell>
+
+                  <TableCell>Sender</TableCell>
+
+                  <TableCell>Receiver</TableCell>
+
+                  <TableCell>Docket No.</TableCell>
+
+                  <TableCell>Action Date</TableCell>
+
+                  <TableCell>Status</TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {historyData.map((historyItem, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{historyData.length - index}</TableCell>
+
+                    <TableCell>{historyItem.fileNo}</TableCell>
+
+                    <TableCell>{historyItem.sender || "NA"}</TableCell>
+
+                    <TableCell>{historyItem.receiver || "NA"}</TableCell>
+
+                    <TableCell>{historyItem.docketNo || "NA"}</TableCell>
+
+                    <TableCell>{historyItem.actionDate || "NA"}</TableCell>
+
+                    <TableCell>
+                      {index === 0 ? "Present" : "Sent"}{" "}
+                      {/* Conditional rendering */}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </DialogContent>
+
+          <DialogActions>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => setHistoryModalVisible(false)}
             >
               Close
             </Button>

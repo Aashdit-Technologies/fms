@@ -46,6 +46,10 @@ import SearchIcon from '@mui/icons-material/Search';
 import RemoveCircleOutline from '@mui/icons-material/RemoveCircleOutline';
 import Visibility from '@mui/icons-material/Visibility';
 import { PageLoader } from "../pageload/PageLoader";
+import { LocalizationProvider, MobileDatePicker } from "@mui/x-date-pickers";
+import { CalendarToday } from "@mui/icons-material";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 const customStyles = {
   table: {
     style: {
@@ -277,42 +281,133 @@ const DiarySection = () => {
     {
       name: "Group Name",
       selector: (row) => row.groupName || "N/A",
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '150px'
+          }} 
+          title={row.groupName || ''}
+        >
+          {row.groupName || ''}
+        </div>
+      ),
       sortable: true,
       wrap: true,
     },
     {
       name: "Name",
       selector: (row) => row.name || "N/A",
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '150px'
+          }} 
+          title={row.name || ''}
+        >
+          {row.name || ''}
+        </div>
+      ),
       sortable: true,
       wrap: true,
     },
     {
       name: "Address",
       selector: (row) => row.address || "N/A",
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '150px'
+          }} 
+          title={row.address || ''}
+        >
+          {row.address || ''}
+        </div>
+      ),
       sortable: true,
       wrap: true,
     },
     {
       name: "Mobile",
       selector: (row) => row.mobile || "N/A",
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '150px'
+          }} 
+          title={row.mobile || ''}
+        >
+          {row.mobile || ''}
+        </div>
+      ),
       sortable: true,
       width: "120px",
     },
     {
       name: "Email",
       selector: (row) => row.email || "N/A",
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '150px'
+          }} 
+          title={row.email || ''}
+        >
+          {row.email || ''}
+        </div>
+      ),
       sortable: true,
       wrap: true,
     },
     {
       name: "Fax",
       selector: (row) => row.fax || "N/A",
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '150px'
+          }} 
+          title={row.fax || ''}
+        >
+          {row.fax || ''}
+        </div>
+      ),
       sortable: true,
       width: "100px",
     },
     {
       name: "District",
       selector: (row) => row.district || "N/A",
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '150px'
+          }} 
+          title={row.district || ''}
+        >
+          {row.district || ''}
+        </div>
+      ),
       sortable: true,
       wrap: true,
     },
@@ -328,6 +423,19 @@ const DiarySection = () => {
     {
       name: "Sender Details",
       selector: (row) => row?.sender || "N/A",
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '500px'
+          }} 
+          title={row.sender || ''}
+        >
+          {row.sender || ''}
+        </div>
+      ),
       sortable: true,
       width: "480px",
     },
@@ -488,6 +596,19 @@ const DiarySection = () => {
     {
       name: "Sender Details",
       selector: (row) => row.sender,
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+           
+          }} 
+          title={row.sender || ''}
+        >
+          {row.sender || ''}
+        </div>
+      ),
       wrap: true,
      width:"330px"
     },
@@ -523,11 +644,37 @@ const DiarySection = () => {
     {
       name: "Memo No.",
       selector: (row) => row.memoNo,
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '150px'
+          }} 
+          title={row.memoNo|| ''}
+        >
+          {row.memoNo|| ''}
+        </div>
+      ),
        width:"150px"
     },
     {
       name: "Addressee",
       selector: (row) => row.addressee,
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '150px'
+          }} 
+          title={row.addressee || ''}
+        >
+          {row.addressee || ''}
+        </div>
+      ),
       wrap: true,
        width:"350px"
     },
@@ -973,7 +1120,7 @@ const handleremarksChange = (e) => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // console.log("API response:", response);
+       
 
         const data = response?.data?.data?.enclosureTypeList || [];
         if (response.status === 200 && Array.isArray(data)) {
@@ -1198,7 +1345,7 @@ const handleremarksChange = (e) => {
         });
   
         const allnewletter = response?.data?.data || [];
-        console.log("Fetched new letters:", allnewletter);
+        
   
         if (response.status === 200 && Array.isArray(allnewletter)) {
           setNewLetterData(allnewletter);
@@ -1235,12 +1382,12 @@ const handleremarksChange = (e) => {
         headers: { Authorization: `Bearer ${token}` },
       });
   
-      console.log("Full API Response:", response);
+     
   
       const allSentLetter = response?.data?.data || [];
   
       if (response.status === 200 && Array.isArray(allSentLetter)) {
-        console.log("Fetched sent letters:", allSentLetter);
+        
         setSentLetterData(allSentLetter);
         setfilteredSentLetter(allSentLetter);
       } else {
@@ -1388,7 +1535,7 @@ const handleEncloserIconClick = async (row) => {
     );
 
     if (response.status === 200) {
-      console.log("Raw Response Data:", response.data);
+      
 
       let parsedArray = [];
       try {
@@ -1398,7 +1545,7 @@ const handleEncloserIconClick = async (row) => {
         parsedArray = []; 
       }
 
-      console.log("Parsed Array:", parsedArray);
+    
       setNewLetterDataEncloser(parsedArray); 
       
     } else {
@@ -1461,7 +1608,7 @@ const handleEditButtonClick = async (row) => {
   }
 
   const payload = { value: row.documentMetaDataId.toString() };
-  console.log("Edit payload:", payload);
+  
   setIsLoading(true);
   try {
     const response = await api.post(
@@ -1473,8 +1620,7 @@ const handleEditButtonClick = async (row) => {
       const letterData = response.data.data;
       const editedList = letterData.EditedList[0];
 
-      console.log("Edit Letter Data:", letterData);
-      console.log("Edit Letter:", editedList);
+   
 
       // Extract sender details
       const senderAddressBook = editedList.sender_addressbook 
@@ -1546,7 +1692,7 @@ const handleEditButtonClick = async (row) => {
           };
         });
       
-        console.log("Formatted Department List:", formattedDepartmentList); // Debugging
+        
       
         setRows(formattedDepartmentList);
       
@@ -1555,7 +1701,7 @@ const handleEditButtonClick = async (row) => {
           addressee: row.addressList.some(a => a.id === row.addressee) ? row.addressee : ""
         })));
       
-        console.log("Final Rows After Processing: ", formattedDepartmentList);
+       
       } else {
         setRows([{ departmentName: "", addresseeDesignation: "", addressee: "", memoNumber: "", addressList: [] }]);
       }
@@ -1629,7 +1775,7 @@ const handleEditButtonClick = async (row) => {
         "diary-section/view-letter",
         { dataObject: encryptPayload(payload) }
       );
-        console.log("letter view", response.data.data)
+        
       if (response.status === 200 && response.data.outcome) {
         setSelectedLetterDetails(response.data.data);
         setShowLetterModal(true);
@@ -1844,7 +1990,7 @@ const handleEditButtonClick = async (row) => {
           ? { ...row, file, fileName: file.name, filePath: null }
           : row
       );
-      console.log("Updated Enclosure Rows:", updatedRows); 
+      
       return updatedRows;
     });
     
@@ -1986,10 +2132,9 @@ const handleFileUploadChangeencloser = (index, event) => {
       documentName: formData.fileName,
       documentPath: formData.filePath,
     };
-// console.log("documentname",documentName)
-// console.log("documentpath",documentPath)
+
     const encryptedPayload = encryptPayload(payload);
-    console.log("Checking payloads", encryptedPayload);
+   
 
     const response = await api.post(
       'download/view-document',
@@ -1998,7 +2143,7 @@ const handleFileUploadChangeencloser = (index, event) => {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    console.log(response);
+   
     if (response.data && response.data.data) {
       const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
       const byteCharacters = atob(base64String);
@@ -2034,7 +2179,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
     };
     setIsLoading(true);
     const encryptedPayload = encryptPayload(payload);
-    console.log("Checking payloads", encryptedPayload);
+   
 
     const response = await api.post(
       'download/view-document',
@@ -2043,7 +2188,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    console.log(response);
+   
     if (response.data && response.data.data) {
       const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
       const byteCharacters = atob(base64String);
@@ -2087,7 +2232,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
     );
     
     if (response.status === 200) {
-    console.log('Full PDF Response:', response.data);
+    
     
     // Create a download link and trigger download
     const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -2135,7 +2280,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
       );
       
       if (response.status === 200) {
-      console.log('Full PDF Response:', response.data);
+      
       
       // Create a download link and trigger download
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -2183,7 +2328,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
         );
         
         if (response.status === 200) {
-        console.log('Full PDF Response:', response.data);
+        
         
         // Create a download link and trigger download
         const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -2207,7 +2352,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
         }
         };
   
-
+        const badgeColors = ["#ff5733", "#1e90ff", "#28a745", "#ffcc00"];
      
 
       return (
@@ -2358,7 +2503,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                   <label style={{ display: "block", width: "100%" }}>
                     Sender Date: <span style={{ color: "red" }}>*</span>
                   </label>
-                  <TextField
+                  {/* <TextField
                     fullWidth
                     size="small"
                     // InputProps={{ sx: { height: 55 } }}
@@ -2383,7 +2528,53 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                         },
                       },
                     }}
-                  />
+                  /> */}
+
+<LocalizationProvider dateAdapter={AdapterDayjs}>
+  <MobileDatePicker
+    value={formData.senderDate ? dayjs(formData.senderDate) : null}
+    onChange={(newValue) => {
+      if (newValue && newValue.isAfter(dayjs())) {
+        toast.error("Future dates are not allowed!");
+        return;
+      }
+      handleSenderDateChange({ target: { name: "senderDate", value: newValue ? newValue.format("YYYY-MM-DD") : "" } });
+    }}
+    disableCloseOnSelect
+    format="YYYY-MM-DD"
+    maxDate={dayjs()} // ✅ Restricts future dates
+    slotProps={{
+      textField: {
+        fullWidth: true,
+        required: true,
+        InputLabelProps: {
+          shrink: true,
+          sx: {
+            "& .MuiFormLabel-asterisk": {
+              color: "red",
+            },
+          },
+        },
+        InputProps: {
+          endAdornment: <CalendarToday color="action" />,
+        },
+        sx: {
+          "& .MuiInputBase-root": {
+            height: "40px",
+          },
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": { borderColor: "#207785" },
+            "&:hover fieldset": { borderColor: "#1a5f6a" },
+          },
+        },
+      },
+      actionBar: { actions: [] },
+    }}
+    closeOnSelect={true}
+  />
+</LocalizationProvider>
+
+
                 </div>
               </div>
               {/* Subject */}
@@ -2999,7 +3190,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                       if (typeof setSenderAddress === 'function') {
                         setSenderAddress("");
                       }
-                      setOpenSection(null);
+                      // setOpenSection(null);
 
                     }}
                   >
@@ -3838,7 +4029,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
 
       <Modal.Header style={{ backgroundColor: "#207785", color: "#fff" }}>
         <div className="w-100 d-flex justify-content-between align-items-center">
-          <h6 className="mb-0">Letter Details</h6>
+          <h6 className="mb-0" style={{fontSize:"20px"}}>Letter Details</h6>
           <div>
             <Button
               variant="link"
@@ -3935,7 +4126,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     p: 3,
                   }}
                 >
-                  <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 2 ,color:"#1a5f6a",fontSize:"20px"}}>
                     Notes
                   </Typography>
                   {Array.isArray(selectedLetterDetails?.letterNotesArrays) &&
@@ -3950,22 +4141,27 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
-                          borderRadius: 2,
+                          borderRadius: 1,
+                          borderLeft: `6px solid ${badgeColors[index % badgeColors.length]}`,
                         }}
                       >
                         {/* Left Side Content */}
-                        <Box>
-                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                            <strong>Action taken by:</strong> {note?.actionTakenBy || "N/A"}
+                        <Box sx={{ lineHeight: 1.6 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: "bold", color: "#1565c0" }}>
+                            <strong  style={{ color: "#1565c0" }}>Action taken by:</strong>{" "} 
+                            <span style={{ fontWeight: "normal", color: "#333" }}>{note?.actionTakenBy || "N/A"}</span>
                           </Typography>
                           <Typography sx={{ mb: 1 }}>
-                            <strong>Action:</strong> {note?.action || "N/A"}
+                            <strong style={{ color: "#1565c0" }}>Action:</strong> {" "}
+                            <span style={{ fontWeight: "normal", color: "#333" }}>{note?.action || "N/A"}</span>
                           </Typography>
                           <Typography sx={{ mb: 1 }}>
-                            <strong>Date:</strong> {note?.modifyDate || "N/A"}
+                            <strong style={{ color: "#1565c0" }}>Date:</strong>{" "} 
+                            <span style={{ fontWeight: "normal", color: "#333" }}>{note?.modifyDate || "N/A"}</span>
                           </Typography>
                           <Typography>
-                            <strong>Note:</strong> {note?.note || "N/A"}
+                            <strong style={{ color: "#1565c0" }}>Note:</strong>{" "}
+                            <span style={{ fontWeight: "normal", color: "#333" }}> {note?.note || "N/A"}</span>
                           </Typography>
                         </Box>
 
@@ -3975,11 +4171,12 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                             width: 30,
                             height: 30,
                             borderRadius: "50%",
-                            bgcolor: "#e0e0e0",
+                            bgcolor: badgeColors[index % badgeColors.length],
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             fontWeight: "bold",
+                            color: "#ffffff", 
                           }}
                         >
                           {index + 1}
@@ -4002,46 +4199,77 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     p: 3,
                   }}
                 >
-                  <h6 className="mb-3">All Enclosures</h6>
-                  <div className="table-responsive">
-                  <table className="table table-bordered table-hover">
-                    <thead>
-                      <tr>
-                        <th className="text-center">SI NO</th>
-                        <th className="text-center">Enclosure Name</th>
-                        <th className="text-center">Enclosure Type</th>
-                        <th className="text-center">Added By</th>
-                        <th className="text-center">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedLetterDetails.letterEnclosureArrays?.map((enclosure, index) => (
-                        <tr key={index}>
-                          <td className="text-center align-middle">{index + 1}</td>
-                          <td className="text-center align-middle">
-                            <button
-                              style={{
-                                background: "none",
-                                border: "none",
-                                color: "#007bff",
-                                textDecoration: "underline",
-                                cursor: "pointer",
-                              }}
-                              onClick={() =>
-                                handleDownloadEnclosureletter(enclosure.fileName, enclosure.filePath)
-                              }
-                            >
-                              {enclosure.enclosureName}
-                            </button>
-                          </td>
-                          <td className="text-center align-middle">{enclosure.enclosureType}</td>
-                          <td className="text-center align-middle">{enclosure.enclosureUploadBy}</td>
-                          <td className="text-center align-middle">{enclosure.enclosureUploadDate}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                  <Typography variant="subtitle1" sx={{ mb: 2, color: "#1a5f6a", fontSize: "20px", fontWeight: "bold" }}>
+                    All Enclosures
+                  </Typography>
+                  <TableContainer component={Paper} variant="outlined">
+                          <Table size="small" sx={{ border: "1px solidrgb(224, 224, 224)" }}>
+                    <TableHead>
+                               <TableRow sx={{ bgcolor: "#1a5f6a" }}> 
+                                 <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                                   SI NO
+                                 </TableCell>
+                                 <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                                   Enclosure Name
+                                 </TableCell>
+                                 <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                                   Enclosure Type
+                                 </TableCell>
+                                 <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                                   Added By
+                                 </TableCell>
+                                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>
+                                   Date
+                                 </TableCell>
+                               </TableRow>
+                             </TableHead>
+                    <TableBody>
+                      {selectedLetterDetails.letterEnclosureArrays?.length>0?(
+                      selectedLetterDetails.letterEnclosureArrays?.map((enclosure, index) => (
+                     
+
+                        <TableRow
+                                          key={index}
+                                          sx={{
+                                            "&:hover": { bgcolor: "#f5f5f5" }, 
+                                          }}
+                                        >
+                                          <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>{index + 1}</TableCell>
+                                          <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>
+                                            <button
+                                              style={{
+                                                background: "none",
+                                                border: "none",
+                                                color: "#007bff",
+                                                textDecoration: "underline",
+                                                cursor: "pointer",
+                                                padding: 0, 
+                                              }}
+                                              onClick={() =>
+                                                handleDownloadEnclosureletter(enclosure.fileName, enclosure.filePath)
+                                              }
+                                            >
+                                              {enclosure.enclosureName}
+                                            </button>
+                                          </TableCell>
+                                          <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>{enclosure.enclosureType}</TableCell>
+                                          <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>{enclosure.enclosureUploadBy}</TableCell>
+                                          <TableCell>{enclosure.enclosureUploadDate}</TableCell>
+                                        </TableRow>
+                                      ))
+                                    ) : (
+                                      <TableRow>
+                                        <TableCell colSpan={5} sx={{ textAlign: "center", py: 3 }}>
+                                          <Typography variant="body2" sx={{ color: "#757575" }}>
+                                            No Data Available
+                                          </Typography>
+                                        </TableCell>
+                                      </TableRow>
+                                    )}
+                    </TableBody>
+                    </Table>
+                    </TableContainer>
+
                 </Box>
               </div>
             </div>

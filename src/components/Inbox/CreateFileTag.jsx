@@ -114,7 +114,9 @@ const ManageFile = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    
     setIsSubmitting(true);
+
    
     if (!selectedOffice) return toast.error("Please select an office.");
     if (!selectedDepartment) return toast.error("Please select a department.");

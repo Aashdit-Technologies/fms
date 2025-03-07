@@ -182,7 +182,7 @@ useEffect(() => {
           },
         }
       );
-      console.log("Full API Response:", response.data);
+     
       const list = response.data?.data?.employeeList;
       if (Array.isArray(list)) {
         setEmployeeList(list);
@@ -215,30 +215,83 @@ const columns = [
     name: "Sl No",
     cell: (row, index) => index + 1,
     sortable: true,
-    width:"150px"
+    width:"100px"
   },
   {
     name: "Employee Code",
     selector: (row) => row.StaffCode || "",
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '150px'
+        }} 
+        title={row.StaffCode || ''}
+      >
+        {row.StaffCode || ''}
+      </div>
+    ),
     sortable: true,
   },
   {
     name: "First Name",
     selector: (row) => row.FirstName || "",
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '150px'
+        }} 
+        title={row.FirstName || ''}
+      >
+        {row.FirstName || ''}
+      </div>
+    ),
     sortable: true,
   },
   {
     name: "Last Name",
     selector: (row) => row.LastName || "",
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '150px'
+        }} 
+        title={row.LastName || ''}
+      >
+        {row.LastName || ''}
+      </div>
+    ),
     sortable: true,
   },
   {
     name: "Service Status",
     selector: (row) => row.ServiceStatus || "",
+    cell: row => (
+      <div 
+        style={{
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          maxWidth: '150px'
+        }} 
+        title={row.ServiceStatus || ''}
+      >
+        {row.ServiceStatus || ''}
+      </div>
+    ),
     sortable: true,
   },
   {
     name: "Action",
+     width:"150px",
     cell: (row) => (
       <Button
         variant="contained"
@@ -298,12 +351,12 @@ const handleEdit = async (row) => {
     if (response.status === 200) {
       const employeeData = response.data.data;
 
-      // Update Zustand store with employee data
+   
       useFormStore.getState().updateFormData("basicDetails", employeeData);
       useFormStore.getState().setEmployeeId(employeeData.employeeId);
-     // useFormStore.getState().setEmployeeCode(employeeData.EmployeeCode);
-     console.log("Updated Employee ID in Store:", useFormStore.getState().employeeId);
-      // Navigate to the Employee Master page
+     
+     
+      
       navigate("/employee-master");
     }
   } catch (error) {
@@ -361,6 +414,7 @@ const handleRowsPerPageChange = (newRowSize) => {
       sx={{ minWidth: 200 }}
       displayEmpty
     >
+      <MenuItem key="0" value="0">All</MenuItem>
       {serviceStatusList.map((status) => (
         <MenuItem key={status.ServiceStatusId} value={status.ServiceStatusId}>
           {status.ServiceStatusName}

@@ -678,7 +678,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
                 variant="contained"
                 color="secondary"
                 size="small"
-                title="Edit"
+                title="History"
                 sx={{
                   minWidth: "auto",
                   padding: "6px 10px",

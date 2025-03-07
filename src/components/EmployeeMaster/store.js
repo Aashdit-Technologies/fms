@@ -21,7 +21,6 @@ const useFormStore = create((set) => ({
     set((state) => ({
       formData: { ...state.formData, [section]: data },
     })),
-
   setEmployeeCode: (code) => set({ employeeCode: code }),
 
   setEmployeeId: (id) => set({ employeeId: id }), 

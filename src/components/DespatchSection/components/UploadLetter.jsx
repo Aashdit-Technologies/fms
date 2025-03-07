@@ -15,7 +15,10 @@ import { encryptPayload } from "../../../utils/encrypt";
 import api from '../../../Api/Api';
 import {toast } from "react-toastify";
 import { PageLoader } from "../../pageload/PageLoader";
-
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider, MobileDatePicker } from "@mui/x-date-pickers";
+import { CalendarToday, AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
+import { Grid } from '@mui/joy';
 const UploadLetter = ({ open, onClose,   dispatchData,fetchLetters}) => {
   
   const correspondenceId = dispatchData?.length > 0 ? dispatchData[0].correspondenceId : null;
@@ -137,7 +140,8 @@ const validateForm = () => {
   return (
     <>
      {isLoading && <PageLoader />}
-<Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+     <LocalizationProvider dateAdapter={AdapterDayjs}>
+     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       {/* Dialog Title */}
       <DialogTitle
         sx={{
@@ -159,9 +163,9 @@ const validateForm = () => {
       {/* Dialog Content */}
       <DialogContent sx={{ mt: 2 }}>
         <form>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, py: 2 }}>
-            {/* Letter No and Ending Memo No */}
-            <Box sx={{ display: "flex", gap: 2 }}>
+          <Box>
+          <Grid container spacing={2} >
+          <Grid item xs={6} sx={{ mb: 2 }}>
               <TextField
                 required
                 fullWidth
@@ -188,15 +192,17 @@ const validateForm = () => {
                 autoComplete="off"
                 inputProps={{
                   maxLength: 20,
-                  pattern: "[0-9]*", // Allows only numbers
-                  inputMode: "numeric", // Shows numeric keyboard on mobile
+                  pattern: "[0-9]*", 
+                  inputMode: "numeric", 
                   onKeyDown: (e) => {
                     if (!/^[0-9]$/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete") {
-                      e.preventDefault(); // Block non-numeric input
+                      e.preventDefault(); 
                     }
                   },
                 }}
               />
+              </Grid>
+              <Grid item xs={6} sx={{ mb: 2 }}>
               <TextField
                 fullWidth
                 label="Ending Memo No"
@@ -214,93 +220,89 @@ const validateForm = () => {
                 autoComplete="off"
                 inputProps={{
                   maxLength: 20,
-                  pattern: "[0-9]*", // Allows only numbers
-                  inputMode: "numeric", // Shows numeric keyboard on mobile
+                  pattern: "[0-9]*",
+                  inputMode: "numeric",
                   onKeyDown: (e) => {
                     if (!/^[0-9]$/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete") {
-                      e.preventDefault(); // Block non-numeric input
+                      e.preventDefault(); 
                     }
                   },
                 }}
               />
               
-            </Box>
+              </Grid>
+              <Grid item xs={6} sx={{ mb: 2 }}>
+                  <MobileDatePicker
+                    label={
+                      <>
+                        Date <span style={{ color: "red" }}>*</span>
+                      </>
+                    }
+                    value={formData.date || null}
+                    onChange={(newValue) =>
+                      handleInputChange({ target: { name: "date", value: newValue } })
+                    }
+                    disableCloseOnSelect
+                    format="YYYY-MM-DD"
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        
+                        InputLabelProps: {
+                          shrink: true,
+                          
+                        },
+                        InputProps: {
+                          endAdornment: <CalendarToday color="action" />,
+                        },
+                        sx: {
+                          "& .MuiInputBase-root": {
+                            height: "50px",
+                          },
+                          "& .MuiOutlinedInput-root": {
+                            "& fieldset": { borderColor: "#207785" },
+                            "&:hover fieldset": { borderColor: "#1a5f6a" },
+                          },
+                        },
+                      },
+                      actionBar: { actions: [] },
+                    }}
+                    closeOnSelect={true}
+                  />
+                </Grid>
 
-            {/* Date and File Upload */}
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              <Grid item xs={6} sx={{ mb: 2 }}>
               <TextField
-                required
+              label={
+                <>
+                letter Document <span style={{color:"red"}}>*</span>
+                </>
+              }
+                type="file"
+                accept=".pdf"
+                id="file"
+                onChange={handleFileChange}
                 fullWidth
-                label="Date"
-                name="date"
-                type="date"
-                value={formData.date}
-                onChange={handleInputChange}
-                InputLabelProps={{
-                  shrink:true,
-                  sx: {
-                    
-                    '& .MuiFormLabel-asterisk': {
-                      color: 'red',
-                    },
+                InputLabelProps={{ shrink: true }}
+                inputProps={{
+                  style: {
+                    cursor: "pointer",
+                    padding: "10px",
                   },
                 }}
-                
                 sx={{
+                  width: "420px",
                   "& .MuiOutlinedInput-root": {
                     height: "50px",
-                    width: "420px",
-                    "& fieldset": { borderColor: "#207785" }, 
-                    "&:hover fieldset": { borderColor: "#1a5f6a" }, 
+                    bgcolor: "#f9f9f9",
+                    borderRadius: "4px",
                   },
                 }}
-              />
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexGrow: 1 }}>
-                <Button
-                  variant="contained"
-                  component="label"
-                  sx={{
-                    width: "420px",
-                    height:"50px",
-                    textTransform: 'none',
-                    bgcolor: "#207785", 
-                    "&:hover": { bgcolor: "#1a5f6a" }, 
-                  }}
-                >
-                  Select File <span style={{color:"red"}}> *</span>
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    id="file"
-                    hidden
-                    onChange={handleFileChange}
-                  />
-                </Button>
-                
-              </Box>
-
-            </Box>
-            <Box sx={{ display: "flex", justifyContent: "end", maxWidth: "100%" }}>
-              {formData.letterDocuments && (
-                <Box
-                  sx={{
-                    ml: 1,
-                    color: "#1976d2",
-                    fontWeight: "medium",
-                    maxWidth: "420px", // Adjust as needed
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                  title={formData.letterDocuments.name} // Show full name on hover
-                >
-                  {formData.letterDocuments.name}
-                </Box>
-              )}
-            </Box>
-
-
+              />   
+            </Grid>
+        </Grid>
           </Box>
+         
         </form>
       </DialogContent>
 
@@ -329,8 +331,11 @@ const validateForm = () => {
         </Button>
       </DialogActions>
     </Dialog>
+    </LocalizationProvider>
     </>
   );
 };
 
 export default UploadLetter;
+
+

@@ -6,6 +6,7 @@ import {
   Grid,
   MenuItem,
   IconButton,
+  Typography,
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider, MobileDatePicker } from "@mui/x-date-pickers";
@@ -18,6 +19,7 @@ import useAuthStore from "../../store/Store";
 import { PageLoader } from "../pageload/PageLoader";
 import { encryptPayload } from "../../utils/encrypt";
 import {toast } from "react-toastify";
+import { FormControl } from "react-bootstrap";
 
 
 const fetchDropdownData = async () => {
@@ -28,34 +30,44 @@ const fetchDropdownData = async () => {
     "common/get-designation-list",
     "common/role-list",
     "common/get-service-status-list",
-    "common/get-office-list"
+    "common/get-office-list",
   ];
 
-  const requests = endpoints.map(endpoint => api.get(endpoint)
-    .then(res => ({ success: true, data: res.data.data }))
-    .catch(error => {
-      console.error(`Error fetching ${endpoint}:`, error);
-      return { success: false, data: null }; // Handle failure
-    })
+  const requests = endpoints.map((endpoint) =>
+    api
+      .get(endpoint)
+      .then((res) => {
+       
+        const data = res.data.data || res.data; 
+        return { success: true, data };
+      })
+      .catch((error) => {
+        console.error(`Error fetching ${endpoint}:`, error);
+        return { success: false, data: [] };
+      })
   );
 
   const responses = await Promise.allSettled(requests);
 
-  // Extract only successful responses
-  return responses.map((res, index) => 
+  return responses.map((res) =>
     res.status === "fulfilled" && res.value.success ? res.value.data : []
   );
 };
 
-const EmploymentDetails = ({  handleTabChange }) => {
+const EmploymentDetails = ({ handleTabChange }) => {
   
-  const { activeTab, updateFormData, setActiveTab ,formData,setEmployeeCode} = useFormStore();
+  const { activeTab, updateFormData, setActiveTab ,formData,setEmployeeCode,employeeId,employeeCode} = useFormStore();
+  
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const token = useAuthStore((state) => state.token);
   const { data } = useQuery({
     queryKey: ["dropdownData"],
     queryFn: fetchDropdownData,
   });
+  
+  const [organizations, companies, departments, designations, roles, ServiceStatus, offices] =
+    data || [[], [], [], [], [], [], []];
   const [serviceStatus, setServiceStatus] = useState("");
   const [rows, setRows] = useState([
     {
@@ -67,29 +79,42 @@ const EmploymentDetails = ({  handleTabChange }) => {
       role: "",
       fromDate: "",
       endDate: "",
-      isPrimary: "No",
+      isPrimary: "Yes",
       employeeId: null,
     },
   ]);
 
-  const [organizations, companies, departments, designations, roles, ServiceStatus,offices] = data || [[], [], [], [], [], [], []];
-
   const handleChange = (index, field, value) => {
     const updatedRows = rows.map((row, i) => {
       if (i === index) {
-        
         return { ...row, [field]: value };
-      } else if (field === "isPrimary" && value === "Yes") {
-      
-        return { ...row, isPrimary: "No" };
       }
       return row;
     });
-
+  
     setRows(updatedRows);
-  };
 
+    const newErrors = { ...errors };
+    delete newErrors[`${field}_${index}`];
+    setErrors(newErrors);
+  };
   const addRow = () => {
+    const isAllRowsValid = rows.every((row, index) => {
+      return (
+        row.organization &&
+        row.department &&
+        row.designation &&
+        row.role &&
+        row.fromDate &&
+        row.isPrimary
+      );
+    });
+  
+    if (!isAllRowsValid) {
+      toast.error("Please fill all mandatory fields in all rows before adding a new row.");
+      return; 
+    }
+  
     setRows([
       ...rows,
       {
@@ -102,7 +127,7 @@ const EmploymentDetails = ({  handleTabChange }) => {
         fromDate: "",
         endDate: "",
         isPrimary: "No",
-        EmployeeId:""
+        EmployeeId: "",
       },
     ]);
   };
@@ -113,29 +138,28 @@ const EmploymentDetails = ({  handleTabChange }) => {
     }
   };
 
- 
-
-
   const handleBack = () => {
-    console.log("handleBack clicked");
-
     if (typeof handleTabChange !== "function") {
       console.error("handleTabChange is not a function! Received:", handleTabChange);
       return;
     }
-
-    handleTabChange(null, "BASIC_DETAILS"); 
+    handleTabChange(null, "BASIC_DETAILS");
   };
 
- 
-  
   const handleSaveAndNext = async () => {
     const storedEmployeeId = useFormStore.getState().employeeId;
-    
-    if (!rows || rows.length === 0) {
-      toast.error("No employment data provided.");
-      return;
-    }
+ 
+ const isValid = validateEmploymentFields(rows,serviceStatus);
+
+ if (!isValid) {
+   toast.error("Please fill all the required fields.");
+   return; 
+ }
+
+ if (!rows || rows.length === 0) {
+   toast.error("No employment data provided.");
+   return;
+ }
   setIsLoading(true)
     try {
       const payload = {
@@ -165,7 +189,7 @@ const EmploymentDetails = ({  handleTabChange }) => {
       );
   
       if (response.data?.outcome) {
-        const { employeeCode, employeeId } = response.data.data;
+        const { employeeCode, employeeId,success_msg } = response.data.data;
   
         useFormStore.getState().setEmployeeCode(employeeCode);
         useFormStore.getState().setEmployeeId(employeeId);
@@ -176,7 +200,7 @@ const EmploymentDetails = ({  handleTabChange }) => {
           ServiceStatusId: serviceStatus ?? null,
         });
   
-        toast.success("Data saved successfully!", { position: "top-right", autoClose: 3000 });
+         toast.success(success_msg);
   
         setActiveTab("FAMILY_DETAILS");
       } else {
@@ -201,7 +225,7 @@ const EmploymentDetails = ({  handleTabChange }) => {
         setServiceStatus(storedData?.serviceStatusId || "");
 
       
-        if (storedData?.employmentDetails) {
+        if (storedData?.employmentDetails && storedData?.employmentDetails.length > 0) {
           const formattedRows = storedData.employmentDetails.map((row) => ({
             empDeptMapId: row?.employeeDeptMapId ?? null,
             role: row?.roleId ?? "",
@@ -217,35 +241,120 @@ const EmploymentDetails = ({  handleTabChange }) => {
 
           setRows(formattedRows);
         }
+        else {
+          
+          setRows([
+            {
+              organization: "",
+              company: "",
+              office: "",
+              department: "",
+              designation: "",
+              role: "",
+              fromDate: "",
+              endDate: "",
+              isPrimary: "Yes",
+              employeeId: null,
+            },
+          ]);
       }
     }
+    }
   }, [activeTab, formData]);
+
+  const validateEmploymentFields = (rows) => {
+    const newErrors = {};
+    let isValid = true;
+  
+    if (!serviceStatus) {
+      newErrors.serviceStatus = "Service Status is required.";
+      isValid = false;
+    }
+  
+    rows.forEach((row, index) => {
+      if (!row.organization) {
+        newErrors[`organization_${index}`] = "Organization is required.";
+        isValid = false;
+      }
+      if (!row.department) {
+        newErrors[`department_${index}`] = "Department is required.";
+        isValid = false;
+      }
+      if (!row.designation) {
+        newErrors[`designation_${index}`] = "Designation is required.";
+        isValid = false;
+      }
+      if (!row.role) {
+        newErrors[`role_${index}`] = "Role is required.";
+        isValid = false;
+      }
+      if (!row.fromDate) {
+        newErrors[`fromDate_${index}`] = "From Date is required.";
+        isValid = false;
+      }
+      if (!row.isPrimary) {
+        newErrors[`isPrimary_${index}`] = "Is Primary is required.";
+        isValid = false;
+      } 
+
+      if (row.endDate && row.fromDate && dayjs(row.endDate).isBefore(dayjs(row.fromDate), "day")) {
+        newErrors[`endDate_${index}`] = "End Date must be after From Date.";
+        isValid = false;
+      }
+    });
+  
+    setErrors(newErrors);
+    return isValid;
+  };
+  
+ 
+  useEffect(() => {
+    if (formData?.basicDetails?.employeeCode) {
+      setEmployeeCode(formData.basicDetails.employeeCode);
+    }
+  }, [formData?.basicDetails?.employeeCode, setEmployeeCode]);
   
   return (
     <>
     {isLoading && <PageLoader />}
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box>
-        <Grid container spacing={2} alignItems="center" sx={{ mb: 5,mt:3 }}>
-          <Grid item xs={3}>
-            <TextField
-              fullWidth
-              label="Employee Code"
-              value={formData?.employmentDetails?.staffCode || ""}
-              InputProps={{ readOnly: true ,sx: { height: '50px' }}}
-              
-            />
-          </Grid>
+        <Grid container spacing={2}  sx={{ mb: 5,mt:3 }}>
+         
+          <Grid item xs={3} sx={{ mb: 3 }}>
+          
+          <TextField
+            fullWidth
+            label="Employee Code"
+            value={employeeCode || ""}
+            InputProps={{ readOnly: true, sx: { height: "50px" } }}
+          />
+          
+        </Grid>
 
-          <Grid item xs={3}>
+          <Grid item xs={3} sx={{ mb: 3 }}>
             <TextField
               select
               fullWidth
-              label="Service Status"
+              
+              label={
+                <>
+                  Service Status <span style={{ color: "red" }}>*</span>
+                </>
+              }
               value={serviceStatus}
-              InputProps={{ sx: { height: '50px' } }}
-              onChange={(e) => setServiceStatus(e.target.value)}
+              InputProps={{ sx: { height: '50px' } }} 
+           
+              onChange={(e) => {
+                setServiceStatus(e.target.value); 
+                setErrors((prevErrors) => ({ ...prevErrors, serviceStatus: "" })); 
+              }}
+              error={!!errors.serviceStatus} 
+              helperText={errors.serviceStatus} 
             >
+               <MenuItem value="" >
+                --Select ServiceStatus--
+              </MenuItem>
               {ServiceStatus?.map((serv) => (
                 <MenuItem key={serv.ServiceStatusId} value={serv.ServiceStatusId}>
                   {serv.ServiceStatusName}
@@ -253,31 +362,48 @@ const EmploymentDetails = ({  handleTabChange }) => {
               ))}
             </TextField>
           </Grid>
-        </Grid>
-
+          <Grid item xs={6} sx={{ mb: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", width: "100%", }}>
+              <Typography sx={{ color: "red" }}>
+                *Note: First row must be a primary role.
+              </Typography>
+            </Box>
+          </Grid>
+     </Grid>
         {rows.map((row, index) => (
           <Grid
             container
             spacing={2}
-            alignItems="center"
+            // alignItems="center"
             key={index}
             sx={{ borderBottom: "1px solid #ddd", pb: 2, mb: 2 }}
           >
-           <Grid item xs={3} sx={{mb:3}} >
+           <Grid item xs={3} sx={{ mb:3}} >
            <TextField
                 select
                 fullWidth
-                label="Organization"
+                
+                label={
+                  <>
+                  Organization <span style={{color:"red"}}>*</span>
+                  </>
+                }
                 value={row.organization} 
                 InputProps={{ sx: { height: '50px' } }}
                 onChange={(e) => handleChange(index, "organization", e.target.value)}
+                error={!!errors[`organization_${index}`]}
+                helperText={errors[`organization_${index}`]} 
+
               >
+                 <MenuItem value="" >
+                --Select organization--
+              </MenuItem>
                 {organizations.map((org) => (
                   <MenuItem key={org.OrganizationId} value={org.OrganizationId}>
                     {org.OrganizationName}
                   </MenuItem>
                 ))}
-         </TextField>
+              </TextField>
             </Grid>
 
             <Grid item xs={3} sx={{mb:3}}>
@@ -299,6 +425,9 @@ const EmploymentDetails = ({  handleTabChange }) => {
                   },
                 }}
               >
+                 <MenuItem value="" >
+                --Select Company--
+              </MenuItem>
                 {companies.map((cmpg) => (
                   <MenuItem key={cmpg.CompanyId} value={cmpg.CompanyId}
                   style={{
@@ -322,7 +451,9 @@ const EmploymentDetails = ({  handleTabChange }) => {
               InputProps={{ sx: { height: '50px' } }}
               onChange={(e) => handleChange(index, "office", e.target.value)}
             >
-              {/* Ensure `offices` is always an array before mapping */}
+              <MenuItem value="" >
+                --Select office--
+              </MenuItem>
               {(offices ?? []).map((ofc) => (
                 <MenuItem key={ofc.officeId} value={ofc.officeId}>
                   {ofc.officeName}
@@ -336,11 +467,21 @@ const EmploymentDetails = ({  handleTabChange }) => {
               <TextField
                 select
                 fullWidth
-                label="Department"
+                
+                label={
+                  <>
+                  Department <span style={{color:"red"}}>*</span>
+                  </>
+                }
                 value={row.department}
                 InputProps={{ sx: { height: '50px' } }}
                 onChange={(e) => handleChange(index, "department", e.target.value)}
+                error={!!errors[`department_${index}`]}
+                helperText={errors[`department_${index}`]} 
               >
+                 <MenuItem value="" >
+                --Select department--
+              </MenuItem>
                 {departments.map((dep) => (
                   <MenuItem key={dep.departmentId} value={dep.departmentId}>
                     {dep.departmentName}
@@ -353,11 +494,22 @@ const EmploymentDetails = ({  handleTabChange }) => {
               <TextField
                 select
                 fullWidth
-                label="Designation"
+                
+                label={
+                  <>
+                  Designation <span style={{color:"red"}}>*</span>
+
+                  </>
+                }
                 value={row.designation}
                 InputProps={{ sx: { height: '50px' } }}
                 onChange={(e) => handleChange(index, "designation", e.target.value)}
+                error={!!errors[`designation_${index}`]}
+                helperText={errors[`designation_${index}`]} 
               >
+                 <MenuItem value="" >
+                --Select designation--
+              </MenuItem>
                 {designations.map((desi) => (
                   <MenuItem key={desi.designationId} value={desi.designationId}>
                     {desi.designationName}
@@ -370,11 +522,22 @@ const EmploymentDetails = ({  handleTabChange }) => {
               <TextField
                 select
                 fullWidth
-                label="Role"
+                
+                label={
+                  <>
+                  Role<span style={{color:"red"}}>*</span>
+
+                  </>
+                }
                 value={row.role}
                 InputProps={{ sx: { height: '50px' } }}
                 onChange={(e) => handleChange(index, "role", e.target.value)}
+                error={!!errors[`role_${index}`]}
+                helperText={errors[`role_${index}`]} 
               >
+                <MenuItem value="" >
+                --Select role--
+              </MenuItem>
                 {roles?.map((role) => (
                   <MenuItem key={role.RoleId} value={role.RoleId}>
                     {role.RoleName}
@@ -383,27 +546,33 @@ const EmploymentDetails = ({  handleTabChange }) => {
               </TextField>
             </Grid>
 
-           
-
             <Grid item xs={3} sx={{mb:3}}>
               <MobileDatePicker
-                label="From Date"
+               
+                label={
+                  <>
+                 From Date <span style={{color:"red"}}>*</span>
+                  </>
+                }
                 value={row.fromDate ? dayjs(row.fromDate) : null}
                 onChange={(newValue) =>
                   handleChange(index, "fromDate", newValue ? newValue.format("YYYY-MM-DD") : "")
                 }
+                error={!!errors[`fromDate_${index}`]}
+                helperText={errors[`fromDate_${index}`]} 
                
                 format="YYYY-MM-DD"
                 slotProps={{
                   textField: {
                     fullWidth: true,
-                    
+                    error: !!errors[`fromDate_${index}`], 
+                    helperText: errors[`fromDate_${index}`], 
                     InputProps: {
                       endAdornment: <CalendarToday color="action" />,
                     },
                     sx: {
                       '& .MuiInputBase-root': {
-                        height: '50px', 
+                        height: '50px',
                       },
                     },
                   },
@@ -417,50 +586,65 @@ const EmploymentDetails = ({  handleTabChange }) => {
               />
             </Grid>
 
-            <Grid item xs={3} sx={{mb:3}}>
-              <MobileDatePicker
-                label="End Date"
-                value={row.endDate ? dayjs(row.endDate) : null}
-                onChange={(newValue) =>
-                  handleChange(index, "endDate", newValue ? newValue.format("YYYY-MM-DD") : "")
-                }
-                format="YYYY-MM-DD"
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    InputProps: {
-                      endAdornment: <CalendarToday color="action" />,
-                    },
-                    sx: {
-                      '& .MuiInputBase-root': {
-                        height: '50px', 
-                      },
-                    },
-                  },
-                  actionBar: {
-                    actions: [], // Removes both "OK" and "Clear" buttons
-                  },
-                }}
-                closeOnSelect={true}
-              />
-            </Grid>
+        
 
-            <Grid item xs={3} >
-            <TextField
-              select
-              fullWidth
-              label="Is Primary"
-              value={row.isPrimary}
-              InputProps={{ sx: { height: '50px' } }}
-              onChange={(e) => handleChange(index, "isPrimary", e.target.value)}
-            >
-              {["Yes", "No"].map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </TextField>
+          <Grid item xs={3} sx={{ mb: 3 }}>
+            <MobileDatePicker
+              label="End Date"
+              value={row.endDate ? dayjs(row.endDate) : null}
+              onChange={(newValue) =>
+                handleChange(index, "endDate", newValue ? newValue.format("YYYY-MM-DD") : "")
+              }
+              format="YYYY-MM-DD"
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  error: !!errors[`endDate_${index}`],  
+                  helperText: errors[`endDate_${index}`] || "", 
+                  InputProps: {
+                    endAdornment: <CalendarToday color="action" />,
+                  },
+                  sx: {
+                    "& .MuiInputBase-root": {
+                      height: "50px",
+                    },
+                  },
+                },
+                actionBar: {
+                  actions: [],
+                },
+              }}
+              closeOnSelect={true}
+            />
           </Grid>
+
+              <Grid item xs={3} sx={{mb:3}}>
+                <TextField
+                  select
+                  fullWidth
+                  label={
+                    <>
+                      Is Primary <span style={{ color: "red" }}>*</span>
+                    </>
+                  }
+                  value={row.isPrimary} 
+                  InputProps={{ sx: { height: "50px" } }}
+                  onChange={(e) => handleChange(index, "isPrimary", e.target.value)}
+                  error={!!errors[`isPrimary_${index}`]}
+                  helperText={errors[`isPrimary_${index}`]}
+                >
+                  {index === 0 ? (
+                    <MenuItem key="Yes" value="Yes">
+                      Yes
+                    </MenuItem>
+                  ) : (
+                    <MenuItem key="No" value="No">
+                      No
+                    </MenuItem>
+                  )}
+                </TextField>
+              </Grid>
+
 
             <Grid item xs={1}>
               {index === 0 && (
@@ -468,7 +652,7 @@ const EmploymentDetails = ({  handleTabChange }) => {
                   <AddCircleOutline />
                 </IconButton>
               )}
-              {rows.length > 1 && (
+              {index > 0 && (
                 <IconButton color="error" onClick={() => removeRow(index)}>
                   <RemoveCircleOutline />
                 </IconButton>
@@ -476,13 +660,14 @@ const EmploymentDetails = ({  handleTabChange }) => {
             </Grid>
           </Grid>
         ))}
+        
 
         <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
           <Button variant="contained" color="secondary" onClick={handleBack}>
             Back
           </Button>
           <Button variant="contained" color="primary"  onClick={handleSaveAndNext}>
-            Save & Next
+             {employeeId ? 'Update & Next'  :'Save & Next'}
           </Button>
         </Box>
       </Box>

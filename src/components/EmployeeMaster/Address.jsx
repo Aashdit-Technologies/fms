@@ -26,8 +26,15 @@ const fetchAddressDropdownData = async () => {
   ];
 
   const requests = endpoints.map((endpoint) =>
-    api.get(endpoint)
-      .then((res) => ({ success: true, data: res.data.data || [] }))
+    api
+      .get(endpoint)
+      .then((res) => {
+        
+        const data = res.data.data || res.data; 
+       
+        return { success: true, data };
+      
+      })
       .catch((error) => {
         console.error(`Error fetching ${endpoint}:`, error);
         return { success: false, data: [] };
@@ -35,12 +42,13 @@ const fetchAddressDropdownData = async () => {
   );
 
   const responses = await Promise.allSettled(requests);
-
-  return responses.map((res) => (res.status === "fulfilled" && res.value.success ? res.value.data : []));
+console.log("address response checking ",responses)
+  return responses.map((res) =>
+    res.status === "fulfilled" && res.value.success ? res.value.data : []
+  );
 };
 
-
-const AddressForm = () => {
+const AddressForm = ({handleTabChange}) => {
   const { updateFormData, setActiveTab, formData, activeTab } = useFormStore();
   const [isLoading, setIsLoading] = useState(false);
   const [presentAddress, setPresentAddress] = useState({
@@ -50,35 +58,35 @@ const AddressForm = () => {
     cityId: "",
     pincode: "",
     isPermanent: "",
-    addressType:"PRESENT",
+    addressType: "PRESENT",
   });
 
   const [isSameAddress, setIsSameAddress] = useState(false);
-  const [permanentAddress, setPermanentAddress] = useState({ ...presentAddress });
-    const token = useAuthStore.getState().token;
+  const [permanentAddress, setPermanentAddress] = useState({
+    ...presentAddress,
+  });
+  const token = useAuthStore.getState().token;
+ const [errors, setErrors] = useState({});
+ const { data } = useQuery({
+  queryKey: ["dropdownaddressData"],
+  queryFn: fetchAddressDropdownData,
+  staleTime: 5 * 60 * 1000,
+});
 
-    const { data} = useQuery({
-      queryKey: ["dropdownData"],
-      queryFn: fetchAddressDropdownData,
-      staleTime: 5 * 60 * 1000, 
-    });
+const [country = [], state = [], district = [], city = []] = data ?? [[], [], [], []];
 
-    const [country = [], state = [], district = [], city = []] = data ?? [[], [], [], []];
-
-console.log("state",state)
-console.log("state",state)
+console.log("country", country);
 
   const handleChange = (event, section) => {
-    debugger
-    const { name, value } = event.target;
   
+    const { name, value } = event.target;
+
     if (section === "present") {
       setPresentAddress((prev) => ({
         ...prev,
         [name]: value,
       }));
-  
-   
+
       if (isSameAddress) {
         setPermanentAddress((prev) => ({
           ...prev,
@@ -90,17 +98,15 @@ console.log("state",state)
         ...prev,
         [name]: value,
       }));
-    }   
+    }
   };
-  
 
   const handleCheckboxChange = (event) => {
-    debugger
+   
     const isChecked = event.target.checked;
     setIsSameAddress(isChecked);
-  
+
     if (isChecked) {
-    
       setPermanentAddress({
         countryId: "",
         stateId: "",
@@ -108,79 +114,112 @@ console.log("state",state)
         cityId: "",
         pincode: "",
         isPermanent: true,
-        addressType:"PERMANENT",
+        addressType: "PERMANENT",
       });
     } else {
-     
       setPermanentAddress({ ...presentAddress, isPermanent: true });
     }
   };
-  
 
   const handleBack = () => {
-    updateFormData("employmentDetails", rows);
-    setActiveTab(2);
+    if (typeof handleTabChange !== "function") {
+      console.error("handleTabChange is not a function! Received:", handleTabChange);
+      return;
+    }
+    handleTabChange(null, "FAMILY_DETAILS");
   };
 
   const handleSaveAndNext = async () => {
     const storedEmployeeId = useFormStore.getState().employeeId;
+
  
+ const { newErrors: presentErrors, isValid: isPresentValid } = validateAddressFields(
+  presentAddress,
+  "present"
+);
+
+
+let permanentErrors = {};
+let isPermanentValid = true;
+if (permanentAddress && !isSameAddress) {
+  const { newErrors, isValid } = validateAddressFields(
+    permanentAddress,
+    "permanent"
+  );
+  permanentErrors = newErrors;
+  isPermanentValid = isValid;
+}
+
+
+const allErrors = { ...presentErrors, ...permanentErrors };
+setErrors(allErrors);
+
+
+if (!isPresentValid || !isPermanentValid) {
+  console.log("Form has errors. Please fix them.");
+  return; 
+}
+
+
+
+
     setIsLoading(true);
-  
+
     try {
       const addressDetails = [
         {
-          addressId:  null,
+          addressId: null,
           countryId: presentAddress.countryId ?? null,
           stateId: presentAddress.stateId ?? null,
           districtId: presentAddress.districtId ?? null,
           cityId: presentAddress.cityId ?? null,
           pincode: presentAddress.pincode ?? null,
-          isPermanent: isSameAddress ? true : false, 
-          addressType: "PRESENT", 
+          isPermanent: isSameAddress ? true : false,
+          addressType: "PRESENT",
         },
       ];
-  
-      
+
       if (!isSameAddress) {
         addressDetails.push({
-          addressId:  null,
+          addressId: null,
           countryId: permanentAddress.countryId ?? null,
           stateId: permanentAddress.stateId ?? null,
           districtId: permanentAddress.districtId ?? null,
           cityId: permanentAddress.cityId ?? null,
           pincode: permanentAddress.pincode ?? null,
-          isPermanent: false, 
+          isPermanent: false,
           addressType: "PERMANENT",
         });
       }
-  
+
       const payload = {
         employeeId: storedEmployeeId ?? null,
         addressDetails,
       };
-  
+
       const encryptedPayload = encryptPayload(payload);
-  
+
       const response = await api.post(
         "governance/save-or-update-employee-address",
         { dataObject: encryptedPayload },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       if (response.data?.outcome) {
         const { employeeCode, employeeId } = response.data.data;
-  
+
         useFormStore.getState().setEmployeeCode(employeeCode);
         useFormStore.getState().setEmployeeId(employeeId);
-  
+
         updateFormData("address", payload.addressDetails);
-  
-        toast.success("Address details saved successfully!", { position: "top-right", autoClose: 3000 });
-  
+
+        toast.success(response.data.message);
+
         setActiveTab("EDUCATION");
       } else {
-        toast.error(response.data?.message || "Failed to save address details.");
+        toast.error(
+          response.data?.message || "Failed to save address details."
+        );
       }
     } catch (error) {
       console.error("Error saving address details:", error);
@@ -189,96 +228,18 @@ console.log("state",state)
       setIsLoading(false);
     }
   };
-  
-  // useEffect(() => {
- 
-  
-  //   if (activeTab === "ADDRESS") {
-  //     debugger
-  //     const storedData = formData?.address?.addressDetails || [];
-  //     const addressType = formData?.address?.addressType || "";
 
-  
-  //     if (storedData.length > 0) {
-  //       if(addressType == 'PERMANENT'){
-  //         const permanentAddr = storedData.find(addr => addr.addressType === 'PERMANENT') || {};
-
-  //         setPermanentAddress({
-  //           addressId:  null,
-  //           countryId: permanentAddr?.countryId ?? "",
-  //           stateId: permanentAddr?.stateId ?? "",
-  //           districtId: permanentAddr?.districtId ?? "",
-  //           cityId: permanentAddr?.cityId ?? "",
-  //           pincode: permanentAddr?.pinCode ?? "",
-  //           isPermanent: permanentAddr?.IsPermanent ?? true,
-  //         });
-  //         setIsSameAddress(addressType === "PERMANENT");
-  //     }else if(addressType == 'PRESENT'){
-  //       const presentAddr = storedData.find(addr => addr.addressType === 'PRESENT') || {};
-  //       const permanentAddr = storedData.find(addr => addr.addressType === 'PERMANENT') || {};
-        
-  //       setPermanentAddress({
-  //         addressId:  null,
-  //         countryId: permanentAddr?.countryId ?? "",
-  //         stateId: permanentAddr?.stateId ?? "",
-  //         districtId: permanentAddr?.districtId ?? "",
-  //         cityId: permanentAddr?.cityId ?? "",
-  //         pincode: permanentAddr?.pinCode ?? "",
-  //         isPermanent: permanentAddr?.IsPermanent ?? true,
-  //       });
-
-  //       setPresentAddress({
-  //         addressId:  null,
-  //         countryId: presentAddr?.countryId ?? "",
-  //         stateId: presentAddr?.stateId ?? "",
-  //         districtId: presentAddr?.districtId ?? "",
-  //         cityId: presentAddr?.cityId ?? "",
-  //         pincode: presentAddr?.pinCode ?? "",
-  //         isPermanent: presentAddr?.IsPermanent ?? false,
-  //       });
-
-  //       setIsSameAddress(addressType === "PERMANENT");
-  //     }
-
-        
-  //     } else {
-      
-  //       setPresentAddress({
-  //         countryId: "",
-  //         stateId: "",
-  //         districtId: "",
-  //         cityId: "",
-  //         pincode: "",
-  //         isPermanent: false,
-  //       });
-  //       setPermanentAddress({
-  //         countryId: "",
-  //         stateId: "",
-  //         districtId: "",
-  //         cityId: "",
-  //         pincode: "",
-  //         isPermanent: false,
-  //       });
-  //       setIsSameAddress(false);
-  //     }
-  //   }
-  // }, [activeTab, formData]);
-  
   useEffect(() => {
     if (activeTab === "ADDRESS") {
       const storedData = formData?.address?.addressDetails || [];
       const addressType = formData?.address?.addressType || "";
-  
-      console.log("storedData:", storedData); // Debugging
-      console.log("addressType:", addressType); // Debugging
-  
+
       if (storedData.length > 0) {
-        const permanentAddr = storedData.find(addr => addr.addressType === 'PERMANENT') || {};
-        const presentAddr = storedData.find(addr => addr.addressType === 'PRESENT') || {};
-  
-        console.log("permanentAddr:", permanentAddr); // Debugging
-        console.log("presentAddr:", presentAddr); // Debugging
-  
+        const permanentAddr =
+          storedData.find((addr) => addr.addressType === "PERMANENT") || {};
+        const presentAddr =
+          storedData.find((addr) => addr.addressType === "PRESENT") || {};
+
         // Always set Permanent Address
         setPermanentAddress({
           addressId: permanentAddr?.addressId ?? null,
@@ -289,7 +250,7 @@ console.log("state",state)
           pincode: permanentAddr?.pinCode ?? "",
           isPermanent: permanentAddr?.IsPermanent ?? true,
         });
-  
+
         // Always set Present Address (if presentAddr exists)
         setPresentAddress({
           addressId: presentAddr?.addressId ?? null,
@@ -300,7 +261,7 @@ console.log("state",state)
           pincode: presentAddr?.pinCode ?? "",
           isPermanent: presentAddr?.IsPermanent ?? false,
         });
-  
+
         // Set isSameAddress based on addressType
         setIsSameAddress(addressType === "PERMANENT");
       } else {
@@ -328,174 +289,394 @@ console.log("state",state)
     }
   }, [activeTab, formData]);
 
+
+
+
+  const validateAddressFields = (address, type) => {
+    const newErrors = {};
+    let isValid = true;
+  
+    
+    if (!address.countryId) {
+      newErrors[`${type}CountryId`] = "Country is required.";
+      isValid = false;
+    }
+  
+   
+    if (!address.stateId) {
+      newErrors[`${type}StateId`] = "State is required.";
+      isValid = false;
+    }
+  
+   
+    if (!address.districtId) {
+      newErrors[`${type}DistrictId`] = "District is required.";
+      isValid = false;
+    }
+  
+  
+    if (!address.cityId) {
+      newErrors[`${type}CityId`] = "City is required.";
+      isValid = false;
+    }
+  
+   
+    if (!address.pincode) {
+      newErrors[`${type}Pincode`] = "Pincode is required.";
+      isValid = false;
+    } 
+  
+    return { newErrors, isValid };
+  };
   return (
     <>
-     {isLoading && <PageLoader/>}
-    <Box >
-        <Typography variant="h6" sx={{ color: "red", mb: 1 ,fontSize:"16px"}}>
-        Present Address
-      </Typography>
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-      <Grid item xs={3}>
-          <TextField select 
-          fullWidth 
-          label="Country" 
-          name="countryId" 
-          value={presentAddress.countryId || ""} 
-          onChange={(e) => handleChange(e, "present")}
-          InputProps={{ sx: { height: '50px' }}}
-          >
-          {country.map(({ countryId, countryName }) => (
-         <MenuItem key={countryId} value={countryId}>{countryName}</MenuItem>
-))}
-          </TextField>
-        </Grid>
-        <Grid item xs={3}>
-          <TextField select fullWidth
-           label="State"
-            name="stateId"
-             value={presentAddress.stateId || ""} 
-             onChange={(e) => handleChange(e, "present")}
-             InputProps={{ sx: { height: '50px' }}}
-             >
-            {state.map(({ stateId, stateName }) => (
-              <MenuItem key={stateId} value={stateId}>{stateName}</MenuItem>
-            ))}
-
-          </TextField>
-        </Grid>
-        <Grid item xs={3}>
-          <TextField select fullWidth
-           label="District"
-            name="districtId"
-             value={presentAddress.districtId || ""}
-              onChange={(e) => handleChange(e, "present")}
-              InputProps={{ sx: { height: '50px' }}}
-              >
-            {district.map(({ districtId, districtName }) => (
-            <MenuItem key={districtId} value={districtId}>{districtName}</MenuItem>
-          ))}
-
-          </TextField>
-        </Grid>
-        <Grid item xs={3}>
-          <TextField select fullWidth 
-          label="City" 
-          name="cityId" 
-          value={presentAddress.cityId || ""}
-           onChange={(e) => handleChange(e, "present")}
-           InputProps={{ sx: { height: '50px' }}}
-           >
-           {city.map(({ cityId, cityName }) => (
-          <MenuItem key={cityId} value={cityId}>{cityName}</MenuItem>
-        ))}
-
-          </TextField>
-        </Grid>
-        <Grid item xs={3}>
-          <TextField fullWidth 
-          label="Pin"
-           name="pincode" 
-           value={presentAddress.pincode || ""} 
-           onChange={(e) => handleChange(e, "present")} 
-           InputProps={{ sx: { height: '50px' }}}
-           />
-        </Grid>
-        
-      </Grid>
-
-      <FormControlLabel
-  control={<Checkbox checked={isSameAddress} onChange={handleCheckboxChange} color="primary" />}
-  label="Permanent address is same as present address?"
-  sx={{ mb: 2, fontSize: "14px" }}
-/>
-
-{permanentAddress && !isSameAddress && (
-        <>
-          <Typography variant="h6" sx={{ color: "red", mb: 1 ,fontSize:"16px"}}>
-            Permanent Address
-          </Typography>
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={3}>
-              <TextField select fullWidth
-               label="Country" 
-               name="countryId" 
-               value={permanentAddress.countryId || ""} 
-               onChange={(e) => handleChange(e, "permanent")}
-               InputProps={{ sx: { height: '50px' }}}
-               >
-                 {country.map(({ countryId, countryName }) => (
-              <MenuItem key={countryId} value={countryId}>{countryName}</MenuItem>
+      {isLoading && <PageLoader />}
+      <Box>
+        <Typography variant="h6" sx={{ color: "red", mb: 1, fontSize: "16px" }}>
+          Present Address
+        </Typography>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid item xs={3}>
+            <TextField
+              select
+              fullWidth
+              
+              label={
+                <>
+                Country <span style={{color:"red"}}>*</span>
+                </>
+              }
+              name="countryId"
+              value={presentAddress.countryId || ""}
+              onChange={(e) =>{
+                  handleChange(e, "present")
+                  setErrors((prevErrors) => ({ ...prevErrors, presentCountryId: "" }));
+                } } 
+              InputProps={{ sx: { height: "50px" } }}
+              error={!!errors.presentCountryId}
+              helperText={errors.presentCountryId}
+            >
+              <MenuItem value="">
+              --Select country--
+              </MenuItem>
+              {country.map(({ countryId, countryName }) => (
+                <MenuItem key={countryId} value={countryId}>
+                  {countryName}
+                </MenuItem>
               ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={3}>
-              <TextField select fullWidth
-               label="State"
-                name="stateId"
-                 value={permanentAddress.stateId || ""} 
-                 onChange={(e) => handleChange(e, "permanent")}
-                 InputProps={{ sx: { height: '50px' }}}
-                 >
-                {state.map(({ stateId, stateName }) => (
-                <MenuItem key={stateId} value={stateId}>{stateName}</MenuItem>
-              ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={3}>
-              <TextField select fullWidth
-               label="District" 
-               name="districtId" 
-               value={permanentAddress.districtId || ""}
-                onChange={(e) => handleChange(e, "permanent")}
-                InputProps={{ sx: { height: '50px' }}}
-                >
-               {district.map(({ districtId, districtName }) => (
-              <MenuItem key={districtId} value={districtId}>{districtName}</MenuItem>
-            ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={3}>
-              <TextField select fullWidth
-               label="City" 
-               name="cityId"
-                value={permanentAddress.cityId || ""}
-                 onChange={(e) => handleChange(e, "permanent")}
-                 InputProps={{ sx: { height: '50px' }}}
-                 >
-                     {city.map(({ cityId, cityName }) => (
-                     <MenuItem key={cityId} value={cityId}>{cityName}</MenuItem>
-                    ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={3}>
-              <TextField fullWidth
-               label="Pin" 
-               name="pincode" 
-               value={permanentAddress.pincode || ""}
-                onChange={(e) => handleChange(e, "permanent")} 
-                InputProps={{ sx: { height: '50px' }}}
-                />
-            </Grid>
-           
+            </TextField>
           </Grid>
-        </>
-      )}
+          <Grid item xs={3}>
+            <TextField
+              select
+              fullWidth
+             
+              label={
+                <>
+                State <span style={{color:"red"}}>*</span>
+                </>
+              }
+              name="stateId"
+              value={presentAddress.stateId || ""}
+              onChange={(e) => {
+                handleChange(e, "present")
+                setErrors((prevErrors) => ({ ...prevErrors, presentStateId: "" }));
+              }}
+              InputProps={{ sx: { height: "50px" } }}
+              error={!!errors.presentStateId}
+               helperText={errors.presentStateId}
+            >
+                <MenuItem value="">
+              --Select State--
+              </MenuItem>
+              {state.map(({ stateId, stateName }) => (
+                <MenuItem key={stateId} value={stateId}>
+                  {stateName}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={3}>
+            <TextField
+              select
+              fullWidth
+              
+              label={
+                <>
+                District <span style={{color:"red"}}>*</span>
+                </>
+              }
+              name="districtId"
+              value={presentAddress.districtId || ""}
+              onChange={(e) => {
+                handleChange(e, "present")
+                setErrors((prevErrors) => ({ ...prevErrors, presentDistrictId: "" }));
+              }}
+              InputProps={{ sx: { height: "50px" } }}
+              error={!!errors.presentDistrictId}
+              helperText={errors.presentDistrictId}
+            >
+                <MenuItem value="">
+              --Select District--
+              </MenuItem>
+              {district.map(({ districtId, districtName }) => (
+                <MenuItem key={districtId} value={districtId}>
+                  {districtName}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={3}>
+            <TextField
+              select
+              fullWidth
+            
+              name="cityId"
+              label={
+                <>
+                City<span style={{color:"red"}}>*</span>
+                </>
+              }
+              value={presentAddress.cityId || ""}
+              onChange={(e) => {
+                handleChange(e, "present")
+                setErrors((prevErrors) => ({ ...prevErrors, presentCityId: "" }));
+              } }
+              InputProps={{ sx: { height: "50px" } }}
+              error={!!errors.presentCityId}
+              helperText={errors.presentCityId}
+            >
+                <MenuItem value="">
+              --Select city--
+              </MenuItem>
+              {city.map(({ cityId, cityName }) => (
+                <MenuItem key={cityId} value={cityId}>
+                  {cityName}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={3}>
+            <TextField
+              fullWidth
+            
+              label={
+                <>
+                Pin <span style={{color:"red"}}>*</span>
+                </>
+              }
+              name="pincode"
+              value={presentAddress.pincode || ""}
+              
+              onChange={(e) => {
+                const value = e.target.value;
+                
+                if (/^\d*$/.test(value)) {
+                  handleChange(e, "present");
+                  setErrors((prevErrors) => ({ ...prevErrors, presentPincode: "" }));
+                }
+              }}
+              onKeyDown={(e) => {
+                
+                if (!/\d/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete" && e.key !== "Tab") {
+                  e.preventDefault();
+                }
+              }}
+           
+              InputProps={{ sx: { height: "50px" } }}
+              inputProps={{  maxLength: 6}}
+              error={!!errors.presentPincode}
+              helperText={errors.presentPincode}
+            />
+          </Grid>
+        </Grid>
 
-      <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
-                <Button variant="contained" color="secondary" onClick={handleBack}>
-                  Back
-                </Button>
-                <Button variant="contained" color="primary" onClick={handleSaveAndNext}>
-                  Save & Next
-                </Button>
-              </Box>
-    </Box>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={isSameAddress}
+              onChange={handleCheckboxChange}
+              color="primary"
+            />
+          }
+          label="Permanent address is same as present address?"
+          sx={{ mb: 2, fontSize: "14px" }}
+        />
+
+        {permanentAddress && !isSameAddress && (
+          <>
+            <Typography
+              variant="h6"
+              sx={{ color: "red", mb: 1, fontSize: "16px" }}
+            >
+              Permanent Address
+            </Typography>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={3}>
+                <TextField
+                  select
+                  fullWidth
+                  label={
+                    <>
+                    Country <span style={{color:"red"}}>*</span>
+                    </>
+                  }
+                  name="countryId"
+                  value={permanentAddress.countryId || ""}
+                  onChange={(e) =>{
+                     handleChange(e, "permanent")
+                     setErrors((prevErrors) => ({ ...prevErrors, permanentCountryId: "" }));
+                    }}
+                  InputProps={{ sx: { height: "50px" } }}
+                  error={!!errors.permanentCountryId}
+                  helperText={errors.permanentCountryId}
+                >
+                   <MenuItem value="">
+                --Select country--
+              </MenuItem>
+                  {country.map(({ countryId, countryName }) => (
+                    <MenuItem key={countryId} value={countryId}>
+                      {countryName}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                  select
+                  fullWidth
+                  label={
+                    <>
+                    State <span style={{color:"red"}}>*</span>
+                    </>
+                  }
+                  name="stateId"
+                  value={permanentAddress.stateId || ""}
+                  onChange={(e) =>{ 
+                    handleChange(e, "permanent")
+                    setErrors((prevErrors) => ({ ...prevErrors, permanentStateId: "" }));
+                  }}
+                  InputProps={{ sx: { height: "50px" } }}
+                  error={!!errors.permanentStateId}
+            helperText={errors.permanentStateId}
+                >
+                  <MenuItem value="">
+              --Select State--
+              </MenuItem>
+                  {state.map(({ stateId, stateName }) => (
+                    <MenuItem key={stateId} value={stateId}>
+                      {stateName}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                  select
+                  fullWidth
+                  label={
+                    <>
+                    District <span style={{color:"red"}}>*</span>
+                    </>
+                  }
+                  name="districtId"
+                  value={permanentAddress.districtId || ""}
+                  onChange={(e) =>{ 
+                    handleChange(e, "permanent")
+                    setErrors((prevErrors) => ({ ...prevErrors, permanentDistrictId: "" }));
+                  }}
+                  InputProps={{ sx: { height: "50px" } }}
+                  error={!!errors.permanentDistrictId}
+                  helperText={errors.permanentDistrictId}
+                >
+                  <MenuItem value="">
+              --Select District--
+              </MenuItem>
+                  {district.map(({ districtId, districtName }) => (
+                    <MenuItem key={districtId} value={districtId}>
+                      {districtName}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                  select
+                  fullWidth
+                  label={
+                    <>
+                    City<span style={{color:"red"}}>*</span>
+                    </>
+                  }
+                  name="cityId"
+                  value={permanentAddress.cityId || ""}
+                  onChange={(e) => {
+                    handleChange(e, "permanent")
+                    setErrors((prevErrors) => ({ ...prevErrors, permanentCityId: "" }));
+                  }}
+                  InputProps={{ sx: { height: "50px" } }}
+                  error={!!errors.permanentCityId}
+            helperText={errors.permanentCityId}
+                >
+                   <MenuItem value="">
+              --Select city--
+              </MenuItem>
+                  {city.map(({ cityId, cityName }) => (
+                    <MenuItem key={cityId} value={cityId}>
+                      {cityName}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={3}>
+                <TextField
+                 fullWidth
+                 label={
+                  <>
+                  Pin <span style={{color:"red"}}>*</span>
+                  </>
+                }
+                  name="pincode"
+                  value={permanentAddress.pincode || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    
+                    if (/^\d*$/.test(value)) {
+                      handleChange(e, "permanent");
+                      setErrors((prevErrors) => ({ ...prevErrors, permanentPincode: "" }));
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    
+                    if (!/\d/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete" && e.key !== "Tab") {
+                      e.preventDefault();
+                    }
+                  }}
+                  inputProps={{  maxLength: 6}}
+                  InputProps={{ sx: { height: "50px" } }}
+                  error={!!errors.permanentPincode}
+                  helperText={errors.permanentPincode}
+                />
+              </Grid>
+            </Grid>
+          </>
+        )}
+
+        <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
+          <Button variant="contained" color="secondary" onClick={handleBack}>
+            Back
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSaveAndNext}
+          >
+            Save & Next
+          </Button>
+        </Box>
+      </Box>
     </>
   );
 };
 
 export default AddressForm;
-
-
-

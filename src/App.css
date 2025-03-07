@@ -1,6 +1,11 @@
 :root{
     --backgroundColor:#349124;
 }
+body p,span,td{
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .jodit-status-bar-link {
   display: none ! important;
 }

@@ -118,7 +118,7 @@ const encloserFilePath = letterDataView?.letterEnclosureArrays?.[0]?.filePath ||
       const isChecked = event.target.checked;
   
       if (isChecked) {
-        console.log("Checked ID:", empOfcDeptMapId); 
+        
         return [...prevSelected, empOfcDeptMapId];
       } else {
         return prevSelected.filter((id) => id !== empOfcDeptMapId); 
@@ -132,7 +132,7 @@ const encloserFilePath = letterDataView?.letterEnclosureArrays?.[0]?.filePath ||
       const isChecked = event.target.checked;
   
       if (isChecked) {
-        console.log("Checked ID:", empDeptMapId); 
+        
         return [...prevSelected, empDeptMapId]; 
       } else {
         return prevSelected.filter((id) => id !== empDeptMapId); 
@@ -331,15 +331,13 @@ const handleConfirmUrgent = async () => {
           ? officeResponse.data.data
           : [];
   
-        console.log('Raw Department Data:', departmentData);
-        console.log('Raw Office Data:', officeData);
+      
   
         
         const deptIdUser = letterDataView.deptIdUser; 
         const officeIdUser = letterDataView.officeIdUser;
   
-        console.log('deptIdUser:', deptIdUser);
-        console.log('officeIdUser:', officeIdUser);
+      
   
         
         const filteredDepartments = departmentData.filter(
@@ -351,8 +349,7 @@ const handleConfirmUrgent = async () => {
           (office) => office.officeId === officeIdUser
         );
   
-        console.log('Filtered Departments:', filteredDepartments);
-        console.log('Filtered Offices:', filteredOffices);
+       
   
 
      
@@ -370,7 +367,7 @@ const handleConfirmUrgent = async () => {
         setOpenModalotherbutton(true);
        
 
-        console.log('APIs called successfully!');
+       
       } else {
         console.error('Unexpected API Response:', {
           department: departmentResponse.data.message,
@@ -399,9 +396,9 @@ const handleConfirmUrgent = async () => {
         departmentId,
       };
   
-      console.log('Payload before encryption:', payload);
+     
       const encryptedPayload = encryptPayload(payload);
-      console.log('Encrypted payload:', encryptedPayload);
+     
   
      
       const response = await api.post(
@@ -410,12 +407,12 @@ const handleConfirmUrgent = async () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
-      console.log('API Response:', response);
+      
   
       if (response.status === 200 && response.data.outcome) {
         if (Array.isArray(response.data.data)) {
           setTableData(response.data.data); 
-          console.log('Employee data fetched successfully:', response.data.data);
+          
         } else {
           console.error('Unexpected data format in API response:', response.data.data);
           setTableData([]); 
@@ -463,10 +460,9 @@ const handleConfirmUrgent = async () => {
         chkSendTo: selectedRows.map(Number),
       };
   
-      console.log("Payload before encryption:", payload);
+      
       const encryptedPayload = encryptPayload(payload);
-      console.log("Encrypted Payload:", encryptedPayload);
-      console.log("Selected Rows:", selectedRows);
+      
   
       const response = await api.post(
         "letter/send-letter-sendto",
@@ -475,7 +471,7 @@ const handleConfirmUrgent = async () => {
       );
   
       if (response.status === 200 && response.data.outcome) {
-        console.log("Data sent successfully:", response.data);
+        
   
         
         toast.success(response.data.message);
@@ -491,7 +487,7 @@ const handleConfirmUrgent = async () => {
       }
     } catch (error) {
       console.error("Error sending data:", error);
-      console.log("Server response:", error.response?.data);
+     
       toast.error("An error occurred while sending data.");
     }
     finally{
@@ -560,23 +556,23 @@ const handleConfirmUrgent = async () => {
       );
   
       if (response.status === 200) {
-        console.log('Full API Response:', response.data);
+        
   
         const fetchedData = response.data.data; 
-        console.log('Raw letterDetails:', fetchedData.letterDetails);
+       
   
        
         if (typeof fetchedData.letterDetails === 'string') {
           try {
             const parsedLetterDetails = JSON.parse(fetchedData.letterDetails); 
-            console.log('Parsed letterDetails:', parsedLetterDetails);
+           
   
             const formattedData = {
               letterReceiptId: fetchedData.letterReceiptId,
               metadataId: fetchedData.metadataId,
               ...parsedLetterDetails, 
             };
-            console.log(' after Parsed letterDetails:', formattedData);
+           
             navigate('/add-to-file', { state: { data: formattedData } });
           } catch (parseError) {
             console.error('Error parsing letterDetails:', parseError);
@@ -625,7 +621,7 @@ const handleConfirmUrgent = async () => {
     );
     
     if (response.status === 200) {
-    console.log('Full PDF Response:', response.data);
+    
     
     // Create a download link and trigger download
     const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -696,7 +692,7 @@ const handleConfirmUrgent = async () => {
         setIsLoading(false);
       }
       };
-  
+      const badgeColors = ["#ff5733", "#1e90ff", "#28a745", "#ffcc00"];
     
   const showAllDetails = letterData?.tabCode === 'NEW_LETTER' ;
   // const isNewLetter = letterData?.tabCode === 'NEW_LETTER';
@@ -704,8 +700,8 @@ const handleConfirmUrgent = async () => {
     <>
     {isLoading && <PageLoader />}
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle sx={{ m: 0, p: 2, bgcolor: '#f5f5f5' }}>
-        <Typography variant="h6"   component="span" sx={{ fontWeight: 500, color: '#666' }}>Letter Details</Typography>
+      <DialogTitle sx={{ m: 0, p: 2, bgcolor: '#207785' }}>
+        <Typography variant="h6"   component="span" sx={{ fontWeight: 500, color: '#fff',}}>Letter Details</Typography>
         <IconButton
           aria-label="close"
           onClick={onClose}
@@ -724,24 +720,64 @@ const handleConfirmUrgent = async () => {
         <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 2 }}>
           {/* Top Left: Letter Details */}
           <Box>
-            <Typography variant="subtitle1" sx={{ mb: 3 }}>
-              Letter Details
-            </Typography>
-            <Box sx={{ display: 'grid', gap: 2, mb: 3 }}>
-          <Typography variant="body1"><b>Letter Number:</b> {letterDataView?.letterNo || 'NA'}</Typography>
-          <Typography variant="body1"><b>Sender Date:</b> {letterDataView?.senderDate || 'NA'}</Typography>
-          <Typography variant="body1"><b>Sender:</b> {letterDataView?.senderName || 'NA'}</Typography>
-          <Typography variant="body1"><b>Addressee:</b> {letterDataView?.addressee || 'NA'}</Typography>
-          <Typography variant="body1"><b>Subject:</b> {letterDataView?.subject || 'NA'}</Typography>
-          <Typography variant="body1"><b>Diary Number:</b> {letterDataView?.diaryNumber || 'NA'}</Typography>
-          <Typography variant="body1"><b>Memo Number:</b> {letterDataView?.memoNo || 'NA'}</Typography>
-          <Typography variant="body1"><b>Remarks:</b> {letterDataView?.remarks || 'NA'}</Typography>
-        </Box>
+          <Typography variant="subtitle1" sx={{ mb: 2, fontSize: "18px", fontWeight: 600, color: "#1a5f6a" }}>
+             Letter Details
+          </Typography>
+      <Box sx={{ display: "grid", gap: 2, mb: 3 }}>
+        {/* Letter Number */}
+        <Typography variant="body1">
+          <span style={{ fontWeight: 600,  }}>Letter Number:</span>{" "}
+          <span style={{ color: "#333" }}>{letterDataView?.letterNo || "NA"}</span>
+        </Typography>
+
+        {/* Sender Date */}
+        <Typography variant="body1">
+          <span style={{ fontWeight: 600,  }}>Sender Date:</span>{" "}
+          <span style={{ color: "#333" }}>{letterDataView?.senderDate || "NA"}</span>
+        </Typography>
+
+        {/* Sender */}
+        <Typography variant="body1">
+          <span style={{ fontWeight: 600,  }}>Sender:</span>{" "}
+          <span style={{ color: "#333" }}>{letterDataView?.senderName || "NA"}</span>
+        </Typography>
+
+        {/* Addressee */}
+        <Typography variant="body1">
+          <span style={{ fontWeight: 600,  }}>Addressee:</span>{" "}
+          <span style={{ color: "#333" }}>{letterDataView?.addressee || "NA"}</span>
+        </Typography>
+
+        {/* Subject */}
+        <Typography variant="body1">
+          <span style={{ fontWeight: 600,  }}>Subject:</span>{" "}
+          <span style={{ color: "#333" }}>{letterDataView?.subject || "NA"}</span>
+        </Typography>
+
+        {/* Diary Number */}
+        <Typography variant="body1">
+          <span style={{ fontWeight: 600,  }}>Diary Number:</span>{" "}
+          <span style={{ color: "#333" }}>{letterDataView?.diaryNumber || "NA"}</span>
+        </Typography>
+
+        {/* Memo Number */}
+        <Typography variant="body1">
+          <span style={{ fontWeight: 600,  }}>Memo Number:</span>{" "}
+          <span style={{ color: "#333" }}>{letterDataView?.memoNo || "NA"}</span>
+        </Typography>
+
+        {/* Remarks */}
+        <Typography variant="body1">
+          <span style={{ fontWeight: 600,  }}>Remarks:</span>{" "}
+          <span style={{ color: "#333" }}>{letterDataView?.remarks || "NA"}</span>
+        </Typography>
+      </Box>
             {showAllDetails && (
               <>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                  Marginal Instructions
-                </Typography>
+               
+                <Typography variant="subtitle1" sx={{ mb: 2, fontSize: "18px", fontWeight: 600, color: "#1a5f6a" }}>
+                Marginal Instructions
+               </Typography>
                 <TextField
                   fullWidth
                   multiline
@@ -761,62 +797,74 @@ const handleConfirmUrgent = async () => {
         
                 {showAllDetails && (
                   <>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                  Frequently Mark
-                </Typography>
-                <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
-            <Table size="small">
-             <TableHead>
-              <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-            <TableCell>Action</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Department</TableCell>
-              <TableCell>Office</TableCell>
-              <TableCell>Designation</TableCell>
-             
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {letterDataView?.letterFrequentlyMarkObj?.map((mark, index) => (
-              <TableRow key={mark.empDeptMapId}>
-                <TableCell>
-             <Checkbox
-            checked={selectedRowsfrequ.includes(mark.empDeptMapId)} 
-            onChange={(event) => handleCheckboxfrequientlyChange(event, mark.empDeptMapId)}
-          />
-                </TableCell>
-               
-                <TableCell>{mark.name}</TableCell>
-                <TableCell>{mark.departmentName}</TableCell>
-                <TableCell>{mark.officeName}</TableCell>
-                <TableCell>{mark.designation}</TableCell>
-                
-              </TableRow>
-            ))}
-            <TableRow>
-              <TableCell colSpan={7}>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={handleOtherButtonClick}
+         <Typography variant="subtitle1" sx={{ mb: 2, fontSize: "18px", fontWeight: 600, color: "#1a5f6a" }}>
+            Frequently Mark
+          </Typography>
+          <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+            <Table size="small" sx={{ border: "1px solid #e0e0e0" }}>
+              <TableHead>
+                <TableRow sx={{ bgcolor: "#1a5f6a" }}> {/* Header background color */}
+                  <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                    Action
+                  </TableCell>
+                  <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                    Name
+                  </TableCell>
+                  <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                    Department
+                  </TableCell>
+                  <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                    Office
+                  </TableCell>
+                  <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>
+                    Designation
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {letterDataView?.letterFrequentlyMarkObj?.map((mark) => (
+                  <TableRow
+                    key={mark.empDeptMapId}
                     sx={{
-                      backgroundColor: '#1976d2',
-                      textTransform: 'none', 
-                      color: '#ffffff',
-                      '&:hover': {
-                        backgroundColor: '#115293',
-                      },
+                      "&:hover": { bgcolor: "#f5f5f5" }, // Hover effect
                     }}
                   >
-                    Other
-                  </Button>
-                </Box>
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
+                    <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>
+                      <Checkbox
+                        checked={selectedRowsfrequ.includes(mark.empDeptMapId)}
+                        onChange={(event) => handleCheckboxfrequientlyChange(event, mark.empDeptMapId)}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>{mark.name}</TableCell>
+                    <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>{mark.departmentName}</TableCell>
+                    <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>{mark.officeName}</TableCell>
+                    <TableCell>{mark.designation}</TableCell>
+                  </TableRow>
+                ))}
+                <TableRow>
+                  <TableCell colSpan={5}>
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, p: 1 }}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={handleOtherButtonClick}
+                        sx={{
+                          backgroundColor: "#1976d2",
+                          textTransform: "none",
+                          color: "#ffffff",
+                          "&:hover": {
+                            backgroundColor: "#115293",
+                          },
+                        }}
+                      >
+                        Other
+                      </Button>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
 
               </>
             )}
@@ -926,21 +974,22 @@ const handleConfirmUrgent = async () => {
       >
         Download PDF
       </Button>
-    </Box>
+         </Box>
           </Box>
 
         {/* Bottom Section */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mt: 3 }}>
           {/* Bottom Left: Note */}  
-     <Box>
-      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+  
+      <Box>
+      <Typography variant="subtitle1" sx={{ mb: 2, color: "#1a5f6a", fontSize: "20px", fontWeight: "bold" }}>
         Notes
       </Typography>
       <Box>
         {letterDataView?.letterNotesArrays?.map((note, index) => (
           <Paper
             key={index}
-            elevation={2} 
+            elevation={2}
             sx={{
               p: 2,
               mb: 2,
@@ -948,35 +997,38 @@ const handleConfirmUrgent = async () => {
               justifyContent: "space-between",
               alignItems: "center",
               borderRadius: 1,
+              borderLeft: `6px solid ${badgeColors[index % badgeColors.length]}`, 
             }}
           >
-            {/* Left Side Content */}
-            <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
-                Action taken by: {note.actionTakenBy}
+            <Box sx={{ lineHeight: 1.6 }}> 
+              <Typography variant="subtitle2" sx={{ fontWeight: "bold", color: "#1565c0" }}>
+                Action taken by:{" "}
+                <span style={{ fontWeight: "normal", color: "#333" }}>{note.actionTakenBy}</span>
               </Typography>
               <Typography>
-                <strong>Action:</strong> {note.action}
+                <strong style={{ color: "#1565c0" }}>Action:</strong>{" "}
+                <span style={{ color: "#333" }}>{note.action}</span>
               </Typography>
               <Typography variant="caption" display="block">
-                <strong>Date:</strong> {note.modifyDate}
+                <strong style={{ color: "#1565c0" }}>Date:</strong>{" "}
+                <span style={{ color: "#333" }}>{note.modifyDate}</span>
               </Typography>
               <Typography>
-                <strong>Note:</strong> {note.note}
+                <strong style={{ color: "#1565c0" }}>Note:</strong>{" "}
+                <span style={{ color: "#333" }}>{note.note}</span>
               </Typography>
             </Box>
-
-            {/* Right Side Numbering */}
             <Box
               sx={{
                 width: 30,
                 height: 30,
                 borderRadius: "50%",
-                bgcolor: "#e0e0e0",
+                bgcolor: badgeColors[index % badgeColors.length],
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontWeight: "bold",
+                color: "#ffffff", 
               }}
             >
               {index + 1}
@@ -986,49 +1038,79 @@ const handleConfirmUrgent = async () => {
       </Box>
     </Box>
 
+
           {/* Bottom Right: All Enclosures */}
-          <Box>
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-              All Enclosures
-            </Typography>
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                    <TableCell>SI NO</TableCell>
-                    <TableCell>Enclosure Name</TableCell>
-                    <TableCell>Enclosure Type</TableCell>
-                    <TableCell>Added By</TableCell>
-                    <TableCell>Date</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {letterDataView?.letterEnclosureArrays?.map((enclosure, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>
-                            <button
-                              style={{
-                                background: "none",
-                                border: "none",
-                                color: "#007bff",
-                                textDecoration: "underline",
-                                cursor: "pointer",
-                              }}
-                              onClick={() => handleDownloadenclosure(enclosure.fileName, enclosure.filePath)}
-                            >
-                              {enclosure.enclosureName}
-                            </button>
-                            </TableCell>
-                      <TableCell>{enclosure.enclosureType}</TableCell>
-                      <TableCell>{enclosure.enclosureUploadBy}</TableCell>
-                      <TableCell>{enclosure.enclosureUploadDate}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
+       
+      <Box>
+      <Typography variant="subtitle1" sx={{ mb: 2, color: "#1a5f6a", fontSize: "20px", fontWeight: "bold" }}>
+        All Enclosures
+      </Typography>
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small" sx={{ border: "1px solidrgb(224, 224, 224)" }}>
+          <TableHead>
+            <TableRow sx={{ bgcolor: "#1a5f6a" }}> 
+              <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                SI NO
+              </TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                Enclosure Name
+              </TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                Enclosure Type
+              </TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold", borderRight: "1px solid #e0e0e0" }}>
+                Added By
+              </TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>
+                Date
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {letterDataView?.letterEnclosureArrays?.length > 0 ? (
+              letterDataView.letterEnclosureArrays.map((enclosure, index) => (
+                <TableRow
+                  key={index}
+                  sx={{
+                    "&:hover": { bgcolor: "#f5f5f5" }, 
+                  }}
+                >
+                  <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>{index + 1}</TableCell>
+                  <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>
+                    <button
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#007bff",
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                        padding: 0, 
+                      }}
+                      onClick={() =>
+                        handleDownloadenclosure(enclosure.fileName, enclosure.filePath)
+                      }
+                    >
+                      {enclosure.enclosureName}
+                    </button>
+                  </TableCell>
+                  <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>{enclosure.enclosureType}</TableCell>
+                  <TableCell sx={{ borderRight: "1px solid #e0e0e0" }}>{enclosure.enclosureUploadBy}</TableCell>
+                  <TableCell>{enclosure.enclosureUploadDate}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} sx={{ textAlign: "center", py: 3 }}>
+                  <Typography variant="body2" sx={{ color: "#757575" }}>
+                    No Data Available
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
         </Box>
       </DialogContent>
 
@@ -1043,7 +1125,7 @@ const handleConfirmUrgent = async () => {
           justifyContent: "space-between", 
           alignItems: "center" 
         }}>
-          {pendingUrgency ? "Set As URGENT" : "Set As NON-URGENT"}</DialogTitle>
+          {pendingUrgency ? "Set as Urgent" : "Set as Non-Urgent"}</DialogTitle>
           <IconButton onClick={handleCancelUrgent} sx={{ color: "white" }}>
           <CloseIcon/>
         </IconButton>
@@ -1066,7 +1148,7 @@ const handleConfirmUrgent = async () => {
           justifyContent: "space-between", 
           alignItems: "center" 
         }}
-        >{pendingConfidential ? "Set As CONFIDENTIAL" : "Set As NON-CONFIDENTIAL"}</DialogTitle>
+        >{pendingConfidential ? "Set as confidential" : "Set as Non-confidential"}</DialogTitle>
       <DialogContent>
         Do you want to make the letter {pendingConfidential ? "Confidential" : "Non-Confidential"}?
       </DialogContent>
@@ -1113,7 +1195,7 @@ const handleConfirmUrgent = async () => {
   
   <DialogTitle 
     sx={{ 
-      backgroundColor: "#207785", 
+      backgroundColor: "#FFEA00", 
       color: "white", 
       display: "flex", 
       justifyContent: "space-between", 
@@ -1128,7 +1210,7 @@ const handleConfirmUrgent = async () => {
 
  
   <DialogContent>
-    <Typography>Please write marginal instructions!</Typography>
+    <Typography >Please write marginal instructions!</Typography>
   </DialogContent>
 
 

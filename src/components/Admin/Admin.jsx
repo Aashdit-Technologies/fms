@@ -22,6 +22,7 @@ import EmployeeList from "../EmployeeList/EmployeeList";
 import LogViewer from "../LogViewer/LogViewer";
 import NoteSheetPreview from "../FileSection/notesheetpreview/NoteSheetPreview";
 import RoleMenu from "../RoleMenu/RoleMenu";
+import PrintLetter from "../DespatchSection/components/PrintLetter"
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(true);
@@ -202,6 +203,14 @@ const Admin = () => {
                   <RoleMenu/>
                 </React.Suspense>
               }
+            />
+		<Route
+            path="print-letter"
+            element={
+            <React.Suspense fallback={<div>Loading...</div>}>
+            <PrintLetter/>
+            </React.Suspense>
+            }
             />
 
             {menuItems.map((menu) => {

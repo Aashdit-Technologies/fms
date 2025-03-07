@@ -23,6 +23,7 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import { MdFileUpload } from "react-icons/md";
 import {toast } from "react-toastify";
 import { PageLoader } from "../pageload/PageLoader";
+import { useNavigate } from 'react-router-dom';
 const customStyles = {
   table: {
     style: {
@@ -139,9 +140,9 @@ const Despatch = () => {
   const [isLoading, setIsLoading] = useState(false);
    const fileName = dispatchdata?.[0]?.fileName;
    const filePath = dispatchdata?.[0]?.filePath;
-   
-   console.log("fileName:", fileName);
-   console.log("filePath:", filePath);
+   const [letterContent, setLetterContent] = useState([]);
+   const navigate = useNavigate();
+  
    
 
   const handleTabChange = (tab) => {
@@ -169,7 +170,7 @@ const Despatch = () => {
 
 
   const fetchLetters = async (tabCode) => {
-    debugger
+   
     setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
@@ -186,14 +187,14 @@ const Despatch = () => {
         }
       );
   
-      console.log("Raw API Response:", JSON.stringify(response.data, null, 2));
+     
   
       let responseData = response.data?.data?.correspondancelist;
   
       if (!responseData) {
         setDispatchData([]);
       } else if (responseData.empty === true) {
-        console.log("Correspondance list is empty.");
+        
         setDispatchData([]);
       } else if (Array.isArray(responseData)) {
         setDispatchData(responseData);
@@ -245,7 +246,7 @@ const Despatch = () => {
         }
       );
   
-      console.log("API Response:", response.data.data);
+      
   
       const enclosures = response.data?.data|| [];
     
@@ -264,17 +265,110 @@ const Despatch = () => {
   };
 
   const newLetterColumns = [
-    { name: 'Sl No', selector: (row, index) => index + 1, sortable: true, width: '100px' },
-    { name: 'Letter No.', selector: (row) => row.letterNo || '', sortable: true, width: '200px' },
-    { name: 'Ending Memo No.', selector: (row) => row.memoNo || '', sortable: true, width: '250px' },
-    { name: 'Subject', selector: (row) => row.subject, sortable: true, wrap: true, grow: 2 },
-    { name: 'From', selector: (row) => row.from, sortable: true, wrap: true, grow: 1 ,width:"200px"},
-    { name: 'Date', selector: (row) => row.date, sortable: true, width: '120px' },
+    { name: 'Sl No',
+       selector: (row, index) => index + 1,
+        sortable: true,
+         width: '100px' 
+        },
+    { name: 'Letter No.',
+       selector: (row) => row.letterNo || '',
+       cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '200px'
+          }} 
+          title={row.letterNo || ''}
+        >
+          {row.letterNo || ''}
+        </div>
+      ),
+        sortable: true,
+         width: '200px'
+         },
+    { name: 'Ending Memo No.',
+       selector: (row) => row.memoNo || '',
+       cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '200px'
+          }} 
+          title={row.memoNo || ''}
+        >
+          {row.memoNo || ''}
+        </div>
+      ),
+        sortable: true,
+         width: '250px' 
+        },
+    { name: 'Subject', 
+      selector: (row) => row.subject,
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            // maxWidth: '200px'
+          }} 
+          title={row.subject || ''}
+        >
+          {row.subject || ''}
+        </div>
+      ),
+       sortable: true, 
+       wrap: true,
+        grow: 2 },
+    { name: 'From',
+       selector: (row) => row.from,
+       cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '200px'
+          }} 
+          title={row.from || ''}
+        >
+          {row.from || ''}
+        </div>
+      ),
+        sortable: true,
+         wrap: true,
+          grow: 1 ,
+          width:"200px"
+        },
+    { name: 'Date',
+       selector: (row) => row.date,
+       cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '200px'
+          }} 
+          title={row.date || ''}
+        >
+          {row.date || ''}
+        </div>
+      ),
+        sortable: true, 
+        width: '120px' 
+      },
     {
       name: "View",
       cell: (row) => (
         <Box sx={{ display: "flex", gap: 1 }}>
-          {/* <IconButton size="small" onClick={() => handleDownloadview(row)} 
+          {
+            <Tooltip title="View Letter">
+           <IconButton size="small" onClick={() => printLetter(row)} 
           sx={{ 
             color: '#207785',
             bgcolor: 'rgba(32, 119, 133, 0.1)',
@@ -287,7 +381,11 @@ const Despatch = () => {
             borderRadius: '8px',
           }}>
             <Visibility />
-          </IconButton> */}
+          
+          </IconButton> 
+          </Tooltip>
+          }
+
       <Tooltip title="View Enclosures">   
     <IconButton 
   size="small" 
@@ -339,23 +437,98 @@ const Despatch = () => {
 
   const sentLetterColumns = [
     { name: 'Sl No.', selector: (row, index) => index + 1, sortable: true, width: '80px' },
-    { name: 'Letter No.', selector: (row) => row.letterNo || '', sortable: true, width: '200px' },
-    { name: 'Ending Memo No.', selector: (row) => row.memoNo || '', sortable: true, width: '250px' },
-    { name: 'Subject', selector: (row) => row.subject, sortable: true, wrap: true, grow: 2 },
-    { name: 'From', selector: (row) => row.from, sortable: true, wrap: true, grow: 1 },
-    { name: 'Date', selector: (row) => row.date, sortable: true, width: '120px' },
-    // {
-    //   name: "View",
-    //   cell: (row) => (
-    //     <Box sx={{ display: "flex", gap: 1 }}>
-    //       <IconButton size="small" onClick={() => handleView(row)} sx={{ color: "primary.main" }}>
-    //         <Visibility />
-    //       </IconButton>
-    //     </Box>
-    //   ),
-    //   width: "150px",
-    //   center: true,
-    // },
+    { name: 'Letter No.',
+       selector: (row) => row.letterNo || '',
+       cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '200px'
+          }} 
+          title={row.letterNo || ''}
+        >
+          {row.letterNo || ''}
+        </div>
+      ),
+        sortable: true, 
+        width: '200px' 
+      },
+    { name: 'Ending Memo No.',
+       selector: (row) => row.memoNo || '', 
+       cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '200px'
+          }} 
+          title={row.memoNo || ''}
+        >
+          {row.memoNo || ''}
+        </div>
+      ),
+       sortable: true, 
+       width: '250px',
+       
+      },
+    { name: 'Subject',
+       selector: (row) => row.subject,
+       cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '200px'
+          }} 
+          title={row.subject || ''}
+        >
+          {row.subject || ''}
+        </div>
+      ),
+        sortable: true, 
+        wrap: true,
+         grow: 2 },
+    { name: 'From', 
+      selector: (row) => row.from, 
+      cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '200px'
+          }} 
+          title={row.from || ''}
+        >
+          {row.from || ''}
+        </div>
+      ),
+      sortable: true,
+       wrap: true,
+        grow: 1 
+      },
+    { name: 'Date',
+       selector: (row) => row.date, 
+       cell: row => (
+        <div 
+          style={{
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            maxWidth: '200px'
+          }} 
+          title={row.date || ''}
+        >
+          {row.date || ''}
+        </div>
+      ),
+       sortable: true,
+        width: '120px' },
+    
     {
       name: "View",
       cell: (row) => (
@@ -420,7 +593,7 @@ const Despatch = () => {
       };
   
       const encryptedPayload = encryptPayload(payload);
-      console.log("Checking payloads", encryptedPayload);
+     
   
       const response = await api.post(
         'download/view-document',
@@ -429,7 +602,7 @@ const Despatch = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log(response);
+      
       if (response.data && response.data.data) {
         const base64String = response.data.data.split(",")[1]; 
         const byteCharacters = atob(base64String);
@@ -450,7 +623,44 @@ const Despatch = () => {
     }
   };
 
+
+
+  const printLetter = async (row) => {
+    setIsLoading(true);
+    try {
+      const token = useAuthStore.getState().token;
+      const payload = {
+        correspondenceId: row.correspondenceId,
+      };
   
+      const encryptedPayload = encryptPayload(payload);
+  
+      const response = await api.post(
+        'dispatch/cor-draft-print',
+        { dataObject: encryptedPayload },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      if (response.data.outcome) {
+        const letterContent = response.data.data;
+  
+        // Store the letter content in localStorage
+        localStorage.setItem('letterContent', JSON.stringify(letterContent));
+  
+        // Open a new tab with the print letter component
+        window.open('/print-letter', '_blank');
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching correspondence details:", error);
+      toast.error("Failed to view letter. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
 <>
 {isLoading && <PageLoader />}
