@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Accordion } from "react-bootstrap";
 import { FaPlus, FaMinus } from "react-icons/fa6";
 import { Select, MenuItem } from "@mui/material";
@@ -8,7 +8,8 @@ import UploadDocument from "./UploadDocument";
 const Ckeditor = ({ additionalDetails, fileDetails, notingNo, content, onContentChange, refetchData }) => {
   const [selectedItem, setSelectedItem] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [editorContent, setEditorContent] = useState(content || '');
+  // Remove local state and use content prop directly
+  const isUpdatingRef = useRef(false);
   const options = React.useMemo(() => {
     if (!notingNo || !notingNo.data || !Array.isArray(notingNo.data)) {
       return [];
@@ -26,10 +27,9 @@ const Ckeditor = ({ additionalDetails, fileDetails, notingNo, content, onContent
         const noteNumber = value.split("-")[1];
         // Create noting link with custom class
         const linkHTML = `<span class="noting-link" data-note-number="${noteNumber}" style="color: #207785; text-decoration: none; font-weight: 500; padding: 2px 4px; border-radius: 3px; cursor: pointer;">${value}</span>`;
-        const newContent = `${editorContent}${linkHTML}&nbsp;`;
+        const newContent = `${content}${linkHTML}&nbsp;`;
   
         isUpdatingRef.current = true;
-        setEditorContent(newContent);
         onContentChange?.(newContent);
   
         setTimeout(() => {
@@ -37,9 +37,9 @@ const Ckeditor = ({ additionalDetails, fileDetails, notingNo, content, onContent
         }, 100);
       }
     },
-    [editorContent, onContentChange]
+    [content, onContentChange]
   );
-  console.log(editorContent,"editorContent");
+  console.log(content,"editorContent");
   
   
   useEffect(() => {
@@ -69,20 +69,18 @@ const Ckeditor = ({ additionalDetails, fileDetails, notingNo, content, onContent
     return () => document.removeEventListener('click', handleNotingClick);
   }, []);
 
-  // Update editor content when props change
-  useEffect(() => {
-    const newContent = content || additionalDetails?.data?.note || '';
-    console.log('Ckeditor updating content:', newContent);
-    setEditorContent(newContent);
-  }, [content, additionalDetails]);
-
-  
-
   const handleEditorChange = useCallback((newContent) => {
     console.log('Ckeditor content changed:', newContent);
-    setEditorContent(newContent);
-    onContentChange?.(newContent);
-  }, [onContentChange]);
+    // Ensure we're not in an update cycle and content has actually changed
+    if (!isUpdatingRef.current && newContent !== content) {
+      isUpdatingRef.current = true;
+      onContentChange?.(newContent);
+      // Use a longer timeout to ensure the update completes
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 200);
+    }
+  }, [onContentChange, content]);
 
   const toggleAccordion = useCallback((e) => {
     e.preventDefault();
@@ -147,7 +145,7 @@ const Ckeditor = ({ additionalDetails, fileDetails, notingNo, content, onContent
             </Accordion.Header>
             <Accordion.Body>
               <SunEditorComponent
-                content={editorContent}
+                content={content}
                 placeholder="Enter your task action here..."
                 onContentChange={handleEditorChange}
                 additionalDetails={additionalDetails}
@@ -159,7 +157,7 @@ const Ckeditor = ({ additionalDetails, fileDetails, notingNo, content, onContent
       <UploadDocument
         fileDetails={fileDetails}
         additionalDetails={additionalDetails}
-        initialContent={editorContent}
+        initialContent={content}
         refetchData={refetchData}
       />
     </>

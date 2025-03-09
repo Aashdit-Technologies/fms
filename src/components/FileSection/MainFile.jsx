@@ -16,7 +16,9 @@ const MainFile = () => {
   const receiptId = file?.fileReceiptId;
   const [isLoading, setIsLoading] = useState(true);
 
+  // Use ref to prevent infinite update loops and focus loss
   const isUpdatingContentRef = useRef(false);
+  const previousContentRef = useRef("");
 
   const [fileData, setFileData] = useState({
     fileDetails: null,
@@ -72,11 +74,15 @@ const MainFile = () => {
         notingNo: res5.data,
       });
       if (res2.data.data.note) {
-        isUpdatingContentRef.current = true;
-        setSharedEditorContent(res2.data.data.note);
-        setTimeout(() => {
-          isUpdatingContentRef.current = false;
-        }, 100);
+        // Only update if content has changed
+        if (res2.data.data.note !== previousContentRef.current) {
+          isUpdatingContentRef.current = true;
+          setSharedEditorContent(res2.data.data.note);
+          previousContentRef.current = res2.data.data.note;
+          setTimeout(() => {
+            isUpdatingContentRef.current = false;
+          }, 100);
+        }
       }
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -94,34 +100,33 @@ const MainFile = () => {
   };
 
   const handleEditorContentChange = useCallback((newContent) => {
-    if (!isUpdatingContentRef.current) {
+    console.log('MainFile content changed:', newContent, 'previous:', previousContentRef.current);
+    // Only update if content has changed and we're not already updating
+    if (!isUpdatingContentRef.current && newContent !== previousContentRef.current) {
       isUpdatingContentRef.current = true;
       setSharedEditorContent(newContent);
+      previousContentRef.current = newContent;
       sessionStorage.setItem('noteSheetContent', newContent);
-      requestAnimationFrame(() => {
+      
+      // Use a longer timeout to ensure the update completes
+      setTimeout(() => {
         isUpdatingContentRef.current = false;
-      });
+      }, 300);
     }
   }, []);
   
-  // Update the initial content load effect
+  // Load saved content from sessionStorage on initial mount
   useEffect(() => {
     const savedContent = sessionStorage.getItem('noteSheetContent');
-    if (savedContent && !isUpdatingContentRef.current) {
+    if (savedContent && !isUpdatingContentRef.current && !previousContentRef.current) {
       setSharedEditorContent(savedContent);
+      previousContentRef.current = savedContent;
     }
+    
+    // Clean up sessionStorage on component unmount
     return () => {
       sessionStorage.removeItem('noteSheetContent');
     };
-  }, []);
-
-  // Clean up sessionStorage on component unmount
-  useEffect(() => {
-    // Load initial content from sessionStorage if exists
-    const savedContent = sessionStorage.getItem('noteSheetContent');
-    if (savedContent) {
-      setSharedEditorContent(savedContent);
-    }
   }, []);
 
   return (

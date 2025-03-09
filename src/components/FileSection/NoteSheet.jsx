@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Card } from "react-bootstrap";
 import { Button } from "@mui/material";
 import { MdNote } from "react-icons/md";
@@ -20,18 +20,12 @@ const NoteSheet = ({
   const [notes, setNotes] = useState([]);
   const [zoomIn, setZoomIn] = useState(false);
   const [writeNote, setWriteNote] = useState(false);
-  const [editorContent, setEditorContent] = useState(content || "");
-  const [lastSyncedContent, setLastSyncedContent] = useState("");
+  const isUpdatingRef = useRef(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const token = useAuthStore((state) => state.token) || sessionStorage.getItem("token");
 
-  // Update editor content when props change
-  useEffect(() => {
-      const newContent = content || additionalDetails?.data?.note || '';
-      console.log('NoteSheet updating content:', newContent);
-      setEditorContent(newContent);
-    }, [content, additionalDetails, writeNote]);
+  // Remove the effect that updates local state
 
 
 
@@ -48,12 +42,19 @@ const NoteSheet = ({
 
   const handleEditorChange = (newContent) => {
     console.log('NoteSheet content changed:', newContent);
-    setEditorContent(newContent);
-    onContentChange?.(newContent);
+    // Only update if content has actually changed and we're not in an update cycle
+    if (!isUpdatingRef.current && newContent !== content) {
+      isUpdatingRef.current = true;
+      onContentChange?.(newContent);
+      // Use a longer timeout to ensure the update completes
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 200);
+    }
   };
   const handleEditorBlur = () => {
-    console.log('Editor blurred, saving content:', editorContent);
-    onContentChange?.(editorContent); // Notify parent about the content change when editor loses focus
+    console.log('Editor blurred, saving content:', content);
+    // No need to call onContentChange here as it's already handled in handleEditorChange
   };
 
   const handleWriteNoteClick = () => {
@@ -222,14 +223,14 @@ const NoteSheet = ({
               {showPreview ? (
                 <div className="preview-content">
                   <div
-                    dangerouslySetInnerHTML={{ __html: editorContent || "" }}
+                    dangerouslySetInnerHTML={{ __html: content || "" }}
                   />
                 </div>
               ) : (
                 writeNote && (
                   <div className="sun-editor-wrapper">
                     <SunEditorComponent
-                      content={editorContent}
+                      content={content}
                       // placeholder="Enter your task action here..."
                       onContentChange={handleEditorChange}
                       additionalDetails={additionalDetails}
