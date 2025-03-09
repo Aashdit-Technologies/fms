@@ -39,6 +39,8 @@ const Ckeditor = ({ additionalDetails, fileDetails, notingNo, content, onContent
     },
     [editorContent, onContentChange]
   );
+  console.log(editorContent,"editorContent");
+  
   
   useEffect(() => {
     const handleNotingClick = (event) => {

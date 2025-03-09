@@ -264,10 +264,10 @@ const UploadDocument = ({
     return dayjs(date).format("DD/MM/YYYY");
   };
 
-  const validateDocuments = (rows, editorContent) => {
+  const validateDocuments = (rows, initialContent) => {
     let isAnyRowStarted = false;
 
-    if (editorContent.trim()) {
+    if (initialContent.trim()) {
       return true;
     }
 
@@ -294,7 +294,7 @@ const UploadDocument = ({
       }
     }
 
-    if (!editorContent.trim() && !isAnyRowStarted) {
+    if (!initialContent.trim() && !isAnyRowStarted) {
       toast.error(
         "Please enter text in the editor or complete a document entry."
       );
@@ -323,7 +323,7 @@ const UploadDocument = ({
         uploadedDocuments,
         filePriority,
         isConfidential,
-        editorContent,
+        initialContent,
       });
       if (Mark === "Save") {
         toast.success(response.message || "Operation successful!");
@@ -337,9 +337,11 @@ const UploadDocument = ({
     mutationFn: async (data) => {
       setIsLoading(true);
       try {
+        console.log(initialContent,"initialContent11");
+        
         const encryptedDataObject = encryptPayload({
           fileId: fileDetails.data.fileId,
-          note: editorContent || null,
+          note: initialContent || null,
           filerecptId: fileDetails.data.fileReceiptId,
           prevNoteId: additionalDetails?.data?.prevNoteId,
           priority: data.filePriority,
@@ -382,7 +384,7 @@ const UploadDocument = ({
               document: null,
             },
           ]);
-          setEditorContent("");
+          // setinitialContent("");
           setFilePriority("Normal");
           setIsConfidential(false);
           setSelectedFiles({});
