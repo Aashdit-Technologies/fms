@@ -106,28 +106,20 @@ const MainFile = () => {
       isUpdatingContentRef.current = true;
       setSharedEditorContent(newContent);
       previousContentRef.current = newContent;
-      sessionStorage.setItem('noteSheetContent', newContent);
       
       // Use a longer timeout to ensure the update completes
       setTimeout(() => {
         isUpdatingContentRef.current = false;
-      }, 300);
+      }, 10);
     }
   }, []);
-  
-  // Load saved content from sessionStorage on initial mount
+
   useEffect(() => {
-    const savedContent = sessionStorage.getItem('noteSheetContent');
-    if (savedContent && !isUpdatingContentRef.current && !previousContentRef.current) {
-      setSharedEditorContent(savedContent);
-      previousContentRef.current = savedContent;
+    if (sharedEditorContent === "") {
+      setSharedEditorContent(previousContentRef.current || "");
     }
-    
-    // Clean up sessionStorage on component unmount
-    return () => {
-      sessionStorage.removeItem('noteSheetContent');
-    };
   }, []);
+
 
   return (
     <>

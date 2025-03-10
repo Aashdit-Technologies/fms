@@ -1,124 +1,67 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import JoditEditor from "jodit-react";
-import { debounce } from "lodash";
+import { heIL } from "@mui/material/locale";
 
-// Internal name change: Rename the component to `CustomModalEditor`
-const CustomModalEditor = ({ defaultText, onTextUpdate, placeholder }) => {
-  const [contents, setContents] = useState(defaultText || "");
-  const editorRef = useRef(null);
-  const editorInstanceRef = useRef(null);
-  const isInternalUpdate = useRef(false);
-  const cursorPositionRef = useRef(null);
+const ModalEditor = ({ defaultText, onTextUpdate }) => {
+  const editor = useRef(null);
+  const [content, setContent] = useState(defaultText || "");
+  let cursorPosition = { start: 0, end: 0 };
+  let debounceTimeout = null;
 
-  // Debounced callback for onTextUpdate
-  const debouncedOnTextUpdate = useMemo(
-    () => debounce((newContent) => onTextUpdate?.(newContent), 300),
-    [onTextUpdate]
-  );
-
-  // Handle external content updates
+  // Initialize content in the editor once
   useEffect(() => {
-    if (defaultText !== contents && !isInternalUpdate.current) {
-      const editor = editorInstanceRef.current;
-      if (editor) {
-        isInternalUpdate.current = true;
-
-        // Save cursor position
-        cursorPositionRef.current = editor.selection.save();
-
-        // Update state
-        setContents(defaultText || "");
-
-        // Restore cursor position
-        requestAnimationFrame(() => {
-          if (cursorPositionRef.current) {
-            editor.selection.restore(cursorPositionRef.current);
-          }
-          isInternalUpdate.current = false;
-        });
-      } else {
-        setContents(defaultText || "");
-      }
+    if (editor.current && defaultText !== editor.current.getEditorValue()) {
+      editor.current.setEditorValue(defaultText);
     }
-  }, [defaultText, contents]);
+  }, [defaultText]);
 
-  const handleEditorChange = useCallback(
-    (newContent) => {
-      if (!isInternalUpdate.current) {
-        const editor = editorInstanceRef.current;
-        if (editor) {
-          isInternalUpdate.current = true;
-
-          // Save cursor position
-          cursorPositionRef.current = editor.selection.save();
-
-          // Update state and call debounced onTextUpdate
-          setContents(newContent);
-          debouncedOnTextUpdate(newContent);
-
-          // Restore cursor position
-          requestAnimationFrame(() => {
-            if (cursorPositionRef.current) {
-              editor.selection.restore(cursorPositionRef.current);
-            }
-            isInternalUpdate.current = false;
-          });
-        }
-      }
-    },
-    [debouncedOnTextUpdate]
-  );
-
-  const handleEditorFocus = useCallback(() => {
-    if (editorRef.current?.editor) {
-      editorInstanceRef.current = editorRef.current.editor;
-      editorInstanceRef.current.selection?.focus();
-    }
-  }, []);
-
-  const config = useMemo(
-    () => ({
-      readonly: false,
-      placeholder: placeholder || "Start typing...",
-      height: 400,
-      events: {
-        afterInit: (jodit) => {
-          editorInstanceRef.current = jodit;
-          jodit.e.on("blur", () => {
-            // Prevent focus from jumping to toolbar
-            setTimeout(() => {
-              if (document.activeElement.tagName === "BODY") {
-                jodit.selection.focus();
-              }
-            }, 0);
-          });
-        },
+  const config = {
+    readonly: false,
+    // placeholder: "Start typing...",
+    height:"300px",
+    askBeforePasteHTML: false,
+    askBeforePasteFromWord: false,
+    defaultActionOnPaste: 'insert_clear_html',
+    events: {
+      afterInit: (jodit) => {
+        editor.current = jodit;
       },
-    }),
-    [placeholder]
-  );
-
-  // Cleanup debounced function on unmount
-  useEffect(() => {
-    return () => {
-      debouncedOnTextUpdate.cancel();
-    };
-  }, [debouncedOnTextUpdate]);
+      focus: () => {
+        if (editor.current) {
+          editor.current.selection.restore();
+        }
+      },
+      beforeChange: () => {
+        if (editor.current) {
+          cursorPosition = editor.current.selection.get();
+        }
+      },
+      afterChange: () => {
+        if (editor.current) {
+          editor.current.selection.set(cursorPosition);
+        }
+      },
+      blur: () => {
+        // Use debouncing to save the content only after the user stops typing
+        if (editor.current) {
+          debounceTimeout = setTimeout(() => {
+            const updatedContent = editor.current.getEditorValue();
+            setContent(updatedContent);  // Save content
+            onTextUpdate?.(updatedContent); // Notify parent with updated content
+          }, 100); // Wait 500ms after the user stops typing
+        }
+      },
+    },
+  };
 
   return (
     <JoditEditor
-      ref={editorRef}
-      value={contents}
+      ref={editor}
       config={config}
-      onChange={handleEditorChange}
-      onFocus={handleEditorFocus}
-      onBlur={handleEditorFocus}
+      value={content}  // Don't use React state for real-time content updates
+      tabIndex={1}
     />
   );
 };
 
-// Set a custom display name for the component
-CustomModalEditor.displayName = "CustomModalEditor";
-
-// Export the component with the new name
-export default React.memo(CustomModalEditor);
+export default React.memo(ModalEditor);

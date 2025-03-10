@@ -2,13 +2,14 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import { Card } from "react-bootstrap";
 import { Button } from "@mui/material";
 import { MdNote } from "react-icons/md";
-import SunEditorComponent from "./SunEditorComponent";
 import { toast } from "react-toastify";
 import { encryptPayload } from "../../utils/encrypt";
 import useAuthStore from "../../store/Store";
 import api from "../../Api/Api";
 import { PageLoader } from "../pageload/PageLoader";
 import debounce from "lodash/debounce";
+import { Note } from "@mui/icons-material";
+import NoteSheetEditor from "./NoteSheetEditor";
 
 const NoteSheet = ({
   noteSheets,
@@ -20,11 +21,10 @@ const NoteSheet = ({
   const [notes, setNotes] = useState([]);
   const [zoomIn, setZoomIn] = useState(false);
   const [writeNote, setWriteNote] = useState(false);
-  const isUpdatingRef = useRef(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const token = useAuthStore((state) => state.token) || sessionStorage.getItem("token");
-
+  const editorContentRef = useRef(content || "");
   // Remove the effect that updates local state
 
 
@@ -38,32 +38,36 @@ const NoteSheet = ({
     }
   }, [noteSheets]);
 
+  useEffect(() => {
+    editorContentRef.current = content;
+  }, [content]);
 
-
-  const handleEditorChange = (newContent) => {
-    console.log('NoteSheet content changed:', newContent);
-    // Only update if content has actually changed and we're not in an update cycle
-    if (!isUpdatingRef.current && newContent !== content) {
-      isUpdatingRef.current = true;
-      onContentChange?.(newContent);
-      // Use a longer timeout to ensure the update completes
-      setTimeout(() => {
-        isUpdatingRef.current = false;
-      }, 200);
-    }
-  };
-  const handleEditorBlur = () => {
-    console.log('Editor blurred, saving content:', content);
-    // No need to call onContentChange here as it's already handled in handleEditorChange
-  };
+ 
 
   const handleWriteNoteClick = () => {
     setWriteNote(true);
+    // Ensure we have the latest content
+    if (onContentChange && editorContentRef.current !== undefined) {
+      requestAnimationFrame(() => {
+        onContentChange(editorContentRef.current);
+      });
+    }
   };
-
+  
   const handleCloseWriteNote = () => {
     setWriteNote(false);
+    // Save latest content before closing
+    if (onContentChange && editorContentRef.current !== undefined) {
+      requestAnimationFrame(() => {
+        onContentChange(editorContentRef.current);
+      });
+    }
   };
+
+  const handleEditorContentChange = useCallback((newContent) => {
+    editorContentRef.current = newContent;
+    onContentChange?.(newContent);
+  }, [onContentChange]);
 
  
 
@@ -229,12 +233,10 @@ const NoteSheet = ({
               ) : (
                 writeNote && (
                   <div className="sun-editor-wrapper">
-                    <SunEditorComponent
+                    <NoteSheetEditor
                       content={content}
-                      // placeholder="Enter your task action here..."
-                      onContentChange={handleEditorChange}
+                      onContentChange={onContentChange}
                       additionalDetails={additionalDetails}
-                      onBlur={handleEditorBlur}
                     />
                   </div>
                 )

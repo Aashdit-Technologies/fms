@@ -34,7 +34,7 @@ const Ckeditor = ({ additionalDetails, fileDetails, notingNo, content, onContent
   
         setTimeout(() => {
           isUpdatingRef.current = false;
-        }, 100);
+        }, 0);
       }
     },
     [content, onContentChange]
@@ -71,16 +71,11 @@ const Ckeditor = ({ additionalDetails, fileDetails, notingNo, content, onContent
 
   const handleEditorChange = useCallback((newContent) => {
     console.log('Ckeditor content changed:', newContent);
-    // Ensure we're not in an update cycle and content has actually changed
-    if (!isUpdatingRef.current && newContent !== content) {
-      isUpdatingRef.current = true;
+    // Immediately pass the new content to parent without delay
+    if (newContent !== content) {
       onContentChange?.(newContent);
-      // Use a longer timeout to ensure the update completes
-      setTimeout(() => {
-        isUpdatingRef.current = false;
-      }, 200);
     }
-  }, [onContentChange, content]);
+  }, [content, onContentChange]);
 
   const toggleAccordion = useCallback((e) => {
     e.preventDefault();

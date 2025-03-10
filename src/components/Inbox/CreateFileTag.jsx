@@ -10,10 +10,23 @@ import { useLocation, useNavigate } from "react-router-dom";
 //  const Navigate = useNavigate();
 import { PageLoader } from "../pageload/PageLoader";
 const ManageFile = () => {
-  const location = useLocation();
-  const fetchedData = location.state?.data; 
-  const letterReceiptId = fetchedData.letterReceiptId;
-  const metadataId = fetchedData.metadataId;
+  // const location = useLocation();
+  // const fetchedData = location.state?.data; 
+  // const letterReceiptId = fetchedData.letterReceiptId;
+  // const metadataId = fetchedData.metadataId;
+   const location = useLocation();
+    const [letterReceiptId, setLetterReceiptId] = useState(null);
+    const [metadataId, setMetadataId] = useState(null);
+  
+    useEffect(() => {
+      const fetchedData = location.state?.data || {};
+      const receiptId = fetchedData?.letterReceiptId || null;
+      const metadataId = fetchedData.metadataId;
+      setLetterReceiptId(receiptId);
+      setMetadataId(metadataId)
+    }, [location.state]);
+  console.log("letterReceiptId",letterReceiptId)
+  console.log("metadataId",metadataId)
   const Navigate = useNavigate(); 
 
   const [selectedRack, setSelectedRack] = useState(null);
@@ -33,6 +46,8 @@ const ManageFile = () => {
   const [roomData, setRoomData] = useState([]); 
   const [rackData, setRackData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+   const [isRoomSelected, setIsRoomSelected] = useState(false);
+    const [shouldRefreshNewRequest, setShouldRefreshNewRequest] = useState(false);
   const {
     activities,
     custodians,
@@ -43,16 +58,23 @@ const ManageFile = () => {
     fetchAllData,
   } = useApiListStore();
 
-  const employeeDeptMapId = custodians?.[0]?.employeeDeptMapId;
+  // const employeeDeptMapId = custodians?.[0]?.employeeDeptMapId;
   
-  console.log("check employeeDeptMapId", employeeDeptMapId);
-
+  // console.log("check employeeDeptMapId", employeeDeptMapId);
+  const empDeptRoleId = custodians?.[0]?.empDeptRoleId || "Not Available";
+  console.log("check empDeptRoleId:", empDeptRoleId);
+  
   useEffect(() => {
     fetchAllData();
     
   }, []);
 
-  
+   useEffect(() => {
+      if (office.length > 0 && departments.length > 0) {
+        setSelectedOffice(office[0].officeOrgId);
+        setSelectedDepartment(departments[0].departmentId);
+      }
+    }, [office, departments]);
   useEffect(() => {
     const fetchRoomData = async () => {
       setIsLoading(true);
@@ -114,27 +136,28 @@ const ManageFile = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
     setIsSubmitting(true);
-
-   
+    // setSubmitError("");
     if (!selectedOffice) return toast.error("Please select an office.");
     if (!selectedDepartment) return toast.error("Please select a department.");
     if (!selectedFileRTL) return toast.error("Please select a file related to.");
     if (!formTitle.trim()) return toast.error("Please enter a title.");
-    if (!formKeyword.trim()) return toast.error("Please enter a KeyWord.");
+   
     if (!formSubject.trim()) return toast.error("Please enter a subject.");
     if (!formFileName.trim()) return toast.error("Please enter a file name.");
     if (!selectedCustodian) return toast.error("Please select a custodian.");
     if (!selectedFileModule) return toast.error("Please select a file module.");
-  
+    if (selectedRoom && !selectedRack)
+      return toast.error("Please select rack.");
+    if (selectedRoom && !selectedCell)
+      return toast.error("Please select cell.");
     const payload = {
       metadataId,
       letterReceiptId,
-      empOfficeMapIdascustodian: employeeDeptMapId,
-      rackId: selectedRack,
-      roomId: selectedRoom,
-      noOfCell: selectedCell,
+      empOfficeMapIdascustodian: empDeptRoleId,
+      rackId: selectedRack || null,
+      roomId: selectedRoom || null,
+      noOfCell: selectedCell || null,
       departmentId: selectedDepartment,
       activityType: selectedActivity,
       custodian: selectedCustodian,
@@ -150,7 +173,7 @@ const ManageFile = () => {
     try {
       const token = useAuthStore.getState().token;
       const encryptedMessage = encryptPayload(payload);
-  
+      console.log("payload chek",encryptedMessage)
       const response = await api.post(
         "letter/create-file-add-letter",
         { dataObject: encryptedMessage },
@@ -166,6 +189,7 @@ const ManageFile = () => {
        // toast.success(response.data);
         Navigate("/letter");
         resetForm(); 
+        setShouldRefreshNewRequest((prev) => !prev);
       } else {
         toast.error("An error occurred while submitting the form.");
       }
@@ -204,27 +228,46 @@ const ManageFile = () => {
   const handleSelectChange = (event) => {
     const selectedActivity = event.target.value;
     setSelectedActivity(selectedActivity);
-  
+
     if (!activities || activities.length === 0) {
       console.error("Activities data is still loading or empty.");
       return;
     }
-  
-    const selectedActivityObj = Array.isArray(activities) 
-  ? activities.find(
-      (activity) => activity.activityId === Number(selectedActivity)
-    )
-  : null;  // If activities is not an array, return null or handle as needed
 
-  
+    const selectedActivityObj = Array.isArray(activities)
+      ? activities.find(
+          (activity) => activity.activityId === Number(selectedActivity)
+        )
+      : null; // If activities is not an array, return null or handle as needed
+
     console.log("Selected Activity Object:", selectedActivityObj);
-  
+
     if (formTitle && formSubject && selectedActivityObj) {
       setFormFileName(
         `${formTitle}/${formSubject}/${selectedActivityObj.activityName}`
       );
     } else {
-      setFormFileName(""); 
+      setFormFileName("");
+    }
+  };
+
+  const handleTitleChange = (e) => {
+    const newTitle = e.target.value;
+    setFormTitle(newTitle);
+    
+    // Call handleSelectChange with the current activity value
+    if (selectedActivity) {
+      handleSelectChange({ target: { value: selectedActivity } });
+    }
+  };
+
+  const handleSubjectChange = (e) => {
+    const newSubject = e.target.value;
+    setFormSubject(newSubject);
+    
+    // Call handleSelectChange with the current activity value
+    if (selectedActivity) {
+      handleSelectChange({ target: { value: selectedActivity } });
     }
   };
   
@@ -314,7 +357,7 @@ const ManageFile = () => {
           variant="outlined"
           fullWidth
           value={formTitle}
-          onChange={(e) => setFormTitle(e.target.value)}
+          onChange={handleTitleChange}
         />
       </div>
 
@@ -330,7 +373,7 @@ const ManageFile = () => {
           variant="outlined"
           fullWidth
           value={formSubject}
-          onChange={(e) => setFormSubject(e.target.value)}
+          onChange={handleSubjectChange}
         />
       </div>
 
@@ -368,11 +411,7 @@ const ManageFile = () => {
                id="keywordInput"
                variant="outlined"
                size="small"
-               label={
-                <span>
-                  Keyword <span style={{ color: "red" }}>*</span>
-                </span>
-              }
+              label="Keyword"
                fullWidth
                value={formKeyword}
                onChange={(e) => setFormKeyword(e.target.value)}
@@ -438,10 +477,28 @@ const ManageFile = () => {
               options={roomData}
               getOptionLabel={(option) => option.roomNumber}
               value={roomData.find((r) => r.docRoomId === selectedRoom) || null}
-              onChange={(event, newValue) => setSelectedRoom(newValue ? newValue.docRoomId : "")}
-              renderInput={(params) => (
-                <TextField {...params} label="Select Room" variant="outlined" fullWidth />
-              )}
+              onChange={(event, newValue) => {
+                setSelectedRoom(newValue ? newValue.docRoomId : "");
+                setIsRoomSelected(!!newValue);
+                if (!newValue) {
+                  setSelectedRack(null);
+                  setSelectedCell(null);
+                }
+              }}
+            renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    label={
+                                      <span>
+                                        Select Room
+                                        {selectedRoom &&
+                                        <span style={{ color: "red" }}>*</span>}
+                                      </span>
+                                    }
+                                    variant="outlined"
+                                    fullWidth
+                                  />
+                                )}
             />
           </div>
 
@@ -453,10 +510,28 @@ const ManageFile = () => {
                   getOptionLabel={(option) => option.rackNumber}
                   value={rackData.find((r) => r.rackId === selectedRack) || null}
                   onChange={(event, newValue) => setSelectedRack(newValue ? newValue.rackId : "")}
-                  renderInput={(params) => (
-                    <TextField {...params} label="Select Rack" variant="outlined" fullWidth />
-                  )}
-                />
+                 renderInput={(params) => (
+                                       <TextField
+                                         {...params}
+                                         label={
+                                           <span>
+                                             Select Rack{" "}
+                                             {isRoomSelected && (
+                                               <span style={{ color: "red" }}>*</span>
+                                             )}
+                                           </span>
+                                         }
+                                         variant="outlined"
+                                         fullWidth
+                                         error={isRoomSelected && !selectedRack}
+                                         helperText={
+                                           isRoomSelected && !selectedRack
+                                             ? "Rack is required when room is selected"
+                                             : ""
+                                         }
+                                       />
+                                     )}
+                                   />
               </div>
 
               <div className="form-group col-md-3 mt-3">
@@ -469,9 +544,27 @@ const ManageFile = () => {
                   value={selectedCell || null}
                   onChange={(event, newValue) => setSelectedCell(newValue || "")}
                   renderInput={(params) => (
-                    <TextField {...params} label="Select Cell" variant="outlined" fullWidth />
-                  )}
-                />
+                                        <TextField
+                                          {...params}
+                                          label={
+                                            <span>
+                                              Select Cell{" "}
+                                              {isRoomSelected && (
+                                                <span style={{ color: "red" }}>*</span>
+                                              )}
+                                            </span>
+                                          }
+                                          variant="outlined"
+                                          fullWidth
+                                          error={isRoomSelected && !selectedCell}
+                                          helperText={
+                                            isRoomSelected && !selectedCell
+                                              ? "Cell is required when room is selected"
+                                              : ""
+                                          }
+                                        />
+                                      )}
+                                    />
               </div>
 
    
@@ -483,10 +576,20 @@ const ManageFile = () => {
           getOptionLabel={(option) => option.moduleName}
           value={fileModules.find((f) => f.moduleId === selectedFileModule) || null}
           onChange={(event, newValue) => setSelectedFileModule(newValue ? newValue.moduleId : "")}
-          renderInput={(params) => (
-            <TextField {...params} label="Select File Module" variant="outlined" fullWidth />
-          )}
-        />
+         renderInput={(params) => (
+                               <TextField
+                                 {...params}
+                                 label={
+                                   <span>
+                                     Select File Module
+                                     <span style={{ color: "red" }}>*</span>
+                                   </span>
+                                 }
+                                 variant="outlined"
+                                 fullWidth
+                               />
+                             )}
+                           />
       </div>
       <div className="col-md-12 text-center">
         <Button type="submit" variant="contained" 

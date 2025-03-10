@@ -1,77 +1,81 @@
-import React, { useRef, useMemo, useCallback } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import JoditEditor from 'jodit-react';
 
-const SunEditorComponent = ({ content, onContentChange, placeholder, selectedNote, additionalDetails, onBlur }) => {
+const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) => {
   const editor = useRef(null);
-  const isUpdatingRef = useRef(false);
-  console.log('Editor content:', content);
+  const [currentContent, setCurrentContent] = useState(content);
+  const [cursorPosition, setCursorPosition] = useState(null);
+  const isUpdatingRef = useRef(false); // To prevent updates when focus is gained
 
-  const config = useMemo(
-    () => ({
-      readonly: false,
-      placeholder: !content ? placeholder : '',
-      height: '300px',
-      toolbarButtonSize: 'medium',
-      enableDragAndDropFileToEditor: false,
-      uploader: { insertImageAsBase64URI: true },
-      useSearch: false,
-      removeButtons: ['about'],
-      showCharsCounter: true,
-      showWordsCounter: true,
-      showXPathInStatusbar: false,
-      // Prevent focus loss and improve performance
-      events: {
-        beforeSetValueToEditor: () => {
-          if (isUpdatingRef.current) return false;
-          return true;
-        },
-        afterInit: (instance) => {
-          // Improve focus handling
-          instance.events.on('blur', () => {
-            if (onBlur) onBlur();
-          });
-        },
-        focus: () => {
-          // Prevent unnecessary updates when editor gets focus
-          isUpdatingRef.current = true;
-          setTimeout(() => {
-            isUpdatingRef.current = false;
-          }, 100);
+  useEffect(() => {
+    // Set initial content when component mounts or content changes
+    if (editor.current && content !== currentContent) {
+      editor.current.value = content;
+    }
+  }, [content]);
+
+  const handleContentInput = (newContent) => {
+    if (!isUpdatingRef.current && newContent !== currentContent) {
+      setCurrentContent(newContent);
+      onContentChange?.(newContent);
+    }
+  };
+
+  const config = {
+    readonly: false,
+    placeholder: placeholder || '',
+    height: '300px',
+    askBeforePasteHTML: false,
+    askBeforePasteFromWord: false,
+    defaultActionOnPaste: 'insert_clear_html',
+    events: {
+      beforeChange: () => {
+        if (editor.current) {
+          const range = editor.current.selection.get();
+          setCursorPosition(range); // Save current cursor position
         }
       },
-      // Reduce unnecessary rerenders
-      defaultActionOnPaste: 'insert_as_html',
-      askBeforePasteHTML: false,
-      askBeforePasteFromWord: false
-    }),
-    [content, placeholder, onBlur]
-  );
+      afterChange: () => {
+        if (editor.current && cursorPosition) {
+          editor.current.selection.set(cursorPosition); // Restore cursor position
+        }
+      },
+      afterInit: (instance) => {
+        editor.current = instance;
+      },
+      focus: () => {
+        if (editor.current) {
+          editor.current.selection.restore(); // Restore the cursor on focus
+        }
+      },
+      // Immediate save on blur with small timeout to ensure sync
+      blur: () => {
+        if (editor.current) {
+          setTimeout(() => {
+            const updatedContent = editor.current.getEditorValue();
+            setCurrentContent(updatedContent); // Update the state with the new content
+            onContentChange?.(updatedContent); // Notify parent with updated content
+          }, 10); // Small delay to ensure internal state is updated
+        }
+        if (onBlur) onBlur(); // Call the onBlur prop if available
+      },
+    },
+  };
 
-  const handleContentChange = useCallback((newContent) => {
-    console.log('Editor content changed:', newContent);
-    if (!isUpdatingRef.current && newContent !== content) {
-      isUpdatingRef.current = true;
-      onContentChange?.(newContent);
-      // Use a longer timeout to ensure the update completes
-      setTimeout(() => {
-        isUpdatingRef.current = false;
-      }, 200);
+  useEffect(() => {
+    if (editor.current) {
+      editor.current.selection.restore(); // Restore the cursor when component re-renders
     }
-  }, [onContentChange, content]);
+  }, [currentContent]);
 
   return (
     <div className="editor-wrapper">
       <JoditEditor
         ref={editor}
-        value={content}
+        value={currentContent}  // Use the local state `currentContent`
         config={config}
         tabIndex={1}
-        onChange={handleContentChange}
-        onBlur={onBlur}
-        onReady={(instance) => {
-          // Set initial content when editor is ready
-          instance.value = content;
-        }}
+        onInput={(e) => handleContentInput(e.target.innerHTML)} // Use onInput here
       />
       <style jsx>{`
         .editor-wrapper {

@@ -1028,7 +1028,7 @@ const CreateDraftModal = ({
 
           <Box sx={{ mt: 2 }} className="editor-containers">
             <ModalEditor
-              defaultText={formData.contentss}
+              defaultText={formData.contentss || ""}
               onTextUpdate={handleTextUpdate}
             />
           </Box>

@@ -153,8 +153,8 @@ const ManageFile = () => {
 
     const payload = {
       rackId: selectedRack,
-      roomId: selectedRoom,
-      noOfCell: selectedCell,
+      roomId: selectedRoom || null,
+      noOfCell: selectedCell || null,
       departmentId: selectedDepartment,
       activityType: selectedActivity,
       custodian: selectedCustodian,
