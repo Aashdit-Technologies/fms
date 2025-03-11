@@ -107,7 +107,7 @@ const BasicDetails = () => {
           const joinDate = dayjs(formData.joiningDate, "DD-MM-YYYY");
   
           if (joinDate.diff(birthDate, "year") < 18) {
-            return "Date of Birth must be at least 18 years before Joining Date.";
+            return "Date of birth must be at least 18 years before joining date.";
           }
         }
         return "";
@@ -120,7 +120,7 @@ const BasicDetails = () => {
           const joinDate = dayjs(value, "DD-MM-YYYY");
   
           if (joinDate.diff(birthDate, "year") < 18) {
-            return "Joining Date must be at least 18 years after Date of Birth.";
+            return "Joining date must be at least 18 years after date of birth.";
           }
         }
         return "";
@@ -133,7 +133,7 @@ const BasicDetails = () => {
           const endDate = dayjs(value, "DD-MM-YYYY");
   
           if (endDate.isBefore(joinDate)) {
-            return "Service End Date must be after Joining Date.";
+            return "Service end date must be after joining date.";
           }
         }
         return "";
@@ -222,7 +222,7 @@ const BasicDetails = () => {
   
       if (joinDate.diff(birthDate, "year") < 18) {
         newErrors.dateBirth =
-          "Date of Birth must be at least 18 years before Joining Date.";
+          "Date of birth must be at least 18 years before joining date.";
         
         updateFormData("basicDetails", (prev) => ({
           ...prev,
@@ -245,7 +245,7 @@ const BasicDetails = () => {
   
       if (joinDate.diff(birthDate, "year") < 18) {
         newErrors.joiningDate =
-          "Joining Date must be at least 18 years after Date of Birth.";
+          "Joining date must be at least 18 years after date of birth.";
         
         updateFormData("basicDetails", (prev) => ({
           ...prev,
@@ -267,7 +267,7 @@ const BasicDetails = () => {
       const endDate = dayjs(serviceEndDate, "DD-MM-YYYY");
   
       if (endDate.isBefore(joinDate)) {
-        newErrors.serviceEndDate = "Service End Date must be after Joining Date.";
+        newErrors.serviceEndDate = "Service end date must be after joining date.";
       } else {
         newErrors.serviceEndDate = "";
       }
@@ -283,6 +283,16 @@ const BasicDetails = () => {
       return;
     }
   
+    if (data.serviceEndDate && data.joiningDate) {
+      const joinDate = dayjs(data.joiningDate, "DD-MM-YYYY");
+      const endDate = dayjs(data.serviceEndDate, "DD-MM-YYYY");
+  
+      if (endDate.isBefore(joinDate) || endDate.isSame(joinDate)) {
+        toast.error("Service end date must be after the joining date.");
+        return;
+      }
+    }
+
   const isUnique = await checkDuplicateEmployeeCode(data.staffCode);
 
   if (!isUnique) {
@@ -740,11 +750,11 @@ const BasicDetails = () => {
            
 
             <Box sx={{ mt: 5, paddingLeft: "20px" }}> 
-            <Typography sx={{ color: "red" }}>
+            <Typography sx={{ color: "red", marginBottom: 2 }}>
               *Note 1: If employee code is not entered, the system will generate it.
-            </Typography> <br />
+            </Typography> 
             <Typography sx={{ color: "red" }}>
-              *Note 2 :  employee code is not editable, once submit.
+              *Note 2 :  Employee code is not editable, once submit.
             </Typography>
           </Box> 
           

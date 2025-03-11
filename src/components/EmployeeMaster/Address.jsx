@@ -8,6 +8,9 @@ import {
   FormControlLabel,
   Button,
   Typography,
+  FormControl,
+  InputLabel,
+  Select,
 } from "@mui/material";
 import useFormStore from "../EmployeeMaster/store";
 import api from "../../Api/Api";
@@ -17,36 +20,129 @@ import { toast } from "react-toastify";
 import { PageLoader } from "../pageload/PageLoader";
 import { useQuery } from "@tanstack/react-query";
 
+
 const fetchAddressDropdownData = async () => {
   const endpoints = [
-    "common/get-country-list",
-    "common/get-state-list",
-    "common/get-district-list",
-    "common/get-city-list",
+    "common/get-country-list", 
+    "common/get-state-list-by-country-id", 
+    "common/get-district-list-by-state-id", 
+    "common/get-city-list-by-district-id", 
   ];
 
-  const requests = endpoints.map((endpoint) =>
-    api
-      .get(endpoint)
-      .then((res) => {
-        
-        const data = res.data.data || res.data; 
-       
-        return { success: true, data };
-      
-      })
-      .catch((error) => {
-        console.error(`Error fetching ${endpoint}:`, error);
-        return { success: false, data: [] };
-      })
-  );
+  
+  const countryResponse = await api
+    .get(endpoints[0])
+    .then((res) => {
+      console.log("Country response:", res.data);
+      const data = res.data.data || res.data;
+      return { success: true, data };
+    })
+    .catch((error) => {
+      console.error(`Error fetching ${endpoints[0]}:`, error);
+      return { success: false, data: [] };
+    });
 
-  const responses = await Promise.allSettled(requests);
-console.log("address response checking ",responses)
-  return responses.map((res) =>
-    res.status === "fulfilled" && res.value.success ? res.value.data : []
-  );
+  if (!countryResponse.success || !countryResponse.data.length) {
+    return [[], [], [], []]; 
+  }
+
+  const countryId = countryResponse.data[0].countryId;
+  console.log("Selected countryId:", countryId);
+
+ 
+  const encryptedStatePayload = encryptPayload({ countryId });
+  console.log("Encrypted payload for state:", encryptedStatePayload);
+
+  const stateResponse = await api
+    .post(
+      endpoints[1],
+      { dataObject: encryptedStatePayload }, 
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    )
+    .then((res) => {
+      console.log("State response:", res.data);
+      const data = res.data.data || res.data;
+      return { success: true, data };
+    })
+    .catch((error) => {
+      console.error(`Error fetching ${endpoints[1]}:`, error);
+      return { success: false, data: [] };
+    });
+
+  if (!stateResponse.success || !stateResponse.data.length) {
+    return [countryResponse.data, [], [], []]; 
+  }
+
+  const stateId = stateResponse.data[0].stateId; 
+  console.log("Selected stateId:", stateId);
+
+  
+  const encryptedDistrictPayload = encryptPayload({ stateId });
+  console.log("Encrypted payload for district:", encryptedDistrictPayload);
+
+  const districtResponse = await api
+    .post(
+      endpoints[2],
+      { dataObject: encryptedDistrictPayload }, 
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    )
+    .then((res) => {
+      console.log("District response:", res.data);
+      const data = res.data.data || res.data;
+      return { success: true, data };
+    })
+    .catch((error) => {
+      console.error(`Error fetching ${endpoints[2]}:`, error);
+      return { success: false, data: [] };
+    });
+
+  if (!districtResponse.success || !districtResponse.data.length) {
+    return [countryResponse.data, stateResponse.data, [], []]; 
+  }
+
+  const districtId = districtResponse.data[0].districtId; 
+  console.log("Selected districtId:", districtId);
+
+
+  const encryptedCityPayload = encryptPayload({ districtId });
+  console.log("Encrypted payload for city:", encryptedCityPayload);
+
+  const cityResponse = await api
+    .post(
+      endpoints[3],
+      { dataObject: encryptedCityPayload },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    )
+    .then((res) => {
+      console.log("City response:", res.data);
+      const data = res.data.data || res.data;
+      return { success: true, data };
+    })
+    .catch((error) => {
+      console.error(`Error fetching ${endpoints[3]}:`, error);
+      return { success: false, data: [] };
+    });
+
+  return [
+    countryResponse.data,
+    stateResponse.data,
+    districtResponse.data,
+    cityResponse.data,
+  ];
 };
+
 
 const AddressForm = ({handleTabChange}) => {
   const { updateFormData, setActiveTab, formData, activeTab } = useFormStore();
@@ -67,7 +163,8 @@ const AddressForm = ({handleTabChange}) => {
   });
   const token = useAuthStore.getState().token;
  const [errors, setErrors] = useState({});
- const { data } = useQuery({
+ 
+const { data } = useQuery({
   queryKey: ["dropdownaddressData"],
   queryFn: fetchAddressDropdownData,
   staleTime: 5 * 60 * 1000,
@@ -75,7 +172,7 @@ const AddressForm = ({handleTabChange}) => {
 
 const [country = [], state = [], district = [], city = []] = data ?? [[], [], [], []];
 
-console.log("country", country);
+
 
   const handleChange = (event, section) => {
   
@@ -101,6 +198,11 @@ console.log("country", country);
     }
   };
 
+ 
+
+  
+  
+
   const handleCheckboxChange = (event) => {
    
     const isChecked = event.target.checked;
@@ -120,7 +222,12 @@ console.log("country", country);
       setPermanentAddress({ ...presentAddress, isPermanent: true });
     }
   };
-
+  const [openDropdown, setOpenDropdown] = useState({
+    country: false,
+    state: false,
+    district: false,
+    city: false,
+  });
   const handleBack = () => {
     if (typeof handleTabChange !== "function") {
       console.error("handleTabChange is not a function! Received:", handleTabChange);
@@ -159,9 +266,6 @@ if (!isPresentValid || !isPermanentValid) {
   console.log("Form has errors. Please fix them.");
   return; 
 }
-
-
-
 
     setIsLoading(true);
 
@@ -336,126 +440,161 @@ if (!isPresentValid || !isPermanentValid) {
           Present Address
         </Typography>
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid item xs={3}>
-            <TextField
-              select
-              fullWidth
-              
-              label={
-                <>
-                Country <span style={{color:"red"}}>*</span>
-                </>
-              }
-              name="countryId"
-              value={presentAddress.countryId || ""}
-              onChange={(e) =>{
-                  handleChange(e, "present")
-                  setErrors((prevErrors) => ({ ...prevErrors, presentCountryId: "" }));
-                } } 
-              InputProps={{ sx: { height: "50px" } }}
-              error={!!errors.presentCountryId}
-              helperText={errors.presentCountryId}
-            >
-              <MenuItem value="">
-              --Select country--
+
+       
+      <Grid item xs={3}>
+     <TextField
+       select
+       fullWidth
+       label={
+      <>
+        Country <span style={{ color: "red" }}>*</span>
+      </>
+    }
+    name="countryId"
+    value={presentAddress.countryId || ""}
+    onChange={(e) => {
+      const countryId = e.target.value;
+      setPresentAddress((prev) => ({
+        ...prev,
+        countryId,
+        stateId: "",
+        districtId: "",
+        cityId: "",
+      }));
+      setErrors((prevErrors) => ({ ...prevErrors, presentCountryId: "" }));
+    }}
+    displayEmpty
+    sx={{
+      height: "50px",
+      
+      "& .MuiSelect-select": { paddingLeft: "10px" }, 
+    }}
+
+    InputProps={{ sx: { height: "50px" } }}
+    error={!!errors.presentCountryId}
+    helperText={errors.presentCountryId}
+  >
+     <MenuItem value="">
+              <em>--Select Country--</em>
+            </MenuItem>
+            {country.map(({ countryId, countryName }) => (
+              <MenuItem key={countryId} value={countryId}>
+                {countryName}
               </MenuItem>
-              {country.map(({ countryId, countryName }) => (
-                <MenuItem key={countryId} value={countryId}>
-                  {countryName}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-          <Grid item xs={3}>
-            <TextField
-              select
-              fullWidth
-             
-              label={
-                <>
-                State <span style={{color:"red"}}>*</span>
-                </>
-              }
-              name="stateId"
-              value={presentAddress.stateId || ""}
-              onChange={(e) => {
-                handleChange(e, "present")
-                setErrors((prevErrors) => ({ ...prevErrors, presentStateId: "" }));
-              }}
-              InputProps={{ sx: { height: "50px" } }}
-              error={!!errors.presentStateId}
-               helperText={errors.presentStateId}
-            >
-                <MenuItem value="">
-              --Select State--
+            ))}
+  </TextField>
+     </Grid>
+      <Grid item xs={3}>
+        <TextField
+          select
+          fullWidth
+          label={
+            <>
+              State <span style={{ color: "red" }}>*</span>
+            </>
+          }
+          name="stateId"
+          value={presentAddress.stateId || ""}
+          onChange={(e) => {
+            const stateId = e.target.value;
+            setPresentAddress((prev) => ({
+              ...prev,
+              stateId,
+              districtId: "",
+              cityId: "",
+            }));
+            setErrors((prevErrors) => ({ ...prevErrors, presentStateId: "" }));
+          }}
+          disabled={!presentAddress.countryId}
+          MenuProps={{ autoFocus: false }}
+          InputProps={{ sx: { height: "50px" } }}
+          error={!!errors.presentStateId}
+          helperText={errors.presentStateId}
+        
+        >
+          <MenuItem value="">--Select State--</MenuItem>
+          {state.map(({ stateId, stateName }) => (
+            <MenuItem key={stateId} value={stateId}>
+              {stateName}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+
+      <Grid item xs={3}>
+        <TextField
+          select
+          fullWidth
+          label={
+            <>
+              District <span style={{ color: "red" }}>*</span>
+            </>
+          }
+          name="districtId"
+          value={presentAddress.districtId || ""}
+          onChange={(e) => {
+            const districtId = e.target.value;
+            setPresentAddress((prev) => ({
+              ...prev,
+              districtId,
+              cityId: "",
+            }));
+            setErrors((prevErrors) => ({ ...prevErrors, presentDistrictId: "" }));
+          }}
+          disabled={!presentAddress.stateId}
+          MenuProps={{ autoFocus: false }}
+          InputProps={{ sx: { height: "50px" } }}
+          error={!!errors.presentDistrictId}
+          helperText={errors.presentDistrictId}
+        
+        >
+          <MenuItem value="">--Select District--</MenuItem>
+          {district.map(({ districtId, districtName }) => (
+            <MenuItem key={districtId} value={districtId}>
+              {districtName}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+
+     
+        <Grid item xs={3}>
+          <TextField
+            select
+            fullWidth
+            label={
+              <>
+                City <span style={{ color: "red" }}>*</span>
+              </>
+            }
+            name="cityId"
+            value={presentAddress.cityId || ""}
+            onChange={(e) => {
+              setPresentAddress((prev) => ({
+                ...prev,
+                cityId: e.target.value,
+              }));
+              setErrors((prevErrors) => ({ ...prevErrors, presentCityId: "" }));
+            }}
+            disabled={!presentAddress.districtId}
+            MenuProps={{ autoFocus: false }}
+            InputProps={{ sx: { height: "50px" } }}
+            error={!!errors.presentCityId}
+            helperText={errors.presentCityId}
+          
+          >
+            <MenuItem value="">--Select City--</MenuItem>
+            {city.map(({ cityId, cityName }) => (
+              <MenuItem key={cityId} value={cityId}>
+                {cityName}
               </MenuItem>
-              {state.map(({ stateId, stateName }) => (
-                <MenuItem key={stateId} value={stateId}>
-                  {stateName}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-          <Grid item xs={3}>
-            <TextField
-              select
-              fullWidth
-              
-              label={
-                <>
-                District <span style={{color:"red"}}>*</span>
-                </>
-              }
-              name="districtId"
-              value={presentAddress.districtId || ""}
-              onChange={(e) => {
-                handleChange(e, "present")
-                setErrors((prevErrors) => ({ ...prevErrors, presentDistrictId: "" }));
-              }}
-              InputProps={{ sx: { height: "50px" } }}
-              error={!!errors.presentDistrictId}
-              helperText={errors.presentDistrictId}
-            >
-                <MenuItem value="">
-              --Select District--
-              </MenuItem>
-              {district.map(({ districtId, districtName }) => (
-                <MenuItem key={districtId} value={districtId}>
-                  {districtName}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-          <Grid item xs={3}>
-            <TextField
-              select
-              fullWidth
-            
-              name="cityId"
-              label={
-                <>
-                City<span style={{color:"red"}}>*</span>
-                </>
-              }
-              value={presentAddress.cityId || ""}
-              onChange={(e) => {
-                handleChange(e, "present")
-                setErrors((prevErrors) => ({ ...prevErrors, presentCityId: "" }));
-              } }
-              InputProps={{ sx: { height: "50px" } }}
-              error={!!errors.presentCityId}
-              helperText={errors.presentCityId}
-            >
-                <MenuItem value="">
-              --Select city--
-              </MenuItem>
-              {city.map(({ cityId, cityName }) => (
-                <MenuItem key={cityId} value={cityId}>
-                  {cityName}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
+            ))}
+          </TextField>
+        </Grid>
+
+
+
           <Grid item xs={3}>
             <TextField
               fullWidth
@@ -512,57 +651,81 @@ if (!isPresentValid || !isPermanentValid) {
               Permanent Address
             </Typography>
             <Grid container spacing={2} sx={{ mb: 3 }}>
+
               <Grid item xs={3}>
-                <TextField
-                  select
-                  fullWidth
-                  label={
-                    <>
-                    Country <span style={{color:"red"}}>*</span>
-                    </>
-                  }
-                  name="countryId"
-                  value={permanentAddress.countryId || ""}
-                  onChange={(e) =>{
-                     handleChange(e, "permanent")
-                     setErrors((prevErrors) => ({ ...prevErrors, permanentCountryId: "" }));
-                    }}
-                  InputProps={{ sx: { height: "50px" } }}
-                  error={!!errors.permanentCountryId}
-                  helperText={errors.permanentCountryId}
-                >
-                   <MenuItem value="">
-                --Select country--
-              </MenuItem>
-                  {country.map(({ countryId, countryName }) => (
-                    <MenuItem key={countryId} value={countryId}>
-                      {countryName}
-                    </MenuItem>
-                  ))}
-                </TextField>
+              <TextField
+                select
+                fullWidth
+                label={
+                <>
+                  Country <span style={{ color: "red" }}>*</span>
+                </>
+              }
+              name="countryId"
+              value={permanentAddress.countryId || ""}
+              onChange={(e) => {
+                const countryId = e.target.value;
+                setPermanentAddress((prev) => ({
+                  ...prev,
+                  countryId,
+                  stateId: "",
+                  districtId: "",
+                  cityId: "",
+                }));
+                setErrors((prevErrors) => ({ ...prevErrors, permanentCountryId: "" }));
+              }}
+              displayEmpty
+              sx={{
+                height: "50px",
+                
+                "& .MuiSelect-select": { paddingLeft: "10px" }, 
+              }}
+
+              InputProps={{ sx: { height: "50px" } }}
+              error={!!errors.permanentCountryId}
+              helperText={errors.permanentCountryId}
+            >
+              <MenuItem value="">
+                        <em>--Select Country--</em>
+                      </MenuItem>
+                      {country.map(({ countryId, countryName }) => (
+                        <MenuItem key={countryId} value={countryId}>
+                          {countryName}
+                        </MenuItem>
+                      ))}
+            </TextField>
               </Grid>
+
+        
               <Grid item xs={3}>
                 <TextField
                   select
                   fullWidth
                   label={
                     <>
-                    State <span style={{color:"red"}}>*</span>
+                      State <span style={{ color: "red" }}>*</span>
                     </>
                   }
                   name="stateId"
                   value={permanentAddress.stateId || ""}
-                  onChange={(e) =>{ 
-                    handleChange(e, "permanent")
+                  onChange={(e) => {
+                    const stateId = e.target.value;
+                    setPermanentAddress((prev) => ({
+                      ...prev,
+                      stateId,
+                      districtId: "",
+                      cityId: "",
+                    }));
                     setErrors((prevErrors) => ({ ...prevErrors, permanentStateId: "" }));
                   }}
+                  disabled={!permanentAddress.countryId}
+                  MenuProps={{ autoFocus: false }}
                   InputProps={{ sx: { height: "50px" } }}
-                  error={!!errors.permanentStateId}
-            helperText={errors.permanentStateId}
+                error={!!errors.permanentStateId}
+                  helperText={errors.permanentStateId}
+                
                 >
-                  <MenuItem value="">
-              --Select State--
-              </MenuItem>
+                  <MenuItem value="">--Select State--</MenuItem>
                   {state.map(({ stateId, stateName }) => (
                     <MenuItem key={stateId} value={stateId}>
                       {stateName}
@@ -570,64 +733,80 @@ if (!isPresentValid || !isPermanentValid) {
                   ))}
                 </TextField>
               </Grid>
+
+
               <Grid item xs={3}>
-                <TextField
-                  select
-                  fullWidth
-                  label={
-                    <>
-                    District <span style={{color:"red"}}>*</span>
-                    </>
-                  }
-                  name="districtId"
-                  value={permanentAddress.districtId || ""}
-                  onChange={(e) =>{ 
-                    handleChange(e, "permanent")
-                    setErrors((prevErrors) => ({ ...prevErrors, permanentDistrictId: "" }));
-                  }}
-                  InputProps={{ sx: { height: "50px" } }}
-                  error={!!errors.permanentDistrictId}
-                  helperText={errors.permanentDistrictId}
-                >
-                  <MenuItem value="">
-              --Select District--
-              </MenuItem>
-                  {district.map(({ districtId, districtName }) => (
-                    <MenuItem key={districtId} value={districtId}>
-                      {districtName}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  select
-                  fullWidth
-                  label={
-                    <>
-                    City<span style={{color:"red"}}>*</span>
-                    </>
-                  }
-                  name="cityId"
-                  value={permanentAddress.cityId || ""}
-                  onChange={(e) => {
-                    handleChange(e, "permanent")
-                    setErrors((prevErrors) => ({ ...prevErrors, permanentCityId: "" }));
-                  }}
-                  InputProps={{ sx: { height: "50px" } }}
-                  error={!!errors.permanentCityId}
-            helperText={errors.permanentCityId}
-                >
-                   <MenuItem value="">
-              --Select city--
-              </MenuItem>
-                  {city.map(({ cityId, cityName }) => (
-                    <MenuItem key={cityId} value={cityId}>
-                      {cityName}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
+                    <TextField
+                      select
+                      fullWidth
+                      label={
+                        <>
+                          District <span style={{ color: "red" }}>*</span>
+                        </>
+                      }
+                      name="districtId"
+                      value={permanentAddress.districtId || ""}
+                      onChange={(e) => {
+                        const districtId = e.target.value;
+                        setPermanentAddress((prev) => ({
+                          ...prev,
+                          districtId,
+                          cityId: "",
+                        }));
+                        setErrors((prevErrors) => ({ ...prevErrors, permanentDistrictId: "" }));
+                      }}
+                      disabled={!permanentAddress.stateId}
+                      MenuProps={{ autoFocus: false }}
+                      InputProps={{ sx: { height: "50px" } }}
+                      error={!!errors.permanentDistrictId}
+                      helperText={errors.permanentDistrictId}
+                    
+                    >
+                      <MenuItem value="">--Select District--</MenuItem>
+                      {district.map(({ districtId, districtName }) => (
+                        <MenuItem key={districtId} value={districtId}>
+                          {districtName}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+
+
+            <Grid item xs={3}>
+              <TextField
+                select
+                fullWidth
+                label={
+                  <>
+                    City <span style={{ color: "red" }}>*</span>
+                  </>
+                }
+                name="cityId"
+                value={permanentAddress.cityId || ""}
+                onChange={(e) => {
+                  setPermanentAddress((prev) => ({
+                    ...prev,
+                    cityId: e.target.value,
+                  }));
+                  setErrors((prevErrors) => ({ ...prevErrors, permanentCityId: "" }));
+                }}
+                disabled={!permanentAddress.districtId}
+                MenuProps={{ autoFocus: false }}
+                InputProps={{ sx: { height: "50px" } }}
+                error={!!errors.permanentCityId}
+                helperText={errors.permanentCityId}
+              
+              >
+                <MenuItem value="">--Select City--</MenuItem>
+                {city.map(({ cityId, cityName }) => (
+                  <MenuItem key={cityId} value={cityId}>
+                    {cityName}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
+
               <Grid item xs={3}>
                 <TextField
                  fullWidth
@@ -671,7 +850,7 @@ if (!isPresentValid || !isPermanentValid) {
             color="primary"
             onClick={handleSaveAndNext}
           >
-            Save & Next
+            {formData?.address?.addressDetails && formData?.address?.addressDetails.length > 0 ? "Update & Next" : "Save & Next"}
           </Button>
         </Box>
       </Box>

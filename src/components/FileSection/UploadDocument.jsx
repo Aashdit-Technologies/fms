@@ -332,7 +332,6 @@ const UploadDocument = ({
       // toast.error(error.response?.data?.message || error.message || "Something went wrong!");
     }
   };
-
   const mutation = useMutation({
     mutationFn: async (data) => {
       setIsLoading(true);

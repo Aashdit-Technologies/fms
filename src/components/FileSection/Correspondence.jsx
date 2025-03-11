@@ -1,6 +1,6 @@
 import React, { useState, useEffect,useCallback } from "react";
 import DataTable from "react-data-table-component";
-import { Box, Button, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Button, TextField, Tooltip, Tooltip as MuiTooltip, Typography } from "@mui/material";
 import {
   FaEye,
   FaDownload,
@@ -11,6 +11,8 @@ import {
   FaTimes,
   FaCloudUploadAlt,
   FaEdit,
+  FaCheckCircle,
+  FaClipboard,
 } from "react-icons/fa";
 import styled from "@emotion/styled";
 import { encryptPayload } from "../../utils/encrypt";
@@ -21,6 +23,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { HistoryModal, UploadModal } from "./Modal/AllIconModal";
 import { toast } from "react-toastify";
 import { PageLoader } from "../pageload/PageLoader";
+import { BASE_URL } from "../../Api/Api";
 
 const StyledButton = styled(Button)`
   margin: 0 4px;
@@ -143,7 +146,9 @@ const Correspondence = ({
   const [editMalady, setEditMalady] = useState(null);
   const [loading, setLoading] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
+  const [copiedRows, setCopiedRows] = useState({});
   
+
 
   // Configure letter content query
   const {
@@ -566,6 +571,131 @@ const Correspondence = ({
       setLoading(false);
     }
   };
+  // Mutation for fetching the link
+// Mutation for fetching the link
+const fetchLinkMutation = useMutation({
+  mutationFn: async ({  corrId }) => {
+    
+    
+    try {
+      const encryptedData = encryptPayload({ corrId });
+
+      const response = await api.post(
+        "/file/generate-cores-reflink",
+        { dataObject: encryptedData },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+
+      
+
+      return response.data.data; 
+
+    } catch (error) {
+      console.error("Error fetching link:", error.message);
+      throw error;    
+    }
+  },
+  onError: (error) => {
+    toast.error(error.message || "Failed to fetch link");
+  }
+});
+
+// Handler function for copying the link of a row
+const handleCopyRowLink = async (row) => {
+  if (!row.corrId) {
+    toast.error("No ID available for this row");
+    return;
+  }
+
+  // Set loading state for this specific row
+  setCopiedRows((prev) => ({
+    ...prev,
+    [row.corrId]: "loading",
+  }));
+
+  try {
+    const linkData = await fetchLinkMutation.mutateAsync({
+      corrId: row.corrId,
+    });
+
+    if (!linkData) {
+      throw new Error("No link data returned from API.");
+    }
+
+   
+
+    const [label, rawUrl] = linkData.split("|");
+
+    if (!rawUrl) {
+      throw new Error("Invalid link format.");
+    }
+
+    const url = rawUrl.startsWith("http") ? rawUrl.trim() : `${rawUrl.trim()}`;
+    const anchorTag = `<a href="${BASE_URL.replace(/\/$/, "")}/${url.replace(/^\//, "")}" target="_blank">${label.trim()}</a>`;
+
+
+    
+    setTimeout(async () => {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([anchorTag], { type: "text/html" }),
+            "text/plain": new Blob([`${label.trim()} | ${url}`], { type: "text/plain" }),
+          }),
+        ]);
+      } catch (err) {
+        // console.warn("Clipboard API failed, using fallback...");
+    
+        // Fallback: Use a hidden textarea to copy text
+        const textarea = document.createElement("textarea");
+        textarea.value = `${label.trim()} | ${url}`;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+    
+    }, 100);
+
+    // Update state
+    setCopiedRows((prev) => ({
+      ...prev,
+      [row.corrId]: "copied",
+    }));
+
+
+    // Reset the copied state after 2 seconds
+    setTimeout(() => {
+      setCopiedRows((prev) => ({
+        ...prev,
+        [row.corrId]: null,
+      }));
+    }, 2000);
+  } catch (error) {
+    console.error("Failed to copy link:", error);
+    toast.error(error.message || "Failed to copy link");
+
+    // Reset state on error
+    setCopiedRows((prev) => ({
+      ...prev,
+      [row.corrId]: null,
+    }));
+  }
+};
+
+
+
+
+
+
+
+
+
 
   const columns = [
     {
@@ -629,6 +759,41 @@ const Correspondence = ({
       selector: (row) => row.addedDate,
       sortable: true,
       width: "140px",
+    },
+    {
+      name: "Link",
+      width: "80px",
+      cell: (row) => {
+        const rowState = copiedRows[row.corrId];
+        const isLoading = rowState === 'loading';
+        const isCopied = rowState === 'copied';
+        
+        return (
+          <MuiTooltip title={isCopied ? "Copied!" : "Copy Link"}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => handleCopyRowLink(row)}
+              style={{
+                minWidth: '32px',
+                padding: '4px 8px',
+                backgroundColor: isCopied ? '#28a745' : '#1a5f6a',
+                color: 'white',
+                
+              }}
+              disabled={isLoading || !row.corrId}
+            >
+              {isLoading ? (
+                <div className="spinner-border spinner-border-sm" role="status" style={{ width: '14px', height: '14px',}} />
+              ) : isCopied ? (
+                <FaCheckCircle size={14}  />
+              ) : (
+                <FaClipboard size={14}  />
+              )}
+            </Button>
+          </MuiTooltip>
+        );
+      }
     },
     {
       name: "Action",
@@ -764,7 +929,10 @@ const Correspondence = ({
         <DataTable
           columns={columns}
           data={filteredData.filter((item) =>
-            item.subject?.toLowerCase().includes(filterText.toLowerCase())
+            item.subject?.toLowerCase().includes(filterText.toLowerCase()) ||
+            item.links?.some(link => 
+              link.linkText.toLowerCase().includes(filterText.toLowerCase())
+            )
           )}
           pagination
           customStyles={customStyles}

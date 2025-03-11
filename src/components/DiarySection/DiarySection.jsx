@@ -37,6 +37,7 @@ import {
   Chip,
   InputAdornment,
   Tooltip,
+  Pagination,
  
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -261,8 +262,48 @@ const DiarySection = () => {
   const [selectedLetterDetails, setSelectedLetterDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [rowSize, setRowSize] = useState(10);
+  const [pageNo, setPageNo] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [rowSizesent, setRowSizeSent] = useState(10);
+  const [pageNoSent, setPageNoSent] = useState(1);
+  const [totalPagessent, setTotalPagessent] = useState(0);
+  const [selectedRows, setSelectedRows] = useState([]);
+  
 
   
+ const handlePageChange = (event, newPage) => {
+  if (newPage !== pageNo) {
+    setPageNo(newPage);
+    NewLetter( newPage, rowSize);
+    
+  }
+};
+const handlePageChangesentletter = (event, newPage) => {
+  if (newPage !== pageNo) {
+    pageNoSent(newPage);
+    sentLetter(newPage, rowSize)
+  }
+};
+
+const handleRowSizeChange = (event) => {
+  const newSize = parseInt(event.target.value, 10);
+  setRowSize(newSize);
+  setPageNo(1); 
+  NewLetter( 1, newSize);
+  
+};
+
+const handleRowSizeChangesentletter = (event) => {
+  const newSize = parseInt(event.target.value, 10);
+  setRowSizeSent(newSize);
+  setPageNoSent(1); 
+  sentLetter(1, newSize)
+};
+
+
+
+
   const handleTabChange = (tabKey) => {
     
     setActiveTab(tabKey);
@@ -543,42 +584,36 @@ const DiarySection = () => {
     {
       name: "Action",
       cell: (row) => (
-        <div className="d-flex gap-2">
+        <div className="d-flex">
           <Button
             variant="contained"
             size="small"
-            startIcon={<FaPencilAlt />}
             onClick={(e) => { 
               e.stopPropagation(); 
               handleEditButtonClick(row); 
             }}
-            sx={{ 
-              bgcolor: '#207785',
-              '&:hover': {
-                bgcolor: '#1a5f6a',
-              },
-              minWidth: 'auto',
-              px: 2
+            color="primary"
+            sx={{
+              minWidth: "auto",
+              padding: "6px 10px",
+              marginRight: "8px",
             }}
           >
-           
+           <FaPencilAlt />
           </Button>
 
           <Button
             variant="contained"
             size="small"
-            startIcon={<BsSend />}
             onClick={(e) => handleOpenModal(row, e)}
-            sx={{ 
-              bgcolor: '#6c757d',
-              '&:hover': {
-                bgcolor: '#5a6268',
-              },
-              minWidth: 'auto',
-              px: 2
+            color="success"
+            sx={{
+              minWidth: "auto",
+              padding: "6px 10px",
+              marginRight: "8px",
             }}
           >
-        
+        <BsSend />
       </Button>
 
         </div>
@@ -1332,24 +1367,34 @@ const handleremarksChange = (e) => {
   };
 
    
-    const NewLetter = async () => {
+    const NewLetter = async ( page = pageNo,
+      size = rowSize) => {
       setIsLoading(true);
       try {
+        const payload = {
+          pageNo: page,
+          rowSize: size,
+        };
+        const encryptedMessage = encryptPayload(payload);
         const token = useAuthStore.getState().token;
         if (!token) {
           throw new Error("Authorization token is missing");
         }
   
-        const response = await api.get("diary-section/new-letter", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await api.post("diary-section/new-letter",
+          { dataObject: encryptedMessage }, 
+  { headers: { Authorization: `Bearer ${token}` } } 
+);
   
-        const allnewletter = response?.data?.data || [];
+      
+        const allnewletter = response?.data?.data.letterList || [];
         
   
         if (response.status === 200 && Array.isArray(allnewletter)) {
           setNewLetterData(allnewletter);
           setFilteredNewLetter(allnewletter);
+          const totalRecords = response.data.data.totalPages;
+          setTotalPages(totalRecords);
         } else {
           console.error("Failed to fetch data. Unexpected response format.");
         }
@@ -1363,33 +1408,39 @@ const handleremarksChange = (e) => {
       }
     };
     useEffect(() => {
-      NewLetter(); 
+      NewLetter(pageNo, rowSize); 
     }, []); 
 
  // SentLetter api binding 
  
-  const sentLetter = async () => {
+  const sentLetter = async (page = pageNoSent,
+    size = rowSizesent) => {
     setIsLoading(true);
     try {
-
+      const payload = {
+        pageNo: page,
+        rowSize: size,
+      };
+      const encryptedMessage = encryptPayload(payload);
       const token = useAuthStore.getState().token;
       if (!token) {
         toast.error("Authorization token is missing");
         return;
       }
   
-      const response = await api.get("diary-section/sent-letter", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.post("diary-section/sent-letter", 
+        { dataObject: encryptedMessage }, 
+        { headers: { Authorization: `Bearer ${token}` } } 
+      );
   
-     
-  
-      const allSentLetter = response?.data?.data || [];
+      const allSentLetter = response?.data?.data.letterList || [];
   
       if (response.status === 200 && Array.isArray(allSentLetter)) {
         
         setSentLetterData(allSentLetter);
         setfilteredSentLetter(allSentLetter);
+        const totalRecords = response.data.data.totalPages;
+        setTotalPagessent(totalRecords);
       } else {
         console.error("Failed to fetch data. Unexpected response format.");
         toast.error("Failed to fetch data. Please try again later.");
@@ -3569,13 +3620,61 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                         <DataTable
                           columns={columnsNewLetter}
                           data={filteredNewLetter || []}
-                          pagination
                           highlightOnHover
                           striped
                           responsive
                           customStyles={customStyles}
                         />
                       </div>
+              <div className="d-flex justify-content-end align-items-center mt-3 gap-2">
+              <div className="d-flex align-items-center">
+                <span className="me-2">Rows per page:</span>
+                <select
+                  value={rowSize}
+                  onChange={handleRowSizeChange}
+                  className="form-select form-select-sm"
+                  style={{ width: "80px", marginLeft: "8px" }}
+                >
+                  <option value={10}>10</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={150}>150</option>
+                </select>
+              </div>
+
+              <div className="d-flex align-items-center">
+                <Pagination
+                  count={totalPages}
+                  page={pageNo}
+                  onChange={handlePageChange}
+                  variant="outlined"
+                  color="primary"
+                  size="medium"
+                  showFirstButton
+                  showLastButton
+                  siblingCount={1}
+                  boundaryCount={1}
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      margin: "0 2px",
+                      minWidth: "32px",
+                      height: "32px",
+                    },
+                    "& .Mui-selected": {
+                      backgroundColor: "#1a5f6a !important",
+                      color: "white",
+                      "&:hover": {
+                        backgroundColor: "#1a5f6a",
+                      },
+                    },
+                  }}
+                />
+                <span className="ms-3">
+                  Page {pageNo} of {totalPages}
+                </span>
+              </div>
+            </div>
+
                     </Tab>
                     <Tab eventKey="sentLetter" title="Sent Letter">
                   <div className="d-flex justify-content-end mb-3">
@@ -3601,12 +3700,61 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                   <DataTable
                     columns={columnsSentLetter}
                     data={filteredSentLetter}
-                    pagination
+                  
                     highlightOnHover
                       striped
                       responsive
                     customStyles={customStyles}
                   />
+
+              <div className="d-flex justify-content-end align-items-center mt-3 gap-2">
+              <div className="d-flex align-items-center">
+                <span className="me-2">Rows per page:</span>
+                <select
+                  value={rowSizesent}
+                  onChange={handleRowSizeChangesentletter}
+                  className="form-select form-select-sm"
+                  style={{ width: "80px", marginLeft: "8px" }}
+                >
+                  <option value={10}>10</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={150}>150</option>
+                </select>
+              </div>
+
+              <div className="d-flex align-items-center">
+                <Pagination
+                  count={totalPagessent}
+                  page={pageNoSent}
+                  onChange={handlePageChangesentletter}
+                  variant="outlined"
+                  color="primary"
+                  size="medium"
+                  showFirstButton
+                  showLastButton
+                  siblingCount={1}
+                  boundaryCount={1}
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      margin: "0 2px",
+                      minWidth: "32px",
+                      height: "32px",
+                    },
+                    "& .Mui-selected": {
+                      backgroundColor: "#1a5f6a !important",
+                      color: "white",
+                      "&:hover": {
+                        backgroundColor: "#1a5f6a",
+                      },
+                    },
+                  }}
+                />
+                <span className="ms-3">
+                  Page {pageNoSent} of {totalPagessent}
+                </span>
+              </div>
+            </div>
                 </Tab>
                   </Tabs>
                 </div>

@@ -326,7 +326,7 @@ const isValid =validateFamilyFields (rows);
               </Grid>
 
               {/* Birth Date */}
-              <Grid item xs={3} sx={{mb:2}}>
+              {/* <Grid item xs={3} sx={{mb:2}}>
               <MobileDatePicker
                 label={
                   <>
@@ -365,7 +365,48 @@ const isValid =validateFamilyFields (rows);
                 }}
                 closeOnSelect={true}
               />
-            </Grid>
+            </Grid> */}
+                
+                <Grid item xs={3} sx={{ mb: 2 }}>
+  <MobileDatePicker
+    label={
+      <>
+        Date Of Birth<span style={{ color: "red" }}>*</span>
+      </>
+    }
+    value={row.dateOfBirth ? dayjs(row.dateOfBirth) : null}
+    onChange={(newValue) => {
+      const formattedDate = newValue ? newValue.format("YYYY-MM-DD") : "";
+      handleChange(index, "dateOfBirth", formattedDate);
+      setErrors((prevErrors) => ({ ...prevErrors, [`dateOfBirth_${index}`]: "" }));
+    }}
+    format="YYYY-MM-DD"
+    maxDate={dayjs()} 
+    slotProps={{
+      textField: {
+        fullWidth: true,
+        error: !!errors[`dateOfBirth_${index}`], 
+        helperText: errors[`dateOfBirth_${index}`], 
+        InputProps: {
+          endAdornment: (
+            <InputAdornment position="end">
+              <CalendarToday />
+            </InputAdornment>
+          ),
+        },
+        sx: {
+          "& .MuiInputBase-root": {
+            height: "50px",
+          },
+        },
+      },
+      actionBar: {
+        actions: [],
+      },
+    }}
+    closeOnSelect={true}
+  />
+</Grid>
 
               {/* Relationship Dropdown */}
               <Grid item xs={2} sx={{mb:2}}>
@@ -431,7 +472,7 @@ const isValid =validateFamilyFields (rows);
               color="primary"
               onClick={handleSaveAndNext}
             >
-              Save & Next
+            {formData?.familyDetails?.familyDetails && formData?.familyDetails?.familyDetails.length > 0 ? 'Update & Next' :'Save & Next'}
             </Button>
           </Box>
         </Box>

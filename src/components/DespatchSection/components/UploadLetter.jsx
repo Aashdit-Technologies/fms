@@ -144,14 +144,16 @@ const validateForm = () => {
      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       {/* Dialog Title */}
       <DialogTitle
-        sx={{
-          bgcolor: "#207785", 
-          color: "white",
-          display: "flex",
-          justifyContent: "space-between",
+         sx={{ 
+          backgroundColor: "#207785", 
+          color: "#fff",             
+          display: "flex", 
+          justifyContent: "space-between", 
           alignItems: "center",
+          height: "60px",              
           fontWeight: "bold",
-          fontSize: "1.25rem",
+          fontSize: "1.2rem",
+          padding: "10px 20px"         
         }}
       >
         Upload Letter
@@ -307,13 +309,15 @@ const validateForm = () => {
       </DialogContent>
 
       {/* Dialog Actions */}
-      <DialogActions sx={{ p: 2, bgcolor: "#f5f5f5" }}>
+      <DialogActions>
         <Button
           onClick={onClose}
-          sx={{
-            textTransform: 'none',
-            color: "#1976d2", 
-            "&:hover": { bgcolor: "#e3f2fd" }, 
+          sx={{ 
+            backgroundColor: "#F5F5F5", 
+            height: "10px",            // Set footer height
+            padding: "10px 20px",
+            display: "flex",
+            justifyContent: "flex-end" // Align button to the right
           }}
         >
           Close

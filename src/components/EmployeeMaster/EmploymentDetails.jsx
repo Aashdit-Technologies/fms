@@ -72,13 +72,13 @@ const EmploymentDetails = ({ handleTabChange }) => {
   const [rows, setRows] = useState([
     {
       organization: "",
-      company: "",
-      office: "",
+      company: null,
+      office: null,
       department: "",
       designation: "",
       role: "",
       fromDate: "",
-      endDate: "",
+      endDate: null,
       isPrimary: "Yes",
       employeeId: null,
     },
@@ -98,6 +98,7 @@ const EmploymentDetails = ({ handleTabChange }) => {
     delete newErrors[`${field}_${index}`];
     setErrors(newErrors);
   };
+
   const addRow = () => {
     const isAllRowsValid = rows.every((row, index) => {
       return (
@@ -119,19 +120,20 @@ const EmploymentDetails = ({ handleTabChange }) => {
       ...rows,
       {
         organization: "",
-        company: "",
-        office: "",
+        company: null,
+        office: null,
         department: "",
         designation: "",
         role: "",
         fromDate: "",
-        endDate: "",
+        endDate: null,
         isPrimary: "No",
         EmployeeId: "",
       },
     ]);
   };
 
+  
   const removeRow = (index) => {
     if (rows.length > 1) {
       setRows(rows.filter((_, i) => i !== index));
@@ -169,13 +171,13 @@ const EmploymentDetails = ({ handleTabChange }) => {
           empDeptMapId: row?.empDeptMapId ?? null,
           roleId: row?.role ?? null,
           organizationId: row?.organization ?? null,
-          companyId: row?.company ?? null,
-          officeId: row?.office ?? null,
+          companyId: row?.company || null,
+          officeId: row?.office || null,
           departmentId: row?.department ?? null,
           sectionId: row?.section ?? null,
           designationId: row?.designation ?? null,
           fromDate: row?.fromDate ?? null,
-          endDate: row?.endDate ?? null,
+          endDate: row?.endDate || null,
           isPrimary: row?.isPrimary === "Yes",
         })),
       };
@@ -230,12 +232,12 @@ const EmploymentDetails = ({ handleTabChange }) => {
             empDeptMapId: row?.employeeDeptMapId ?? null,
             role: row?.roleId ?? "",
             organization: row?.organizationId ?? "",
-            company: row?.companyId ?? "",
-            office: row?.officeId ?? "",
+            company: row?.companyId ?? null,
+            office: row?.officeId ?? null,
             department: row?.departmentId ?? "",
             designation: row?.designationId ?? "",
             fromDate: row?.fromDate ? new Date(row.fromDate).toISOString().split("T")[0] : "",
-            endDate: row?.endDate ? new Date(row.endDate).toISOString().split("T")[0] : "",
+            endDate: row?.endDate ? new Date(row.endDate).toISOString().split("T")[0] : null,
             isPrimary: row?.isPrimary ? "Yes" : "No",
           }));
 
@@ -246,13 +248,13 @@ const EmploymentDetails = ({ handleTabChange }) => {
           setRows([
             {
               organization: "",
-              company: "",
-              office: "",
+              company: null,
+              office: null,
               department: "",
               designation: "",
               role: "",
               fromDate: "",
-              endDate: "",
+              endDate: null,
               isPrimary: "Yes",
               employeeId: null,
             },
@@ -267,7 +269,7 @@ const EmploymentDetails = ({ handleTabChange }) => {
     let isValid = true;
   
     if (!serviceStatus) {
-      newErrors.serviceStatus = "Service Status is required.";
+      newErrors.serviceStatus = "Service status is required.";
       isValid = false;
     }
   
@@ -289,16 +291,16 @@ const EmploymentDetails = ({ handleTabChange }) => {
         isValid = false;
       }
       if (!row.fromDate) {
-        newErrors[`fromDate_${index}`] = "From Date is required.";
+        newErrors[`fromDate_${index}`] = "From date is required.";
         isValid = false;
       }
       if (!row.isPrimary) {
-        newErrors[`isPrimary_${index}`] = "Is Primary is required.";
+        newErrors[`isPrimary_${index}`] = "Is primary is required.";
         isValid = false;
       } 
 
       if (row.endDate && row.fromDate && dayjs(row.endDate).isBefore(dayjs(row.fromDate), "day")) {
-        newErrors[`endDate_${index}`] = "End Date must be after From Date.";
+        newErrors[`endDate_${index}`] = "End date must be after from date.";
         isValid = false;
       }
     });
@@ -306,7 +308,6 @@ const EmploymentDetails = ({ handleTabChange }) => {
     setErrors(newErrors);
     return isValid;
   };
-  
  
   useEffect(() => {
     if (formData?.basicDetails?.employeeCode) {
@@ -353,7 +354,7 @@ const EmploymentDetails = ({ handleTabChange }) => {
               helperText={errors.serviceStatus} 
             >
                <MenuItem value="" >
-                --Select ServiceStatus--
+                --Select--
               </MenuItem>
               {ServiceStatus?.map((serv) => (
                 <MenuItem key={serv.ServiceStatusId} value={serv.ServiceStatusId}>
@@ -667,7 +668,7 @@ const EmploymentDetails = ({ handleTabChange }) => {
             Back
           </Button>
           <Button variant="contained" color="primary"  onClick={handleSaveAndNext}>
-             {employeeId ? 'Update & Next'  :'Save & Next'}
+          {formData?.employmentDetails?.employmentDetails && formData?.employmentDetails?.employmentDetails.length > 0 ? 'Update & Next' :'Save & Next'}
           </Button>
         </Box>
       </Box>

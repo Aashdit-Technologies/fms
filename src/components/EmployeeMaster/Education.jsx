@@ -75,7 +75,7 @@ const EducationForm = ({handleTabChange}) => {
         field.universitySchoolName &&
         field.yearOfPassing &&
         field.percentageCgpa &&
-        field.file
+        (field.educationId || field.file)
       );
     });
   
@@ -304,7 +304,7 @@ debugger
     educationFields.forEach((field, index) => {
       
       if (!field.qualificationId) {
-        newErrors[`qualificationId_${index}`] = "Educational Qualification is required.";
+        newErrors[`qualificationId_${index}`] = "Educational qualification is required.";
         isValid = false;
       }
   
@@ -316,10 +316,10 @@ debugger
   
      
       if (!field.yearOfPassing) {
-        newErrors[`yearOfPassing_${index}`] = "Year of Passing is required.";
+        newErrors[`yearOfPassing_${index}`] = "Year of passing is required.";
         isValid = false;
       } else if (!/^\d{4}$/.test(field.yearOfPassing)) {
-        newErrors[`yearOfPassing_${index}`] = "Year of Passing must be a valid 4-digit year.";
+        newErrors[`yearOfPassing_${index}`] = "Year of passing must be a valid 4-digit year.";
         isValid = false;
       }
   
@@ -333,7 +333,7 @@ debugger
   
       
       if (!field.educationId && !field.file ) {
-        newErrors[`file_${index}`] = "Upload Documents is required.";
+        newErrors[`file_${index}`] = "Upload document is required.";
         isValid = false;
       }
     });
@@ -405,7 +405,7 @@ debugger
                   setErrors((prevErrors) => ({ ...prevErrors, [`universitySchoolName_${index}`]: "" })); 
                 }}
                 fullWidth
-                inputProps={{maxLength:30}}
+                inputProps={{maxLength:70}}
                 autoComplete="off"
                 InputProps={{ sx: { height: "50px" } }}
                 error={!!errors[`universitySchoolName_${index}`]}
@@ -419,7 +419,7 @@ debugger
                 label="Institution"
                 name="institution"
                 value={field.institution}
-                inputProps={{maxLength:30}}
+                inputProps={{maxLength:70}}
                 autoComplete="off"
                 onChange={(e) => handleChange(index, e)}
                 fullWidth
@@ -518,7 +518,7 @@ debugger
                 onChange={(e) => handleChange(index, e)}
                 fullWidth
                 InputProps={{ sx: { height: "50px" } }}
-                inputProps={{maxLength:30}}
+                inputProps={{maxLength:50}}
                 autoComplete="off"
               />
             </Grid>
@@ -530,7 +530,7 @@ debugger
                 
                 label={
                   <>
-                  Upload Documents <span style={{color:"red"}}>*</span>
+                  Upload Document <span style={{color:"red"}}>*</span>
                   </>
                 }
                 type="file"
@@ -610,7 +610,7 @@ debugger
             color="primary"
             onClick={handleSaveAndNext}
           >
-            Save 
+            {formData?.education.educationDetails && formData?.education.educationDetails.length > 0 ? "Update" : "Save"}
           </Button>
         </Box>
       </div>

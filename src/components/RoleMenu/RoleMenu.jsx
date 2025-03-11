@@ -2,154 +2,154 @@ import React, { useState, useEffect } from "react";
 import { PageLoader } from "../pageload/PageLoader";
 import { toast } from "react-toastify";
 import "./RoleMenu.css";
-
+import api from "../../Api/Api";
+import useAuthStore from "../../store/Store";
 const RoleMenu = () => {
-  const [selectedRole, setSelectedRole] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
+  const [roles, setRoles] = useState([]); 
+  const [selectedRole, setSelectedRole] = useState(""); 
   const [selectedMenuItems, setSelectedMenuItems] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const token = useAuthStore.getState().token;
+  
 
-  // Using dummy data for roles
-  const dummyRoles = {
-    "data": [
-      {"RoleName": "Administrator User", "RoleId": 1},
-      {"RoleName": "System", "RoleId": 5},
-      {"RoleName": "CHAIRMAN", "RoleId": 2},
-      {"RoleName": "MD", "RoleId": 3},
-      {"RoleName": "CAO", "RoleId": 4},
-      {"RoleName": "Dy CAO", "RoleId": 6},
-      {"RoleName": "Accountant", "RoleId": 7},
-      {"RoleName": "Asst. Accountant", "RoleId": 8},
-      {"RoleName": "Sr. Assistant", "RoleId": 9},
-      {"RoleName": "Diarist", "RoleId": 10},
-      {"RoleName": "Despatch", "RoleId": 11},
-      {"RoleName": "Jr. Engg", "RoleId": 12},
-      {"RoleName": "Section Officer", "RoleId": 13},
-      {"RoleName": "Asst. Engg", "RoleId": 14},
-      {"RoleName": "Law Officer", "RoleId": 15},
-      {"RoleName": "Labour Officer", "RoleId": 16}
-    ],
-    "outcome": true,
-    "message": "Success"
+  // const dummyMenuItems = [
+  //   {
+  //     "expanded": false,
+  //     "folder": true,
+  //     "isParent": true,
+  //     "parentCode": 0,
+  //     "children": [
+  //       {
+  //         "expanded": false,
+  //         "folder": false,
+  //         "isParent": false,
+  //         "parentCode": 276,
+  //         "children": [],
+  //         "display": true,
+  //         "id": 164,
+  //         "title": "Add District",
+  //         "url": "/core/district/add",
+  //         "selected": false
+  //       },
+  //       {
+  //         "expanded": false,
+  //         "folder": false,
+  //         "isParent": false,
+  //         "parentCode": 276,
+  //         "children": [],
+  //         "display": true,
+  //         "id": 158,
+  //         "title": "District List",
+  //         "url": "/core/district/list",
+  //         "selected": false
+  //       }
+  //     ],
+  //     "display": true,
+  //     "id": 276,
+  //     "title": "Masters",
+  //     "selected": false
+  //   },
+  //   {
+  //     "expanded": false,
+  //     "folder": true,
+  //     "isParent": true,
+  //     "parentCode": 0,
+  //     "children": [
+  //       {
+  //         "expanded": false,
+  //         "folder": false,
+  //         "isParent": false,
+  //         "parentCode": 237,
+  //         "children": [],
+  //         "display": true,
+  //         "id": 47,
+  //         "title": "Budget Allocation",
+  //         "url": "/financial-budget-allocation",
+  //         "selected": false
+  //       },
+  //       {
+  //         "expanded": false,
+  //         "folder": false,
+  //         "isParent": false,
+  //         "parentCode": 237,
+  //         "children": [],
+  //         "display": true,
+  //         "id": 53,
+  //         "title": "Offices Fund Allocation",
+  //         "url": "/offices-fund-allocation",
+  //         "selected": false
+  //       }
+  //     ],
+  //     "display": true,
+  //     "id": 237,
+  //     "title": "Allotments",
+  //     "selected": false
+  //   },
+  //   {
+  //     "expanded": false,
+  //     "folder": false,
+  //     "isParent": false,
+  //     "parentCode": 0,
+  //     "children": [],
+  //     "display": true,
+  //     "id": 183,
+  //     "title": "Role List",
+  //     "url": "/admin/role/list",
+  //     "selected": false
+  //   },
+  //   {
+  //     "expanded": false,
+  //     "folder": false,
+  //     "isParent": false,
+  //     "parentCode": 0,
+  //     "children": [],
+  //     "display": true,
+  //     "id": 197,
+  //     "title": "Role Menu Mapping",
+  //     "url": "/admin/menu/map",
+  //     "selected": false
+  //   }
+  // ];
+
+
+  const fetchRoles = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get("common/role-list"); 
+      if (response.data && Array.isArray(response.data.data)) {
+        setRoles(response.data.data);
+        console.log("role data checking ",response.data.data)
+      }
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      toast.error("Error fetching roles. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Use the dummy roles data directly
-  const roles = dummyRoles.data;
-  const rolesLoading = false;
-  const rolesError = null;
+ 
+  const handleRoleChange = (event) => {
+    setSelectedRole(event.target.value);
+  };
 
-  // Dummy menu items data
-  const dummyMenuItems = [
-    {
-      "expanded": false,
-      "folder": true,
-      "isParent": true,
-      "parentCode": 0,
-      "children": [
-        {
-          "expanded": false,
-          "folder": false,
-          "isParent": false,
-          "parentCode": 276,
-          "children": [],
-          "display": true,
-          "id": 164,
-          "title": "Add District",
-          "url": "/core/district/add",
-          "selected": false
-        },
-        {
-          "expanded": false,
-          "folder": false,
-          "isParent": false,
-          "parentCode": 276,
-          "children": [],
-          "display": true,
-          "id": 158,
-          "title": "District List",
-          "url": "/core/district/list",
-          "selected": false
-        }
-      ],
-      "display": true,
-      "id": 276,
-      "title": "Masters",
-      "selected": false
-    },
-    {
-      "expanded": false,
-      "folder": true,
-      "isParent": true,
-      "parentCode": 0,
-      "children": [
-        {
-          "expanded": false,
-          "folder": false,
-          "isParent": false,
-          "parentCode": 237,
-          "children": [],
-          "display": true,
-          "id": 47,
-          "title": "Budget Allocation",
-          "url": "/financial-budget-allocation",
-          "selected": false
-        },
-        {
-          "expanded": false,
-          "folder": false,
-          "isParent": false,
-          "parentCode": 237,
-          "children": [],
-          "display": true,
-          "id": 53,
-          "title": "Offices Fund Allocation",
-          "url": "/offices-fund-allocation",
-          "selected": false
-        }
-      ],
-      "display": true,
-      "id": 237,
-      "title": "Allotments",
-      "selected": false
-    },
-    {
-      "expanded": false,
-      "folder": false,
-      "isParent": false,
-      "parentCode": 0,
-      "children": [],
-      "display": true,
-      "id": 183,
-      "title": "Role List",
-      "url": "/admin/role/list",
-      "selected": false
-    },
-    {
-      "expanded": false,
-      "folder": false,
-      "isParent": false,
-      "parentCode": 0,
-      "children": [],
-      "display": true,
-      "id": 197,
-      "title": "Role Menu Mapping",
-      "url": "/admin/menu/map",
-      "selected": false
-    }
-  ];
+ 
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
-  // Initialize selected menu items when menu items change
+
   useEffect(() => {
     if (menuItems.length > 0) {
       const initialSelected = {};
-      
-      // Helper function to process items recursively
+
       const processItems = (items) => {
         items.forEach(item => {
-          // Set initial state based on item's selected property
+        
           initialSelected[item.id] = item.selected;
-          
-          // Process children if any
+
           if (item.children && item.children.length > 0) {
             processItems(item.children);
           }
@@ -163,31 +163,25 @@ const RoleMenu = () => {
     }
   }, [menuItems]);
 
-  // Set menu items when role is selected
+
   useEffect(() => {
     if (selectedRole) {
-      setMenuItems(dummyMenuItems);
+      // setMenuItems(dummyMenuItems);
     } else {
       setMenuItems([]);
     }
   }, [selectedRole]);
 
-  // Loading state for menu items
+
   const menuLoading = false;
 
-  const handleRoleChange = (e) => {
-    const roleId = parseInt(e.target.value);
-    setSelectedRole(roleId);
-  };
 
   const handleCheckboxChange = (item) => {
     const newSelectedItems = { ...selectedMenuItems };
     const newValue = !selectedMenuItems[item.id];
-    
-    // Update the clicked item
+
     newSelectedItems[item.id] = newValue;
-    
-    // If the item has children, update all children recursively
+
     if (item.children && item.children.length > 0) {
       const updateChildren = (children) => {
         children.forEach(child => {
@@ -206,8 +200,7 @@ const RoleMenu = () => {
 
   const handleSubmit = () => {
     setIsSubmitting(true);
-    
-    // Simulate API call
+   
     setTimeout(() => {
       console.log("Submitting selected menu items:", selectedMenuItems);
       toast.success(`Menu items updated for role: ${roles.find(r => r.RoleId === selectedRole)?.RoleName}`);
@@ -231,6 +224,7 @@ const RoleMenu = () => {
               className="form-check-input"
             />
           </div>
+          
           <div className="menu-item-title">
             <label htmlFor={`menu-item-${item.id}`} className="form-check-label">
               {item.folder ? <i className="bx bx-folder"></i> : <i className="bx bx-file"></i>}
@@ -238,12 +232,7 @@ const RoleMenu = () => {
             </label>
           </div>
           <div className="menu-item-url">{item.url}</div>
-          <div className="menu-item-actions">
-            <span className={`badge ${item.display ? 'bg-success' : 'bg-danger'}`}>
-              {item.display ? 'Visible' : 'Hidden'}
-            </span>
-            {item.selected && <span className="badge bg-primary ms-1">Current</span>}
-          </div>
+         
         </div>
         
         {hasChildren && (
@@ -255,13 +244,7 @@ const RoleMenu = () => {
     );
   };
 
-  if (rolesLoading) {
-    return <PageLoader />;
-  }
-
-  if (rolesError && !roles) {
-    return <div className="error-message">Error loading roles. Please try again.</div>;
-  }
+ 
 
   return (
     <div className="role-menu-container">
@@ -271,29 +254,30 @@ const RoleMenu = () => {
         </div>
         <div className="card-body">
           <div className="row mb-4">
-            <div className="col-md-6">
-              <label htmlFor="roleSelect" className="form-label fw-bold">
-                Select Role
-              </label>
-              <select
-                id="roleSelect"
-                className="form-select"
-                onChange={handleRoleChange}
-                value={selectedRole || ""}
-              >
-                <option value="" disabled>
-                  -- Select a role --
-                </option>
-                {roles &&
-                  roles.map((role) => (
-                    <option key={role.RoleId} value={role.RoleId}>
-                      {role.RoleName}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          </div>
-
+         
+      <div className="col-md-4">
+      <label htmlFor="roleSelect" className="form-label fw-bold">
+        Select Role
+      </label>
+      <select
+        id="roleSelect"
+        className="form-select"
+        onChange={handleRoleChange}
+        value={selectedRole || ""}
+        disabled={isLoading} 
+      >
+        <option value="" disabled>
+          -- Select a role --
+        </option>
+        {roles.map((role) => (
+          <option key={role.RoleId} value={role.RoleId}>
+            {role.RoleName}
+          </option>
+        ))}
+      </select>
+      {isLoading && <p>Loading roles...</p>} 
+    </div>
+    </div>
           {selectedRole && (
             <div className="menu-items-container">
               <div className="menu-items-header">

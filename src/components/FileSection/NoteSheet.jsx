@@ -24,7 +24,7 @@ const NoteSheet = ({
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const token = useAuthStore((state) => state.token) || sessionStorage.getItem("token");
-  const editorContentRef = useRef(content || "");
+  const editorContentRef = useRef(content);
   // Remove the effect that updates local state
 
 
@@ -45,8 +45,8 @@ const NoteSheet = ({
  
 
   const handleWriteNoteClick = () => {
-    setWriteNote(true);
     // Ensure we have the latest content
+    setWriteNote(true);
     if (onContentChange && editorContentRef.current !== undefined) {
       requestAnimationFrame(() => {
         onContentChange(editorContentRef.current);
@@ -64,10 +64,7 @@ const NoteSheet = ({
     }
   };
 
-  const handleEditorContentChange = useCallback((newContent) => {
-    editorContentRef.current = newContent;
-    onContentChange?.(newContent);
-  }, [onContentChange]);
+
 
  
 
@@ -103,11 +100,25 @@ const NoteSheet = ({
     }
   };
 
-  const convertHTMLToText = (htmlContent) => {
-    if (!htmlContent) return "";
-    const doc = new DOMParser().parseFromString(htmlContent, "text/html");
-    return doc.body.textContent || doc.body.innerText || "";
+  const convertHTMLToText = (html) => {
+    // Create a temporary div element
+    const temp = document.createElement("div");
+  
+    // Set the HTML content
+    temp.innerHTML = html;
+  
+    // Loop through all <a> tags and set target="_blank" to open in a new tab
+    const links = temp.getElementsByTagName("a");
+    for (let i = 0; i < links.length; i++) {
+      // Ensure the link opens in a new tab
+      links[i].target = "_blank";
+      links[i].style.color = '#007bff';  // Default color for links (you can customize this)
+    }
+  
+    // Return the updated HTML where <a> tags have target="_blank" and other tags are removed
+    return temp.innerHTML;
   };
+  
 
   const badgeColors = ["#ff5733", "#1e90ff", "#28a745", "#ffcc00"];
 
@@ -136,7 +147,9 @@ const NoteSheet = ({
           <span className="text-primary">{note.senderName}</span> (
           {note.senderDesignation})
         </p>
-        <p className="note-content">{convertHTMLToText(note.note)}</p>
+        <p className="note-content" dangerouslySetInnerHTML={{
+                    __html: convertHTMLToText(note.note),
+                  }}></p>
         <p className="note-date">
           {note.senderName} | {note.createdDate} | {note.createdTime}
         </p>

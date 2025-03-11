@@ -73,8 +73,10 @@ const MainFile = () => {
         noteSheets: res4.data,
         notingNo: res5.data,
       });
+      console.log("Previous content:", res2.data.data.note);
       if (res2.data.data.note) {
         // Only update if content has changed
+        
         if (res2.data.data.note !== previousContentRef.current) {
           isUpdatingContentRef.current = true;
           setSharedEditorContent(res2.data.data.note);
@@ -101,13 +103,11 @@ const MainFile = () => {
 
   const handleEditorContentChange = useCallback((newContent) => {
     console.log('MainFile content changed:', newContent, 'previous:', previousContentRef.current);
-    // Only update if content has changed and we're not already updating
     if (!isUpdatingContentRef.current && newContent !== previousContentRef.current) {
       isUpdatingContentRef.current = true;
       setSharedEditorContent(newContent);
       previousContentRef.current = newContent;
       
-      // Use a longer timeout to ensure the update completes
       setTimeout(() => {
         isUpdatingContentRef.current = false;
       }, 10);
@@ -120,6 +120,7 @@ const MainFile = () => {
     }
   }, []);
 
+console.log("MainFile sharedEditorContent:", sharedEditorContent);
 
   return (
     <>

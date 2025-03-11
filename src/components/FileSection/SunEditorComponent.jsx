@@ -5,7 +5,7 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
   const editor = useRef(null);
   const [currentContent, setCurrentContent] = useState(content);
   const [cursorPosition, setCursorPosition] = useState(null);
-  const isUpdatingRef = useRef(false); // To prevent updates when focus is gained
+  const isUpdatingRef = useRef(false); 
 
   useEffect(() => {
     // Set initial content when component mounts or content changes
@@ -37,7 +37,7 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
       },
       afterChange: () => {
         if (editor.current && cursorPosition) {
-          editor.current.selection.set(cursorPosition); // Restore cursor position
+          editor.current.selection.set(cursorPosition);
         }
       },
       afterInit: (instance) => {
@@ -75,7 +75,7 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
         value={currentContent}  // Use the local state `currentContent`
         config={config}
         tabIndex={1}
-        onInput={(e) => handleContentInput(e.target.innerHTML)} // Use onInput here
+        onInput={(e) => handleContentInput(e.target.innerHTML)} 
       />
       <style jsx>{`
         .editor-wrapper {

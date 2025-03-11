@@ -1001,15 +1001,15 @@ const handleConfirmUrgent = async () => {
             }}
           >
             <Box sx={{ lineHeight: 1.6 }}> 
-              <Typography variant="subtitle2" sx={{ fontWeight: "bold", color: "#1565c0" }}>
-                Action taken by:{" "}
-                <span style={{ fontWeight: "normal", color: "#333" }}>{note.actionTakenBy}</span>
+              <Typography >
+                <strong style={{ color: "#1565c0" }}>Action taken by:</strong>{" "}
+                <span style={{ color: "#333" }}>{note.actionTakenBy}</span>
               </Typography>
               <Typography>
                 <strong style={{ color: "#1565c0" }}>Action:</strong>{" "}
                 <span style={{ color: "#333" }}>{note.action}</span>
               </Typography>
-              <Typography variant="caption" display="block">
+              <Typography >
                 <strong style={{ color: "#1565c0" }}>Date:</strong>{" "}
                 <span style={{ color: "#333" }}>{note.modifyDate}</span>
               </Typography>
@@ -1120,19 +1120,30 @@ const handleConfirmUrgent = async () => {
       <DialogTitle
         sx={{ 
           backgroundColor: "#207785", 
-          color: "white", 
+          color: "#fff",             
           display: "flex", 
           justifyContent: "space-between", 
-          alignItems: "center" 
+          alignItems: "center",
+          height: "60px",              
+          fontWeight: "bold",
+          fontSize: "1.2rem",
+          padding: "10px 20px"         
         }}>
           {pendingUrgency ? "Set as Urgent" : "Set as Non-Urgent"}</DialogTitle>
-          <IconButton onClick={handleCancelUrgent} sx={{ color: "white" }}>
+          {/* <IconButton onClick={handleCancelUrgent} sx={{ color: "white" }}>
           <CloseIcon/>
-        </IconButton>
+        </IconButton> */}
        <DialogContent>
         Do you want to make the letter {pendingUrgency ? "Urgent" : "Non-Urgent"}?
       </DialogContent>
-      <DialogActions>
+      <DialogActions
+       sx={{ 
+        backgroundColor: "#F5F5F5", 
+        height: "50px",            
+        padding: "10px 20px",
+        display: "flex",
+        justifyContent: "flex-end" 
+      }}>
         <Button onClick={handleCancelUrgent} variant="contained" sx={{ textTransform: 'none', }} color="error">No</Button>
         <Button onClick={handleConfirmUrgent} variant="contained" sx={{ textTransform: 'none', }}  color="primary">Yes</Button>
       </DialogActions>
@@ -1143,16 +1154,27 @@ const handleConfirmUrgent = async () => {
       <DialogTitle
          sx={{ 
           backgroundColor: "#207785", 
-          color: "white", 
+          color: "#fff",             
           display: "flex", 
           justifyContent: "space-between", 
-          alignItems: "center" 
+          alignItems: "center",
+          height: "60px",              
+          fontWeight: "bold",
+          fontSize: "1.2rem",
+          padding: "10px 20px"         
         }}
         >{pendingConfidential ? "Set as confidential" : "Set as Non-confidential"}</DialogTitle>
       <DialogContent>
         Do you want to make the letter {pendingConfidential ? "Confidential" : "Non-Confidential"}?
       </DialogContent>
-      <DialogActions>
+      <DialogActions
+       sx={{ 
+        backgroundColor: "#F5F5F5", // Light gray for footer
+        height: "50px",            // Set footer height
+        padding: "10px 20px",
+        display: "flex",
+        justifyContent: "flex-end" // Align button to the right
+      }}>
         <Button onClick={handleCancelConfidential} variant="contained"  sx={{ textTransform: 'none', }} color="error">No</Button>
         <Button onClick={handleConfirmConfidential} variant="contained" sx={{ textTransform: 'none', }} color="primary">Yes</Button>
       </DialogActions>
@@ -1161,13 +1183,17 @@ const handleConfirmUrgent = async () => {
 
       <Dialog open={openConfirmModal} onClose={() => setOpenConfirmModal(false)}>
         <DialogTitle
-          sx={{ 
-            backgroundColor: "#207785", 
-            color: "white", 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center" 
-          }}
+         sx={{ 
+          backgroundColor: "#207785", 
+          color: "#fff",             
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center",
+          height: "60px",              
+          fontWeight: "bold",
+          fontSize: "1.2rem",
+          padding: "10px 20px"         
+        }}
          >
          Confirm Save
          <IconButton onClick={() => setOpenConfirmModal(false)} sx={{ color: "white" }}>
@@ -1177,7 +1203,14 @@ const handleConfirmUrgent = async () => {
         <DialogContent>
           <Typography>Do you want to proceed?</Typography>
         </DialogContent>
-        <DialogActions>
+        <DialogActions
+         sx={{ 
+          backgroundColor: "#F5F5F5", // Light gray for footer
+          height: "50px",            // Set footer height
+          padding: "10px 20px",
+          display: "flex",
+          justifyContent: "flex-end" // Align button to the right
+        }}>
           <Button onClick={() => setOpenConfirmModal(false)} variant="outlined" sx={{ textTransform: 'none', }} color="secondary">
              Cancel
           </Button>
@@ -1191,34 +1224,53 @@ const handleConfirmUrgent = async () => {
 
 
 
-<Dialog open={openWarningModal} onClose={() => setOpenWarningModal(false)}>
+      <Dialog open={openWarningModal} onClose={() => setOpenWarningModal(false)}>
   
+  {/* Header */}
   <DialogTitle 
     sx={{ 
-      backgroundColor: "#FFEA00", 
-      color: "white", 
+      backgroundColor: "#207785", 
+      color: "#fff",             
       display: "flex", 
       justifyContent: "space-between", 
-      alignItems: "center" 
+      alignItems: "center",
+      height: "60px",              
+      fontWeight: "bold",
+      fontSize: "1.2rem",
+      padding: "10px 20px"         
     }}
   >
     Warning
-    <IconButton onClick={() => setOpenWarningModal(false)} sx={{ color: "white" }}>
+    <IconButton onClick={() => setOpenWarningModal(false)} sx={{ color: "black" }}>
       <CloseIcon />
     </IconButton>
   </DialogTitle>
 
- 
+  {/* Content */}
   <DialogContent>
-    <Typography >Please write marginal instructions!</Typography>
+    <Typography>Please write marginal instructions!</Typography>
   </DialogContent>
 
-
-  <DialogActions>
-    <Button onClick={() => setOpenWarningModal(false)} variant="contained" sx={{ textTransform: 'none', }} color="error">
+  {/* Footer */}
+  <DialogActions 
+    sx={{ 
+      backgroundColor: "#F5F5F5", // Light gray for footer
+      height: "50px",            // Set footer height
+      padding: "10px 20px",
+      display: "flex",
+      justifyContent: "flex-end" // Align button to the right
+    }}
+  >
+    <Button 
+      onClick={() => setOpenWarningModal(false)} 
+      variant="contained" 
+      sx={{ textTransform: 'none' }} 
+      color="error"
+    >
       OK
     </Button>
   </DialogActions>
+
 </Dialog>
 
 

@@ -3,13 +3,14 @@ import JoditEditor from "jodit-react"; // Import JoditEditor
 
 const NoteSheetEditor = ({ content, onContentChange, additionalDetails }) => {
   const editorRef = useRef(null);
+  
 
   // Handle blur event to notify when the editor loses focus
   const handleEditorBlur = () => {
     if (editorRef.current) {
-      const updatedContent = editorRef.current.value; // Get content after blur
+      const updatedContent = editorRef.current.value;
       if (onContentChange) {
-        onContentChange(updatedContent); // Notify parent component
+        onContentChange(updatedContent);
       }
     }
   };
@@ -19,10 +20,9 @@ const NoteSheetEditor = ({ content, onContentChange, additionalDetails }) => {
       <h5>Note Sheet Editor</h5>
       <JoditEditor
         ref={editorRef}
-        value={content} // Pass the current content as value to JoditEditor
+        value={content}
         config={{
           readonly: false,
-          placeholder: "Enter your note here...",
           height: 300,
           askBeforePasteHTML: false,
           askBeforePasteFromWord: false,
