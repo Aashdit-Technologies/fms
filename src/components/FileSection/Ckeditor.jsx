@@ -41,6 +41,7 @@ const Ckeditor = ({
       if (selectedValue) {
         setSelectedItem(selectedValue.label);
         setSelectedNote(selectedValue.value); // Set selected note data
+        setIsOpen(false);
 
         // Generate the hyperlink for editor content
         const linkHTML = `<a href="#" class="noting-link" data-note-index="${selectedValue.label}" 
@@ -123,18 +124,17 @@ const Ckeditor = ({
   };
   const convertHTMLToText = (html) => {
     const temp = document.createElement("div");
-  
+
     temp.innerHTML = html;
-  
+
     const links = temp.getElementsByTagName("a");
     for (let i = 0; i < links.length; i++) {
       links[i].target = "_blank";
-      links[i].style.color = '#007bff';  
+      links[i].style.color = "#007bff";
     }
-  
+
     return temp.innerHTML;
   };
-  
 
   return (
     <>
@@ -144,7 +144,7 @@ const Ckeditor = ({
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100">
                 <h5>Take Action</h5>
-                <div className="d-flex align-items-center z-3">
+                <div className="d-flex align-items-center ">
                   <Select
                     value={selectedItem}
                     onChange={handleSelectChange}
@@ -160,9 +160,9 @@ const Ckeditor = ({
                     ))}
                   </Select>
                 </div>
-                <span className="toggle-icon" onClick={toggleAccordion}>
-                  {isOpen ? <FaPlus /> : <FaMinus />}
-                </span>
+                  <span className="toggle-icon" onClick={toggleAccordion}>
+                    {isOpen ? <FaPlus /> : <FaMinus />}
+                  </span>
               </div>
             </Accordion.Header>
             <Accordion.Body>

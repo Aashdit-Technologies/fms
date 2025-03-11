@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { 
   Box, MenuItem, Select, TextField, IconButton, 
-  AccordionSummary, Typography, AccordionDetails 
+  AccordionSummary, Typography, AccordionDetails, 
+  Pagination
 } from "@mui/material";
 import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
@@ -97,20 +98,37 @@ const EmployeeList = () => {
  const [serviceStatusList, setServiceStatusList] = useState([]);
 const [serviceStatus, setServiceStatus] = useState("");
 const [employeeList, setEmployeeList] = useState([]);
-const [rowSize, setRowSize] = useState(10);
-const [pageno, setPageno] = useState(1);
-const [totalRows, setTotalRows] = useState(0);
 const [filteredEmployees, setFilteredEmployees] = useState([]); 
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(true);
   const token = useAuthStore.getState().token;
   const [isLoading, setIsLoading] = useState(false);
 
+ const [rowSize, setRowSize] = useState(10);
+  const [pageNo, setPageNo] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  
 const navigate = useNavigate();
+
+const handlePageChange = (event, newPage) => {
+  if (newPage !== pageNo) {
+    setPageNo(newPage);
+    fetchEmployeeList( serviceStatus,newPage, rowSize);
+    
+  }
+};
+const handleRowSizeChange = (event) => {
+  const newSize = parseInt(event.target.value, 10);
+  setRowSize(newSize);
+  setPageNo(1); 
+  fetchEmployeeList(serviceStatus, 1, newSize);
+  
+};
+
 
 const handleServiceStatusChange = (event) => {
   setServiceStatus(event.target.value);
-  setPageno(1);
+  setPageNo(1);
 };
 
 useEffect(() => {
@@ -165,13 +183,15 @@ useEffect(() => {
  
 
 
-  const fetchEmployeeList = async (serviceId) => {
+  const fetchEmployeeList = async (serviceId,page = pageNo,
+    size = rowSize ) => {
+      debugger
     setIsLoading(true)
     try { 
       const payload = {
         serviceId: serviceId,
-        pageno: pageno,
-        rowSize : rowSize,
+        pageno: page,
+        rowSize : size,
       };
       const response = await api.post(
         "governance/get-employee-List",
@@ -186,6 +206,9 @@ useEffect(() => {
       const list = response.data?.data?.employeeList;
       if (Array.isArray(list)) {
         setEmployeeList(list);
+        const totalRecords = response.data.data.totalPages;
+          setTotalPages(totalRecords);
+          console.log("totalRecords checking ",totalRecords)
       } else {
         console.error("Invalid employee list format:", response.data);
         setEmployeeList([]);
@@ -207,7 +230,7 @@ useEffect(() => {
   if (serviceStatus) {  
     fetchEmployeeList(serviceStatus);
   }
-}, [token, rowSize, pageno, serviceStatus]);
+}, [token, pageNo, rowSize, serviceStatus]);
 
 
 const columns = [
@@ -369,10 +392,10 @@ const handleEdit = async (row) => {
 
 
 
-const handleRowsPerPageChange = (newRowSize) => {
-  setRowSize(prev => (prev !== newRowSize ? newRowSize : prev));
-  setPageno(1);
-};
+// const handleRowsPerPageChange = (newRowSize) => {
+//   setRowSize(prev => (prev !== newRowSize ? newRowSize : prev));
+//   setPageno(1);
+// };
 
 
   return (
@@ -422,8 +445,8 @@ const handleRowsPerPageChange = (newRowSize) => {
       ))}
     </Select>
     </Box>
-          <Box sx={{ display: "flex", justifyContent:"space-between", gap: 2, mb: 2 }}>
-          <Select
+          <Box sx={{ display: "flex", justifyContent:"end", gap: 2, mb: 2 }}>
+          {/* <Select
               value={rowSize}
               onChange={(e) => handleRowsPerPageChange(e.target.value)}
               size="small"
@@ -435,7 +458,7 @@ const handleRowsPerPageChange = (newRowSize) => {
               <MenuItem value={50}>50</MenuItem>
               <MenuItem value={100}>100</MenuItem>
               <MenuItem value={200}>200</MenuItem>
-          </Select>
+          </Select> */}
             
           <TextField
               label="Search"
@@ -448,21 +471,61 @@ const handleRowsPerPageChange = (newRowSize) => {
           <Box sx={{ width: "100%", overflowX: "auto" }}>
       <DataTable
         columns={columns}
-        // data={employeeList}
+       
         data={filteredEmployees}
-        pagination
-        paginationServer
-            paginationTotalRows={totalRows}
-            paginationPerPage={rowSize} 
-            paginationDefaultPage={pageno}
-            onChangePage={(page) => setPageno(page)}
-            onChangeRowsPerPage={(newRowSize) => {
-              setRowSize(newRowSize);
-              setPageno(1);  
-            }}
+        
         customStyles={customStyles}
         responsive
       />
+      <div className="d-flex justify-content-end align-items-center mt-3 gap-2">
+                    <div className="d-flex align-items-center">
+                      <span className="me-2">Rows per page:</span>
+                      <select
+                        value={rowSize}
+                        onChange={handleRowSizeChange}
+                        className="form-select form-select-sm"
+                        style={{ width: "80px", marginLeft: "8px" }}
+                      >
+                        <option value={10}>10</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                        <option value={150}>150</option>
+                      </select>
+                    </div>
+      
+                    <div className="d-flex align-items-center">
+                      <Pagination
+                        count={totalPages}
+                        page={pageNo}
+                        onChange={handlePageChange}
+                        variant="outlined"
+                        color="primary"
+                        size="medium"
+                        showFirstButton
+                        showLastButton
+                        siblingCount={1}
+                        boundaryCount={1}
+                        sx={{
+                          "& .MuiPaginationItem-root": {
+                            margin: "0 2px",
+                            minWidth: "32px",
+                            height: "32px",
+                          },
+                          "& .Mui-selected": {
+                            backgroundColor: "#1a5f6a !important",
+                            color: "white",
+                            "&:hover": {
+                              backgroundColor: "#1a5f6a",
+                            },
+                          },
+                        }}
+                      />
+                      <span className="ms-3">
+                        Page {pageNo} of {totalPages}
+                      </span>
+                    </div>
+                  </div>
+      
     </Box>
         </AccordionDetails>
       </Accordion>

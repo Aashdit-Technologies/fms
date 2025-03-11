@@ -12,7 +12,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   Typography,
-  IconButton
+  IconButton,
+  Pagination
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -116,62 +117,107 @@ const LetterList = () => {
 
   const [letters, setLetters] = useState([]);
   const [viewletters, setViewLetters] = useState([]);
-  const [rowSize, setRowSize] = useState(10);
-  const [pageNo, setPageNo] = useState(1);
-  const [totalRows, setTotalRows] = useState(0);
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [openLetterDetail, setOpenLetterDetail] = useState(false);
   const [expanded, setExpanded] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [totalRows, setTotalRows] = useState(0);
+  
+  
   const TAB_CODES = {
     NEW_LETTER: 'NEW_LETTER',
     SENT_LETTER: 'SENT_LETTER',
     MOVE_FILE: 'MOVE_FILE'
   };
+  const [tabStates, setTabStates] = useState({
+    [TAB_CODES.NEW_LETTER]: { pageNo: 1, rowSize: 10, totalPages: 0 },
+    [TAB_CODES.SENT_LETTER]: { pageNo: 1, rowSize: 10, totalPages: 0 },
+    [TAB_CODES.MOVE_FILE]: { pageNo: 1, rowSize: 10, totalPages: 0 },
+  });
+
+  const handlePageChange = (event, newPage) => {
+    if (newPage !== tabStates[activeTab].pageNo) {
+      setTabStates((prevStates) => {
+        const updatedStates = {
+          ...prevStates,
+          [activeTab]: {
+            ...prevStates[activeTab],
+            pageNo: newPage,
+          },
+        };
+        fetchLetters(activeTab, updatedStates); // Pass the updated state to fetchLetters
+        return updatedStates;
+      });
+    }
+  };
+  
+  const handleRowSizeChange = (event) => {
+    const newSize = parseInt(event.target.value, 10);
+    setTabStates((prevStates) => {
+      const updatedStates = {
+        ...prevStates,
+        [activeTab]: {
+          ...prevStates[activeTab],
+          rowSize: newSize,
+          pageNo: 1, // Reset page when row size changes
+        },
+      };
+      fetchLetters(activeTab, updatedStates);
+      return updatedStates;
+    });
+  };
+
+  
 
   const [activeTab, setActiveTab] = useState(TAB_CODES.NEW_LETTER);
 
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    fetchLetters(newTab);
+  };
  
- 
-    const fetchLetters = useCallback(async (tabCode) => {
+  const fetchLetters = useCallback(
+    async (tabCode, updatedTabStates = tabStates) => {
       setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         const payload = {
-          rowsize: rowSize,
+          rowsize: updatedTabStates[tabCode].rowSize,
           tabCode: tabCode,
-          pageNo: pageNo,
+          pageNo: updatedTabStates[tabCode].pageNo,
         };
   
         const response = await api.post(
           "letter/manage-letter-receipents",
           { dataObject: encryptPayload(payload) },
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
   
-       
-  
         const responseData = response.data?.data?.letterList || [];
         setLetters(Array.isArray(responseData) ? responseData : []);
-        setTotalRows(response.data?.data?.totalRows || 0);
+        const totalRecords = response.data.data.totalPages;
+        setTabStates((prevStates) => ({
+          ...prevStates,
+          [tabCode]: {
+            ...prevStates[tabCode],
+            totalPages: totalRecords,
+          },
+        }));
       } catch (error) {
         console.error("Error fetching letters:", error);
         setLetters([]);
-      }  finally{
+      } finally {
         setIsLoading(false);
       }
-    },[rowSize, pageNo]);
-   
-    useEffect(() => {
-    if (activeTab) {
-      fetchLetters(activeTab);
-    }
-  }, [activeTab, pageNo, rowSize]); 
+    },
+    []
+  );
+  
+  useEffect(() => {
+    fetchLetters(activeTab);
+  }, [activeTab]); // Now it runs only when the tab changes
   
 
 const handleViewLetterDetail = async (row, tabCode) => {
@@ -222,20 +268,7 @@ const handleViewLetterDetail = async (row, tabCode) => {
 };
 
 
-const handleTabChange = (newTab) => {
-  setActiveTab(newTab);
-  setPageNo(1);
 
-  setRowSize(10);
-  setTimeout(() => {
-    fetchLetters(newTab);
-  }, 0); 
-};
-
-  const handleRowsPerPageChange = (newRowSize) => {
-    setRowSize(newRowSize);
-    setPageNo(1);  
-  };
   
 
   const handleCloseLetterDetail = () => {
@@ -418,7 +451,7 @@ const SentLetterColumns = [
   },
   {
     name: 'Letter No. & Date',
-    // cell: (row) => `${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`,
+    
     cell: (row) => (
       <div
         style={{
@@ -742,7 +775,7 @@ const MovedToFileColumns = [
         </AccordionSummary>
         
         <AccordionDetails sx={{ backgroundColor: '#fafafa', p: 2, borderRadius: '0 0 10px 10px' }}>
-          <Paper sx={{ width: '100%', mb: 2 ,mt: 3}}>
+          <Paper sx={{ width: '100%', mb: 5 ,mt: 3}}>
             <Tabs
               value={activeTab}
              onChange={(event, newValue) => handleTabChange(newValue)}
@@ -767,7 +800,7 @@ const MovedToFileColumns = [
             </Tabs>
           </Paper>
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
           
             <TextField
             type="number"
@@ -783,26 +816,65 @@ const MovedToFileColumns = [
             sx={{ width: 150 }}
             inputProps={{ min: 1 }}
 />
-          </Box>
+          </Box> */}
 
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
         
           <DataTable
-            columns={getActiveColumns()}
-            data={letters}
-            pagination
-            paginationServer
-            paginationTotalRows={totalRows}
-            paginationPerPage={rowSize} 
-            paginationDefaultPage={pageNo}
-            onChangePage={(page) => setPageNo(page)}
-            onChangeRowsPerPage={(newRowSize) => {
-              setRowSize(newRowSize);
-              setPageNo(1);  
-            }}
-            customStyles={customStyles}
-            responsive
-          />     
+  columns={getActiveColumns()}
+  data={letters}
+  customStyles={customStyles}
+  responsive
+/>
+
+<div className="d-flex justify-content-end align-items-center mt-3 gap-2">
+  <div className="d-flex align-items-center">
+    <span className="me-2">Rows per page:</span>
+    <select
+      value={tabStates[activeTab].rowSize}
+      onChange={handleRowSizeChange}
+      className="form-select form-select-sm"
+      style={{ width: "80px", marginLeft: "8px" }}
+    >
+      <option value={10}>10</option>
+      <option value={50}>50</option>
+      <option value={100}>100</option>
+      <option value={150}>150</option>
+    </select>
+  </div>
+
+  <div className="d-flex align-items-center">
+    <Pagination
+      count={tabStates[activeTab].totalPages}
+      page={tabStates[activeTab].pageNo}
+      onChange={handlePageChange}
+      variant="outlined"
+      color="primary"
+      size="medium"
+      showFirstButton
+      showLastButton
+      siblingCount={1}
+      boundaryCount={1}
+      sx={{
+        "& .MuiPaginationItem-root": {
+          margin: "0 2px",
+          minWidth: "32px",
+          height: "32px",
+        },
+        "& .Mui-selected": {
+          backgroundColor: "#1a5f6a !important",
+          color: "white",
+          "&:hover": {
+            backgroundColor: "#1a5f6a",
+          },
+        },
+      }}
+    />
+    <span className="ms-3">
+      Page {tabStates[activeTab].pageNo} of {tabStates[activeTab].totalPages}
+    </span>
+  </div>
+</div>
           </Box> 
         </AccordionDetails>
       </Accordion>

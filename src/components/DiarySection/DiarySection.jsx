@@ -279,10 +279,11 @@ const DiarySection = () => {
     
   }
 };
+
 const handlePageChangesentletter = (event, newPage) => {
-  if (newPage !== pageNo) {
-    pageNoSent(newPage);
-    sentLetter(newPage, rowSize)
+  if (newPage !== pageNoSent) {
+    setPageNoSent(newPage);
+    sentLetter(newPage, rowSizesent); 
   }
 };
 
@@ -298,7 +299,7 @@ const handleRowSizeChangesentletter = (event) => {
   const newSize = parseInt(event.target.value, 10);
   setRowSizeSent(newSize);
   setPageNoSent(1); 
-  sentLetter(1, newSize)
+  sentLetter(1, newSize); 
 };
 
 
@@ -584,36 +585,42 @@ const handleRowSizeChangesentletter = (event) => {
     {
       name: "Action",
       cell: (row) => (
-        <div className="d-flex">
+        <div className="d-flex gap-2">
           <Button
             variant="contained"
             size="small"
+            startIcon={<FaPencilAlt />}
             onClick={(e) => { 
               e.stopPropagation(); 
               handleEditButtonClick(row); 
             }}
-            color="primary"
-            sx={{
-              minWidth: "auto",
-              padding: "6px 10px",
-              marginRight: "8px",
+            sx={{ 
+              bgcolor: '#207785',
+              '&:hover': {
+                bgcolor: '#1a5f6a',
+              },
+              minWidth: 'auto',
+              px: 2
             }}
           >
-           <FaPencilAlt />
+           
           </Button>
 
           <Button
             variant="contained"
             size="small"
+            startIcon={<BsSend />}
             onClick={(e) => handleOpenModal(row, e)}
-            color="success"
-            sx={{
-              minWidth: "auto",
-              padding: "6px 10px",
-              marginRight: "8px",
+            sx={{ 
+              bgcolor: '#6c757d',
+              '&:hover': {
+                bgcolor: '#5a6268',
+              },
+              minWidth: 'auto',
+              px: 2
             }}
           >
-        <BsSend />
+        
       </Button>
 
         </div>
@@ -1413,8 +1420,7 @@ const handleremarksChange = (e) => {
 
  // SentLetter api binding 
  
-  const sentLetter = async (page = pageNoSent,
-    size = rowSizesent) => {
+  const sentLetter = async (page = pageNoSent, size = rowSizesent) => {
     setIsLoading(true);
     try {
       const payload = {

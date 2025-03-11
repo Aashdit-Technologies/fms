@@ -935,14 +935,17 @@ console.log("metadataId",metadataId)
   
   {/* Dialog Title with Close Icon */}
   <DialogTitle
-    sx={{
-      bgcolor: "#207785",
-      color: "white",
-      fontWeight: "bold",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between", 
-    }}
+      sx={{ 
+        backgroundColor: "#207785", 
+        color: "#fff",             
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center",
+        height: "60px",              
+        fontWeight: "bold",
+        fontSize: "1.2rem",
+        padding: "10px 20px"         
+      }}
   >
     Confirmation
     <IconButton onClick={() => setShowModal(false)} sx={{ color: "white" }}>
@@ -958,7 +961,13 @@ console.log("metadataId",metadataId)
   </DialogContent>
 
   {/* Dialog Actions */}
-  <DialogActions sx={{ justifyContent: "center", pb: 2 }}>
+  <DialogActions  sx={{ 
+        backgroundColor: "#F5F5F5", // Light gray for footer
+        height: "50px",            // Set footer height
+        padding: "10px 20px",
+        display: "flex",
+        justifyContent: "flex-end" // Align button to the right
+      }}>
     <Button
       onClick={() => setShowModal(false)}
       variant="contained"
