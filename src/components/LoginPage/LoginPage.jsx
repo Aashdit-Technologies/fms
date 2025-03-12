@@ -6,7 +6,8 @@ import { FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import "./LoginPage.css";
-import Odisha from "../../assets/od-logo.png";
+import Odisha from "../../assets/odishalogo.png";
+import LeftImg from "../../assets/left-img.png";
 import { IoKeySharp } from "react-icons/io5";
 
 const LoginPage = () => {
@@ -43,9 +44,18 @@ const LoginPage = () => {
     <div className="login_main">
       <div className="container">
         <div className="log-logo-sec">
-          <Link to="/">
-            <img src={Odisha} alt="" />
+          <Link to="/" style={{textDecoration: "none"}}>
+              <div className="logo_sec_main" style={{display: "flex", alignItems: "center", justifyContent: "start", textDecoration: "none", gap:"10px"}}>
+                <img src={Odisha} alt="" />
+                <div className="logo_head mt-3">
+                  <h2>FILE MANAGEMENT SYSTEM</h2>
+                  <h6>Higher Education Information & Management System</h6>
+                </div>
+              </div>
           </Link>
+        </div>
+        <div className="left_fig">
+          <img src={LeftImg} alt="" />
         </div>
       </div>
       <div className="container-fluid">

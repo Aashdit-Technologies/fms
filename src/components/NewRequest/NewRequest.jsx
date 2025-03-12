@@ -33,7 +33,7 @@ import {
   Pagination,
 } from "@mui/material";
 
-import DataTable from "react-data-table-component";
+import DataTable, { defaultThemes } from "react-data-table-component";
 
 import { Autocomplete, TextField, Button } from "@mui/material";
 
@@ -550,6 +550,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       document.body.style.overflow = "unset";
     }
   };
+  
   const columns = [
     {
       name: "SL",

@@ -12,7 +12,7 @@ export default defineConfig({
 // export default defineConfig({
 //   plugins: [react()],
 //   server: {
-//     // host:'192.168.3.141',
+//     host:'192.168.29.116',
 //     port: 3000,
 //   },
 // });

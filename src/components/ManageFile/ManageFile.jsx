@@ -198,8 +198,6 @@ const ManageFile = () => {
   };
 
   const resetForm = () => {
-    setSelectedOffice(null);
-    setSelectedDepartment(null);
     setSelectedFileRTL(null);
     setFormTitle("");
     setFormSubject("");
@@ -613,12 +611,7 @@ const ManageFile = () => {
                         }
                         variant="outlined"
                         fullWidth
-                        error={isRoomSelected && !selectedRack}
-                        helperText={
-                          isRoomSelected && !selectedRack
-                            ? "Rack is required when room is selected"
-                            : ""
-                        }
+                        
                       />
                     )}
                   />
@@ -649,12 +642,7 @@ const ManageFile = () => {
                         }
                         variant="outlined"
                         fullWidth
-                        error={isRoomSelected && !selectedCell}
-                        helperText={
-                          isRoomSelected && !selectedCell
-                            ? "Cell is required when room is selected"
-                            : ""
-                        }
+                        
                       />
                     )}
                   />

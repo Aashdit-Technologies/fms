@@ -464,15 +464,30 @@ export const UploadModal = ({
               onClick={addRow}
               color="secondary"
               variant="contained"
-              startIcon={<FaPlus />}
-            ></Button>
+              size="small"
+              title="addrow"
+              sx={{
+                minWidth: "auto",
+                padding: "6px 10px",
+                marginRight: "8px",
+              }}
+            >
+              <FaPlus />
+            </Button>
             {rows.length > 1 && (
               <Button
                 onClick={() => removeRow(rows.length - 1)}
                 color="error"
                 variant="contained"
-                startIcon={<FaMinus />}
-              ></Button>
+                size="small"
+                sx={{
+                  minWidth: "auto",
+                  padding: "6px 10px",
+                  marginRight: "8px",
+                }}
+              >
+                <FaMinus />
+              </Button>
             )}
           </Box>
 
@@ -671,14 +686,14 @@ export const UploadModal = ({
                             variant="contained"
                             color="primary"
                             startIcon={
-                              <FaDownload style={{ margin: "0 !important" }} />
+                              <FaEye style={{ margin: "0 !important" }} />
                             }
                             onClick={() => handleDownload(enc, "download")}
                             sx={{
                               fontWeight: "light",
                             }}
                           >
-                            Download
+                            View
                           </Button>
                         ) : (
                           <Button

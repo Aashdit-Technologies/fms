@@ -45,7 +45,6 @@ const NoteSheet = ({
  
 
   const handleWriteNoteClick = () => {
-    // Ensure we have the latest content
     setWriteNote(true);
     if (onContentChange && editorContentRef.current !== undefined) {
       requestAnimationFrame(() => {
@@ -56,14 +55,13 @@ const NoteSheet = ({
   
   const handleCloseWriteNote = () => {
     setWriteNote(false);
-    // Save latest content before closing
     if (onContentChange && editorContentRef.current !== undefined) {
       requestAnimationFrame(() => {
         onContentChange(editorContentRef.current);
       });
     }
   };
-
+  
 
 
  

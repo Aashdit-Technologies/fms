@@ -575,6 +575,7 @@ const Correspondence = ({
 // Mutation for fetching the link
 const fetchLinkMutation = useMutation({
   mutationFn: async ({  corrId }) => {
+    debugger
     
     
     try {
@@ -607,6 +608,8 @@ const fetchLinkMutation = useMutation({
 
 // Handler function for copying the link of a row
 const handleCopyRowLink = async (row) => {
+
+  
   if (!row.corrId) {
     toast.error("No ID available for this row");
     return;
@@ -634,20 +637,33 @@ const handleCopyRowLink = async (row) => {
     if (!rawUrl) {
       throw new Error("Invalid link format.");
     }
-
+    console.log("URL 1:", rawUrl);
     const url = rawUrl.startsWith("http") ? rawUrl.trim() : `${rawUrl.trim()}`;
     const anchorTag = `<a href="${BASE_URL.replace(/\/$/, "")}/${url.replace(/^\//, "")}" target="_blank">${label.trim()}</a>`;
 
+    console.log("Anchor Tag:", anchorTag);
+    console.log("URL 2:", url);
 
-    
     setTimeout(async () => {
       try {
-        await navigator.clipboard.write([
+        const clipboardData = [
           new ClipboardItem({
             "text/html": new Blob([anchorTag], { type: "text/html" }),
             "text/plain": new Blob([`${label.trim()} | ${url}`], { type: "text/plain" }),
           }),
-        ]);
+        ];
+    
+        // Log the data you're about to write to the clipboard
+        console.log("Clipboard Data:", {
+          textHtml: anchorTag,
+          textPlain: `${label.trim()} | ${url}`,
+        });
+    
+        // Write the data to the clipboard
+        await navigator.clipboard.write(clipboardData);
+
+        console.log("Link copied to clipboard!");
+
       } catch (err) {
         // console.warn("Clipboard API failed, using fallback...");
     
@@ -687,15 +703,6 @@ const handleCopyRowLink = async (row) => {
     }));
   }
 };
-
-
-
-
-
-
-
-
-
 
   const columns = [
     {
@@ -816,7 +823,7 @@ const handleCopyRowLink = async (row) => {
                   onClick={() => download(row)}
                   title="Download"
                 >
-                  <FaDownload size={16} />
+                  <FaEye size={16} />
                 </StyledButton>
               ) : (
                 <StyledButton
@@ -854,7 +861,7 @@ const handleCopyRowLink = async (row) => {
                 onClick={() => download(row)}
                 title="Download"
               >
-                <FaDownload size={16} />
+                <FaEye size={16} />
               </StyledButton>
             </>
           )}

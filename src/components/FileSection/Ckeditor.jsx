@@ -40,8 +40,7 @@ const Ckeditor = ({
 
       if (selectedValue) {
         setSelectedItem(selectedValue.label);
-        setSelectedNote(selectedValue.value); // Set selected note data
-        setIsOpen(false);
+        setSelectedNote(selectedValue.value); 
 
         // Generate the hyperlink for editor content
         const linkHTML = `<a href="#" class="noting-link" data-note-index="${selectedValue.label}" 
@@ -96,6 +95,11 @@ const Ckeditor = ({
     e.stopPropagation();
     setIsOpen((prev) => !prev);
   }, []);
+  useEffect(() => {
+    // Set the initial state to true when the page loads (for example)
+    setIsOpen(true);
+  }, []);
+  
 
   const handlePrint = () => {
     if (modalRef.current) {
@@ -132,14 +136,14 @@ const Ckeditor = ({
       links[i].target = "_blank";
       links[i].style.color = "#007bff";
     }
-
+    
     return temp.innerHTML;
   };
 
   return (
     <>
       <div ref={accordionRef} className="editor-container">
-        <Accordion defaultActiveKey="0" className="custom-accordion">
+        <Accordion activeKey={isOpen ? "0" : null} className="custom-accordion">
           <Accordion.Item eventKey="0">
             <Accordion.Header>
               <div className="d-flex justify-content-between align-items-center w-100">
@@ -159,16 +163,16 @@ const Ckeditor = ({
                       </MenuItem>
                     ))}
                   </Select>
-                </div>
                   <span className="toggle-icon" onClick={toggleAccordion}>
                     {isOpen ? <FaPlus /> : <FaMinus />}
                   </span>
+                </div>
               </div>
             </Accordion.Header>
             <Accordion.Body>
               <SunEditorComponent
                 content={content}
-                placeholder="Enter your task action here..."
+                placeholder=""
                 onContentChange={handleEditorChange}
                 additionalDetails={additionalDetails}
               />

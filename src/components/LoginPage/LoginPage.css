@@ -4,7 +4,7 @@
     align-items: center;
     height: 100vh;
     overflow: hidden;
-    background: url(/src/assets/Login-Page.jpg);
+    background: url(/src/assets/Login-Page.png);
     background-size: cover;
     width: 100%;
 }
@@ -84,6 +84,9 @@
         inset 3px 3px 2px #fff;
     border-radius: 30px;
 }
+.css-ymlv7e .css-qwdxx6{
+    padding: 9.5px 0px 8.5px 14px;
+}
 
 .content .form {
     position: relative;
@@ -143,9 +146,28 @@
     position: absolute;
     top: 5%;
     left: 4%;
-    width: 25%;
 }
 .log-logo-sec img{
+    width: 8%;
+    filter: brightness(0) invert(1);
+    object-fit: cover;
+}
+.logo_head h2{
+    color: #fff;
+    font-size: 22px;
+    font-weight: 600;
+}
+.logo_head h6{
+    color: #fff;
+    font-size: 13px;
+}
+.left_fig{
+    width: 60%;
+    text-align: center;
+    margin: 20% auto 0;
+    /* width: 5%; */
+}
+.left_fig img{
     width: 100%;
     object-fit: cover;
 }

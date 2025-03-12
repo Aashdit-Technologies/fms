@@ -17,7 +17,7 @@ const ModalEditor = ({ defaultText, onTextUpdate }) => {
 
   const config = {
     readonly: false,
-    // placeholder: "Start typing...",
+    placeholder: "",
     height:"300px",
     askBeforePasteHTML: false,
     askBeforePasteFromWord: false,
