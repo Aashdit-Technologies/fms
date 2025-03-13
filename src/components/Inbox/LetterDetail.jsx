@@ -330,16 +330,10 @@ const handleConfirmUrgent = async () => {
         const officeData = Array.isArray(officeResponse.data.data)
           ? officeResponse.data.data
           : [];
-  
-      
-  
-        
+
         const deptIdUser = letterDataView.deptIdUser; 
         const officeIdUser = letterDataView.officeIdUser;
-  
-      
-  
-        
+
         const filteredDepartments = departmentData.filter(
           (dept) => dept.departmentId === deptIdUser
         );

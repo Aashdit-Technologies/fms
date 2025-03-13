@@ -102,7 +102,7 @@ const ManageRack = () => {
   const [activeKey, setActiveKey] = useState("1");
   const [rack, setRack] = useState({
     rackNumber: "",
-    noOfCell: "",
+    noOfCell: 1,
     roomId: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -194,7 +194,7 @@ const ManageRack = () => {
       if (validateInput(value)) {
         setRack((prev) => ({ ...prev, [name]: value }));
       } else {
-        toast.warning("Only alphanumeric characters and .,/- & () are allowed");
+        // toast.warning("Only alphanumeric characters and .,/- & () are allowed");
       }
       return;
     }
@@ -259,7 +259,7 @@ const ManageRack = () => {
           ? "Rack updated successfully!"
           : "Rack added successfully!"
       );
-      setRack({ rackNumber: "", noOfCell: "", roomId: "" }); // Reset the form
+      setRack({ rackNumber: "", roomId: "" }); // Reset the form
       setEditingRackId(null); 
       setActiveKey("1"); 
     } catch (error) {
@@ -291,7 +291,7 @@ const ManageRack = () => {
       );
       setRackData(sortData(updatedData));
       toast.success(
-        `Rack Status is ${rack.isActive ? "Activated" : "Inactivated "} successfully`
+        `Rack Status is ${rack.isActive ? "Inactivated" : "Activated "} successfully`
       );
       fetchRackData();
     } catch (error) {
@@ -311,7 +311,7 @@ const ManageRack = () => {
   };
 
   const handleReset = () => {
-    setRack({ rackNumber: "", noOfCell: "", roomId: "" });
+    setRack({ rackNumber: ""  , roomId: "" });
     setEditingRackId(null);
   };
 
@@ -355,7 +355,7 @@ const ManageRack = () => {
             size="small"
             sx={{ minWidth: "auto" }}
             onClick={() => handleStatusToggle(row)}
-            title={row.isActive ? "In-Active" : "Active"}
+            title={row.isActive ? "Inactive" : "Active"}
           >
             {row.isActive ? <FaLock /> : <FaLockOpen />}
           </Button>
@@ -477,11 +477,11 @@ const ManageRack = () => {
                   error={
                     !validateInput(rack.rackNumber) && rack.rackNumber !== ""
                   }
-                  // helperText={
-                  //   !validateInput(rack.rackNumber) && rack.rackNumber !== ""
-                  //     ? "Only alphanumeric and .,/- & () characters allowed"
-                  //     : ""
-                  // }
+                  helperText={
+                    !validateInput(rack.rackNumber) && rack.rackNumber !== ""
+                      ? "Only alphanumeric and .,/- & () characters allowed"
+                      : ""
+                  }
                   inputProps={{
                     maxLength: 50,
                   }}
@@ -503,12 +503,12 @@ const ManageRack = () => {
                   margin="normal"
                   type="number"
                   placeholder="Enter number of cells"
-                  error={rack.noOfCell < 0}
-                  // helperText={
-                  //   rack.noOfCell < 0 ? "Number must be greater than 0" : ""
-                  // }
+                  error={rack.noOfCell < 1}
+                  helperText={
+                    rack.noOfCell < 1 ? "Number must be greater than 0" : ""
+                  }
                   inputProps={{
-                    min: 0,
+                    min: 1,
                     max: 9999,
                   }}
                 />

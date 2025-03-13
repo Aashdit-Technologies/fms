@@ -4062,7 +4062,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
       </Modal>
 
  {/* new letter table share data data */}
-        <Modal
+        {/* <Modal
             show={showModalShare}
             onHide={() => (!isSending ? setShowModalShare(false) : null)} 
             backdrop="static"
@@ -4084,16 +4084,16 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                 {isSending ? "Sending..." : "Confirm"}
               </Button>
             </Modal.Footer>
-        </Modal>
+        </Modal> */}
 
 
-      <Modal
+       <Modal
         show={showModalShare}
         onHide={() => (!isSending ? setShowModalShare(false) : null)}
         backdrop="static"
         keyboard={false}
         centered
-        size="lg"
+        size="md"
       >
         <Modal.Header 
           closeButton={!isSending}
@@ -4171,7 +4171,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
             </div>
           </div>
         </Modal.Body>
-      </Modal>
+      </Modal> 
 
     <Modal
       show={showLetterModal}

@@ -603,7 +603,7 @@ const CreateDraftModal = ({
       if (response.data.outcome) {
         toast.success(
           editMalady
-            ? "Draft updated successfully!"
+            ? "Draft Approved successfully!"
             : "Draft created successfully!"
         );
         resetForm();

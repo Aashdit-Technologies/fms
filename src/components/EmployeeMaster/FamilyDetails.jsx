@@ -255,34 +255,38 @@ const isValid =validateFamilyFields (rows);
               key={index}
               sx={{ borderBottom: "1px solid #ddd", pb: 2, mb: 2 }}
             >
-              {/* First Name */}
-              <Grid item xs={3} sx={{mb:2}}>
+              
+              <Grid item xs={3} sx={{ mb: 2 }}>
                 <TextField
                   fullWidth
-                 
                   label={
                     <>
-                      First Name <span style={{color:"red"}}>*</span>
+                      First Name <span style={{ color: "red" }}>*</span>
                     </>
                   }
                   value={row.firstName}
-                 
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (/^[A-Za-z]*$/.test(value)) {
+                   
+                    if (/^[A-Za-z\s]*$/.test(value)) {
                       handleChange(index, "firstName", value);
                       setErrors((prevErrors) => ({ ...prevErrors, [`firstName_${index}`]: "" }));
                     }
                   }}
                   onKeyDown={(e) => {
-                    if (!/[A-Za-z]/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete") {
+                    
+                    if (e.key === " " && !row.firstName.trim()) {
+                      e.preventDefault();
+                    }
+                    
+                    if (!/[A-Za-z\s]/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete") {
                       e.preventDefault();
                     }
                   }}
-                  autoComplete="off" 
+                  autoComplete="off"
                   inputProps={{
                     maxLength: 20,
-                    autoComplete: "off", 
+                    autoComplete: "off",
                   }}
                   InputProps={{ sx: { height: "50px" } }}
                   error={!!errors[`firstName_${index}`]}
@@ -291,39 +295,43 @@ const isValid =validateFamilyFields (rows);
               </Grid>
 
               {/* Last Name */}
-              <Grid item xs={3} sx={{mb:2}}>
-                <TextField
-                  fullWidth
-           
-                  label={
-                    <>
-                      Last Name<span style={{color:"red"}}>*</span>
-                    </>
-                  }
-                  value={row.lastName}
-                  
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^[A-Za-z]*$/.test(value)) {
-                      handleChange(index, "lastName", e.target.value)
-                      setErrors((prevErrors) => ({ ...prevErrors, [`lastName_${index}`]: "" }));
+              <Grid item xs={3} sx={{ mb: 2 }}>
+                  <TextField
+                    fullWidth
+                    label={
+                      <>
+                        Last Name <span style={{ color: "red" }}>*</span>
+                      </>
                     }
-                  }}
-                  onKeyDown={(e) => {
-                    if (!/[A-Za-z]/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete") {
-                      e.preventDefault();
-                    }
-                  }}
-                  inputProps={{
-                    maxLength: 20,
-                    autoComplete: "off", 
-                  }}
-                  autoComplete="off"
-                  InputProps={{ sx: { height: "50px" } }}
-                  error={!!errors[`lastName_${index}`]}
-                  helperText={errors[`lastName_${index}`]}
-                />
-              </Grid>
+                    value={row.lastName}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                     
+                      if (/^[A-Za-z\s]*$/.test(value)) {
+                        handleChange(index, "lastName", value);
+                        setErrors((prevErrors) => ({ ...prevErrors, [`lastName_${index}`]: "" }));
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      
+                      if (e.key === " " && !row.lastName.trim()) {
+                        e.preventDefault();
+                      }
+                     
+                      if (!/[A-Za-z\s]/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete") {
+                        e.preventDefault();
+                      }
+                    }}
+                    inputProps={{
+                      maxLength: 20,
+                      autoComplete: "off",
+                    }}
+                    autoComplete="off"
+                    InputProps={{ sx: { height: "50px" } }}
+                    error={!!errors[`lastName_${index}`]}
+                    helperText={errors[`lastName_${index}`]}
+                  />
+                </Grid>
 
               {/* Birth Date */}
               {/* <Grid item xs={3} sx={{mb:2}}>

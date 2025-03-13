@@ -685,29 +685,29 @@ export const UploadModal = ({
                           <Button
                             variant="contained"
                             color="primary"
-                            startIcon={
-                              <FaEye style={{ margin: "0 !important" }} />
-                            }
+                            size="small"
                             onClick={() => handleDownload(enc, "download")}
                             sx={{
-                              fontWeight: "light",
+                              minWidth: "auto",
+                              padding: "6px 10px",
+                              marginRight: "8px",
                             }}
                           >
-                            View
+                            <FaEye style={{ margin: "0 !important" }} />
                           </Button>
                         ) : (
                           <Button
                             variant="contained"
                             color="primary"
-                            startIcon={
-                              <FaEye style={{ margin: "0 !important" }} />
-                            }
+                            size="small"
                             onClick={() => handleDownload(enc, "view")}
                             sx={{
-                              fontWeight: "light",
+                              minWidth: "auto",
+                              padding: "6px 10px",
+                              marginRight: "8px",
                             }}
                           >
-                            View
+                            <FaEye style={{ margin: "0 !important" }} />
                           </Button>
                         )}
                       </TableCell>

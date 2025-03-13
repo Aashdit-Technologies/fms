@@ -104,6 +104,7 @@ const ManageRoom = () => {
   const [editingRoomId, setEditingRoomId] = useState(null);
   const token = useAuthStore.getState().token;
   const [totalRows, setTotalRows] = useState(0);
+  
 
   // Fetch Room Data
   const fetchRoomData = useCallback(async () => {
@@ -136,7 +137,7 @@ const ManageRoom = () => {
     if (isValidInput(value)) {
       setRoom((prev) => ({ ...prev, [name]: value }));
     } else {
-      toast.warning("Only alphanumeric characters and .,/- & () are allowed");
+      // toast.warning("Only alphanumeric characters and .,/- & () are allowed");
     }
   };
 
@@ -274,7 +275,7 @@ const ManageRoom = () => {
             size="small"
             sx={{ minWidth: "auto" }}
             onClick={() => handleStatusToggle(row)}
-            title={row.isActive ? "Inactivate" : "Activate"}
+            title={row.isActive ?  "Inactivate": "Activate"}
           >
             {row.isActive ? <FaLock /> : <FaLockOpen />}
           </Button>
@@ -332,10 +333,8 @@ const ManageRoom = () => {
                   value={room.roomNumber}
                   onChange={handleInputChange}
                   placeholder="Enter Room"
-                  // helperText="Only alphanumeric characters and .,/- & () are allowed"
-                  error={
-                    !isValidInput(room.roomNumber) && room.roomNumber !== ""
-                  }
+                  helperText="Only alphanumeric characters and .,/- & () are allowed"
+                 
                   inputProps={{
                     maxLength: 50,
                   }}
@@ -358,10 +357,7 @@ const ManageRoom = () => {
                   value={room.description}
                   onChange={handleInputChange}
                   placeholder="Enter room description"
-                  // helperText="Only alphanumeric characters and .,/- & () are allowed"
-                  error={
-                    !isValidInput(room.description) && room.description !== ""
-                  }
+                  helperText="Only alphanumeric characters and .,/- & () are allowed"
                   inputProps={{
                     maxLength: 500,
                   }}

@@ -1,4 +1,4 @@
- .role-menu-container {
+ /* .role-menu-container {
   padding: 20px;
 }
 
@@ -122,7 +122,7 @@
   margin: 15px 0;
 }
 
-/* Responsive adjustments */
+
 @media (max-width: 768px) {
   .menu-item-header {
     flex-direction: column;
@@ -138,4 +138,159 @@
     margin-top: 8px;
     align-self: flex-start;
   }
+} */
+
+
+.role-menu-container {
+  padding: 20px;
+}
+
+.card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background: #1a5f6a;
+  color: #fff;
+  padding: 15px 20px;
+  border-radius: 8px 8px 0 0;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.menus-items-container {
+  margin-top: 20px;
+}
+
+.menus-items-header {
+  background: #cfcfe9;
+  color: #000;
+  padding: 15px 20px;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+}
+
+.menus-items-header h6 {
+  margin: 0;
+  flex: 1;
+}
+
+.menus-items-list {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  background: #fff;
+}
+
+.menus-item {
+  margin-bottom: 10px;
+  background: #f9f9f9;
+  margin-top: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+  padding: 10px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.menus-item.checked {
+  background-color: #e0f7fa;  
+  /* background-color: #caecec; */
+}
+
+.menus-item-header {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.menus-item-header.checked {
+  background-color: #e0f7fa; /* Light blue background for checked items */
+}
+
+.menus-item-checkbox {
+  margin-right: 10px;
+}
+
+.menus-item-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.menus-item-title label {
+  margin: 0;
+  cursor: pointer;
+}
+
+.menus-item-url {
+  flex: 1;
+  color: #666;
+  text-align: right; 
+}
+.menus-item-urls{
+  flex: 1;
+  color: #000;
+  text-align: right; 
+}
+
+.menus-item-children {
+  margin-left: 30px; /* Increase gap between parent and child */
+  padding-left: 20px;
+  border-left: 2px solid #ddd;
+  margin-top: 10px; /* Add spacing between parent and child */
+}
+
+.menus-item-children .menu-item {
+  background: #f0f0f0; /* Different background for child items */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.toggle-icon {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+  line-height: 24px;
+  margin-right: 10px;
+  color: #207785;
+  cursor: pointer;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.toggle-icon:hover {
+  background-color: #207785;
+  color: #fff;
+}
+
+.btn-success {
+  background-color: #207785;
+  border-color: #207785;
+}
+
+.btn-success:hover {
+  background-color: #165a63;
+  border-color: #165a63;
+}
+
+.btn-outline-danger {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: #fff;
 }

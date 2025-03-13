@@ -495,7 +495,11 @@ const ManageFile = () => {
                     id="keywordInput"
                     size="small"
                     variant="outlined"
-                    label="Keyword"
+                    label={
+                      <span>
+                        Keyword 
+                      </span>
+                    }
                     fullWidth
                     value={formKeyword}
                     onChange={(e) => setFormKeyword(e.target.value)}

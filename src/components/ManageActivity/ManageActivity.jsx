@@ -148,7 +148,7 @@ const ManageActivity = () => {
     if (validateInput(value)) {
       setActivity((prev) => ({ ...prev, [name]: value }));
     } else {
-      toast.warning("Only alphanumeric characters and .,/- & () are allowed");
+      // toast.warning("Only alphanumeric characters and .,/- & () are allowed");
     }
   };
 
@@ -156,7 +156,7 @@ const ManageActivity = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!activity.activityCode || !activity.activityName) {
+    if (!activity.activityCode || !activity.activityName || !activity.activityRemarks) {
       toast.warning("Please fill out all required fields.");
       setIsSubmitting(false);
       return;
@@ -310,7 +310,7 @@ const ManageActivity = () => {
             color={row.isActive ? "error" : "success"}
             size="small"
             sx={{ minWidth: "auto" }}
-            title={row.isActive ? "Deactivate" : "Activate"}
+            title={row.isActive ? "Inactivate" : "Activate"}
             onClick={() => handleStatusToggle(row)}
           >
             {row.isActive ? <FaLock /> : <FaLockOpen />}
@@ -405,10 +405,10 @@ const ManageActivity = () => {
                         activity.activityName !== ""
                       }
                       helperText={
-                        !validateInput(activity.activityName) &&
-                        activity.activityName !== ""
+                        validateInput(activity.activityName) &&
+                        activity.activityName == ""
                           ? "Only alphanumeric and .,/- & () characters allowed"
-                          : ""
+                          : "Only alphanumeric and .,/- & () characters allowed"
                       }
                     />
                   </div>
@@ -434,10 +434,10 @@ const ManageActivity = () => {
                         activity.activityRemarks !== ""
                       }
                       helperText={
-                        !validateInput(activity.activityRemarks) &&
-                        activity.activityRemarks !== ""
+                        validateInput(activity.activityRemarks) &&
+                        activity.activityRemarks == ""
                           ? "Only alphanumeric and .,/- & () characters allowed"
-                          : ""
+                          : "Only alphanumeric and .,/- & () characters allowed"
                       }
                       InputProps={{
                         style: customStyles.textarea,

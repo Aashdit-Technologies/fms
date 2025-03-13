@@ -99,28 +99,22 @@ const NoteSheet = ({
   };
 
   const convertHTMLToText = (html) => {
-    // Create a temporary div element
     const temp = document.createElement("div");
   
-    // Set the HTML content
     temp.innerHTML = html;
   
-    // Loop through all <a> tags and set target="_blank" to open in a new tab
     const links = temp.getElementsByTagName("a");
     for (let i = 0; i < links.length; i++) {
-      // Ensure the link opens in a new tab
       links[i].target = "_blank";
-      links[i].style.color = '#007bff';  // Default color for links (you can customize this)
+      links[i].style.color = '#007bff';  
     }
   
-    // Return the updated HTML where <a> tags have target="_blank" and other tags are removed
     return temp.innerHTML;
   };
   
 
   const badgeColors = ["#ff5733", "#1e90ff", "#28a745", "#ffcc00"];
 
-  // Memoize rendered notes to optimize performance
   const renderedNotes = useMemo(() => {
     return notes.map((note, index) => (
       <Card.Body

@@ -17,7 +17,7 @@ import {
   InputLabel,
   CircularProgress,
 } from "@mui/material";
-// import UserDropdown from "./Profile";
+import UserDropdown from "./Profile";
 
 const Header = ({ collapsed }) => {
   const location = useLocation();
@@ -226,7 +226,7 @@ const Header = ({ collapsed }) => {
                   )}
                 </FormControl>
               </div>
-              {/* <UserDropdown/> */}
+              <UserDropdown/>
 
               <div className="header-right-sec-2 ms-3 d-flex gap-2">
                 {!isDashboardPage && (

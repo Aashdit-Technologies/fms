@@ -42,7 +42,6 @@ const Ckeditor = ({
         setSelectedItem(selectedValue.label);
         setSelectedNote(selectedValue.value); 
 
-        // Generate the hyperlink for editor content
         const linkHTML = `<a href="#" class="noting-link" data-note-index="${selectedValue.label}" 
         style="color: #007bff; text-decoration: underline; font-weight: 600; cursor: pointer;">
         ${selectedValue.label}
@@ -51,7 +50,7 @@ const Ckeditor = ({
         const newContent = `${content}${linkHTML}&nbsp;`;
         onContentChange?.(newContent);
 
-        setModalOpen(false); // Open the modal after inserting the link
+        setModalOpen(false); 
       }
     },
     [content, onContentChange, options]

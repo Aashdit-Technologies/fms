@@ -29,6 +29,13 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
     askBeforePasteFromWord: false,
     defaultActionOnPaste: 'insert_clear_html',
     events: {
+      beforePaste: (e) => {
+        if (editor.current) {
+          // Get the current selection or cursor position
+          const range = editor.current.selection.get();
+          setCursorPosition(range); // Save current cursor position
+        }
+      },
       beforeChange: () => {
         if (editor.current) {
           const range = editor.current.selection.get();
@@ -59,6 +66,18 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
         }
         if (onBlur) onBlur(); // Call the onBlur prop if available
       },
+      afterPaste: (e) => {
+        // Get pasted content and insert it at the cursor
+        const pastedContent = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain');
+        
+        // If no content to paste, return
+        if (!pastedContent) return;
+
+        // Insert pasted content directly into the current position (no new line)
+        editor.current.selection.insertHTML(pastedContent);
+
+        e.preventDefault();  // Prevent default paste behavior
+      },
     },
   };
 
@@ -72,7 +91,7 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
     <div className="editor-wrapper">
       <JoditEditor
         ref={editor}
-        value={currentContent}  // Use the local state `currentContent`
+        value={currentContent} 
         config={config}
         tabIndex={1}
         onInput={(e) => handleContentInput(e.target.innerHTML)} 
@@ -90,6 +109,9 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
           background: #f8f9fa;
           border-top: 1px solid #ddd;
         }
+          .editor-wrapper p{
+            width: fit-content !important;
+          }
       `}</style>
     </div>
   );

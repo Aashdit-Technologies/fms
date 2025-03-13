@@ -204,6 +204,8 @@ const ManageFile = () => {
   
   // Function to Reset Form Fields
   const resetForm = () => {
+    setSelectedOffice(null);
+    setSelectedDepartment(null);
     setSelectedFileRTL(null);
     setFormTitle("");
     setFormSubject("");

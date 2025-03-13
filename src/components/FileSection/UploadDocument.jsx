@@ -94,7 +94,6 @@ const UploadDocument = ({
   const [isMoveToRackModalOpen, setIsMoveToRackModalOpen] = useState(false);
 
   const handleRadioButtonChange = (index) => {
-    console.log("Selected Row:", index); // Debugging
     setSelectedRow(index);
     setIsSendEnabled(true);
     const actionValue = apiResponseData[index]?.empDeptRoleId || null;
@@ -107,9 +106,6 @@ const UploadDocument = ({
   };
 
   const handleSend = () => {
-    console.log("Selected Row:", selectedRow); // Log for debugging
-    console.log("Receiver Emp Role Map:", receiverEmpRoleMap); // Log for debugging
-    console.log("Modal Action:", modalAction); // Log for debugging
 
     if (selectedRow !== null && selectedRow !== undefined) {
       newEndpointMutation.mutate();
@@ -264,45 +260,45 @@ const UploadDocument = ({
     return dayjs(date).format("DD/MM/YYYY");
   };
 
+
   const validateDocuments = (rows, initialContent) => {
+    debugger;
     let isAnyRowStarted = false;
 
-    if (initialContent.trim()) {
-      return true;
+    const isContentEmpty = !initialContent.trim() || initialContent.replace(/\s/g, '') === "<p><br></p>";
+    const isRowEmpty = rows.every(row => !(row.subject || row.type || row.date || row.letterNumber || row.document));
+    if (isContentEmpty || isRowEmpty) {
+        toast.error("Please enter text in the editor or complete a row with document entry.");
+        return false; 
     }
 
+
+    
     for (const row of rows) {
-      const { subject, type, letterNumber, date, document } = row;
+        const { subject, type, letterNumber, date, document } = row;
 
-      const isRowStarted = subject || type || date || letterNumber || document;
+        const isRowStarted = subject || type || date || letterNumber || document;
+        
+        if (isRowStarted) {
+            isAnyRowStarted = true;
 
-      if (isRowStarted) {
-        isAnyRowStarted = true;
-
-        if (
-          !subject ||
-          !type ||
-          !date ||
-          (type === "LETTER" && !letterNumber) ||
-          !document
-        ) {
-          toast.error(
-            "All fields in each row must be filled before submission."
-          );
-          return false;
+            if (
+                !subject ||
+                !type ||
+                !date ||
+                (type === "LETTER" && !letterNumber) ||
+                !document
+            ) {
+                toast.error("All fields in each row must be filled before submission.");
+                return false;
+            }
         }
-      }
-    }
-
-    if (!initialContent.trim() && !isAnyRowStarted) {
-      toast.error(
-        "Please enter text in the editor or complete a document entry."
-      );
-      return false;
     }
 
     return true;
-  };
+};
+
+
 
   const handleDirectSubmit = async () => {
     await handleSubmit("Save");
@@ -315,7 +311,12 @@ const UploadDocument = ({
       letterDate: row.date,
     }));
 
+    // Prepare uploadedDocuments array (only non-falsy values)
     const uploadedDocuments = rows.map((row) => row.document).filter(Boolean);
+
+    // Validate before submission
+    const isValid = validateDocuments(rows, initialContent);
+    if (!isValid) return;
 
     try {
       const response = await mutation.mutateAsync({
@@ -336,7 +337,6 @@ const UploadDocument = ({
     mutationFn: async (data) => {
       setIsLoading(true);
       try {
-        console.log(initialContent,"initialContent11");
         
         const encryptedDataObject = encryptPayload({
           fileId: fileDetails.data.fileId,

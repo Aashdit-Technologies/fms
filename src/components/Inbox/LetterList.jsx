@@ -298,15 +298,16 @@ const handleViewLetterDetail = async (row, tabCode) => {
 
 const NewLettercolumns = [
   {
-    name: 'Sl No',
+    name: '#',
     cell: (row, index) => index + 1,
     sortable: true,
-    width: '80px',
+   width:"80px"
   },
   {
     name: 'Diary No.',
     selector: row => row.diaryNumber || '',
     sortable: true,
+   
     cell: row => (
       <div 
         style={{
@@ -323,14 +324,14 @@ const NewLettercolumns = [
   },
   {
     name: 'Letter No. & Date',
-    
+  
     cell: (row) => (
       <div
         style={{
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
-          maxWidth: "200px",
+          maxWidth: "150px",
         }}
         title={`${row?.letterNumber || "N/A"} / ${row?.senderDate || "N/A"}`}
       >
@@ -344,13 +345,14 @@ const NewLettercolumns = [
     name: 'Letter Source',
     selector: row => row.letterSource || '',
     sortable: true,
+    
     cell: row => (
       <div 
         style={{
           whiteSpace: 'nowrap', 
           overflow: 'hidden', 
           textOverflow: 'ellipsis', 
-          maxWidth: '250px'
+          maxWidth: '150px'
         }} 
         title={row.letterSource || ''}
       >
@@ -364,6 +366,7 @@ const NewLettercolumns = [
     name: 'Send Date',
     selector: row => row.senderDate || '',
     sortable: true,
+   
     cell: row => (
       <div 
         style={{
@@ -382,6 +385,7 @@ const NewLettercolumns = [
     name: 'Sender',
     selector: row => row.sender || '',
     sortable: true,
+     
     cell: row => (
       <div 
         style={{
@@ -400,6 +404,7 @@ const NewLettercolumns = [
     name: 'Updated Date & Time',
     selector: row => row.updatedDateTime || 'NA',
     sortable: true,
+  
     cell: row => (
       <div 
         style={{
@@ -418,13 +423,14 @@ const NewLettercolumns = [
     name: 'Memo No. & Date',
     selector: row => row.memoNo || '',
     sortable: true,
+   
     cell: row => (
       <div 
         style={{
           whiteSpace: 'nowrap', 
           overflow: 'hidden', 
           textOverflow: 'ellipsis', 
-          maxWidth: '100px',
+          maxWidth: '150px',
           
         }} 
         title={row.memoNo || ''}
