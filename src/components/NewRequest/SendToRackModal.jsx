@@ -39,6 +39,7 @@ const SendToRackModal = ({ open, onClose, selectedFile, onSuccess }) => {
     mutationFn: async () => {
       const payload = {
         fileId: selectedFile.fileId,
+        fileRecptId: selectedFile.fileRecptId,
         roomId: selectedRoom,
         rackId: selectedRack,
         cellNo: selectedCell,
@@ -47,7 +48,7 @@ const SendToRackModal = ({ open, onClose, selectedFile, onSuccess }) => {
       const encryptedMessage = encryptPayload(payload);
 
       return api.post(
-        "/file/update-room-rack-cell",
+        "/file/close-file",
         { dataObject: encryptedMessage },
         {
           headers: { Authorization: `Bearer ${token}` },

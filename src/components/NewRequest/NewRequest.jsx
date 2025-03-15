@@ -167,6 +167,8 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
 
   const [nRData, setNRData] = useState({ prioritylst: [], receiptList: [] });
 
+  const [filterText, setFilterText] = useState("");
+
   const [loading, setLoading] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -199,6 +201,15 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
   console.log("filedetails", fileDetails);
 
   const Navigate = useNavigate();
+
+  const filteredData = nRData.data?.filter((item) => {
+    return (
+      item.fileNo?.toLowerCase().includes(filterText.toLowerCase()) ||
+      item.fileName?.toLowerCase().includes(filterText.toLowerCase()) ||
+      item.status?.toLowerCase().includes(filterText.toLowerCase()) ||
+      item.sentOn?.toLowerCase().includes(filterText.toLowerCase())
+    );
+  });
 
   const conditionalRowStyles = [
     {
@@ -550,7 +561,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       document.body.style.overflow = "unset";
     }
   };
-  
+
   const columns = [
     {
       name: "SL",
@@ -745,12 +756,22 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
             )}
           />
         </div>
+        <div className="form-group col-md-3"></div>
+        <div className="form-group col-md-3 m-0">
+          <TextField
+            size="small"
+            placeholder="Search"
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            style={{width: "100%"}}
+          />
+        </div>
 
         <div className="col-md-12 mt-3">
           <div className="table-responsive p-3">
             <DataTable
               columns={columns}
-              data={nRData.data || []}
+              data={filteredData || []}
               progressPending={loading}
               progressComponent={<PageLoader />}
               customStyles={customStyles}
@@ -935,8 +956,8 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
                     "File Name": fileDetails.fileName,
                     Subject: fileDetails.subject || "NA",
                     Title: fileDetails.title || "NA",
-                    Activity:fileDetails.activity || "NA",
-                    Custodian:fileDetails.custodian || "NA",
+                    Activity: fileDetails.activity || "NA",
+                    Custodian: fileDetails.custodian || "NA",
 
                     // "From Employee": fileDetails.fromEmployee,
 
@@ -951,7 +972,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
                     Rack: fileDetails.rackNumber,
 
                     Cell: fileDetails.cellNumber,
-                    "Created By":fileDetails.createdBy || "NA",
+                    "Created By": fileDetails.createdBy || "NA",
                     "Created Date": fileDetails.sentOn,
                   }).map(([key, value]) => (
                     <TableRow key={key}>

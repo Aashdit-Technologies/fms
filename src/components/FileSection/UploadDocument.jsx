@@ -62,7 +62,7 @@ const UploadDocument = ({
   const [rows, setRows] = useState([
     {
       subject: "",
-      type: "Select",
+      type: "",
       letterNumber: "",
       date: null,
       document: null,
@@ -93,6 +93,15 @@ const UploadDocument = ({
   const [selectedFiles, setSelectedFiles] = useState({});
   const [isMoveToRackModalOpen, setIsMoveToRackModalOpen] = useState(false);
 
+  const options = [
+    { value: "LETTER", label: "Letter" },
+    { value: "DOCUMENT", label: "Document" },
+    { value: "DRAWING", label: "Drawing" },
+    { value: "MAP", label: "Map" },
+    { value: "SKETCH", label: "Sketch" },
+    { value: "OTHER", label: "Other" },
+  ];
+
   const handleRadioButtonChange = (index) => {
     setSelectedRow(index);
     setIsSendEnabled(true);
@@ -106,7 +115,6 @@ const UploadDocument = ({
   };
 
   const handleSend = () => {
-
     if (selectedRow !== null && selectedRow !== undefined) {
       newEndpointMutation.mutate();
     } else {
@@ -120,13 +128,13 @@ const UploadDocument = ({
       ...prevRows,
       {
         subject: "",
-        type: "SELECT",
+        type: "",
         letterNumber: "",
         date: null,
         document: null,
       },
     ]);
-  }, []);
+  }, [setRows]); // ✅ Including `setRows` for better stability (optional)
 
   const handleRemoveRow = (index) => {
     if (rows.length > 1) {
@@ -138,60 +146,65 @@ const UploadDocument = ({
         return updatedFiles;
       });
 
-      toast.warning("Row removed successfully!");
+      // toast.warning("Row removed successfully!");
     }
   };
 
-  const getMissingFields = (row) => {
-    const missingFields = [];
-    if (!row.subject?.trim()) missingFields.push("Subject");
-    if (row.type === "SELECT") missingFields.push("Type");
-    if (row.type === "LETTER" && !row.letterNumber?.trim()) {
-      missingFields.push("Letter Number");
-    }
-    if (!row.date) missingFields.push("Date");
-    if (!row.document) missingFields.push("Document");
-    return missingFields;
-  };
+  // const getMissingFields = (row) => {
+  //   const missingFields = [];
+  //   if (!row.subject?.trim()) missingFields.push("Subject");
+  //   if (row.type === "SELECT") missingFields.push("Type");
+  //   if (row.type === "LETTER" && !row.letterNumber?.trim()) {
+  //     missingFields.push("Letter Number");
+  //   }
+  //   if (!row.date) missingFields.push("Date");
+  //   if (!row.document) missingFields.push("Document");
+  //   return missingFields;
+  // };
 
-  const isAnyFieldFilled = (row) => {
-    return (
-      row.subject?.trim() ||
-      row.type !== "SELECT" ||
-      (row.type === "LETTER" ? row.letterNumber?.trim() : false) ||
-      row.date ||
-      row.document
-    );
-  };
+  // const isAnyFieldFilled = (row) => {
+  //   return (
+  //     row.subject?.trim() ||
+  //     row.type !== "SELECT" ||
+  //     (row.type === "LETTER" ? row.letterNumber?.trim() : false) ||
+  //     row.date ||
+  //     row.document
+  //   );
+  // };
 
-  const isRowEmpty = (row) => {
-    if (row.type === "LETTER") {
-      return (
-        !row.subject?.trim() &&
-        row.type === "SELECT" &&
-        !row.letterNumber?.trim() &&
-        !row.date &&
-        !row.document
-      );
-    } else {
-      return (
-        !row.subject?.trim() &&
-        row.type === "SELECT" &&
-        !row.date &&
-        !row.document
-      );
-    }
-  };
+  // const isRowEmpty = (row) => {
+  //   if (row.type === "LETTER") {
+  //     return (
+  //       !row.subject?.trim() &&
+  //       row.type === "" &&
+  //       !row.letterNumber?.trim() &&
+  //       !row.date &&
+  //       !row.document
+  //     );
+  //   } else {
+  //     return (
+  //       !row.subject?.trim() &&
+  //       row.type === "" &&
+  //       !row.date &&
+  //       !row.document
+  //     );
+  //   }
+  // };
 
   const handleInputChange = (index, field, value) => {
-    const newRows = [...rows];
-
-    if (field === "type" && value !== "LETTER") {
-      newRows[index].letterNumber = "";
-    }
-
-    newRows[index][field] = value;
-    setRows(newRows);
+    setRows((prevRows) =>
+      prevRows.map((row, i) =>
+        i === index
+          ? {
+              ...row,
+              [field]: value,
+              ...(field === "type" && value !== "LETTER"
+                ? { letterNumber: "" }
+                : {}),
+            }
+          : row
+      )
+    );
   };
 
   const handleFileChange = (index, file) => {
@@ -260,50 +273,67 @@ const UploadDocument = ({
     return dayjs(date).format("DD/MM/YYYY");
   };
 
-
-  const validateDocuments = (rows, initialContent) => {
+  const validateForm = (rows, initialContent) => {
     debugger;
-    let isAnyRowStarted = false;
-
-    const isContentEmpty = !initialContent.trim() || initialContent.replace(/\s/g, '') === "<p><br></p>";
-    const isRowEmpty = rows.every(row => !(row.subject || row.type || row.date || row.letterNumber || row.document));
-    if (isContentEmpty || isRowEmpty) {
-        toast.error("Please enter text in the editor or complete a row with document entry.");
-        return false; 
+    const cleanedContent = initialContent.replace(/\s|&nbsp;/g, "").trim();
+    const isContentEmpty = !cleanedContent || cleanedContent === "<p><br></p>";
+  
+    const isRowsEmpty = rows.every(
+      (row) =>
+        !row.subject && !row.type && !row.date && !row.letterNumber && !row.document
+    );
+  
+    // ❌ Reject submission if both Notesheet and rows are empty
+    if (isContentEmpty && isRowsEmpty) {
+      toast.error("Please write some notes in the Notesheet or fill in at least one row.");
+      return false;
     }
-
-
-    
+  
+    // ✅ Allow submission if Notesheet has content, regardless of rows
+    if (!isContentEmpty) {
+      return true;
+    }
+  
+    // ✅ Allow submission if at least one row is fully filled
+    let isAnyRowPartiallyFilled = false;
+  
     for (const row of rows) {
-        const { subject, type, letterNumber, date, document } = row;
-
-        const isRowStarted = subject || type || date || letterNumber || document;
-        
-        if (isRowStarted) {
-            isAnyRowStarted = true;
-
-            if (
-                !subject ||
-                !type ||
-                !date ||
-                (type === "LETTER" && !letterNumber) ||
-                !document
-            ) {
-                toast.error("All fields in each row must be filled before submission.");
-                return false;
-            }
+      const isRowStarted = row.subject || row.type || row.date || row.letterNumber || row.document;
+  
+      if (isRowStarted) {
+        if (
+          !row.subject ||
+          !row.type ||
+          !row.date ||
+          (row.type === "LETTER" && !row.letterNumber) ||
+          !row.document
+        ) {
+          isAnyRowPartiallyFilled = true;
+          break;
         }
+      }
     }
-
+  
+    if (isAnyRowPartiallyFilled) {
+      toast.error("All fields in each row must be filled before submission.");
+      return false;
+    }
+  
     return true;
-};
-
-
+  };
+  
 
   const handleDirectSubmit = async () => {
     await handleSubmit("Save");
   };
   const handleSubmit = async (Mark) => {
+    const isValid = validateForm(rows, initialContent);
+
+    if (!isValid) {
+      return; // Prevent submission if validation fails
+    }
+
+    // If validation passes, proceed with submission
     const documents = rows.map((row) => ({
       docSubject: row.subject,
       letterType: row.type,
@@ -311,12 +341,7 @@ const UploadDocument = ({
       letterDate: row.date,
     }));
 
-    // Prepare uploadedDocuments array (only non-falsy values)
     const uploadedDocuments = rows.map((row) => row.document).filter(Boolean);
-
-    // Validate before submission
-    const isValid = validateDocuments(rows, initialContent);
-    if (!isValid) return;
 
     try {
       const response = await mutation.mutateAsync({
@@ -337,7 +362,6 @@ const UploadDocument = ({
     mutationFn: async (data) => {
       setIsLoading(true);
       try {
-        
         const encryptedDataObject = encryptPayload({
           fileId: fileDetails.data.fileId,
           note: initialContent || null,
@@ -397,7 +421,7 @@ const UploadDocument = ({
         }
       } catch (error) {
         throw error;
-      }finally {
+      } finally {
         setIsLoading(false);
       }
     },
@@ -440,7 +464,7 @@ const UploadDocument = ({
       } catch (error) {
         console.error("API Error:", error);
         throw error;
-      }finally {
+      } finally {
         setIsLoading(false);
       }
     },
@@ -561,7 +585,7 @@ const UploadDocument = ({
           error.message ||
           "Something went wrong during the API call";
         throw new Error(errorMessage);
-      }finally {
+      } finally {
         setIsLoading(false);
       }
     },
@@ -639,43 +663,21 @@ const UploadDocument = ({
 
                       <Grid item xs={2.4}>
                         <FormControl fullWidth>
-                          <TextField
-                            select
-                            label={
-                              <Typography>
-                                Type <span style={{ color: "red" }}>*</span>
-                              </Typography>
-                            }
-                            value={row.type || ""}
+                          <InputLabel>Type</InputLabel>
+                          <Select
+                            value={row.type}
                             onChange={(e) =>
                               handleInputChange(index, "type", e.target.value)
                             }
-                            // sx={{ height: "40px" }}
+                            label="Type"
                             size="small"
-                            SelectProps={{
-                              displayEmpty: true,
-                              renderValue: (value) => {
-                                if (value === "") {
-                                  return (
-                                    <em style={{ color: "gray" }}>
-                                      Select Letter Type
-                                    </em>
-                                  );
-                                }
-                                return value;
-                              },
-                            }}
                           >
-                            <MenuItem value="" disabled>
-                              <em>Select Letter Type</em>
-                            </MenuItem>
-                            <MenuItem value="LETTER">Letter</MenuItem>
-                            <MenuItem value="DOCUMENT">Document</MenuItem>
-                            <MenuItem value="DRAWING">Drawing</MenuItem>
-                            <MenuItem value="MAP">Map</MenuItem>
-                            <MenuItem value="SKETCH">Sketch</MenuItem>
-                            <MenuItem value="OTHER">Other</MenuItem>
-                          </TextField>
+                            {options.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </Select>
                         </FormControl>
                       </Grid>
 
@@ -760,8 +762,7 @@ const UploadDocument = ({
                                   ),
                                 },
                                 sx: {
-                                  "& .MuiInputBase-root": {
-                                  },
+                                  "& .MuiInputBase-root": {},
                                 },
                               },
                               actionBar: {

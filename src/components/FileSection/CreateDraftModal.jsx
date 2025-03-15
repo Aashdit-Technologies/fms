@@ -34,6 +34,7 @@ const CreateDraftModal = ({
 }) => {
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+console.log("editMalady" , editMalady);
 
   const [data, setData] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -81,20 +82,19 @@ const CreateDraftModal = ({
 
   useEffect(() => {
     if (officeNames?.data) {
-      // Set the data for letter content dropdown
-      setData(officeNames.data);
       if (editMalady && editMalady.tempType) {
         const selectedTemplate = officeNames.data.find(
           (template) => template.tempType === editMalady.tempType
         );
+  
         if (selectedTemplate) {
           setFormData((prev) => ({
             ...prev,
-            office: selectedTemplate.templateId,
+            office: selectedTemplate.templateId, // Ensure this is the correct field
             tempType: selectedTemplate.tempType,
-            contentss:
-              selectedTemplate.tempContent || editMalady.letterContent || "",
+            contentss: selectedTemplate.tempContent || editMalady.letterContent || "",
           }));
+  
           updatedContentRef.current =
             selectedTemplate.tempContent || editMalady.letterContent || "";
         }
@@ -602,9 +602,11 @@ const CreateDraftModal = ({
 
       if (response.data.outcome) {
         toast.success(
-          editMalady
+          action === "APPROVE"
             ? "Draft Approved successfully!"
-            : "Draft created successfully!"
+            : editMalady
+            ? "Draft Updated successfully!"
+            : "Draft Created successfully!"
         );
         resetForm();
         if (refetchData && typeof refetchData === "function") {
@@ -622,20 +624,28 @@ const CreateDraftModal = ({
     }
   };
 
+  useEffect(() => {
+    if (officeNames?.data) {
+      console.log("officeNames.data:", officeNames.data);
+      setData(officeNames.data); // Set data from officeNames
+    }
+  }, [officeNames]);
+
   const officeOptions = useMemo(() => {
-    if (!Array.isArray(data)) {
+    if (!Array.isArray(officeNames?.data)) {
+      console.error("officeNames.data is not an array:", officeNames?.data);
       return [];
     }
-
+  
     return [
-      { label: "None", value: "" },
-      ...data.map((item) => ({
-        label: item.tempType,
-        value: item.templateId,
-        tempContent: item.tempContent,
+      { label: "None", value: "" }, // Optional default option
+      ...officeNames.data.map((item) => ({
+        label: item.tempType, // Use tempType as the label
+        value: item.templateId, // Use templateId as the value
+        tempContent: item.tempContent, // Optional, for additional data
       })),
     ];
-  }, [data]);
+  }, [officeNames]);
 
   useEffect(() => {}, [officeOptions, formData.office]);
 

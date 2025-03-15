@@ -326,7 +326,7 @@ const ManageFile = () => {
             }}
           >
             <Box>
-              <form className="row" onSubmit={handleSubmit}>
+              <form className="row" onSubmit={handleSubmit} autoComplete="off">
                 {/* Office */}
                 <div className="form-group col-md-3">
                   <Autocomplete
@@ -346,7 +346,7 @@ const ManageFile = () => {
                         {...params}
                         label={
                           <span>
-                            Select Office{" "}
+                            Office{" "}
                             <span style={{ color: "red" }}>*</span>
                           </span>
                         }
@@ -380,7 +380,7 @@ const ManageFile = () => {
                         {...params}
                         label={
                           <span>
-                            Select Department{" "}
+                            Department{" "}
                             <span style={{ color: "red" }}>*</span>
                           </span>
                         }
