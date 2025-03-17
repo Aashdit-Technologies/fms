@@ -37,27 +37,24 @@ const Ckeditor = ({
       const selectedValue = options.find(
         (option) => option.label === event.target.value
       );
-  
+
       if (selectedValue) {
         setSelectedItem(selectedValue.label);
-        setSelectedNote(selectedValue.value);
-  
+        setSelectedNote(selectedValue.value); 
+
         const linkHTML = `<a href="#" class="noting-link" data-note-index="${selectedValue.label}" 
-          style="color: #007bff; text-decoration: underline; font-weight: 600; cursor: pointer;">
-          ${selectedValue.label}
-        </a>`;
-  
-        // Insert at the cursor position inside the editor
-        if (editorRef.current) {
-          editorRef.current.editor.s.insertHTML(linkHTML + "&nbsp;");
-        }
-  
-        setModalOpen(false);
+        style="color: #007bff; text-decoration: underline; font-weight: 600; cursor: pointer;">
+        ${selectedValue.label}
+      </a>`;
+
+        const newContent = `${content}${linkHTML}&nbsp;`;
+        onContentChange?.(newContent);
+
+        setModalOpen(false); 
       }
     },
-    [options]
+    [content, onContentChange, options]
   );
-  
 
   useEffect(() => {
     const handleNotingClick = (event) => {

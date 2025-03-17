@@ -248,8 +248,13 @@ const UploadDocument = ({
   const handleOpenModal = async () => {
     setIsLoading(true);
     try {
-      await handleSubmit();
-      await fetchOrganizations.mutateAsync(); 
+      const isSubmissionSuccessful = await handleSubmit(); // ✅ Ensure handleSubmit succeeds
+  
+      if (!isSubmissionSuccessful) {
+        return; 
+      }
+  
+      await fetchOrganizations.mutateAsync();
       setIsSendToModalOpen(true);
     } catch (error) {
       toast.error("Failed to open modal.");
@@ -258,6 +263,7 @@ const UploadDocument = ({
       setIsLoading(false);
     }
   };
+  
 
   // const handleEndTask = () => {
   //   toast.warning("Task ended!");
@@ -277,30 +283,37 @@ const UploadDocument = ({
     debugger;
     const cleanedContent = initialContent.replace(/\s|&nbsp;/g, "").trim();
     const isContentEmpty = !cleanedContent || cleanedContent === "<p><br></p>";
-  
+
     const isRowsEmpty = rows.every(
       (row) =>
-        !row.subject && !row.type && !row.date && !row.letterNumber && !row.document
+        !row.subject &&
+        !row.type &&
+        !row.date &&
+        !row.letterNumber &&
+        !row.document
     );
 
     if (Mark === "MARKDOWN") {
       return true;
     }
-  
+
     if (isContentEmpty && isRowsEmpty) {
-      toast.error("Please write some notes in the Notesheet or fill in at least one row.");
+      toast.error(
+        "Please write some notes in the Notesheet or fill in at least one row."
+      );
       return false;
     }
-  
+
     if (!isContentEmpty) {
       return true;
     }
-  
+
     let isAnyRowPartiallyFilled = false;
-  
+
     for (const row of rows) {
-      const isRowStarted = row.subject || row.type || row.date || row.letterNumber || row.document;
-  
+      const isRowStarted =
+        row.subject || row.type || row.date || row.letterNumber || row.document;
+
       if (isRowStarted) {
         if (
           !row.subject ||
@@ -314,29 +327,42 @@ const UploadDocument = ({
         }
       }
     }
-  
+
     if (isAnyRowPartiallyFilled) {
       toast.error("All fields in each row must be filled before submission.");
       return false;
     }
-  
+
     return true;
   };
-  
 
   const handleDirectSubmit = async () => {
     await handleSubmit("Save");
   };
-  const handleSubmit = async (Mark) => {
+  const handleSubmit = async (action) => {
 
-    const isValid = Mark === "MARKDOWN" ? true : validateForm(rows, initialContent,Mark);
+    // const isValid = Mark === "MARKDOWN" ? true : validateForm(rows, initialContent,Mark);
+    if (action !== "MARKDOWN") {
+      // Validate initialContent for other actions
+      const cleanedContent = initialContent.replace(/\s|&nbsp;/g, "").trim();
+      const isContentEmpty =
+        !cleanedContent || cleanedContent === "<p><br></p>";
 
-   
-   
-    if (!isValid) {
-      return; 
+      if (isContentEmpty) {
+        console.error("❌ Submission failed: Content is empty");
+        toast.error(
+          "Please write some notes in the Notesheet before proceeding."
+        );
+        return false; // Prevent further execution
+      }
+
+      // Validate form rows (if needed)
+      const isValid = validateForm(rows, initialContent, action);
+      console.log("✅ Form Validation Result:", isValid);
+      if (!isValid) {
+        return false; // Prevent further execution if form validation fails
+      }
     }
-    
 
     const documents = rows.map((row) => ({
       docSubject: row.subject,
@@ -355,25 +381,33 @@ const UploadDocument = ({
         isConfidential,
         initialContent,
       });
-      if (Mark === "Save") {
+      if (action === "Save") {
         toast.success(response.message || "Operation successful!");
+      }
+      if (response.outcome === true) {
+        return true;
+      } else {
+        return false;
       }
     } catch (error) {
       // toast.error(error.response?.data?.message || error.message || "Something went wrong!");
+      return false;
     }
   };
   const mutation = useMutation({
     mutationFn: async (data) => {
       setIsLoading(true);
       try {
-        const encryptedDataObject = encryptPayload({
+        const payload = {
           fileId: fileDetails.data.fileId,
           note: initialContent || null,
           filerecptId: fileDetails.data.fileReceiptId,
           prevNoteId: additionalDetails?.data?.prevNoteId,
           priority: data.filePriority,
           isConfidential: data.isConfidential,
-        });
+        };
+        // console.log(payload,"payload");
+        const encryptedDataObject = encryptPayload(payload);
 
         const encryptedDocumentData = encryptPayload({
           documents: data.documents.map((doc) => ({
@@ -463,7 +497,7 @@ const UploadDocument = ({
           }
         );
         setApiResponseData(response.data.data);
-        return response.data;
+        return true;
       } catch (error) {
         console.error("API Error:", error);
         throw error;
@@ -488,9 +522,20 @@ const UploadDocument = ({
 
   const handleMarkupOrMarkdown = async (action) => {
     setModalAction(action);
-    triggerMarkAction(action);
-    setIsModalOpen(true);
-    await handleSubmit(action);
+
+    const isSubmissionSuccessful = await handleSubmit(action);
+
+    if (!isSubmissionSuccessful) {
+      return;
+    }
+
+    try {
+      await triggerMarkAction(action);
+
+      setIsModalOpen(true);
+    } catch (error) {
+      toast.error("Failed to trigger mark action.");
+    }
   };
 
   const approveFileMutation = useMutation({
@@ -537,6 +582,27 @@ const UploadDocument = ({
     const data = { action };
     approveFileMutation.mutate(data);
   };
+  const handleEndTaskClick = async () => {
+    const isSubmissionSuccessful = await handleSubmit("APPROVED");
+  
+    if (isSubmissionSuccessful) {
+      handleApprove("APPROVED");
+    } else {
+      console.warn("❌ handleSubmit failed, End-Task won't proceed.");
+    }
+  };
+  const handleMoveToRackClick = async () => {
+    const isSubmissionSuccessful = await handleSubmit("MOVE_TO_RACK");
+  
+    if (isSubmissionSuccessful) {
+      setIsMoveToRackModalOpen(true);
+    } else {
+      console.warn("❌ handleSubmit failed, Move-To-Rack modal won't open.");
+    }
+  };
+  
+  
+  
 
   const newEndpointMutation = useMutation({
     mutationFn: async () => {
@@ -565,7 +631,6 @@ const UploadDocument = ({
         const SendformData = new FormData();
         SendformData.append("dataObject", encryptedDataObjectUpDown);
 
-        console.log("Calling API...");
         const response = await api.post("/file/send-file", SendformData, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -944,7 +1009,7 @@ const UploadDocument = ({
                       variant="contained"
                       color="secondary"
                       startIcon={<FaCheckCircle />}
-                      onClick={() => setIsMoveToRackModalOpen(true)}
+                      onClick={handleMoveToRackClick} 
                       disabled={isLoading}
                     >
                       Move-To-Rack
@@ -954,7 +1019,7 @@ const UploadDocument = ({
                       variant="contained"
                       color="secondary"
                       startIcon={<FaCheckCircle />}
-                      onClick={() => handleApprove("APPROVED")}
+                      onClick={handleEndTaskClick} 
                       disabled={isLoading}
                     >
                       End-Task
@@ -1030,7 +1095,12 @@ const UploadDocument = ({
         {/* Modal for Table and Send Button */}
         <Modal
           open={isModalOpen}
-          onClose={handleCloseModal}
+          onClose={(event, reason) => {
+            if (reason === "backdropClick") {
+              return;
+            }
+            handleCloseModal();
+          }}
           aria-labelledby="markup-markdown-modal"
           aria-describedby="modal-to-select-action"
         >

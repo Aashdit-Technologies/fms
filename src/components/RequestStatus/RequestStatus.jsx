@@ -24,7 +24,7 @@ import { encryptPayload } from "../../utils/encrypt.js";
 import dayjs from "dayjs";
 import { PageLoader } from "../pageload/PageLoader";
 import { useNavigate } from "react-router-dom";
-import { FaHistory } from "react-icons/fa";
+import { FaHistory, FaRedoAlt } from "react-icons/fa";
 import { FaEye } from "react-icons/fa6";
 
 const customStyles = {
@@ -103,7 +103,7 @@ const customStyles = {
   },
 };
 
-const RequestStatus = () => {
+const RequestStatus = ({onSwitchTab}) => {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [rqstStsData, setRqstStsData] = useState([]);
@@ -245,6 +245,7 @@ const RequestStatus = () => {
         );
         toast.success(response.data.message);
         await fetchFilteredData(fromDate, toDate);
+        onSwitchTab();
       } else {
         toast.error(response.data.message);
       }
@@ -337,7 +338,7 @@ const RequestStatus = () => {
       name: "File Name",
       selector: (row) => row.fileName,
       sortable: true,
-      width: "300px",
+      width: "280px",
     },
     {
       name: "From",
@@ -368,7 +369,7 @@ const RequestStatus = () => {
           {row.status}
         </span>
       ),
-      width: "110px",
+      width: "130px",
     },
     {
       name: "Action",
@@ -385,13 +386,18 @@ const RequestStatus = () => {
             {canRecall && (
               <Button
                 variant="contained"
-                color="secondary"
+                color="error"
                 size="small"
                 title="Recall"
-                className="ms-2"
+                // className="ms-2"
                 onClick={() => handleReCall(row.fileId, row.fileReceiptId)}
+                sx={{
+                  minWidth: "auto",
+                  padding: "6px 10px",
+                  marginRight: "8px",
+                }}
               >
-                Recall
+                <FaRedoAlt />
               </Button>
             )}
             <Button
