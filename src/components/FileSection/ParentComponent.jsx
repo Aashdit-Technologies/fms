@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import NoteSheet from './NoteSheet';
-import Ckeditor from './CKEditor';
+import Ckeditor from './Ckeditor';
 
 const ParentComponent = ({ noteSheets, additionalDetails, fileDetails }) => {
   const [sharedContent, setSharedContent] = useState('');

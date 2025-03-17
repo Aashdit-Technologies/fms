@@ -25,11 +25,9 @@ const NoteSheet = ({
   const [isLoading, setIsLoading] = useState(false);
   const token = useAuthStore((state) => state.token) || sessionStorage.getItem("token");
   const editorContentRef = useRef(content);
-  // Remove the effect that updates local state
 
 
 
-  // Update notes when noteSheets change
   useEffect(() => {
     if (noteSheets && Array.isArray(noteSheets.data)) {
       setNotes(noteSheets.data);
@@ -66,29 +64,29 @@ const NoteSheet = ({
 
  
 
+  
+
   const togglePreview = async () => {
     setIsLoading(true);
     try {
       const encryptedDload = encryptPayload({
         fileId: fileDetails.data.fileId,
       });
-
+  
       const response = await api.post(
         "/file/notesheet-preview",
         { dataObject: encryptedDload },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
+      console.log("API Response:", response.data);
+  
       if (response.data.outcome) {
-        const previewWindow = window.open("/note-sheet-preview", "_blank");
-        if (previewWindow) {
-          sessionStorage.setItem(
-            "noteSheetPreviewData",
-            JSON.stringify(response.data)
-          );
-        } else {
-          toast.error("Popup blocked. Please allow popups for this site.");
-        }
+        sessionStorage.setItem("noteSheetPreviewData", JSON.stringify(response.data.data));
+  
+        setTimeout(() => {
+          window.open("/note-sheet-preview", "_blank");
+        }, 500);
       }
     } catch (error) {
       toast.error("Preview failed. Please try again.");
@@ -97,6 +95,8 @@ const NoteSheet = ({
       setIsLoading(false);
     }
   };
+  
+
 
   const convertHTMLToText = (html) => {
     const temp = document.createElement("div");

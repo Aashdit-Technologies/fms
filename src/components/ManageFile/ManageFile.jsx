@@ -56,11 +56,7 @@ const ManageFile = () => {
   const [rackData, setRackData] = useState([]);
   const [shouldRefreshNewRequest, setShouldRefreshNewRequest] = useState(false);
   const [currentRackCells, setCurrentRackCells] = useState(0);
-  console.log("currentRackCells-->", currentRackCells);
   const naviget = useNavigate();
-  const switchToCompleteTab = () => {
-    setActiveTab("tab3");
-  };
 
   const {
     activities,
@@ -787,20 +783,20 @@ const ManageFile = () => {
                   <div className="tab-pane fade show active">
                     <NewRequest
                       handelRefecthNew={shouldRefreshNewRequest}
-                      onSwitchTab={switchToCompleteTab}
+                      onSwitchTab={() => handleTabChange("tab3")}
                     />
                   </div>
                 )}
 
                 {activeTab === "tab2" && (
                   <div className="tab-pane fade show active">
-                    <RequestStatus />
+                    <RequestStatus onSwitchTab={() => handleTabChange("tab1")}/>
                   </div>
                 )}
 
                 {activeTab === "tab3" && (
                   <div className="tab-pane fade show active">
-                    <CompleteList />
+                    <CompleteList onSwitchTab={() => handleTabChange("tab1")}/>
                   </div>
                 )}
               </div>

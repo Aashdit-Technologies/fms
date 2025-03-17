@@ -6,18 +6,54 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
   const [currentContent, setCurrentContent] = useState(content);
   const [cursorPosition, setCursorPosition] = useState(null);
   const isUpdatingRef = useRef(false); 
+  const cursorPositions = useRef(null);
 
+  // Function to insert content at cursor position
+  const insertAtCursor = (text) => {
+    if (editor.current) {
+      saveCursorPosition(); // Save cursor before inserting
+      editor.current.s.insertHTML(text); // Insert content at cursor
+      restoreCursorPosition(); // Restore cursor after inserting
+  
+      // Immediately update state
+      const updatedContent = editor.current.getEditorValue();
+      setCurrentContent(updatedContent);
+      onContentChange?.(updatedContent);
+    }
+  };
+  
+
+  // Capture cursor position before typing or pasting
+  const saveCursorPosition = () => {
+    if (editor.current) {
+      cursorPosition.current = editor.current.s.range.cloneRange();
+    }
+  };
+
+  // Restore cursor position after typing or pasting
+  const restoreCursorPosition = () => {
+    if (editor.current && cursorPosition.current) {
+      const range = cursorPosition.current;
+      const selection = editor.current.s;
+  
+      selection.selectRange(range);
+    }
+  };
   useEffect(() => {
-    // Set initial content when component mounts or content changes
     if (editor.current && content !== currentContent) {
       editor.current.value = content;
     }
   }, [content]);
 
+  const sanitizeContent = (newContent) => {
+    const cleanedContent = newContent.replace(/<p><br><\/p>/g, "").trim();
+    return cleanedContent || ""; 
+  };
   const handleContentInput = (newContent) => {
-    if (!isUpdatingRef.current && newContent !== currentContent) {
-      setCurrentContent(newContent);
-      onContentChange?.(newContent);
+    const sanitizedContent = sanitizeContent(newContent);
+    if (!isUpdatingRef.current && sanitizedContent !== currentContent) {
+      setCurrentContent(sanitizedContent);
+      onContentChange?.(sanitizedContent);
     }
   };
 
@@ -28,62 +64,50 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
     askBeforePasteHTML: false,
     askBeforePasteFromWord: false,
     defaultActionOnPaste: 'insert_clear_html',
+    enterenter: "BR", 
     events: {
       beforePaste: (e) => {
-        if (editor.current) {
-          // Get the current selection or cursor position
-          const range = editor.current.selection.get();
-          setCursorPosition(range); // Save current cursor position
-        }
+        e.preventDefault(); // Prevent default paste behavior
+        saveCursorPosition();
+        const pastedContent = e.clipboardData.getData("text/plain");
+        insertAtCursor(pastedContent); // Insert pasted text at cursor
+        restoreCursorPosition();
       },
-      beforeChange: () => {
-        if (editor.current) {
-          const range = editor.current.selection.get();
-          setCursorPosition(range); // Save current cursor position
-        }
-      },
-      afterChange: () => {
-        if (editor.current && cursorPosition) {
-          editor.current.selection.set(cursorPosition);
-        }
-      },
+      beforeChange:saveCursorPosition,
+      afterChange:restoreCursorPosition,
       afterInit: (instance) => {
         editor.current = instance;
       },
       focus: () => {
         if (editor.current) {
-          editor.current.selection.restore(); // Restore the cursor on focus
+          editor.current.selection.restore(); 
         }
       },
-      // Immediate save on blur with small timeout to ensure sync
       blur: () => {
         if (editor.current) {
           setTimeout(() => {
-            const updatedContent = editor.current.getEditorValue();
-            setCurrentContent(updatedContent); // Update the state with the new content
-            onContentChange?.(updatedContent); // Notify parent with updated content
-          }, 10); // Small delay to ensure internal state is updated
+            const updatedContent = sanitizeContent(editor.current.getEditorValue());
+            setCurrentContent(updatedContent);
+            onContentChange?.(updatedContent);
+          }, 10); 
         }
-        if (onBlur) onBlur(); // Call the onBlur prop if available
+        if (onBlur) onBlur(); 
       },
       afterPaste: (e) => {
-        // Get pasted content and insert it at the cursor
         const pastedContent = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain');
         
-        // If no content to paste, return
         if (!pastedContent) return;
 
-        // Insert pasted content directly into the current position (no new line)
         editor.current.selection.insertHTML(pastedContent);
 
-        e.preventDefault();  // Prevent default paste behavior
+        e.preventDefault();  
       },
     },
   };
 
   useEffect(() => {
     if (editor.current) {
-      editor.current.selection.restore(); // Restore the cursor when component re-renders
+      editor.current.selection.restore(); 
     }
   }, [currentContent]);
 
@@ -94,6 +118,7 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
         value={currentContent} 
         config={config}
         tabIndex={1}
+        onBlur={(newContent) => handleContentInput(newContent)}
         onInput={(e) => handleContentInput(e.target.innerHTML)} 
       />
       <style jsx>{`

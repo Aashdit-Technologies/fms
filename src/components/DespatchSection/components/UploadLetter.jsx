@@ -20,9 +20,10 @@ import { LocalizationProvider, MobileDatePicker } from "@mui/x-date-pickers";
 import { CalendarToday, AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { Grid } from '@mui/joy';
 const UploadLetter = ({ open, onClose,   dispatchData,fetchLetters}) => {
-  
-  const correspondenceId = dispatchData?.length > 0 ? dispatchData[0].correspondenceId : null;
- 
+  debugger
+  const correspondenceId = dispatchData != null ? dispatchData.correspondenceId : null;
+
+
   const [formData, setFormData] = useState({
     letterNo: '',
     endingMemoNo: '',

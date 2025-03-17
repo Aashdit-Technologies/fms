@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import { Button } from "@mui/material";
 import { FaEdit, FaHistory } from "react-icons/fa";
+import { LuFileOutput } from "react-icons/lu";
 import useAuthStore from "../../store/Store";
 import api from "../../Api/Api";
 import MainFile from "../FileSection/MainFile.jsx";
@@ -99,7 +100,7 @@ const customStyles = {
   },
 };
 
-const CompleteList = () => {
+const CompleteList = ({ onSwitchTab }) => {
   const [completeListData, setCompleteListData] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -111,6 +112,7 @@ const CompleteList = () => {
 
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
   const [historyData, setHistoryData] = useState([]);
+  console.log("custodianEmpDeptMapId", completeListData);
 
   const Navigate = useNavigate();
   useEffect(() => {
@@ -318,6 +320,7 @@ const CompleteList = () => {
       );
 
       if (response?.data?.outcome === true) {
+        onSwitchTab();
         toast.success(response.data.message || "File reopened successfully");
       } else {
         toast.error(response?.data?.message || "Failed to reopen file");
@@ -330,6 +333,18 @@ const CompleteList = () => {
     } finally {
       setLoading(false);
     }
+  };
+  const handleViewStatus = (file, tabPanelId) => {
+    setLoading(true);
+    console.log("Edit Clicked:view", file);
+
+    if (!file) return;
+
+    Navigate(
+      "/main-file",
+      { state: { file: file, tabPanelId: 1 } },
+      { replace: true }
+    );
   };
 
   const columns = [
@@ -407,7 +422,7 @@ const CompleteList = () => {
           <Button
             variant="contained"
             color="success"
-            onClick={() => handleReopenFile(row)}
+            onClick={() => handleViewStatus(row)}
             title="View"
             sx={{
               minWidth: "auto",
@@ -418,6 +433,24 @@ const CompleteList = () => {
           >
             <FaEye />
           </Button>
+          {row.custodianEmpDeptMapId ===
+          row.currUserEmpDeptMapId ? (
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={() => handleReopenFile(row)}
+              title="Re-open"
+              sx={{
+                minWidth: "auto",
+                padding: "6px 10px",
+                marginRight: "8px",
+              }}
+              size="small"
+            >
+              <LuFileOutput />
+            </Button>
+          ) : ''}
+
           {/* <Button variant="contained" color="error" size="small">
             Delete
           </Button> */}

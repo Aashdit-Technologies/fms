@@ -32,18 +32,25 @@ const SendToRackModal = ({ open, onClose, selectedFile, onSuccess }) => {
   const [currentRackCells, setCurrentRackCells] = useState(0);
   const [isChecked, setIsChecked] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  console.log(selectedFile, "selectedFile");
+  
 
   const token = useAuthStore.getState().token;
 
   const sendToRackMutation = useMutation({
     mutationFn: async () => {
+      debugger
       const payload = {
+        actionTaken: selectedFile.status || "APPROVED",
         fileId: selectedFile.fileId,
-        fileRecptId: selectedFile.fileRecptId,
+        fileRecptId: selectedFile.fileReceiptId,
         roomId: selectedRoom,
         rackId: selectedRack,
         cellNo: selectedCell,
+        checkFlag: isChecked ? "Y" : "N",
       };
+      console.log("payload",payload);
+      
 
       const encryptedMessage = encryptPayload(payload);
 

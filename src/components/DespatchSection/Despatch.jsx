@@ -138,10 +138,7 @@ const Despatch = () => {
    const [dispatchdata, setDispatchData] = useState([]);
   const [expanded, setExpanded] = useState(true); 
   const [isLoading, setIsLoading] = useState(false);
-   const fileName = dispatchdata?.[0]?.fileName;
-   const filePath = dispatchdata?.[0]?.filePath;
-   const [letterContent, setLetterContent] = useState([]);
-   const navigate = useNavigate();
+
   
    
 
@@ -154,6 +151,7 @@ const Despatch = () => {
   };
  
   const handleUpload = (row) => {
+    debugger
     setSelectedRow(row);
     setIsUploadModalOpen(true);
   };
@@ -772,7 +770,7 @@ const Despatch = () => {
 </Paper>
 
       <UploadLetter open={isUploadModalOpen} onClose={handleCloseUploadModal}
-         dispatchData={dispatchdata}
+         dispatchData={selectedRow}
          fetchLetters={fetchLetters}
          />
    

@@ -249,7 +249,7 @@ const UploadDocument = ({
     setIsLoading(true);
     try {
       await handleSubmit();
-      await fetchOrganizations.mutateAsync();
+      await fetchOrganizations.mutateAsync(); 
       setIsSendToModalOpen(true);
     } catch (error) {
       toast.error("Failed to open modal.");
@@ -273,7 +273,7 @@ const UploadDocument = ({
     return dayjs(date).format("DD/MM/YYYY");
   };
 
-  const validateForm = (rows, initialContent) => {
+  const validateForm = (rows, initialContent, Mark) => {
     debugger;
     const cleanedContent = initialContent.replace(/\s|&nbsp;/g, "").trim();
     const isContentEmpty = !cleanedContent || cleanedContent === "<p><br></p>";
@@ -282,19 +282,20 @@ const UploadDocument = ({
       (row) =>
         !row.subject && !row.type && !row.date && !row.letterNumber && !row.document
     );
+
+    if (Mark === "MARKDOWN") {
+      return true;
+    }
   
-    // ❌ Reject submission if both Notesheet and rows are empty
     if (isContentEmpty && isRowsEmpty) {
       toast.error("Please write some notes in the Notesheet or fill in at least one row.");
       return false;
     }
   
-    // ✅ Allow submission if Notesheet has content, regardless of rows
     if (!isContentEmpty) {
       return true;
     }
   
-    // ✅ Allow submission if at least one row is fully filled
     let isAnyRowPartiallyFilled = false;
   
     for (const row of rows) {
@@ -327,13 +328,16 @@ const UploadDocument = ({
     await handleSubmit("Save");
   };
   const handleSubmit = async (Mark) => {
-    const isValid = validateForm(rows, initialContent);
 
+    const isValid = Mark === "MARKDOWN" ? true : validateForm(rows, initialContent,Mark);
+
+   
+   
     if (!isValid) {
-      return; // Prevent submission if validation fails
+      return; 
     }
+    
 
-    // If validation passes, proceed with submission
     const documents = rows.map((row) => ({
       docSubject: row.subject,
       letterType: row.type,
@@ -407,7 +411,6 @@ const UploadDocument = ({
               document: null,
             },
           ]);
-          // setinitialContent("");
           setFilePriority("Normal");
           setIsConfidential(false);
           setSelectedFiles({});
@@ -487,7 +490,7 @@ const UploadDocument = ({
     setModalAction(action);
     triggerMarkAction(action);
     setIsModalOpen(true);
-    await handleSubmit("Mark");
+    await handleSubmit(action);
   };
 
   const approveFileMutation = useMutation({

@@ -17,13 +17,19 @@ const ManageCustodian = () => {
               setIsFormOpen((prev) => !prev);
               setActiveKey(activeKey === "0" ? null : "0");
             }}
+            className="d-flex w-100"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
           >
-            <span className="me-2">Manage Custodian</span>
-            {isFormOpen ? <FaMinus /> : <FaPlus />}
+            <span className="me-2 ">Manage Custodian</span>
+            <span className="ms-auto">{isFormOpen ? <FaMinus /> : <FaPlus />}</span>
           </Accordion.Header>
           <Accordion.Body>
             <div>
-            <FileCustodian/>
+              <FileCustodian />
             </div>
           </Accordion.Body>
         </Accordion.Item>
