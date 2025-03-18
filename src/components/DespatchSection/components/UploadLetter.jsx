@@ -247,7 +247,7 @@ const validateForm = () => {
                       handleInputChange({ target: { name: "date", value: newValue } })
                     }
                     disableCloseOnSelect
-                    format="DD-MM-YYYY"
+                    format="DD/MM/YYYY"
                     slotProps={{
                       textField: {
                         fullWidth: true,

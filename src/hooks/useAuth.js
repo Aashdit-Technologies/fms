@@ -36,7 +36,7 @@ export const useAuth = () => {
         { dataObject: encryptedMessage },
         { responseType: 'arraybuffer' } 
       );
-
+     
       const base64 = btoa(
         new Uint8Array(response.data).reduce(
           (data, byte) => data + String.fromCharCode(byte),
@@ -66,10 +66,11 @@ export const useAuth = () => {
           userName: credentials.userName,
           password: credentials.password,
           captcha: credentials.userCaptcha,
+          byPassCaptcha: false,
         };
   
         const encryptedMessage = encryptPayload(payload);
-        console.log("check payload",payload);
+        
         const response = await api.post('/umt/login', {
           dataObject: encryptedMessage,
         });

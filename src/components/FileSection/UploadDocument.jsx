@@ -49,6 +49,7 @@ import UploadDocumentsModal from "./Modal/UploadDocumentsModal";
 import { PageLoader } from "../pageload/PageLoader";
 import MoveToRackModal from "./Modal/MoveToRackModal";
 import { CalendarToday } from "@mui/icons-material";
+import { type } from "jquery";
 const UploadDocument = ({
   fileDetails,
   initialContent,
@@ -249,11 +250,11 @@ const UploadDocument = ({
     setIsLoading(true);
     try {
       const isSubmissionSuccessful = await handleSubmit(); // ✅ Ensure handleSubmit succeeds
-  
+
       if (!isSubmissionSuccessful) {
-        return; 
+        return;
       }
-  
+
       await fetchOrganizations.mutateAsync();
       setIsSendToModalOpen(true);
     } catch (error) {
@@ -263,7 +264,6 @@ const UploadDocument = ({
       setIsLoading(false);
     }
   };
-  
 
   // const handleEndTask = () => {
   //   toast.warning("Task ended!");
@@ -283,84 +283,61 @@ const UploadDocument = ({
     debugger;
     const cleanedContent = initialContent.replace(/\s|&nbsp;/g, "").trim();
     const isContentEmpty = !cleanedContent || cleanedContent === "<p><br></p>";
-
-    const isRowsEmpty = rows.every(
-      (row) =>
-        !row.subject &&
-        !row.type &&
-        !row.date &&
-        !row.letterNumber &&
-        !row.document
-    );
-
+  
+    // ✅ If action is MARKDOWN, always allow submission
     if (Mark === "MARKDOWN") {
       return true;
     }
-
-    if (isContentEmpty && isRowsEmpty) {
-      toast.error(
-        "Please write some notes in the Notesheet or fill in at least one row."
-      );
-      return false;
-    }
-
+  
+    // ✅ If initialContent is present, allow submission
     if (!isContentEmpty) {
       return true;
     }
-
+  
     let isAnyRowPartiallyFilled = false;
-
+  
     for (const row of rows) {
-      const isRowStarted =
-        row.subject || row.type || row.date || row.letterNumber || row.document;
-
-      if (isRowStarted) {
-        if (
-          !row.subject ||
-          !row.type ||
-          !row.date ||
-          (row.type === "LETTER" && !row.letterNumber) ||
-          !row.document
-        ) {
-          isAnyRowPartiallyFilled = true;
-          break;
-        }
+      // If type is "SELECT", treat it as empty
+      const rowType = row.type === "SELECT" ? "" : row.type;
+    
+      const isRowStarted = row.subject || rowType || row.date || row.letterNumber || row.document;
+      const isRowComplete = row.subject && rowType && row.date && (rowType !== "LETTER" || row.letterNumber) && row.document;
+    
+      if (isRowStarted && !isRowComplete) {
+        isAnyRowPartiallyFilled = true;
+        break;
       }
     }
-
+    
+  
+    // ❌ If any row is incomplete, show error
     if (isAnyRowPartiallyFilled) {
-      toast.error("All fields in each row must be filled before submission.");
+      toast.error("All fields in a row must be filled before submission.");
       return false;
     }
-
-    return true;
+  
+    // ✅ Allow submission if at least one row is fully filled
+    const isAnyRowFilled = rows.some(row =>
+      row.subject && row.type && row.date && (row.type !== "LETTER" || row.letterNumber) && row.document
+    );
+  
+    return isAnyRowFilled;
   };
-
+  
   const handleDirectSubmit = async () => {
     await handleSubmit("Save");
   };
   const handleSubmit = async (action) => {
-
     // const isValid = Mark === "MARKDOWN" ? true : validateForm(rows, initialContent,Mark);
     if (action !== "MARKDOWN") {
-      // Validate initialContent for other actions
       const cleanedContent = initialContent.replace(/\s|&nbsp;/g, "").trim();
-      const isContentEmpty =
-        !cleanedContent || cleanedContent === "<p><br></p>";
+      const isContentEmpty = !cleanedContent || cleanedContent === "<p><br></p>";
 
-      if (isContentEmpty) {
-        console.error("❌ Submission failed: Content is empty");
-        toast.error(
-          "Please write some notes in the Notesheet before proceeding."
-        );
-        return false; // Prevent further execution
-      }
-
-      // Validate form rows (if needed)
       const isValid = validateForm(rows, initialContent, action);
-      console.log("✅ Form Validation Result:", isValid);
-      if (!isValid) {
-        return false; // Prevent further execution if form validation fails
+
+      if (isContentEmpty && !isValid) {
+        toast.error("Please write some notes before save  .");
+        return false; 
       }
     }
 
@@ -406,7 +383,7 @@ const UploadDocument = ({
           priority: data.filePriority,
           isConfidential: data.isConfidential,
         };
-        // console.log(payload,"payload");
+        console.log(payload, "payload");
         const encryptedDataObject = encryptPayload(payload);
 
         const encryptedDocumentData = encryptPayload({
@@ -455,6 +432,7 @@ const UploadDocument = ({
           return response.data;
         } else {
           throw new Error(response.data?.message);
+          toast.error(response.data?.message || "Operation failed!");
         }
       } catch (error) {
         throw error;
@@ -520,18 +498,40 @@ const UploadDocument = ({
     error: markActionError,
   } = markActionMutation;
 
+  // const handleMarkupOrMarkdown = async (action) => {
+  //   setModalAction(action);
+
+  //   const isSubmissionSuccessful = await handleSubmit(action);
+
+  //   if (!isSubmissionSuccessful) {
+  //     return;
+  //   }
+
+  //   try {
+  //     await triggerMarkAction(action);
+
+  //     setIsModalOpen(true);
+  //   } catch (error) {
+  //     toast.error("Failed to trigger mark action.");
+  //   }
+  // };
   const handleMarkupOrMarkdown = async (action) => {
+    if (action === "MARKUP" && !initialContent.trim()) {
+      toast.error(
+        "Please write some notes in the Notesheet before proceeding."
+      );
+      return;
+    }
+
     setModalAction(action);
-
     const isSubmissionSuccessful = await handleSubmit(action);
-
+      
     if (!isSubmissionSuccessful) {
       return;
     }
 
     try {
       await triggerMarkAction(action);
-
       setIsModalOpen(true);
     } catch (error) {
       toast.error("Failed to trigger mark action.");
@@ -582,27 +582,36 @@ const UploadDocument = ({
     const data = { action };
     approveFileMutation.mutate(data);
   };
+
   const handleEndTaskClick = async () => {
+    if (!initialContent.trim()) {
+      toast.error("Please write some notes before ending the task.");
+      return;
+    }
+
     const isSubmissionSuccessful = await handleSubmit("APPROVED");
-  
+
     if (isSubmissionSuccessful) {
       handleApprove("APPROVED");
     } else {
       console.warn("❌ handleSubmit failed, End-Task won't proceed.");
     }
   };
+
   const handleMoveToRackClick = async () => {
+    if (!initialContent.trim()) {
+      toast.error("Please write some notes before moving to rack.");
+      return;
+    }
+
     const isSubmissionSuccessful = await handleSubmit("MOVE_TO_RACK");
-  
+
     if (isSubmissionSuccessful) {
       setIsMoveToRackModalOpen(true);
     } else {
       console.warn("❌ handleSubmit failed, Move-To-Rack modal won't open.");
     }
   };
-  
-  
-  
 
   const newEndpointMutation = useMutation({
     mutationFn: async () => {
@@ -967,15 +976,18 @@ const UploadDocument = ({
                     flexWrap: "wrap",
                   }}
                 >
+                  {/* Save Button */}
                   <Button
                     variant="contained"
                     color="success"
                     startIcon={<FaSave />}
-                    onClick={handleDirectSubmit}
+                    onClick={() => handleSubmit("Save")}
                     disabled={isLoading}
                   >
                     {isLoading ? "Saving..." : "Save"}
                   </Button>
+
+                  {/* Mark Up Button */}
                   <Button
                     variant="contained"
                     color="primary"
@@ -985,6 +997,8 @@ const UploadDocument = ({
                   >
                     {isSubmittingAction ? "Marking Up..." : "Mark Up"}
                   </Button>
+
+                  {/* Mark Down Button */}
                   <Button
                     variant="contained"
                     color="primary"
@@ -995,6 +1009,7 @@ const UploadDocument = ({
                     {isSubmittingAction ? "Marking Down..." : "Mark Down"}
                   </Button>
 
+                  {/* Send To Button */}
                   <Button
                     variant="contained"
                     color="primary"
@@ -1004,12 +1019,14 @@ const UploadDocument = ({
                   >
                     {isLoading ? "Sending..." : "Send To"}
                   </Button>
-                  {moveToRack && moveToRack === "MOVE_TO_RACK" ? (
+
+                  {/* Move-To-Rack or End-Task Button */}
+                  {moveToRack === "MOVE_TO_RACK" ? (
                     <Button
                       variant="contained"
                       color="secondary"
                       startIcon={<FaCheckCircle />}
-                      onClick={handleMoveToRackClick} 
+                      onClick={handleMoveToRackClick}
                       disabled={isLoading}
                     >
                       Move-To-Rack
@@ -1019,13 +1036,14 @@ const UploadDocument = ({
                       variant="contained"
                       color="secondary"
                       startIcon={<FaCheckCircle />}
-                      onClick={handleEndTaskClick} 
+                      onClick={handleEndTaskClick}
                       disabled={isLoading}
                     >
                       End-Task
                     </Button>
                   )}
 
+                  {/* Cancel Button */}
                   <Button
                     variant="contained"
                     color="error"
@@ -1074,7 +1092,7 @@ const UploadDocument = ({
                 onClick={() => {
                   setIsConfidential(pendingConfidential);
                   setConfirmationModalOpen(false);
-                  toast.success("Confidentiality updated!");
+                  // toast.success("Confidentiality updated!");
                 }}
               >
                 Yes
@@ -1084,7 +1102,7 @@ const UploadDocument = ({
                 color="error"
                 onClick={() => {
                   setConfirmationModalOpen(false);
-                  toast.error("Confidentiality update cancelled!");
+                  // toast.error("Confidentiality update cancelled!");
                 }}
               >
                 No

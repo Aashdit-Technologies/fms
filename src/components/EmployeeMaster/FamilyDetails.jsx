@@ -251,7 +251,7 @@ const isValid =validateFamilyFields (rows);
             <Grid
               container
               spacing={2}
-              // alignItems="center"
+              
               key={index}
               sx={{ borderBottom: "1px solid #ddd", pb: 2, mb: 2 }}
             >
@@ -333,107 +333,67 @@ const isValid =validateFamilyFields (rows);
                   />
                 </Grid>
 
-              {/* Birth Date */}
-              {/* <Grid item xs={3} sx={{mb:2}}>
-              <MobileDatePicker
-                label={
-                  <>
-                    Date Of Birth<span style={{ color: "red" }}>*</span>
-                  </>
-                }
-                value={row.dateOfBirth ? dayjs(row.dateOfBirth) : null}
-                
-                onChange={(newValue) => {
-                  const formattedDate = newValue ? newValue.format("YYYY-MM-DD") : "";
-                  handleChange(index, "dateOfBirth", formattedDate);
-                  setErrors((prevErrors) => ({ ...prevErrors, [`dateOfBirth_${index}`]: "" }));
-                }}
-                format="YYYY-MM-DD"
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    error: !!errors[`dateOfBirth_${index}`], 
-                    helperText: errors[`dateOfBirth_${index}`], 
-                    InputProps: {
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <CalendarToday />
-                        </InputAdornment>
-                      ),
-                    },
-                    sx: {
-                      "& .MuiInputBase-root": {
-                        height: "50px",
-                      },
-                    },
-                  },
-                  actionBar: {
-                    actions: [],
-                  },
-                }}
-                closeOnSelect={true}
-              />
-            </Grid> */}
+             
                 
                 <Grid item xs={3} sx={{ mb: 2 }}>
-  <MobileDatePicker
-    label={
-      <>
-        Date Of Birth<span style={{ color: "red" }}>*</span>
-      </>
-    }
-    value={row.dateOfBirth ? dayjs(row.dateOfBirth) : null}
-    onChange={(newValue) => {
-      const formattedDate = newValue ? newValue.format("YYYY-MM-DD") : "";
-      handleChange(index, "dateOfBirth", formattedDate);
-      setErrors((prevErrors) => ({ ...prevErrors, [`dateOfBirth_${index}`]: "" }));
-    }}
-    format="DD-MM-YYYY"
-    maxDate={dayjs()} 
-    slotProps={{
-      textField: {
-        fullWidth: true,
-        error: !!errors[`dateOfBirth_${index}`], 
-        helperText: errors[`dateOfBirth_${index}`], 
-        InputProps: {
-          endAdornment: (
-            <InputAdornment position="end">
-              <CalendarToday />
-            </InputAdornment>
-          ),
-        },
-        sx: {
-          "& .MuiInputBase-root": {
-            height: "50px",
-          },
-        },
-      },
-      actionBar: {
-        actions: [],
-      },
-      toolbar: {
-        hidden: true,
-      },
-    }}
-    slots={{
-      toolbar: null, 
-    }}
-    sx={{
-      "& .MuiPickersLayout-actionBar": {
-        display: "none", 
-      },
-      "& .MuiPickersLayout-contentWrapper": {
-        "& .MuiPickersCalendarHeader-root": {
-          display: "none", 
-        },
-        "& .MuiDayCalendar-header": {
-          display: "none", 
-        },
-      },
-    }}
-    closeOnSelect={true}
-  />
-</Grid>
+                  <MobileDatePicker
+                    label={
+                      <>
+                        Date Of Birth<span style={{ color: "red" }}>*</span>
+                      </>
+                    }
+                    value={row.dateOfBirth ? dayjs(row.dateOfBirth) : null}
+                    onChange={(newValue) => {
+                      const formattedDate = newValue ? newValue.format("YYYY-MM-DD") : "";
+                      handleChange(index, "dateOfBirth", formattedDate);
+                      setErrors((prevErrors) => ({ ...prevErrors, [`dateOfBirth_${index}`]: "" }));
+                    }}
+                    format="DD/MM/YYYY"
+                    maxDate={dayjs()} 
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        error: !!errors[`dateOfBirth_${index}`], 
+                        helperText: errors[`dateOfBirth_${index}`], 
+                        InputProps: {
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <CalendarToday />
+                            </InputAdornment>
+                          ),
+                        },
+                        sx: {
+                          "& .MuiInputBase-root": {
+                            height: "50px",
+                          },
+                        },
+                      },
+                      actionBar: {
+                        actions: [],
+                      },
+                      toolbar: {
+                        hidden: true,
+                      },
+                    }}
+                    slots={{
+                      toolbar: null, 
+                    }}
+                    sx={{
+                      "& .MuiPickersLayout-actionBar": {
+                        display: "none", 
+                      },
+                      "& .MuiPickersLayout-contentWrapper": {
+                        "& .MuiPickersCalendarHeader-root": {
+                          display: "none", 
+                        },
+                        "& .MuiDayCalendar-header": {
+                          display: "none", 
+                        },
+                      },
+                    }}
+                    closeOnSelect={true}
+                  />
+                </Grid>
 
               {/* Relationship Dropdown */}
               <Grid item xs={2} sx={{mb:2}}>

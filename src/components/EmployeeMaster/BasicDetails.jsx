@@ -127,7 +127,7 @@ const BasicDetails = () => {
         return "";
   
       case "serviceEndDate":
-        if (!value) return ""; // Not mandatory
+        if (!value) return ""; 
   
         if (formData?.joiningDate) {
           const joinDate = dayjs(formData.joiningDate, "DD-MM-YYYY");
@@ -151,7 +151,7 @@ const BasicDetails = () => {
           case "officePhone":
             if (!value) return "Office phone is required.";
 
-            // Ensure exactly 11 digits and exactly one hyphen
+
             const digitCount = (value.match(/\d/g) || []).length;
             const hyphenCount = (value.match(/-/g) || []).length;
 
@@ -527,7 +527,7 @@ const BasicDetails = () => {
                     handleDateChange("dateBirth", newValue);
                     validateDateOfBirth(newValue, data.joiningDate); 
                   }}
-                  format="DD-MM-YYYY"
+                  format="DD/MM/YYYY"
                   maxDate={dayjs()} 
 
                   slotProps={{
@@ -716,7 +716,7 @@ const BasicDetails = () => {
                       handleDateChange("joiningDate", newValue);
                       validateJoiningDate(newValue, data.dateBirth); 
                     }}
-                    format="DD-MM-YYYY"
+                    format="DD/MM/YYYY"
                       maxDate={dayjs()} 
                     slotProps={{
                       textField: {
@@ -778,7 +778,7 @@ const BasicDetails = () => {
                 handleDateChange("serviceEndDate", newValue);
                 validateServiceEndDate(newValue, data.joiningDate);
               }}
-              format="DD-MM-YYYY"
+              format="DD/MM/YYYY"
               slotProps={{
                 textField: {
                   fullWidth: true,

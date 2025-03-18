@@ -45,10 +45,7 @@ button#panel1a-header{
   a.noting-link {
     display: inline !important;
   }
-  .jodit-wysiwyg{
-    display: flex !important;
-    gap: 10px !important;
-  }
+  
   input#\:rc\:{
     height: 7px;
   }

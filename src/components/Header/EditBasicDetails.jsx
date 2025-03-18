@@ -507,7 +507,7 @@ serviceEndDate:
                       handleDateChange("dateBirth", newValue);
                       validateDateOfBirth(newValue, data.joiningDate);
                     }}
-                    format="DD-MM-YYYY"
+                    format="DD/MM/YYYY"
                     maxDate={dayjs()}
                     slotProps={{
                       textField: {
@@ -684,7 +684,7 @@ serviceEndDate:
                       handleDateChange("joiningDate", newValue);
                       validateJoiningDate(newValue, data.dateBirth);
                     }}
-                    format="DD-MM-YYYY"
+                    format="DD/MM/YYYY"
                      maxDate={dayjs()}
                     slotProps={{
                       textField: {
@@ -743,7 +743,7 @@ serviceEndDate:
                       handleDateChange("serviceEndDate", newValue);
                       validateServiceEndDate(newValue, data.joiningDate);
                     }}
-                    format="DD-MM-YYYY"
+                    format="DD/MM/YYYY"
                     slotProps={{
                       textField: {
                         fullWidth: true,

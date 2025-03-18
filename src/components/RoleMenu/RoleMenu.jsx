@@ -103,9 +103,9 @@ const RoleMenu = () => {
     setSelectedMenuItems((prevSelected) => {
       const newSelectedItems = { ...prevSelected };
       const newValue = !prevSelected[item.id];
-
+  
       newSelectedItems[item.id] = newValue;
-
+  
       const updateChildren = (children, checked) => {
         children.forEach((child) => {
           newSelectedItems[child.id] = checked;
@@ -114,11 +114,11 @@ const RoleMenu = () => {
           }
         });
       };
-
+  
       if (item.children) {
         updateChildren(item.children, newValue);
       }
-
+  
       const findParent = (id, menuList) => {
         for (let parent of menuList) {
           if (parent.children?.some((child) => child.id === id)) {
@@ -131,31 +131,38 @@ const RoleMenu = () => {
         }
         return null;
       };
-
+  
       const updateParents = (child) => {
         const parent = findParent(child.id, menuItems);
         if (!parent) return;
-
-        const allChildrenChecked = parent.children.every(
-          (child) => newSelectedItems[child.id]
-        );
-
-        newSelectedItems[parent.id] = allChildrenChecked;
+  
+        
+        if (newSelectedItems[child.id]) {
+          newSelectedItems[parent.id] = true;
+        } else {
+  
+          const allChildrenDeselected = parent.children.every(
+            (child) => !newSelectedItems[child.id]
+          );
+          if (allChildrenDeselected) {
+            newSelectedItems[parent.id] = false;
+          }
+        }
+  
         updateParents(parent);
       };
-
+  
       updateParents(item);
-
+  
       setMenuIds(() =>
         Object.keys(newSelectedItems)
           .filter((id) => newSelectedItems[id])
           .map(Number)
       );
-
+  
       return newSelectedItems;
     });
   };
-
   const handleSubmit = async (roleCode) => {
     if (!roleCode) {
       console.warn("No role selected. Please select a role.");

@@ -19,7 +19,7 @@ const LoginPage = () => {
   const [userCaptcha, setUserCaptcha] = useState("");
   const { login, isLoggingIn, captcha, generateCaptcha } = useAuth();
   const token = useAuthStore.getState().token;
-console.log("captcha", captcha);
+
   const setShowCaptchaField = useAuthStore(
     (state) => state.setShowCaptchaField
   );
@@ -30,7 +30,7 @@ console.log("captcha", captcha);
   }, [setShowCaptchaField]);
 
   const handleUserNameChange = (e) => {
-    const value = e.target.value;
+    const value = e.target.value.trim();
     setUserName(value);
 
     if (!value.trim()) {
@@ -38,7 +38,7 @@ console.log("captcha", captcha);
     }
   };
   const handleGenerateCaptcha = async () => {
-    console.log("Generate Captcha button clicked");
+   
     if (!userName.trim()) {
       toast.error("Please enter username.", { autoClose: 1000 });
       return false; 
@@ -59,7 +59,7 @@ console.log("captcha", captcha);
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted");
+    
 
     if (!userName.trim()) {
       toast.error("Please enter username.", { autoClose: 1000 });

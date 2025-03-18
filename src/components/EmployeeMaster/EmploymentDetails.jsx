@@ -375,7 +375,7 @@ const EmploymentDetails = ({ handleTabChange }) => {
           <Grid
             container
             spacing={2}
-            // alignItems="center"
+           
             key={index}
             sx={{ borderBottom: "1px solid #ddd", pb: 2, mb: 2 }}
           >
@@ -562,7 +562,7 @@ const EmploymentDetails = ({ handleTabChange }) => {
                 error={!!errors[`fromDate_${index}`]}
                 helperText={errors[`fromDate_${index}`]} 
                
-                format="DD-MM-YYYY"
+                format="DD/MM/YYYY"
                 slotProps={{
                   textField: {
                     fullWidth: true,
@@ -613,7 +613,7 @@ const EmploymentDetails = ({ handleTabChange }) => {
               onChange={(newValue) =>
                 handleChange(index, "endDate", newValue ? newValue.format("YYYY-MM-DD") : "")
               }
-              format="DD-MM-YYYY"
+              format="DD/MM/YYYY"
               slotProps={{
                 textField: {
                   fullWidth: true,

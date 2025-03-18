@@ -68,7 +68,7 @@ const customStyles = {
       color: "#ffffff",
       fontSize: "14px",
       fontWeight: "600",
-      // textTransform: "uppercase",
+      
       letterSpacing: "0.5px",
       minHeight: "52px",
       borderBottom: "2px solid #1a5f6a",
@@ -261,7 +261,6 @@ const DiarySection = () => {
   const [showLetterModal, setShowLetterModal] = useState(false);
   const [selectedLetterDetails, setSelectedLetterDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
   const [rowSize, setRowSize] = useState(10);
   const [pageNo, setPageNo] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -301,9 +300,6 @@ const handleRowSizeChangesentletter = (event) => {
   setPageNoSent(1); 
   sentLetter(1, newSize); 
 };
-
-
-
 
   const handleTabChange = (tabKey) => {
     
@@ -1240,7 +1236,7 @@ const handleremarksChange = (e) => {
         if (row.file) {
           formDataToSend.append("enclosureDocuments", row.file);
         } else {
-          // Append an empty Blob to maintain the array structure
+          
           formDataToSend.append("enclosureDocuments", new Blob([], { type: "application/octet-stream" }));
         }
       });
@@ -2008,25 +2004,6 @@ const handleEditButtonClick = async (row) => {
   };
   
 
-  // const handleFileUploadChange = (index, event) => {
-  //   const file = event.target.files[0];
-  
-  //   if (!file) {
-  //     toast.warn("Please select a file before proceeding.");
-  //     return;
-  //   }
-  
-    
-  //   if (file.type !== "application/pdf") {
-  //     toast.error("Sorry! only PDF format is  Allowed.");
-  //     return;
-  //   }
-  
-   
-  //   const updatedRows = [...enclosureRows];
-  //   updatedRows[index] = { ...updatedRows[index], file, fileName: file.name };
-  //   setEnclosureRows(updatedRows);
-  // };
   const handleFileUploadChange = (index, event) => {
     const file = event.target.files[0];
   
@@ -2035,7 +2012,6 @@ const handleEditButtonClick = async (row) => {
       return;
     }
   
-    // Validate file type
     if (file.type !== "application/pdf") {
       toast.error("Sorry! Only PDF format is allowed.");
       return;
@@ -2202,7 +2178,7 @@ const handleFileUploadChangeencloser = (index, event) => {
     );
    
     if (response.data && response.data.data) {
-      const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
+      const base64String = response.data.data.split(",")[1];
       const byteCharacters = atob(base64String);
       const byteNumbers = new Uint8Array([...byteCharacters].map(char => char.charCodeAt(0)));
       const blob = new Blob([byteNumbers], { type: "application/pdf" });
@@ -2247,7 +2223,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
     );
    
     if (response.data && response.data.data) {
-      const base64String = response.data.data.split(",")[1]; // Remove MIME type prefix
+      const base64String = response.data.data.split(",")[1]; 
       const byteCharacters = atob(base64String);
       const byteNumbers = new Uint8Array([...byteCharacters].map(char => char.charCodeAt(0)));
       const blob = new Blob([byteNumbers], { type: "application/pdf" });
@@ -2291,7 +2267,6 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
     if (response.status === 200) {
     
     
-    // Create a download link and trigger download
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
     link.href = url;
@@ -2299,7 +2274,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
     document.body.appendChild(link);
     link.click();
     
-    // Cleanup
+  
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
     
@@ -2339,7 +2314,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
       if (response.status === 200) {
       
       
-      // Create a download link and trigger download
+    
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -2347,7 +2322,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
       document.body.appendChild(link);
       link.click();
       
-      // Cleanup
+      
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
@@ -2386,8 +2361,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
         
         if (response.status === 200) {
         
-        
-        // Create a download link and trigger download
+  
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement("a");
         link.href = url;
@@ -2395,7 +2369,6 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
         document.body.appendChild(link);
         link.click();
         
-        // Cleanup
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
         
@@ -2573,7 +2546,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                         handleSenderDateChange({ target: { name: "senderDate", value: newValue ? newValue.format("YYYY-MM-DD") : "" } });
                       }}
                       disableCloseOnSelect
-                      format="DD-MM-YYYY"
+                      format="DD/MM/YYYY"
                       maxDate={dayjs()} 
                       slotProps={{
                         textField: {

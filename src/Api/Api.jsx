@@ -6,8 +6,8 @@ import useAuthStore from "../store/Store";
   // export const BASE_URL= "http://192.168.3.116:2020/file-management/api/";
   //export const BASE_URL: "http://192.168.3.180:2020/file-management/api/";
   //export const BASE_URL: "http://192.168.3.165:2020/file-management/api/";
-  export const BASE_URL = "http://142.93.210.247:2020/file-management/api/";
-  // export const BASE_URL= "http://139.59.12.212:2020/file-management/api/";
+  // export const BASE_URL = "http://142.93.210.247:2020/file-management/api/";
+  export const BASE_URL= "http://139.59.12.212:2020/file-management/api/";
   // export const BASE_URL= "http://192.168.3.138:2020/file-management/api/";
 
 
