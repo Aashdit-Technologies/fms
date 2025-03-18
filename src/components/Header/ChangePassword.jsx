@@ -22,6 +22,7 @@ const ChangePassword = () => {
     userId: changepasswordDetails || '',
     newPassword: '',
     confirmPassword: '',
+    oldPassword:''
   });
 
   const [isValidLength, setIsValidLength] = useState(false);
@@ -31,7 +32,8 @@ const ChangePassword = () => {
   const [hasSpecialChar, setHasSpecialChar] = useState(false);
   const [isPasswordMatch, setIsPasswordMatch] = useState(false);
   const [showPassword, setShowPassword] = useState(false); 
-const [isLoading, setIsLoading] = useState(false);
+  const [showoldPassword, setShowoldPassword] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -66,6 +68,7 @@ const [isLoading, setIsLoading] = useState(false);
         userName: formData.userId,
         newPassword: formData.newPassword,
         confirmPassword: formData.confirmPassword,
+        oldPassword: formData.oldPassword,
       };
 
       
@@ -98,8 +101,13 @@ const [isLoading, setIsLoading] = useState(false);
   const handleClickShowPassword = () => {
     setShowPassword((prev) => !prev);
   };
+  const handleClickShowOldPassword = () => {
+    setShowoldPassword((prev) => !prev);
+  };
 
   return (
+    <>
+    {isLoading && <PageLoader />}
     <Box
     display={"flex"}
     flexDirection={'column'}
@@ -116,12 +124,12 @@ const [isLoading, setIsLoading] = useState(false);
           backgroundColor: '#ffffff',
         }}
       >
-        <Typography variant="h5" component="h1" sx={{ mb: 4, textAlign: 'center', fontWeight: 'bold', color: '#1976d2' }}>
+        <Typography variant="h5" component="h1" sx={{ mb: 4, textAlign: 'center', fontWeight: 'bold', color: '#207785' }}>
           Change Password
         </Typography>
         <Box sx={{ flexGrow: 1 }}>
           <Grid container spacing={3}>
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <TextField
                 fullWidth
                 label="User Id"
@@ -144,7 +152,30 @@ const [isLoading, setIsLoading] = useState(false);
                 }}
             />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
+              <TextField
+                fullWidth
+                label="Old Password"
+                name="oldPassword"
+                type={showoldPassword ? 'text' : 'password'} 
+                variant="outlined"
+                margin="normal"
+                value={formData.oldPassword}
+                onChange={handleInputChange}
+                inputProps={{ maxLength: 15 }}
+                InputProps={{
+                  sx: { height: '50px', borderRadius: '8px' },
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={handleClickShowOldPassword} edge="end">
+                        {showoldPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={3}>
               <TextField
                 fullWidth
                 label="New Password"
@@ -167,7 +198,7 @@ const [isLoading, setIsLoading] = useState(false);
                 }}
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <TextField
                 fullWidth
                 label="Confirm Password"
@@ -225,13 +256,13 @@ const [isLoading, setIsLoading] = useState(false);
             </Box>
           </Box>
         </Typography>
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 2 }}>
           <Button
             variant="contained"
             onClick={handleSubmit}
             sx={{
-              backgroundColor: '#1976d2',
-              '&:hover': { backgroundColor: '#115293' },
+              backgroundColor: ' #1a5f6a',
+              '&:hover': { backgroundColor: '#207785' },
               fontSize: '1rem',
               fontWeight: 'bold',
               borderRadius: '8px',
@@ -251,11 +282,12 @@ const [isLoading, setIsLoading] = useState(false);
              
             }}
           >
-            Cancle
+            Cancel
           </Button>
         </Box>
       </Card>
     </Box>
+    </>
   );
 };
 

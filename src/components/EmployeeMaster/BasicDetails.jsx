@@ -91,7 +91,6 @@ const BasicDetails = () => {
     }
   };
 
-
  
   const validateField = (name, value, formData = {}) => {
     switch (name) {
@@ -151,8 +150,16 @@ const BasicDetails = () => {
   
           case "officePhone":
             if (!value) return "Office phone is required.";
-         
-            return ""; 
+
+            // Ensure exactly 11 digits and exactly one hyphen
+            const digitCount = (value.match(/\d/g) || []).length;
+            const hyphenCount = (value.match(/-/g) || []).length;
+
+            if (digitCount !== 11 || hyphenCount !== 1) {
+              return "Office phone must contain exactly 11 digits and one hyphen.";
+            }
+
+            return "";
       case "email":
         const emailOptionalRegex =
           /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -171,7 +178,7 @@ const BasicDetails = () => {
           : "";
   
       case "staffCode":
-        return value ? "" : ""; // Not mandatory
+        return value ? "" : ""; 
   
       default:
         return "";
@@ -279,12 +286,6 @@ const BasicDetails = () => {
   };
 
  
-  
-  
-  
-  
-  
-
   const handleSaveAndNext = async () => {
     if (!validateForm()) {
       toast.error("Please fill all the required fields.");
@@ -308,6 +309,8 @@ const BasicDetails = () => {
         return;
       }
     }
+
+  
   
     setIsLoading(true);
     try {
@@ -357,6 +360,7 @@ const BasicDetails = () => {
       setIsLoading(false);
     }
   };
+
   const checkDuplicateEmployeeCode = async (employeeCode) => {
    
     if (!employeeCode) return false;
@@ -524,7 +528,8 @@ const BasicDetails = () => {
                     validateDateOfBirth(newValue, data.joiningDate); 
                   }}
                   format="DD-MM-YYYY"
-                  maxDate={dayjs()}
+                  maxDate={dayjs()} 
+
                   slotProps={{
                     textField: {
                       fullWidth: true,
@@ -547,10 +552,31 @@ const BasicDetails = () => {
                     actionBar: {
                       actions: [],
                     },
+                    toolbar: {
+                      hidden: true,
+                    },
+                  }}
+                  slots={{
+                    toolbar: null, 
+                  }}
+                  sx={{
+                    "& .MuiPickersLayout-actionBar": {
+                      display: "none", 
+                    },
+                    "& .MuiPickersLayout-contentWrapper": {
+                      "& .MuiPickersCalendarHeader-root": {
+                        display: "none", 
+                      },
+                      "& .MuiDayCalendar-header": {
+                        display: "none", 
+                      },
+                    },
                   }}
                   closeOnSelect={true}
                 />
               </Grid>
+
+               
 
             <Grid item xs={3} sx={{ mb: 2 }}>
               <TextField
@@ -618,68 +644,61 @@ const BasicDetails = () => {
             </Grid>
 
            
-              <Grid item xs={3}>
-                <TextField
-                  fullWidth
-                  label={
-                    <>
-                      Office Phone <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
-                  name="officePhone"
-                  autoComplete="off"
-                  value={data.officePhone}
-                  onChange={(e) => {
-                    let value = e.target.value.trim(); // Trim spaces
-                    console.log("onChange - Current Value:", value); // Debugging
 
-                    // Allow only digits and hyphen
-                    if (/^[0-9-]*$/.test(value)) {
-                      // Ensure hyphen is not at the start
-                      if (!value.startsWith("-")) {
-                        const digitCount = (value.match(/\d/g) || []).length; // Count digits
-                        const hyphenCount = (value.match(/-/g) || []).length; // Count hyphens
-                        console.log("Digit Count:", digitCount, "Hyphen Count:", hyphenCount); // Debugging
+                <Grid item xs={3}>
+                  <TextField
+                    fullWidth
+                    label={
+                      <>
+                        Office Phone <span style={{ color: "red" }}>*</span>
+                      </>
+                    }
+                    name="officePhone"
+                    autoComplete="off"
+                    value={data.officePhone}
+                    onChange={(e) => {
+                      let value = e.target.value.trim(); 
 
-                        // Ensure max 11 digits and only one hyphen
-                        if (digitCount <= 11 && hyphenCount <= 1) {
-                          handleChange(e); // Update state
+                      if (/^[0-9-]*$/.test(value)) {
+                       
+                        if (!value.startsWith("-")) {
+                          const digitCount = (value.match(/\d/g) || []).length; 
+                          const hyphenCount = (value.match(/-/g) || []).length; 
+
+                          if (digitCount <= 11 && hyphenCount <= 1) {
+                            handleChange(e); 
+                          }
                         }
                       }
-                    }
-                  }}
-                  onBlur={() => {
-                    const error = validateField("officePhone", data.officePhone.trim(), data); // Use validateField
-                    setErrors((prev) => ({ ...prev, officePhone: error }));
-                  }}
-                  onKeyDown={(e) => {
-                    console.log("onKeyDown - Key Pressed:", e.key); // Debugging
+                    }}
+                    onBlur={() => {
+                      const error = validateField("officePhone", data.officePhone.trim(), data); 
+                      setErrors((prev) => ({ ...prev, officePhone: error }));
+                    }}
+                    onKeyDown={(e) => {
+                    
+                      if (
+                        !/\d/.test(e.key) && 
+                        e.key !== "-" && 
+                        !["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight"].includes(e.key)
+                      ) {
+                        e.preventDefault(); 
+                      }
 
-                    // Allow digits, hyphen, Backspace, Delete, Arrow keys, and Tab
-                    if (
-                      !/\d/.test(e.key) && // Allow digits
-                      e.key !== "-" && // Explicitly allow hyphen
-                      !["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight"].includes(e.key)
-                    ) {
-                      console.log("Blocked Key:", e.key); // Debugging
-                      e.preventDefault(); // Block invalid keys
-                    }
-
-                    // Block input if digit count is already 11
-                    const digitCount = (data.officePhone.match(/\d/g) || []).length;
-                    if (digitCount >= 11 && /\d/.test(e.key)) {
-                      console.log("Blocked Key (Max Digits Reached):", e.key); // Debugging
-                      e.preventDefault(); // Block additional digits
-                    }
-                  }}
-                  inputProps={{ maxLength: 13 }} // Max length (11 digits + 1 hyphen + 1 extra)
-                  InputProps={{ sx: { height: "50px" } }}
-                  InputLabelProps={{ shrink: true }}
-                  error={!!errors.officePhone}
-                  helperText={errors.officePhone}
-                  aria-describedby="officePhone-error" // Accessibility
-                />
-              </Grid>
+                      
+                      const digitCount = (data.officePhone.match(/\d/g) || []).length;
+                      if (digitCount >= 11 && /\d/.test(e.key)) {
+                        e.preventDefault(); 
+                      }
+                    }}
+                    inputProps={{ maxLength: 13 }}
+                    InputProps={{ sx: { height: "50px" } }}
+                    InputLabelProps={{ shrink: true }}
+                    error={!!errors.officePhone}
+                    helperText={errors.officePhone}
+                    aria-describedby="officePhone-error" 
+                  />
+                </Grid>
 
                 <Grid item xs={3}>
                   <MobileDatePicker
@@ -698,7 +717,7 @@ const BasicDetails = () => {
                       validateJoiningDate(newValue, data.dateBirth); 
                     }}
                     format="DD-MM-YYYY"
-                    maxDate={dayjs()}
+                      maxDate={dayjs()} 
                     slotProps={{
                       textField: {
                         fullWidth: true,
@@ -719,6 +738,25 @@ const BasicDetails = () => {
                       },
                       actionBar: {
                         actions: [],
+                      },
+                      toolbar: {
+                        hidden: true,
+                      },
+                    }}
+                    slots={{
+                      toolbar: null, 
+                    }}
+                    sx={{
+                      "& .MuiPickersLayout-actionBar": {
+                        display: "none", 
+                      },
+                      "& .MuiPickersLayout-contentWrapper": {
+                        "& .MuiPickersCalendarHeader-root": {
+                          display: "none", 
+                        },
+                        "& .MuiDayCalendar-header": {
+                          display: "none", 
+                        },
                       },
                     }}
                     closeOnSelect={true}
@@ -761,6 +799,25 @@ const BasicDetails = () => {
                 },
                 actionBar: {
                   actions: [],
+                },
+                toolbar: {
+                  hidden: true,
+                },
+              }}
+              slots={{
+                toolbar: null, 
+              }}
+              sx={{
+                "& .MuiPickersLayout-actionBar": {
+                  display: "none", 
+                },
+                "& .MuiPickersLayout-contentWrapper": {
+                  "& .MuiPickersCalendarHeader-root": {
+                    display: "none", 
+                  },
+                  "& .MuiDayCalendar-header": {
+                    display: "none", 
+                  },
                 },
               }}
               closeOnSelect={true}
@@ -816,6 +873,7 @@ const BasicDetails = () => {
               variant="contained"
               color="primary"
               onClick={handleSaveAndNext}
+              
             >
               {data.employeeId ? "Update & Next" : "Save & Next"}
             </Button>

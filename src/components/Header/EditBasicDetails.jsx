@@ -158,7 +158,15 @@ serviceEndDate:
   
           case "officePhone":
             if (!value) return "Office phone is required.";
-         
+
+            // Ensure exactly 11 digits and exactly one hyphen
+            const digitCount = (value.match(/\d/g) || []).length;
+            const hyphenCount = (value.match(/-/g) || []).length;
+
+            if (digitCount !== 11 || hyphenCount !== 1) {
+              return "Office phone must contain exactly 11 digits and one hyphen.";
+            }
+
             return ""; 
   
       case "email":
@@ -350,7 +358,7 @@ serviceEndDate:
     <>
      {isLoading && <PageLoader />}
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box>
+      <Box sx={{mt:5}}>
         <Accordion expanded={expanded} sx={{ boxShadow: 3 }}>
           <AccordionSummary
             expandIcon={
@@ -523,6 +531,25 @@ serviceEndDate:
                       actionBar: {
                         actions: [],
                       },
+                      toolbar: {
+                        hidden: true,
+                      },
+                    }}
+                    slots={{
+                      toolbar: null, 
+                    }}
+                    sx={{
+                      "& .MuiPickersLayout-actionBar": {
+                        display: "none", 
+                      },
+                      "& .MuiPickersLayout-contentWrapper": {
+                        "& .MuiPickersCalendarHeader-root": {
+                          display: "none", 
+                        },
+                        "& .MuiDayCalendar-header": {
+                          display: "none", 
+                        },
+                      },
                     }}
                     closeOnSelect={true}
                   />
@@ -586,97 +613,60 @@ serviceEndDate:
                     helperText={errors.officeEmail}
                   />
                 </Grid>
-                {/* <Grid item xs={3}>
-                  <TextField
-                    fullWidth
-                    label={
-                      <>
-                        Office Phone <span style={{ color: "red" }}>*</span>
-                      </>
-                    }
-                    name="officePhone"
-                    value={data.officePhone}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (/^\d*$/.test(value)) {
-                        handleChange(e);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (!/\d/.test(e.key) && e.key !== "Backspace" && e.key !== "Delete" && e.key !== "Tab") {
-                        e.preventDefault();
-                      }
-                    }}
-                    autoComplete="off"
-                    inputProps={{ maxLength: 10 }}
-                    InputProps={{ sx: { height: "50px" } }}
-                    InputLabelProps={{ shrink: true }}
-                    error={!!errors.officePhone}
-                    helperText={errors.officePhone}
-                  />
-                </Grid> */}
-                     <Grid item xs={3}>
-                         <TextField
-                           fullWidth
-                           label={
-                             <>
-                               Office Phone <span style={{ color: "red" }}>*</span>
-                             </>
-                           }
-                           name="officePhone"
-                           autoComplete="off"
-                           value={data.officePhone}
-                           onChange={(e) => {
-                             let value = e.target.value.trim(); // Trim spaces
-                             console.log("onChange - Current Value:", value); // Debugging
-         
-                             // Allow only digits and hyphen
-                             if (/^[0-9-]*$/.test(value)) {
-                               // Ensure hyphen is not at the start
-                               if (!value.startsWith("-")) {
-                                 const digitCount = (value.match(/\d/g) || []).length; // Count digits
-                                 const hyphenCount = (value.match(/-/g) || []).length; // Count hyphens
-                                 console.log("Digit Count:", digitCount, "Hyphen Count:", hyphenCount); // Debugging
-         
-                                 // Ensure max 11 digits and only one hyphen
-                                 if (digitCount <= 11 && hyphenCount <= 1) {
-                                   handleChange(e); // Update state
-                                 }
-                               }
-                             }
-                           }}
-                           onBlur={() => {
-                             const error = validateField("officePhone", data.officePhone.trim(), data); // Use validateField
-                             setErrors((prev) => ({ ...prev, officePhone: error }));
-                           }}
-                           onKeyDown={(e) => {
-                             console.log("onKeyDown - Key Pressed:", e.key); // Debugging
-         
-                             // Allow digits, hyphen, Backspace, Delete, Arrow keys, and Tab
-                             if (
-                               !/\d/.test(e.key) && // Allow digits
-                               e.key !== "-" && // Explicitly allow hyphen
-                               !["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight"].includes(e.key)
-                             ) {
-                               console.log("Blocked Key:", e.key); // Debugging
-                               e.preventDefault(); // Block invalid keys
-                             }
-         
-                             // Block input if digit count is already 11
-                             const digitCount = (data.officePhone.match(/\d/g) || []).length;
-                             if (digitCount >= 11 && /\d/.test(e.key)) {
-                               console.log("Blocked Key (Max Digits Reached):", e.key); // Debugging
-                               e.preventDefault(); // Block additional digits
-                             }
-                           }}
-                           inputProps={{ maxLength: 13 }} // Max length (11 digits + 1 hyphen + 1 extra)
-                           InputProps={{ sx: { height: "50px" } }}
-                           InputLabelProps={{ shrink: true }}
-                           error={!!errors.officePhone}
-                           helperText={errors.officePhone}
-                           aria-describedby="officePhone-error" // Accessibility
-                         />
-                       </Grid>
+                
+                      <Grid item xs={3}>
+                        <TextField
+                          fullWidth
+                          label={
+                            <>
+                              Office Phone <span style={{ color: "red" }}>*</span>
+                            </>
+                          }
+                          name="officePhone"
+                          autoComplete="off"
+                          value={data.officePhone}
+                          onChange={(e) => {
+                            let value = e.target.value.trim(); 
+      
+                            if (/^[0-9-]*$/.test(value)) {
+                            
+                              if (!value.startsWith("-")) {
+                                const digitCount = (value.match(/\d/g) || []).length; 
+                                const hyphenCount = (value.match(/-/g) || []).length;
+      
+                                if (digitCount <= 11 && hyphenCount <= 1) {
+                                  handleChange(e); 
+                                }
+                              }
+                            }
+                          }}
+                          onBlur={() => {
+                            const error = validateField("officePhone", data.officePhone.trim(), data); 
+                            setErrors((prev) => ({ ...prev, officePhone: error }));
+                          }}
+                          onKeyDown={(e) => {
+        
+                            if (
+                              !/\d/.test(e.key) && 
+                              e.key !== "-" && 
+                              !["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight"].includes(e.key)
+                            ) {
+                              e.preventDefault(); 
+                            }
+      
+                            const digitCount = (data.officePhone.match(/\d/g) || []).length;
+                            if (digitCount >= 11 && /\d/.test(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
+                          inputProps={{ maxLength: 13 }} 
+                          InputProps={{ sx: { height: "50px" } }}
+                          InputLabelProps={{ shrink: true }}
+                          error={!!errors.officePhone}
+                          helperText={errors.officePhone}
+                          aria-describedby="officePhone-error" 
+                        />
+                      </Grid>
 
                 <Grid item xs={3}>
                   <MobileDatePicker
@@ -717,6 +707,25 @@ serviceEndDate:
                       actionBar: {
                         actions: [],
                       },
+                      toolbar: {
+                        hidden: true,
+                      },
+                    }}
+                    slots={{
+                      toolbar: null, 
+                    }}
+                    sx={{
+                      "& .MuiPickersLayout-actionBar": {
+                        display: "none", 
+                      },
+                      "& .MuiPickersLayout-contentWrapper": {
+                        "& .MuiPickersCalendarHeader-root": {
+                          display: "none", 
+                        },
+                        "& .MuiDayCalendar-header": {
+                          display: "none", 
+                        },
+                      },
                     }}
                     closeOnSelect={true}
                   />
@@ -756,6 +765,25 @@ serviceEndDate:
                       actionBar: {
                         actions: [],
                       },
+                      toolbar: {
+                        hidden: true,
+                      },
+                    }}
+                    slots={{
+                      toolbar: null, 
+                    }}
+                    sx={{
+                      "& .MuiPickersLayout-actionBar": {
+                        display: "none", 
+                      },
+                      "& .MuiPickersLayout-contentWrapper": {
+                        "& .MuiPickersCalendarHeader-root": {
+                          display: "none", 
+                        },
+                        "& .MuiDayCalendar-header": {
+                          display: "none", 
+                        },
+                      },
                     }}
                     closeOnSelect={true}
                   />
@@ -789,11 +817,26 @@ serviceEndDate:
 
               </Grid>
               
-              <Box sx={{ mt: 3, display: "flex", justifyContent: "center", gap: 2 }}>
-                <Button variant="contained" color="primary" onClick={handleSaveAndNext}>
+              <Box sx={{ mt: 4, display: "flex", justifyContent: "center", gap: 2 }}>
+                <Button variant="contained" 
+                onClick={handleSaveAndNext}
+                sx={{
+                  backgroundColor: ' #1a5f6a',
+                  '&:hover': { backgroundColor: '#207785' },
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  borderRadius: '8px',
+                 
+                }}>
                     Update
                 </Button>
-                <Button variant="contained" color="error"   onClick={() => navigate("/")}>
+                <Button variant="contained" color="error"   onClick={() => navigate("/")}
+                  sx={{
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    borderRadius: '8px',
+                   
+                  }}>
                     Cancel
                 </Button>
                 </Box>

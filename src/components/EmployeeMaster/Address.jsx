@@ -33,7 +33,7 @@ const fetchAddressDropdownData = async () => {
   const countryResponse = await api
     .get(endpoints[0])
     .then((res) => {
-      console.log("Country response:", res.data);
+     
       const data = res.data.data || res.data;
       return { success: true, data };
     })
@@ -47,11 +47,11 @@ const fetchAddressDropdownData = async () => {
   }
 
   const countryId = countryResponse.data[0].countryId;
-  console.log("Selected countryId:", countryId);
+  
 
  
   const encryptedStatePayload = encryptPayload({ countryId });
-  console.log("Encrypted payload for state:", encryptedStatePayload);
+ 
 
   const stateResponse = await api
     .post(
@@ -64,7 +64,7 @@ const fetchAddressDropdownData = async () => {
       }
     )
     .then((res) => {
-      console.log("State response:", res.data);
+      
       const data = res.data.data || res.data;
       return { success: true, data };
     })
@@ -78,11 +78,11 @@ const fetchAddressDropdownData = async () => {
   }
 
   const stateId = stateResponse.data[0].stateId; 
-  console.log("Selected stateId:", stateId);
+  
 
   
   const encryptedDistrictPayload = encryptPayload({ stateId });
-  console.log("Encrypted payload for district:", encryptedDistrictPayload);
+ 
 
   const districtResponse = await api
     .post(
@@ -95,7 +95,7 @@ const fetchAddressDropdownData = async () => {
       }
     )
     .then((res) => {
-      console.log("District response:", res.data);
+      
       const data = res.data.data || res.data;
       return { success: true, data };
     })
@@ -109,11 +109,11 @@ const fetchAddressDropdownData = async () => {
   }
 
   const districtId = districtResponse.data[0].districtId; 
-  console.log("Selected districtId:", districtId);
+ 
 
 
   const encryptedCityPayload = encryptPayload({ districtId });
-  console.log("Encrypted payload for city:", encryptedCityPayload);
+  
 
   const cityResponse = await api
     .post(
@@ -126,7 +126,7 @@ const fetchAddressDropdownData = async () => {
       }
     )
     .then((res) => {
-      console.log("City response:", res.data);
+    
       const data = res.data.data || res.data;
       return { success: true, data };
     })
@@ -263,7 +263,7 @@ setErrors(allErrors);
 
 
 if (!isPresentValid || !isPermanentValid) {
-  console.log("Form has errors. Please fix them.");
+
   return; 
 }
 

@@ -184,13 +184,7 @@ const NewRequest = ({ handelRefecthNew }) => {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
-  // const fetchedData = location.state?.data; 
-  // const letterReceiptId = fetchedData.letterReceiptId;
-  // const fetchedData = location.state?.data || {};
-  // const letterReceiptId = fetchedData?.letterReceiptId || null;
 
-  // console.log("letterReceiptId:", letterReceiptId);
-  // const metadataId = fetchedData.metadataId;
   const token = useAuthStore.getState().token; 
   const [isLoading, setIsLoading] = useState(false);
   const Navigate = useNavigate();
@@ -223,8 +217,7 @@ const NewRequest = ({ handelRefecthNew }) => {
     setLetterReceiptId(receiptId);
     setMetadataId(metadataId)
   }, [location.state]);
-console.log("letterReceiptId",letterReceiptId)
-console.log("metadataId",metadataId)
+
 
   useEffect(() => {
     const fetchRoomData = async () => {
@@ -321,11 +314,10 @@ console.log("metadataId",metadataId)
       setPrioritylyst(response.data.data.prioritylst || []);
       // setTotalPages(response.data.totalPages || 0);
       const totalRecords = response.data.data.totalPages;
-      console.log("totalRecords", totalRecords);
+     
 
       setTotalPages(totalRecords);
 
-      console.log(response.data.data);
     } catch (error) {
       console.error("Error fetching filtered data:", error);
     } finally {
@@ -361,7 +353,7 @@ console.log("metadataId",metadataId)
 
   const handleEditClick = (file) => {
     setLoading(true);
-    console.log("Edit Clicked:edit", file);
+    
 
     if (!file) return;
 
@@ -426,7 +418,7 @@ console.log("metadataId",metadataId)
         }
       );
 
-      console.log("File successfully sent to rack:", response.data);
+      
 
       closeModal();
     } catch (error) {
@@ -454,7 +446,7 @@ console.log("metadataId",metadataId)
         },
       });
 
-      console.log("History Data Response:", response.data);
+     
 
       setHistoryData(response.data.fileHist || []);
 

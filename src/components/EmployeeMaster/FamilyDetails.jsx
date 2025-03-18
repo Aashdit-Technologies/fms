@@ -388,7 +388,7 @@ const isValid =validateFamilyFields (rows);
       handleChange(index, "dateOfBirth", formattedDate);
       setErrors((prevErrors) => ({ ...prevErrors, [`dateOfBirth_${index}`]: "" }));
     }}
-    format="YYYY-MM-DD"
+    format="DD-MM-YYYY"
     maxDate={dayjs()} 
     slotProps={{
       textField: {
@@ -410,6 +410,25 @@ const isValid =validateFamilyFields (rows);
       },
       actionBar: {
         actions: [],
+      },
+      toolbar: {
+        hidden: true,
+      },
+    }}
+    slots={{
+      toolbar: null, 
+    }}
+    sx={{
+      "& .MuiPickersLayout-actionBar": {
+        display: "none", 
+      },
+      "& .MuiPickersLayout-contentWrapper": {
+        "& .MuiPickersCalendarHeader-root": {
+          display: "none", 
+        },
+        "& .MuiDayCalendar-header": {
+          display: "none", 
+        },
       },
     }}
     closeOnSelect={true}

@@ -138,7 +138,7 @@ const Despatch = () => {
    const [dispatchdata, setDispatchData] = useState([]);
   const [expanded, setExpanded] = useState(true); 
   const [isLoading, setIsLoading] = useState(false);
-
+   
   
    
 
@@ -151,7 +151,6 @@ const Despatch = () => {
   };
  
   const handleUpload = (row) => {
-    debugger
     setSelectedRow(row);
     setIsUploadModalOpen(true);
   };

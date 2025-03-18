@@ -326,8 +326,8 @@ debugger
       if (!field.percentageCgpa) {
         newErrors[`percentageCgpa_${index}`] = "Percentage/CGPA is required.";
         isValid = false;
-      } else if (!/^\d+\.\d{2}$/.test(field.percentageCgpa)) {
-        newErrors[`percentageCgpa_${index}`] = "Percentage/CGPA must be a valid number with exactly two decimal places (e.g., 9.00 or 8.99).";
+      } else if (!/^\d+(\.\d{2})?$/.test(field.percentageCgpa)) {
+        newErrors[`percentageCgpa_${index}`] = "Percentage/CGPA must be a whole number or a number with exactly two decimal places (e.g., 82 or 82.22).";
         isValid = false;
       }
   
@@ -475,7 +475,7 @@ debugger
                 onChange={(e) => {
                   const value = e.target.value;
 
-                  
+                  // Allow whole numbers or numbers with exactly two decimal places
                   if (/^\d*\.?\d{0,2}$/.test(value)) {
                     handleChange(index, e);
                     setErrors((prevErrors) => ({
@@ -485,23 +485,23 @@ debugger
                   }
                 }}
                 onKeyDown={(e) => {
-                  
+                  // Allow digits, decimal point, Backspace, Delete, and Tab
                   if (
-                    !/\d|\./.test(e.key) && 
+                    !/\d|\./.test(e.key) && // Allow digits and decimal point
                     e.key !== "Backspace" &&
                     e.key !== "Delete" &&
                     e.key !== "Tab"
                   ) {
-                    e.preventDefault(); 
+                    e.preventDefault(); // Block invalid keys
                   }
 
-                  
+                  // Prevent multiple decimal points
                   if (e.key === "." && field.percentageCgpa.includes(".")) {
                     e.preventDefault();
                   }
                 }}
                 autoComplete="off"
-                inputProps={{ maxLength: 5 }} 
+                inputProps={{ maxLength: 6 }} // Max length (e.g., 100.22)
                 fullWidth
                 InputProps={{ sx: { height: "50px" } }}
                 error={!!errors[`percentageCgpa_${index}`]}

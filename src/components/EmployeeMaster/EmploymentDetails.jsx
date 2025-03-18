@@ -562,7 +562,7 @@ const EmploymentDetails = ({ handleTabChange }) => {
                 error={!!errors[`fromDate_${index}`]}
                 helperText={errors[`fromDate_${index}`]} 
                
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
                 slotProps={{
                   textField: {
                     fullWidth: true,
@@ -578,11 +578,28 @@ const EmploymentDetails = ({ handleTabChange }) => {
                     },
                   },
                   actionBar: {
-                    actions: [], 
+                    actions: [],
                   },
-                 
+                  toolbar: {
+                    hidden: true,
+                  },
                 }}
-               
+                slots={{
+                  toolbar: null, 
+                }}
+                sx={{
+                  "& .MuiPickersLayout-actionBar": {
+                    display: "none", 
+                  },
+                  "& .MuiPickersLayout-contentWrapper": {
+                    "& .MuiPickersCalendarHeader-root": {
+                      display: "none", 
+                    },
+                    "& .MuiDayCalendar-header": {
+                      display: "none", 
+                    },
+                  },
+                }}
                 closeOnSelect={true}
               />
             </Grid>
@@ -596,7 +613,7 @@ const EmploymentDetails = ({ handleTabChange }) => {
               onChange={(newValue) =>
                 handleChange(index, "endDate", newValue ? newValue.format("YYYY-MM-DD") : "")
               }
-              format="YYYY-MM-DD"
+              format="DD-MM-YYYY"
               slotProps={{
                 textField: {
                   fullWidth: true,
@@ -613,6 +630,25 @@ const EmploymentDetails = ({ handleTabChange }) => {
                 },
                 actionBar: {
                   actions: [],
+                },
+                toolbar: {
+                  hidden: true,
+                },
+              }}
+              slots={{
+                toolbar: null, 
+              }}
+              sx={{
+                "& .MuiPickersLayout-actionBar": {
+                  display: "none", 
+                },
+                "& .MuiPickersLayout-contentWrapper": {
+                  "& .MuiPickersCalendarHeader-root": {
+                    display: "none", 
+                  },
+                  "& .MuiDayCalendar-header": {
+                    display: "none", 
+                  },
                 },
               }}
               closeOnSelect={true}

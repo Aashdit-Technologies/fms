@@ -14,7 +14,7 @@ import EditProfile from "./EditProfile";
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import { useNavigate } from 'react-router-dom';
-
+import { PageLoader } from "../pageload/PageLoader";
 const UserDropdown = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const avatarRef = useRef(null);
@@ -22,18 +22,22 @@ const UserDropdown = () => {
   const [user, setUser] = useState({});
   const [basicDetails, setBasicDetails] = useState(null);
   const [changepassworddata, setChangepassworddata] = useState(null);
-
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const token = useAuthStore.getState().token;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
+      setIsLoading(true);
       try {
         const response = await api.get("user/profile-details");
         setUser(response.data.data);
-        console.log("User details:", response.data.data);
+       
       } catch (error) {
         console.error("Error fetching user profile:", error);
+      }
+      finally {
+        setIsLoading(false);
       }
     };
 
@@ -41,9 +45,10 @@ const UserDropdown = () => {
   }, [token]); 
 
   const handleEditProfileClick = async () => {
+    setIsLoading(true);
     try {
       const response = await api.get("user/basic-details");
-      console.log("Fetched Data:", response.data.data);
+      
       setBasicDetails(response.data.data);
 
       if (user.isEmployee) {
@@ -56,18 +61,25 @@ const UserDropdown = () => {
     } catch (error) {
       console.error("Error fetching basic details:", error);
     }
+    finally {
+      setIsLoading(false);
+    }
   };
 
 
   const handleChangePasswordClick = async () => {
+    setIsLoading(true);
     try {
       const response = await api.get("user/get-user-name");
-      console.log(response.data.data)
+    
       setChangepassworddata(response.data.data)
       handleClose(); 
       navigate('/change-password',{state:{changepassworddata:response.data.data}});
     } catch (error) {
       console.error("Error fetching password details:", error);
+    }
+    finally {
+      setIsLoading(false);
     }
   };
 
@@ -80,6 +92,8 @@ const UserDropdown = () => {
   };
 
   return (
+    <>
+    {isLoading && <PageLoader />}
     <Box sx={{ display: "flex", alignItems: "center", gap: 2, cursor: "pointer" }}>
       {/* User Name */}
       <Typography
@@ -150,6 +164,7 @@ const UserDropdown = () => {
         data={basicDetails}
       />
     </Box>
+    </>
   );
 };
 

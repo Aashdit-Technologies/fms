@@ -24,8 +24,7 @@ import { encryptPayload } from "../../../utils/encrypt";
 import { PageLoader } from "../../pageload/PageLoader";
 const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
 
-  console.log( "fileName props",  fileName)
-  console.log( "filePath props",filePath)
+  
   
   const [isLoading, setIsLoading] = useState(false);
 
@@ -52,7 +51,7 @@ const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
     );
     debugger
     if (response.status === 200) {
-    console.log('Full PDF Response:', response.data);
+   
     
     // Create a download link and trigger download
     const url = window.URL.createObjectURL(new Blob([response.data]));

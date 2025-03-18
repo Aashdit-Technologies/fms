@@ -20,10 +20,9 @@ import { LocalizationProvider, MobileDatePicker } from "@mui/x-date-pickers";
 import { CalendarToday, AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { Grid } from '@mui/joy';
 const UploadLetter = ({ open, onClose,   dispatchData,fetchLetters}) => {
-  debugger
+  
   const correspondenceId = dispatchData != null ? dispatchData.correspondenceId : null;
-
-
+ 
   const [formData, setFormData] = useState({
     letterNo: '',
     endingMemoNo: '',
@@ -234,7 +233,9 @@ const validateForm = () => {
               />
               
               </Grid>
-              <Grid item xs={6} sx={{ mb: 2 }}>
+             
+
+                <Grid item xs={6} sx={{ mb: 2 }}>
                   <MobileDatePicker
                     label={
                       <>
@@ -246,14 +247,12 @@ const validateForm = () => {
                       handleInputChange({ target: { name: "date", value: newValue } })
                     }
                     disableCloseOnSelect
-                    format="YYYY-MM-DD"
+                    format="DD-MM-YYYY"
                     slotProps={{
                       textField: {
                         fullWidth: true,
-                        
                         InputLabelProps: {
                           shrink: true,
-                          
                         },
                         InputProps: {
                           endAdornment: <CalendarToday color="action" />,
@@ -268,7 +267,28 @@ const validateForm = () => {
                           },
                         },
                       },
-                      actionBar: { actions: [] },
+                      actionBar: {
+                        actions: [], 
+                      },
+                      toolbar: {
+                        hidden: true, 
+                      },
+                    }}
+                    slots={{
+                      toolbar: null,
+                    }}
+                    sx={{
+                      "& .MuiPickersLayout-actionBar": {
+                        display: "none", 
+                      },
+                      "& .MuiPickersLayout-contentWrapper": {
+                        "& .MuiPickersCalendarHeader-root": {
+                          display: "none", 
+                        },
+                        "& .MuiDayCalendar-header": {
+                          display: "none", 
+                        },
+                      },
                     }}
                     closeOnSelect={true}
                   />

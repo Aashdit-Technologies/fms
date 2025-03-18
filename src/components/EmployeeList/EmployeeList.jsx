@@ -185,7 +185,7 @@ useEffect(() => {
 
   const fetchEmployeeList = async (serviceId,page = pageNo,
     size = rowSize ) => {
-      debugger
+      
     setIsLoading(true)
     try { 
       const payload = {
@@ -208,7 +208,7 @@ useEffect(() => {
         setEmployeeList(list);
         const totalRecords = response.data.data.totalPages;
           setTotalPages(totalRecords);
-          console.log("totalRecords checking ",totalRecords)
+          
       } else {
         console.error("Invalid employee list format:", response.data);
         setEmployeeList([]);

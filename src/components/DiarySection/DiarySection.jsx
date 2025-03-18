@@ -2560,76 +2560,72 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                   <label style={{ display: "block", width: "100%" }}>
                     Sender Date: <span style={{ color: "red" }}>*</span>
                   </label>
-                  {/* <TextField
-                    fullWidth
-                    size="small"
-                    // InputProps={{ sx: { height: 55 } }}
-                    type="date"
-                    name="senderDate"
-                    inputProps={{
-                      max:  getTodayDate(),
-                    }}
-                    value={formData.senderDate }
-                    onChange={handleSenderDateChange}
-                    required
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '& fieldset': {
-                          borderColor: '#ced4da',
-                        },
-                        '&:hover fieldset': {
-                          borderColor: '#207785',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#207785',
-                        },
-                      },
-                    }}
-                  /> */}
+                 
 
-<LocalizationProvider dateAdapter={AdapterDayjs}>
-  <MobileDatePicker
-    value={formData.senderDate ? dayjs(formData.senderDate) : null}
-    onChange={(newValue) => {
-      if (newValue && newValue.isAfter(dayjs())) {
-        toast.error("Future dates are not allowed!");
-        return;
-      }
-      handleSenderDateChange({ target: { name: "senderDate", value: newValue ? newValue.format("YYYY-MM-DD") : "" } });
-    }}
-    disableCloseOnSelect
-    format="YYYY-MM-DD"
-    maxDate={dayjs()} // ✅ Restricts future dates
-    slotProps={{
-      textField: {
-        fullWidth: true,
-        required: true,
-        InputLabelProps: {
-          shrink: true,
-          sx: {
-            "& .MuiFormLabel-asterisk": {
-              color: "red",
-            },
-          },
-        },
-        InputProps: {
-          endAdornment: <CalendarToday color="action" />,
-        },
-        sx: {
-          "& .MuiInputBase-root": {
-            height: "40px",
-          },
-          "& .MuiOutlinedInput-root": {
-            "& fieldset": { borderColor: "#207785" },
-            "&:hover fieldset": { borderColor: "#1a5f6a" },
-          },
-        },
-      },
-      actionBar: { actions: [] },
-    }}
-    closeOnSelect={true}
-  />
-</LocalizationProvider>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <MobileDatePicker
+                      value={formData.senderDate ? dayjs(formData.senderDate) : null}
+                      onChange={(newValue) => {
+                        if (newValue && newValue.isAfter(dayjs())) {
+                          toast.error("Future dates are not allowed!");
+                          return;
+                        }
+                        handleSenderDateChange({ target: { name: "senderDate", value: newValue ? newValue.format("YYYY-MM-DD") : "" } });
+                      }}
+                      disableCloseOnSelect
+                      format="DD-MM-YYYY"
+                      maxDate={dayjs()} 
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          required: true,
+                          InputLabelProps: {
+                            shrink: true,
+                            sx: {
+                              "& .MuiFormLabel-asterisk": {
+                                color: "red",
+                              },
+                            },
+                          },
+                          InputProps: {
+                            endAdornment: <CalendarToday color="action" />,
+                          },
+                          sx: {
+                            "& .MuiInputBase-root": {
+                              height: "40px",
+                            },
+                            "& .MuiOutlinedInput-root": {
+                              "& fieldset": { borderColor: "#207785" },
+                              "&:hover fieldset": { borderColor: "#1a5f6a" },
+                            },
+                          },
+                        },
+                        actionBar: {
+                          actions: [], 
+                        },
+                        toolbar: {
+                          hidden: true, 
+                        },
+                      }}
+                      slots={{
+                        toolbar: null,
+                      }}
+                      sx={{
+                        "& .MuiPickersLayout-actionBar": {
+                          display: "none", 
+                        },
+                        "& .MuiPickersLayout-contentWrapper": {
+                          "& .MuiPickersCalendarHeader-root": {
+                            display: "none", 
+                          },
+                          "& .MuiDayCalendar-header": {
+                            display: "none", 
+                          },
+                        },
+                      }}
+                      closeOnSelect={true}
+                    />
+                  </LocalizationProvider>
 
 
                 </div>

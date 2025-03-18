@@ -167,7 +167,7 @@ const EditProfile = ({ open, handleClose, data: initialData }) => {
         {/* Header */}
         <DialogTitle
           sx={{
-            backgroundColor: "#207785",
+            backgroundColor: " #1a5f6a",
             color: "#fff",
             height: "60px",
             fontWeight: "bold",
@@ -361,7 +361,14 @@ const EditProfile = ({ open, handleClose, data: initialData }) => {
             justifyContent: "flex-end",
           }}
         >
-          <Button variant="contained" onClick={handleSaveAndNext} sx={{ bgcolor: "#207785" }}>
+          <Button variant="contained" onClick={handleSaveAndNext} sx={{
+              backgroundColor: ' #1a5f6a',
+              '&:hover': { backgroundColor: '#207785' },
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              borderRadius: '8px',
+             
+            }}>
             Update
           </Button>
         </DialogActions>
