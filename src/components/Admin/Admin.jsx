@@ -22,11 +22,13 @@ import EmployeeList from "../EmployeeList/EmployeeList";
 import LogViewer from "../LogViewer/LogViewer";
 import NoteSheetPreview from "../FileSection/notesheetpreview/NoteSheetPreview";
 import RoleMenu from "../RoleMenu/RoleMenu";
-import PrintLetter from "../DespatchSection/components/PrintLetter"
+import PrintLetter from "../DespatchSection/components/PrintLetter";
+import ChangePassword from "../Header/ChangePassword";
+import EditBasicDetails from "../Header/EditBasicDetails";
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(true);
-  const [menuItems, setMenuItems] = useState([]); 
+  const [menuItems, setMenuItems] = useState([]);
 
   const handleMenuData = (data) => {
     setMenuItems(data);
@@ -172,45 +174,61 @@ const Admin = () => {
               }
             />
 
-             <Route
+            <Route
               path="employee-master"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
-                  <EmployeeMaster/>
+                  <EmployeeMaster />
                 </React.Suspense>
               }
             />
-              <Route
+            <Route
               path="employee-list"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
-                  <EmployeeList/>
+                  <EmployeeList />
                 </React.Suspense>
               }
             />
-              <Route
+            <Route
               path="log-view"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
-                  <LogViewer/>
+                  <LogViewer />
                 </React.Suspense>
               }
             />
-              <Route
+            <Route
               path="role-menu"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
-                  <RoleMenu/>
+                  <RoleMenu />
                 </React.Suspense>
               }
             />
-		<Route
-            path="print-letter"
-            element={
-            <React.Suspense fallback={<div>Loading...</div>}>
-            <PrintLetter/>
-            </React.Suspense>
-            }
+            <Route
+              path="print-letter"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <PrintLetter />
+                </React.Suspense>
+              }
+            />
+            <Route
+              path="/edit-basic-details"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <EditBasicDetails />
+                </React.Suspense>
+              }
+            />
+            <Route
+              path="/change-password"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <ChangePassword />
+                </React.Suspense>
+              }
             />
 
             {menuItems.map((menu) => {
@@ -250,9 +268,9 @@ const Admin = () => {
                 menu.menuURL === "/manage-rack" ||
                 menu.menuURL === "/manage-activity" ||
                 menu.menuURL === "/diary-section" ||
-                menu.menuURL === "/despatch-section"||
+                menu.menuURL === "/despatch-section" ||
                 menu.menuURL === "/employee-master" ||
-                menu.menuURL === "/employee-list" 
+                menu.menuURL === "/employee-list"
               ) {
                 return null;
               }

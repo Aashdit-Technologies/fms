@@ -1,6 +1,13 @@
-import React, { useState, useEffect,useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DataTable from "react-data-table-component";
-import { Box, Button, TextField, Tooltip, Tooltip as MuiTooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+  Tooltip,
+  Tooltip as MuiTooltip,
+  Typography,
+} from "@mui/material";
 import {
   FaEye,
   FaDownload,
@@ -147,8 +154,6 @@ const Correspondence = ({
   const [loading, setLoading] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
   const [copiedRows, setCopiedRows] = useState({});
-  
-
 
   // Configure letter content query
   const {
@@ -193,8 +198,6 @@ const Correspondence = ({
       setOfficeNames(offices);
     }
   }, [offices]);
-
- 
 
   const fetchEnclosuresData = async (corrId) => {
     setLoading(true);
@@ -272,8 +275,6 @@ const Correspondence = ({
     },
   });
 
-
-
   const handleUploadClick = (row) => {
     setSelectedCorrId(row.corrId);
 
@@ -322,9 +323,9 @@ const Correspondence = ({
     onError: (error) => {
       console.error("Error fetching history:", error);
       toast.error("Failed to fetch history data");
-    }
+    },
   });
-  
+
   // Update the handleHistoryClick function
   const handleHistoryClick = (row) => {
     console.log("History clicked for draft:", row.draftNo); // Debug log
@@ -336,7 +337,7 @@ const Correspondence = ({
   };
   const printDraft = async (row) => {
     console.log("Print draft clicked for row:", row);
-    
+
     setLoading(true);
     if (!row || !row.corrId) {
       console.error("Invalid row data for download");
@@ -572,141 +573,103 @@ const Correspondence = ({
     }
   };
   // Mutation for fetching the link
-// Mutation for fetching the link
-const fetchLinkMutation = useMutation({
-  mutationFn: async ({  corrId }) => {
-    debugger
-    
-    
-    try {
-      const encryptedData = encryptPayload({ corrId });
+  // Mutation for fetching the link
+  const fetchLinkMutation = useMutation({
+    mutationFn: async ({ corrId }) => {
+      debugger;
 
-      const response = await api.post(
-        "/file/generate-cores-reflink",
-        { dataObject: encryptedData },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-
-      
-
-      return response.data.data; 
-
-    } catch (error) {
-      console.error("Error fetching link:", error.message);
-      throw error;    
-    }
-  },
-  onError: (error) => {
-    toast.error(error.message || "Failed to fetch link");
-  }
-});
-
-// Handler function for copying the link of a row
-const handleCopyRowLink = async (row) => {
-
-  
-  if (!row.corrId) {
-    toast.error("No ID available for this row");
-    return;
-  }
-
-  // Set loading state for this specific row
-  setCopiedRows((prev) => ({
-    ...prev,
-    [row.corrId]: "loading",
-  }));
-
-  try {
-    const linkData = await fetchLinkMutation.mutateAsync({
-      corrId: row.corrId,
-    });
-
-    if (!linkData) {
-      throw new Error("No link data returned from API.");
-    }
-
-   
-
-    const [label, rawUrl] = linkData.split("|");
-
-    if (!rawUrl) {
-      throw new Error("Invalid link format.");
-    }
-    console.log("URL 1:", rawUrl);
-    const url = rawUrl.startsWith("http") ? rawUrl.trim() : `${rawUrl.trim()}`;
-    const anchorTag = `<a href="${BASE_URL.replace(/\/$/, "")}/${url.replace(/^\//, "")}" target="_blank">${label.trim()}</a>`;
-
-    console.log("Anchor Tag:", anchorTag);
-    console.log("URL 2:", url);
-
-    setTimeout(async () => {
       try {
-        const clipboardData = [
-          new ClipboardItem({
-            "text/html": new Blob([anchorTag], { type: "text/html" }),
-            "text/plain": new Blob([`${label.trim()} | ${url}`], { type: "text/plain" }),
-          }),
-        ];
-    
-        // Log the data you're about to write to the clipboard
-        console.log("Clipboard Data:", {
-          textHtml: anchorTag,
-          textPlain: `${label.trim()} | ${url}`,
-        });
-    
-        // Write the data to the clipboard
-        await navigator.clipboard.write(clipboardData);
+        const encryptedData = encryptPayload({ corrId });
 
-        console.log("Link copied to clipboard!");
+        const response = await api.post(
+          "/file/generate-cores-reflink",
+          { dataObject: encryptedData },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-      } catch (err) {
-        // console.warn("Clipboard API failed, using fallback...");
-    
-        // Fallback: Use a hidden textarea to copy text
-        const textarea = document.createElement("textarea");
-        textarea.value = `${label.trim()} | ${url}`;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
+        return response.data.data;
+      } catch (error) {
+        console.error("Error fetching link:", error.message);
+        throw error;
       }
-    
-    }, 100);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to fetch link");
+    },
+  });
 
-    // Update state
+  const handleCopyRowLink = async (row) => {
+    if (!row.corrId) {
+      toast.error("No ID available for this row");
+      return;
+    }
+  
     setCopiedRows((prev) => ({
       ...prev,
-      [row.corrId]: "copied",
+      [row.corrId]: "loading",
     }));
+  
+    try {
+      const linkData = await fetchLinkMutation.mutateAsync({
+        corrId: row.corrId,
+      });
+  
+      if (!linkData) {
+        throw new Error("No link data returned from API.");
+      }
+  
+      const [label, rawUrl] = linkData.split("|");
+  
+      if (!rawUrl) {
+        throw new Error("Invalid link format.");
+      }
+  
+      const url = rawUrl.startsWith("http") ? rawUrl.trim() : `${rawUrl.trim()}`;
+      const fullUrl = `${BASE_URL.replace(/\/$/, "")}/${url.replace(/^\//, "")}`;
+  
+      
+  
+      const anchorTag = `<a href="${fullUrl}" target="_blank">${label.trim()}</a>`;
+  
+      const textarea = document.createElement("textarea");
+      textarea.value = anchorTag;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+  
+      // toast.success("Link copied!");
+  
 
-
-    // Reset the copied state after 2 seconds
-    setTimeout(() => {
+      setCopiedRows((prev) => ({
+        ...prev,
+        [row.corrId]: "copied",
+      }));
+  
+      setTimeout(() => {
+        setCopiedRows((prev) => ({
+          ...prev,
+          [row.corrId]: null,
+        }));
+      }, 2000);
+    } catch (error) {
+      toast.error(error.message || "Failed to copy link");
+  
+     
       setCopiedRows((prev) => ({
         ...prev,
         [row.corrId]: null,
       }));
-    }, 2000);
-  } catch (error) {
-    console.error("Failed to copy link:", error);
-    toast.error(error.message || "Failed to copy link");
-
-    // Reset state on error
-    setCopiedRows((prev) => ({
-      ...prev,
-      [row.corrId]: null,
-    }));
-  }
-};
-
-
-
-
+    }
+  };
+  
+  
+  
+  
   const columns = [
     {
       name: "SI.#",
@@ -775,9 +738,9 @@ const handleCopyRowLink = async (row) => {
       width: "80px",
       cell: (row) => {
         const rowState = copiedRows[row.corrId];
-        const isLoading = rowState === 'loading';
-        const isCopied = rowState === 'copied';
-        
+        const isLoading = rowState === "loading";
+        const isCopied = rowState === "copied";
+
         return (
           <MuiTooltip title={isCopied ? "Copied!" : "Copy Link"}>
             <Button
@@ -785,25 +748,29 @@ const handleCopyRowLink = async (row) => {
               size="small"
               onClick={() => handleCopyRowLink(row)}
               style={{
-                minWidth: '32px',
-                padding: '4px 8px',
-                backgroundColor: isCopied ? '#28a745' : '#1a5f6a',
-                color: 'white',
-                
+                minWidth: "32px",
+                padding: "4px 8px",
+                backgroundColor: isCopied ? "#28a745" : "#1a5f6a",
+                color: "white",
               }}
               disabled={isLoading || !row.corrId}
+              aria-label={isCopied ? "Link copied" : "Copy link"}
             >
               {isLoading ? (
-                <div className="spinner-border spinner-border-sm" role="status" style={{ width: '14px', height: '14px',}} />
+                <div
+                  className="spinner-border spinner-border-sm"
+                  role="status"
+                  style={{ width: "14px", height: "14px" }}
+                />
               ) : isCopied ? (
-                <FaCheckCircle size={14}  />
+                <FaCheckCircle size={14} />
               ) : (
-                <FaClipboard size={14}  />
+                <FaClipboard size={14} />
               )}
             </Button>
           </MuiTooltip>
         );
-      }
+      },
     },
     {
       name: "Action",
@@ -819,7 +786,7 @@ const handleCopyRowLink = async (row) => {
               >
                 <FaCloudUploadAlt size={16} />
               </StyledButton>
-             {row.correspondencePath ? (
+              {row.correspondencePath ? (
                 <StyledButton
                   variant="contained"
                   style={{ backgroundColor: "#28a745" }}
@@ -938,11 +905,12 @@ const handleCopyRowLink = async (row) => {
 
         <DataTable
           columns={columns}
-          data={filteredData.filter((item) =>
-            item.subject?.toLowerCase().includes(filterText.toLowerCase()) ||
-            item.links?.some(link => 
-              link.linkText.toLowerCase().includes(filterText.toLowerCase())
-            )
+          data={filteredData.filter(
+            (item) =>
+              item.subject?.toLowerCase().includes(filterText.toLowerCase()) ||
+              item.links?.some((link) =>
+                link.linkText.toLowerCase().includes(filterText.toLowerCase())
+              )
           )}
           pagination
           customStyles={customStyles}
@@ -969,7 +937,7 @@ const handleCopyRowLink = async (row) => {
         open={historyModalOpen}
         onClose={() => {
           setHistoryModalOpen(false);
-          setHistoryData(null); 
+          setHistoryData(null);
         }}
         historyData={historyData}
         isLoading={isLoadingHistory}

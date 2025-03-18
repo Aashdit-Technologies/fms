@@ -8,14 +8,14 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
   const isUpdatingRef = useRef(false); 
   const cursorPositions = useRef(null);
 
-  // Function to insert content at cursor position
   const insertAtCursor = (text) => {
     if (editor.current) {
-      saveCursorPosition(); // Save cursor before inserting
-      editor.current.s.insertHTML(text); // Insert content at cursor
-      restoreCursorPosition(); // Restore cursor after inserting
+      saveCursorPosition(); 
   
-      // Immediately update state
+      editor.current.s.insertHTML(text);
+  
+      restoreCursorPosition(); 
+  
       const updatedContent = editor.current.getEditorValue();
       setCurrentContent(updatedContent);
       onContentChange?.(updatedContent);
@@ -64,7 +64,7 @@ const SunEditorComponent = ({ content, onContentChange, placeholder, onBlur }) =
     askBeforePasteHTML: false,
     askBeforePasteFromWord: false,
     defaultActionOnPaste: 'insert_clear_html',
-    enterenter: "BR", 
+    enter: 'br',
     events: {
       beforePaste: (e) => {
         e.preventDefault(); // Prevent default paste behavior

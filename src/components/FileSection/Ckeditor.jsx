@@ -37,20 +37,20 @@ const Ckeditor = ({
       const selectedValue = options.find(
         (option) => option.label === event.target.value
       );
-
+  
       if (selectedValue) {
         setSelectedItem(selectedValue.label);
-        setSelectedNote(selectedValue.value); 
-
+        setSelectedNote(selectedValue.value);
+  
         const linkHTML = `<a href="#" class="noting-link" data-note-index="${selectedValue.label}" 
-        style="color: #007bff; text-decoration: underline; font-weight: 600; cursor: pointer;">
-        ${selectedValue.label}
-      </a>`;
-
-        const newContent = `${content}${linkHTML}&nbsp;`;
+          style="color: #007bff; text-decoration: underline; font-weight: 600; cursor: pointer;">
+          ${selectedValue.label}
+        </a>&nbsp;`; 
+  
+        const newContent = `${content}${linkHTML}`;
         onContentChange?.(newContent);
-
-        setModalOpen(false); 
+  
+        setModalOpen(false);
       }
     },
     [content, onContentChange, options]
@@ -95,7 +95,7 @@ const Ckeditor = ({
     setIsOpen((prev) => !prev);
   }, []);
   useEffect(() => {
-    // Set the initial state to true when the page loads (for example)
+   
     setIsOpen(true);
   }, []);
   
@@ -233,9 +233,7 @@ const Ckeditor = ({
           <Button variant="secondary" onClick={() => setModalOpen(false)}>
             Close
           </Button>
-          <Button variant="primary" onClick={handlePrint}>
-            <FaPrint className="me-2" /> Print Note
-          </Button>
+          
         </Modal.Footer>
       </Modal>
       <style>{`
