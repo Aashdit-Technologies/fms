@@ -232,7 +232,8 @@ const Header = ({ collapsed }) => {
                 {!isDashboardPage && (
                   <button
                     className="logout-btn btn btn-dark"
-                    style={{ padding: "10px 22px", backgroundColor: "#207785" }}
+                    style={{  backgroundColor: "#207785" }}
+                    size="small"
                     onClick={() => navigate("/")}
                   >
                     <MdDashboard className="icon-logout d-flex" />
@@ -241,7 +242,7 @@ const Header = ({ collapsed }) => {
                 <button
                   onClick={handleLogout}
                   className="logout-btn btn btn-dark"
-                  style={{ padding: "10px 22px" }}
+                  size="small"
                 >
                   <IoMdLogOut className="icon-logout" />
                 </button>
