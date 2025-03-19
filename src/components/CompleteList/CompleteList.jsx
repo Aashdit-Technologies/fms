@@ -673,47 +673,75 @@ const CompleteList = ({ onSwitchTab }) => {
         <Dialog
           open={historyModalVisible}
           onClose={() => setHistoryModalVisible(false)}
-          maxWidth="xl"
+          maxWidth="lg"
           fullWidth
         >
           <DialogTitle>File History</DialogTitle>
 
           <DialogContent>
-            <Table>
+            <Table sx={{ borderCollapse: "collapse", width: "100%" }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Sl</TableCell>
-
-                  <TableCell>File Number</TableCell>
-
-                  <TableCell>Sender</TableCell>
-
-                  <TableCell>Receiver</TableCell>
-
-                  <TableCell>Docket No.</TableCell>
-
-                  <TableCell>Action Date</TableCell>
-
-                  <TableCell>Status</TableCell>
+                  <TableCell
+                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                  >
+                    Sl
+                  </TableCell>
+                  <TableCell
+                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                  >
+                    File Number
+                  </TableCell>
+                  <TableCell
+                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                  >
+                    Sender
+                  </TableCell>
+                  <TableCell
+                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                  >
+                    Receiver
+                  </TableCell>
+                  <TableCell
+                    sx={{ border: "1px solid #ccc", backgroundColor: '#005F73',fontWeight: "bold",color: '#fff' }}
+                  >
+                    Docket No.
+                  </TableCell>
+                  <TableCell
+                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold" ,color: '#fff'}}
+                  >
+                    Action Date
+                  </TableCell>
+                  <TableCell
+                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold" ,color: '#fff'}}
+                  >
+                    Status
+                  </TableCell>
                 </TableRow>
               </TableHead>
 
               <TableBody>
                 {historyData.map((historyItem, index) => (
                   <TableRow key={index}>
-                    <TableCell>{historyData.length - index}</TableCell>
-
-                    <TableCell>{historyItem.fileNo}</TableCell>
-
-                    <TableCell>{historyItem.sender || "NA"}</TableCell>
-
-                    <TableCell>{historyItem.receiver || "NA"}</TableCell>
-
-                    <TableCell>{historyItem.docketNo || "NA"}</TableCell>
-
-                    <TableCell>{historyItem.actionDate || "NA"}</TableCell>
-
-                    <TableCell>
+                    <TableCell sx={{ border: "1px solid #ccc" }}>
+                      {historyData.length - index}
+                    </TableCell>
+                    <TableCell sx={{ border: "1px solid #ccc" }}>
+                      {historyItem.fileNo}
+                    </TableCell>
+                    <TableCell sx={{ border: "1px solid #ccc" }}>
+                      {historyItem.sender || "NA"}
+                    </TableCell>
+                    <TableCell sx={{ border: "1px solid #ccc" }}>
+                      {historyItem.receiver || "NA"}
+                    </TableCell>
+                    <TableCell sx={{ border: "1px solid #ccc" }}>
+                      {historyItem.docketNo || "NA"}
+                    </TableCell>
+                    <TableCell sx={{ border: "1px solid #ccc" }}>
+                      {historyItem.actionDate || "NA"}
+                    </TableCell>
+                    <TableCell sx={{ border: "1px solid #ccc" }}>
                       {index === 0 ? "Present" : "Sent"}{" "}
                       {/* Conditional rendering */}
                     </TableCell>

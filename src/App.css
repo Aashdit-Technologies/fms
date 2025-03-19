@@ -45,7 +45,9 @@ button#panel1a-header{
   a.noting-link {
     display: inline !important;
   }
-  
+  .main_correspondence .css-wlvq0e{
+    overflow: hidden !important;
+  }
   input#\:rc\:{
     height: 7px;
   }

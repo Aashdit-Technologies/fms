@@ -4,14 +4,17 @@
     align-items: center;
     height: 100vh;
     overflow: hidden;
-    background: url(/src/assets/Login-Page.png);
+    background: url(/src/assets/Login-Page.jpg);
+    /* background: url(/src/assets/Login-Page.png); */
     background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     width: 100%;
 }
 
 .cntr_cls {
     display: flex;
-    justify-content: end;
+    justify-content: center;
     align-items: center;
 }
 
@@ -78,10 +81,8 @@
     position: relative;
     width: 100%;
     height: 100%;
-    background: linear-gradient(#dbdae1, #a3aaba);
-    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1), 15px 15px 15px rgba(0, 0, 0, 0.1),
-        20px 10px 20px rgba(0, 0, 0, 0.1), 50px 50px 85px rgba(0, 0, 0, 0.25),
-        inset 3px 3px 2px #fff;
+    background: #9047b4;
+    box-shadow: 20px 20px 60px #2e0641, -20px -20px 60px #3e0859;
     border-radius: 30px;
 }
 .css-ymlv7e .css-qwdxx6{
@@ -103,7 +104,7 @@
     align-items: center;
     width: 70px;
     height: 70px;
-    background-color: #444;
+    background-color: #b84ff1;
     color: #fff;
     font-size: 1.75em;
     margin-bottom: 10px;
@@ -116,7 +117,7 @@
 
 .content .form h2 {
     font-size: 2em;
-    color: #444;
+    color: #c264f4;
 }
 
 .content .form .inputBox {
@@ -162,7 +163,7 @@
     font-size: 13px;
 }
 .left_fig{
-    width: 60%;
+    width: 80%;
     text-align: center;
     margin: 20% auto 0;
     /* width: 5%; */
@@ -170,4 +171,9 @@
 .left_fig img{
     width: 100%;
     object-fit: cover;
+}
+input:-webkit-autofill {
+    color: #c264f4 !important;
+    background-color: transparent !important;
+    transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
 }

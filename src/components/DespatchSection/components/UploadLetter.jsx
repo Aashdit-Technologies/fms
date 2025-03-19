@@ -19,6 +19,8 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider, MobileDatePicker } from "@mui/x-date-pickers";
 import { CalendarToday, AddCircleOutline, RemoveCircleOutline } from "@mui/icons-material";
 import { Grid } from '@mui/joy';
+import dayjs from "dayjs";
+
 const UploadLetter = ({ open, onClose,   dispatchData,fetchLetters}) => {
   
   const correspondenceId = dispatchData != null ? dispatchData.correspondenceId : null;
@@ -46,6 +48,15 @@ const UploadLetter = ({ open, onClose,   dispatchData,fetchLetters}) => {
     }));
   };
   
+
+  const handleDateChange = (newValue) => {
+    if (newValue) {
+      const formattedDate = dayjs(newValue).format("DD/MM/YYYY"); 
+      handleInputChange({ target: { name: "date", value: formattedDate } });
+    } else {
+      handleInputChange({ target: { name: "date", value: "" } });
+    }
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -234,7 +245,6 @@ const validateForm = () => {
               
               </Grid>
              
-
                 <Grid item xs={6} sx={{ mb: 2 }}>
                   <MobileDatePicker
                     label={
@@ -242,10 +252,9 @@ const validateForm = () => {
                         Date <span style={{ color: "red" }}>*</span>
                       </>
                     }
-                    value={formData.date || null}
-                    onChange={(newValue) =>
-                      handleInputChange({ target: { name: "date", value: newValue } })
-                    }
+                    
+                    value={formData.date ? dayjs(formData.date, "DD/MM/YYYY") : null} 
+                    onChange={handleDateChange}
                     disableCloseOnSelect
                     format="DD/MM/YYYY"
                     slotProps={{
@@ -335,10 +344,10 @@ const validateForm = () => {
           onClick={onClose}
           sx={{ 
             backgroundColor: "#F5F5F5", 
-            height: "10px",            // Set footer height
+            height: "10px",            
             padding: "10px 20px",
             display: "flex",
-            justifyContent: "flex-end" // Align button to the right
+            justifyContent: "flex-end" 
           }}
         >
           Close

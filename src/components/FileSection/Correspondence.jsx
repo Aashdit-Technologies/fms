@@ -607,49 +607,51 @@ const Correspondence = ({
       toast.error("No ID available for this row");
       return;
     }
-  
+
     setCopiedRows((prev) => ({
       ...prev,
       [row.corrId]: "loading",
     }));
-  
+
     try {
       const linkData = await fetchLinkMutation.mutateAsync({
         corrId: row.corrId,
       });
-  
+
       if (!linkData) {
         throw new Error("No link data returned from API.");
       }
-  
+
       const [label, rawUrl] = linkData.split("|");
-  
+
       if (!rawUrl) {
         throw new Error("Invalid link format.");
       }
-  
-      const url = rawUrl.startsWith("http") ? rawUrl.trim() : `${rawUrl.trim()}`;
-      const fullUrl = `${BASE_URL.replace(/\/$/, "")}/${url.replace(/^\//, "")}`;
-  
-      
-  
+
+      const url = rawUrl.startsWith("http")
+        ? rawUrl.trim()
+        : `${rawUrl.trim()}`;
+      const fullUrl = `${BASE_URL.replace(/\/$/, "")}/${url.replace(
+        /^\//,
+        ""
+      )}`;
+
       const anchorTag = `<a href="${fullUrl}" target="_blank">${label.trim()}</a>`;
-  
+
       const textarea = document.createElement("textarea");
       textarea.value = anchorTag;
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand("copy");
       document.body.removeChild(textarea);
-  
+
       // toast.success("Link copied!");
-  
 
       setCopiedRows((prev) => ({
         ...prev,
         [row.corrId]: "copied",
       }));
-  
+
       setTimeout(() => {
         setCopiedRows((prev) => ({
           ...prev,
@@ -658,18 +660,14 @@ const Correspondence = ({
       }, 2000);
     } catch (error) {
       toast.error(error.message || "Failed to copy link");
-  
-     
+
       setCopiedRows((prev) => ({
         ...prev,
         [row.corrId]: null,
       }));
     }
   };
-  
-  
-  
-  
+
   const columns = [
     {
       name: "SI.#",
@@ -915,6 +913,8 @@ const Correspondence = ({
           pagination
           customStyles={customStyles}
           highlightOnHover
+          fixedHeader
+          fixedHeaderScrollHeight="300px"
           striped
         />
       </TableContainer>
