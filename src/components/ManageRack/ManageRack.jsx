@@ -311,7 +311,7 @@ const ManageRack = () => {
   };
 
   const handleReset = () => {
-    setRack({ rackNumber: ""  , roomId: "" });
+    setRack({ rackNumber: ""  , roomId: "",noOfCell:1, });
     setEditingRackId(null);
   };
 
@@ -524,7 +524,7 @@ const ManageRack = () => {
                   {isSubmitting
                     ? "Saving..."
                     : editingRackId
-                    ? "Update Rack"
+                    ? "Update "
                     : "Save"}
                 </Button>
                 <Button

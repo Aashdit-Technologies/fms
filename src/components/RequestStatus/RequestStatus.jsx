@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
-import { Button } from "@mui/material";
+import { Button, TextField } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -115,9 +115,19 @@ const RequestStatus = ({ onSwitchTab }) => {
   const [pageNo, setPageNo] = useState(1);
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
   const [historyData, setHistoryData] = useState([]);
+  const [filterText, setFilterText] = useState("");
 
   const Navigate = useNavigate();
-
+  const filteredData = rqstStsData?.filter((item) => {
+    return (
+      item.fileNo?.toLowerCase().includes(filterText.toLowerCase()) ||
+      item.fileName?.toLowerCase().includes(filterText.toLowerCase()) ||
+      item.status?.toLowerCase().includes(filterText.toLowerCase()) ||
+      item.sentOn?.toLowerCase().includes(filterText.toLowerCase())
+    );
+  });
+  console.log("Filtered Data:", rqstStsData);
+  
   const conditionalRowStyles = [
     {
       when: (row) => row.status === "RECALLED" || row.isRecalled === true,
@@ -338,16 +348,16 @@ const RequestStatus = ({ onSwitchTab }) => {
       name: "File Name",
       selector: (row) => row.fileName,
       sortable: true,
-      width: "280px",
+      width: "200px",
     },
     {
       name: "From",
-      selector: (row) => row.fromEmployee,
+      selector: (row) => row.createdBy,
       sortable: true,
-      width: "150px",
+      width: "250px",
     },
     {
-      name: "Send On",
+      name: "Sent On",
       selector: (row) => row.sentOn,
       sortable: true,
       width: "155px",
@@ -383,6 +393,20 @@ const RequestStatus = ({ onSwitchTab }) => {
 
         return (
           <div className="d-flex">
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              title="View"
+              sx={{
+                minWidth: "auto",
+                padding: "6px 10px",
+                marginRight: "8px",
+              }}
+              onClick={() => handleViewStatus(row)}
+            >
+              <FaEye />
+            </Button>
             {canRecall && (
               <Button
                 variant="contained"
@@ -400,20 +424,6 @@ const RequestStatus = ({ onSwitchTab }) => {
                 <FaRedoAlt />
               </Button>
             )}
-            <Button
-              variant="contained"
-              color="success"
-              size="small"
-              title="View"
-              sx={{
-                minWidth: "auto",
-                padding: "6px 10px",
-                marginRight: "8px",
-              }}
-              onClick={() => handleViewStatus(row)}
-            >
-              <FaEye />
-            </Button>
 
             <Button
               variant="contained"
@@ -489,12 +499,21 @@ const RequestStatus = ({ onSwitchTab }) => {
               )}
             />
           </div>
+          <div className="form-group col-md-3 m-0">
+            <TextField
+              size="small"
+              placeholder="Search"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              style={{ width: "100%" }}
+            />
+          </div>
         </div>
-      </LocalizationProvider>
+      
       {loading && <PageLoader />}
       <DataTable
         columns={columns}
-        data={rqstStsData}
+        data={filteredData || []}
         progressPending={loading}
         striped
         bordered
@@ -511,7 +530,7 @@ const RequestStatus = ({ onSwitchTab }) => {
           setPageNo(1);
         }}
       />
-
+</LocalizationProvider>
       <Modal
         open={fileDetailsModalVisible}
         onClose={() => setFileDetailsModalVisible(false)}

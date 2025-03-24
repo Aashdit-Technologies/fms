@@ -9,7 +9,11 @@ import { toast } from "react-toastify";
 
 const DetailItem = ({ label, value }) => (
   <Box sx={{ mb: 1.5, borderBottom: "1px solid #ccc", pb: 1 }}>
-    <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 600 }}>
+    <Typography
+      variant="caption"
+      color="textSecondary"
+      sx={{ fontWeight: 600 }}
+    >
       {label}
     </Typography>
     <Typography variant="body1" fontWeight="500" sx={{ color: "text.primary" }}>
@@ -37,14 +41,14 @@ const FileDetails = ({ fileDetails }) => {
       <div className="py-4">
         <Accordion defaultActiveKey="0" className="custom-accordion">
           <Accordion.Item eventKey="0">
-            <Accordion.Header 
+            <Accordion.Header
               onClick={() => setIsOpen(!isOpen)}
               className="d-flex align-items-center"
             >
               <div className="d-flex align-items-center w-100 justify-content-between">
                 <h5 className="mb-0">File Details</h5>
                 <span className="toggle-icon me-2 d-flex gap-5 align-items-center">
-                <Button
+                  <Button
                     variant="contained"
                     color="warning"
                     startIcon={<IoMdArrowBack />}
@@ -63,12 +67,36 @@ const FileDetails = ({ fileDetails }) => {
                     <div className="card h-100 border-0 bg-light">
                       <div className="card-body">
                         <div className="mb-3">
-                          <label className="text-muted small text-uppercase " style={{fontWeight:"600", color:"black"}}>File Number</label>
-                          <p className="mb-0 fw-medium clickable-text" onClick={handleShowDetails}>{allDetails.fileNo || 'N/A'}</p>
+                          <label
+                            className="  "
+                            style={{
+                              fontWeight: "700",
+                              color: "#207785",
+                              fontSize: "16px",
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            File Number :
+                          </label>
+                          <p
+                            className="mb-0 fw-medium clickable-text"
+                            style={{
+                              fontWeight: "500",
+                              fontSize: "14px",
+                              textTransform: "capitalize",
+                            }}
+                            onClick={handleShowDetails}
+                          >
+                            {allDetails.fileNo || "N/A"}
+                          </p>
                         </div>
                         <div className="mb-3">
-                          <label className="text-muted small text-uppercase">File Name</label>
-                          <p className="mb-0 fw-medium">{allDetails.fileName || 'N/A'}</p>
+                          <label className="" style={{fontWeight:"700", color:"#207785", fontSize:"16px", textTransform:"capitalize"}}>
+                            File Name :
+                          </label>
+                          <p className="mb-0 fw-medium" style={{fontWeight:"500", fontSize:"14px", textTransform:"capitalize"}}>
+                            {allDetails.fileName || "N/A"}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -77,12 +105,20 @@ const FileDetails = ({ fileDetails }) => {
                     <div className="card h-100 border-0 bg-light">
                       <div className="card-body">
                         <div className="mb-3">
-                          <label className="text-muted small text-uppercase">Subject</label>
-                          <p className="mb-0 fw-medium">{allDetails.subject || 'N/A'}</p>
+                          <label style={{fontWeight:"700", color:"#207785", fontSize:"16px", textTransform:"capitalize"}}>
+                            Subject :
+                          </label>
+                          <p className="mb-0 fw-medium" style={{fontWeight:"500",  fontSize:"14px", textTransform:"capitalize"}}>
+                            {allDetails.subject || "N/A"}
+                          </p>
                         </div>
                         <div className="mb-3">
-                          <label className="text-muted small text-uppercase">Title</label>
-                          <p className="mb-0 fw-medium">{allDetails.title || 'N/A'}</p>
+                          <label style={{fontWeight:"700", color:"#207785", fontSize:"16px", textTransform:"capitalize"}}>
+                            Title :
+                          </label>
+                          <p className="mb-0 fw-medium" style={{fontWeight:"500", fontSize:"14px", textTransform:"capitalize"}}>
+                            {allDetails.title || "N/A"}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -100,9 +136,27 @@ const FileDetails = ({ fileDetails }) => {
       </div>
 
       {/* Modal to Show File Details */}
-      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} >
-        <Box sx={modalStyle} style={{width: "100%", maxWidth: "1200px", maxHeight: "90vh", overflowY: "auto", margin: "auto"}}>
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, textAlign: "center", color: "#1976d2", borderBottom: "2px solid #1976d2" }}>
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <Box
+          sx={modalStyle}
+          style={{
+            width: "100%",
+            maxWidth: "1200px",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            margin: "auto",
+          }}
+        >
+          <Typography
+            variant="h6"
+            fontWeight="bold"
+            sx={{
+              mb: 2,
+              textAlign: "center",
+              color: "#1976d2",
+              borderBottom: "2px solid #1976d2",
+            }}
+          >
             File Details: {allDetails.fileNo || "N/A"}
           </Typography>
           <Grid container spacing={2} sx={{ mt: 2 }}>
@@ -128,7 +182,11 @@ const FileDetails = ({ fileDetails }) => {
           </Grid>
 
           <Box sx={{ textAlign: "right", mt: 2 }}>
-            <Button variant="contained" color="error" onClick={() => setIsModalOpen(false)}>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => setIsModalOpen(false)}
+            >
               Close
             </Button>
           </Box>

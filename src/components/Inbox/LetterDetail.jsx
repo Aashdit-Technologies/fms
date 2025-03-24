@@ -251,7 +251,7 @@ const handleConfirmUrgent = async () => {
           toast.success(response.data.message);
       } else {
           toast.warning(response.data.message || "Urgency status unchanged.");
-          setIsConfidential(!pendingConfidential);
+          setIsConfidential(response.data.data);
       }
       } 
     } catch (error) {
@@ -875,7 +875,7 @@ const handleConfirmUrgent = async () => {
               sx={{ "& .MuiSwitch-thumb": { backgroundColor:isUrgent ? "green" : "gray" } }}
             />
           }
-          label={isUrgent ? "Urgent" : "Non-Urgent"}
+          label={isUrgent ? "Urgent" : "Urgent"}
         />
       
         <FormControlLabel
@@ -886,7 +886,7 @@ const handleConfirmUrgent = async () => {
               sx={{ "& .MuiSwitch-thumb": { backgroundColor: isConfidential ? "green" : "gray" } }}
             />
           }
-          label={isConfidential ? "Confidential" : "Non-Confidential"}
+          label={isConfidential ? "Confidential" : "Confidential"}
         />
       </Box>
     )}

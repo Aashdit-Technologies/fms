@@ -25,6 +25,7 @@ import RoleMenu from "../RoleMenu/RoleMenu";
 import PrintLetter from "../DespatchSection/components/PrintLetter";
 import ChangePassword from "../Header/ChangePassword";
 import EditBasicDetails from "../Header/EditBasicDetails";
+import AllView from "../Welcome/AllView";
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(true);
@@ -199,7 +200,7 @@ const Admin = () => {
               }
             />
             <Route
-              path="role-menu"
+              path="/role-menu"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <RoleMenu />
@@ -227,6 +228,14 @@ const Admin = () => {
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <ChangePassword />
+                </React.Suspense>
+              }
+            />
+            <Route
+              path="/all-view"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <AllView />
                 </React.Suspense>
               }
             />
@@ -270,7 +279,8 @@ const Admin = () => {
                 menu.menuURL === "/diary-section" ||
                 menu.menuURL === "/despatch-section" ||
                 menu.menuURL === "/employee-master" ||
-                menu.menuURL === "/employee-list"
+                menu.menuURL === "/employee-list" ||
+                menu.menuURL === "/role-menu"
               ) {
                 return null;
               }

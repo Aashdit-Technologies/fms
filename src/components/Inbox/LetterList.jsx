@@ -145,7 +145,7 @@ const LetterList = () => {
             pageNo: newPage,
           },
         };
-        fetchLetters(activeTab, updatedStates); // Pass the updated state to fetchLetters
+        fetchLetters(activeTab, updatedStates); 
         return updatedStates;
       });
     }

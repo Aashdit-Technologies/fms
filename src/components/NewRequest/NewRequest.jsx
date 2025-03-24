@@ -626,7 +626,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       width: "300px",
     },
     {
-      name: "Send On",
+      name: "Sent On",
 
       selector: (row) => row.sentOn,
 

@@ -281,63 +281,118 @@ const UploadDocument = ({
 
   const validateForm = (rows, initialContent, Mark) => {
     debugger;
+  
     const cleanedContent = initialContent.replace(/\s|&nbsp;/g, "").trim();
     const isContentEmpty = !cleanedContent || cleanedContent === "<p><br></p>";
   
-    // ✅ If action is MARKDOWN, always allow submission
     if (Mark === "MARKDOWN") {
       return true;
     }
   
-    // ✅ If initialContent is present, allow submission
-    if (!isContentEmpty) {
-      return true;
+    let isRowEmpty = true; 
+    rows.forEach(row => {
+      if (row.type === "SELECT") {
+        row.type = ""; 
+        return false;  
+      }
+      if (row.subject || row.type || row.date || row.letterNumber || row.document) {
+        isRowEmpty = false; 
+      }
+    });
+  
+    if (isContentEmpty && isRowEmpty) {
+      toast.error("Please write some notes before save.");
+      return false; 
     }
   
-    let isAnyRowPartiallyFilled = false;
+    let isAnyRowFilled = false; 
+    let isRowPartiallyFilled = false; 
   
     for (const row of rows) {
-      // If type is "SELECT", treat it as empty
-      const rowType = row.type === "SELECT" ? "" : row.type;
-    
-      const isRowStarted = row.subject || rowType || row.date || row.letterNumber || row.document;
-      const isRowComplete = row.subject && rowType && row.date && (rowType !== "LETTER" || row.letterNumber) && row.document;
-    
-      if (isRowStarted && !isRowComplete) {
-        isAnyRowPartiallyFilled = true;
-        break;
+      if (row.type === "SELECT") {
+        row.type = ""; 
+        return false;  
+      }
+  
+      const isRowEmptyCheck =
+        !row.subject &&
+        !row.type &&
+        !row.date &&
+        !row.letterNumber &&
+        !row.document;
+  
+      if (isRowEmptyCheck) {
+        toast.error("Row is mandatory.");
+        return false;
+      }
+  
+      const isRowComplete =
+        row.subject &&
+        row.type &&
+        row.date &&
+        (row.type !== "LETTER" || row.letterNumber) &&
+        row.document;
+  
+      if (isRowComplete) {
+        isAnyRowFilled = true;
+      }
+  
+      const isRowPartiallyFilledCheck =
+        (row.subject && !row.type) ||
+        (row.subject && !row.date) ||
+        (row.subject && !row.document) ||
+        (row.type && !row.subject) ||
+        (row.type && !row.date) ||
+        (row.type && !row.document) ||
+        (row.date && !row.subject) ||
+        (row.date && !row.type) ||
+        (row.date && !row.document) ||
+        (row.document && !row.subject) ||
+        (row.document && !row.type) ||
+        (row.document && !row.date);
+  
+      if (isRowPartiallyFilledCheck) {
+        isRowPartiallyFilled = true;
+        toast.error("All fields in a row are mandatory.");
+        return false; 
+      }
+  
+      if (!isRowComplete && !isRowEmptyCheck) {
+        toast.error("All fields in a row must be filled before submission.");
+        return false; 
       }
     }
-    
   
-    // ❌ If any row is incomplete, show error
-    if (isAnyRowPartiallyFilled) {
-      toast.error("All fields in a row must be filled before submission.");
+    if (!isAnyRowFilled) {
+      toast.error("At least one row must be fully filled.");
       return false;
     }
   
-    // ✅ Allow submission if at least one row is fully filled
-    const isAnyRowFilled = rows.some(row =>
-      row.subject && row.type && row.date && (row.type !== "LETTER" || row.letterNumber) && row.document
-    );
-  
-    return isAnyRowFilled;
+    return true; 
   };
   
+  
+  
+  
+  
+
   const handleDirectSubmit = async () => {
     await handleSubmit("Save");
   };
   const handleSubmit = async (action) => {
-    // const isValid = Mark === "MARKDOWN" ? true : validateForm(rows, initialContent,Mark);
+    const cleanedContent = initialContent.replace(/\s|&nbsp;/g, "").trim();
+    const isContentEmpty = !cleanedContent || cleanedContent === "<p><br></p>";
+
     if (action !== "MARKDOWN") {
-      const cleanedContent = initialContent.replace(/\s|&nbsp;/g, "").trim();
-      const isContentEmpty = !cleanedContent || cleanedContent === "<p><br></p>";
 
       const isValid = validateForm(rows, initialContent, action);
 
       if (isContentEmpty && !isValid) {
-        toast.error("Please write some notes before save  .");
-        return false; 
+        return false;
+      }
+
+      if (!isValid) {
+        return false;
       }
     }
 
@@ -367,7 +422,11 @@ const UploadDocument = ({
         return false;
       }
     } catch (error) {
-      // toast.error(error.response?.data?.message || error.message || "Something went wrong!");
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Something went wrong!"
+      );
       return false;
     }
   };
@@ -525,7 +584,7 @@ const UploadDocument = ({
 
     setModalAction(action);
     const isSubmissionSuccessful = await handleSubmit(action);
-      
+
     if (!isSubmissionSuccessful) {
       return;
     }

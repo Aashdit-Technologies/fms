@@ -374,7 +374,7 @@ const ManageRoom = () => {
                   {isSubmitting
                     ? "Saving..."
                     : editingRoomId
-                    ? "Update Room"
+                    ? "Update "
                     : "Save"}
                 </Button>
                 <Button

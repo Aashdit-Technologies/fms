@@ -9,7 +9,7 @@ const ManageCustodian = () => {
   const [isFormOpen, setIsFormOpen] = useState(true);
 
   return (
-    <div className="container mt-4">
+    <div className=" mt-4">
       <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
         <Accordion.Item eventKey="0">
           <Accordion.Header

@@ -362,6 +362,7 @@ const Correspondence = ({
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       window.open(url, "_blank");
+      window.URL.revokeObjectURL(url);
       if (response.data && response.data.success) {
         console.log("Download successful!");
       } else {
@@ -402,10 +403,7 @@ const Correspondence = ({
 
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = row.correspondenceName;
-      link.click();
+      window.open(url, "_blank");
       window.URL.revokeObjectURL(url);
 
       if (response.data && response.data.success) {
@@ -686,7 +684,7 @@ const Correspondence = ({
                   ? "#6f42c1"
                   : row.corrType === "DRAFT"
                   ? "#F3B431"
-                  : "#28a745",
+                  :row.corrType === "DRAWING" ? "#1287A5":row.corrType === "MAP" ? "#EA7773":row.corrType === "SKETCH" ? "#535C68": "#28a745",
               color: "white",
               padding: "4px 10px",
               borderRadius: "10px",
@@ -866,6 +864,29 @@ const Correspondence = ({
                 title="View History"
               >
                 <FaHistory size={16} />
+              </StyledButton>
+            </>
+          )}
+          {(row.corrType === "DRAWING" ||
+            row.corrType === "MAP" ||
+            row.corrType === "SKETCH" ||
+            row.corrType === "OTHER") && (
+            <>
+              <StyledButton
+                variant="contained"
+                color="primary"
+                onClick={() => handleUploadClick(row)}
+                title="View Enclosure"
+              >
+                <FaCloudUploadAlt size={16} />
+              </StyledButton>
+              <StyledButton
+                variant="contained"
+                style={{ backgroundColor: "#28a745" }}
+                onClick={() => printDraft(row)}
+                title="Download"
+              >
+                <FaEye size={16} />
               </StyledButton>
             </>
           )}

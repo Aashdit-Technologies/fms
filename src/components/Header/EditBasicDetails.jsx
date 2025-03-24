@@ -158,13 +158,10 @@ serviceEndDate:
   
           case "officePhone":
             if (!value) return "Office phone is required.";
-
-            // Ensure exactly 11 digits and exactly one hyphen
             const digitCount = (value.match(/\d/g) || []).length;
-            const hyphenCount = (value.match(/-/g) || []).length;
-
-            if (digitCount !== 11 || hyphenCount !== 1) {
-              return "Office phone must contain exactly 11 digits and one hyphen.";
+   
+            if (digitCount < 10 || digitCount > 11) {
+              return "Office phone is required.";
             }
 
             return ""; 
@@ -614,59 +611,60 @@ serviceEndDate:
                   />
                 </Grid>
                 
-                      <Grid item xs={3}>
-                        <TextField
-                          fullWidth
-                          label={
-                            <>
-                              Office Phone <span style={{ color: "red" }}>*</span>
-                            </>
-                          }
-                          name="officePhone"
-                          autoComplete="off"
-                          value={data.officePhone}
-                          onChange={(e) => {
-                            let value = e.target.value.trim(); 
-      
-                            if (/^[0-9-]*$/.test(value)) {
+                <Grid item xs={3}>
+                      <TextField
+                        fullWidth
+                        label={
+                          <>
+                            Office Phone <span style={{ color: "red" }}>*</span>
+                          </>
+                        }
+                        name="officePhone"
+                        autoComplete="off"
+                        value={data.officePhone}
+                        onChange={(e) => {
+                          let value = e.target.value.trim();
+
+                         
+                          if (/^[0-9-]*$/.test(value)) {
                             
-                              if (!value.startsWith("-")) {
-                                const digitCount = (value.match(/\d/g) || []).length; 
-                                const hyphenCount = (value.match(/-/g) || []).length;
-      
-                                if (digitCount <= 11 && hyphenCount <= 1) {
-                                  handleChange(e); 
-                                }
+                            if (!value.startsWith("-")) {
+                              const digitCount = (value.match(/\d/g) || []).length;
+                              const hyphenCount = (value.match(/-/g) || []).length;
+
+                             
+                              if (digitCount <= 11 && hyphenCount <= 1) {
+                                handleChange(e); 
                               }
                             }
-                          }}
-                          onBlur={() => {
-                            const error = validateField("officePhone", data.officePhone.trim(), data); 
-                            setErrors((prev) => ({ ...prev, officePhone: error }));
-                          }}
-                          onKeyDown={(e) => {
-        
-                            if (
-                              !/\d/.test(e.key) && 
-                              e.key !== "-" && 
-                              !["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight"].includes(e.key)
-                            ) {
-                              e.preventDefault(); 
-                            }
-      
-                            const digitCount = (data.officePhone.match(/\d/g) || []).length;
-                            if (digitCount >= 11 && /\d/.test(e.key)) {
-                              e.preventDefault();
-                            }
-                          }}
-                          inputProps={{ maxLength: 13 }} 
-                          InputProps={{ sx: { height: "50px" } }}
-                          InputLabelProps={{ shrink: true }}
-                          error={!!errors.officePhone}
-                          helperText={errors.officePhone}
-                          aria-describedby="officePhone-error" 
-                        />
-                      </Grid>
+                          }
+                        }}
+                        onBlur={() => {
+                          const error = validateField("officePhone", data.officePhone.trim(), data);
+                          setErrors((prev) => ({ ...prev, officePhone: error }));
+                        }}
+                        onKeyDown={(e) => {
+                          
+                          if (
+                            !/\d/.test(e.key) &&
+                            e.key !== "-" && 
+                            !["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight"].includes(e.key) 
+                          ) {
+                            e.preventDefault(); 
+                          }
+                          const digitCount = (data.officePhone.match(/\d/g) || []).length;
+                          if (digitCount >= 11 && /\d/.test(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        inputProps={{ maxLength: 13 }} 
+                        InputProps={{ sx: { height: "50px" } }}
+                        InputLabelProps={{ shrink: true }}
+                        error={!!errors.officePhone}
+                        helperText={errors.officePhone}
+                        aria-describedby="officePhone-error"
+                      />
+                    </Grid>
 
                 <Grid item xs={3}>
                   <MobileDatePicker

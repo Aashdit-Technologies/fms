@@ -358,7 +358,7 @@ const ManageActivity = () => {
             </div>
           </Accordion.Header>
           <Accordion.Body>
-            <div className="container">
+            <div className="">
               <div className="row">
                 <form onSubmit={handleSubmit} className="row">
                   <div className="form-group col-md-4">
@@ -460,7 +460,7 @@ const ManageActivity = () => {
                       {isSubmitting
                         ? "Saving..."
                         : editingActivityId
-                        ? "Update Activity"
+                        ? "Update"
                         : "Save"}
                     </Button>
                     <Button

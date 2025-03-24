@@ -1,66 +1,366 @@
-import React from 'react';
-import { Box, Typography, Paper, Container } from '@mui/material';
-import { FolderOpen } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { Box, Typography } from "@mui/material";
+import {
+  Description as DescriptionIcon,
+  Warning as WarningIcon,
+  Folder as FolderIcon,
+  Event as EventIcon,
+  InsertDriveFile as InsertDriveFileIcon,
+  Schedule as ScheduleIcon,
+  FlashOn as FlashOnIcon,
+} from "@mui/icons-material";
+import CountUp from "react-countup";
+
+import { Link, useNavigate } from "react-router-dom";
 
 const Welcome = () => {
-  const navigate = useNavigate();
+  const navigate=useNavigate()
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
-        <Box sx={{ mb: 3 }}>
-          <FolderOpen sx={{ fontSize: 60, color: 'primary.main' }} />
-        </Box>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Welcome to File Management System
-        </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
-          A comprehensive solution for managing your documents and files efficiently.
-        </Typography>
-        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 2 }}>
-          <Paper 
-            elevation={2} 
-            sx={{ 
-              p: 3, 
-              flex: 1, 
-              maxWidth: 200,
-              '&:hover': {
-                backgroundColor: 'action.hover',
-                cursor: 'pointer'
-              }
+    <>
+      <Box>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              lg: "repeat(4, 1fr)",
+            },
+            gap: 3,
+            alignItems: "center",
+            width: "100%",
+            padding: 2,
+          }}
+        >
+          <Link to="/letter" style={{ textDecoration: "none" }}>
+          <Box
+            sx={{
+              position: "relative",
+              padding: 3,
+              background: "linear-gradient(to right, #2dd4bf, #22c55e)",
+              borderRadius: 2,
+              overflow: "hidden",
+              transition: "transform 0.3s, box-shadow 0.3s",
+              "&:hover": {
+                transform: "translateY(-5px)",
+                boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+              },
             }}
-            onClick={() => navigate('/file')}
+
           >
-            <Typography variant="h6" gutterBottom>
-              Files
+            <Typography
+              className="text_count"
+              variant="h4"
+              sx={{
+                color: "white",
+                fontWeight: 600,
+                mb: 2,
+                fontSize: "2.5rem",
+              }}
+            >
+              <CountUp end={100} duration={2} />
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Manage and organize your files
+            <Typography
+              variant="subtitle1"
+              sx={{ color: "#d1fae5", fontWeight: 600 }}
+            >
+              Letters
             </Typography>
-          </Paper>
-          <Paper 
-            elevation={2} 
-            sx={{ 
-              p: 3, 
-              flex: 1, 
-              maxWidth: 200,
-              '&:hover': {
-                backgroundColor: 'action.hover',
-                cursor: 'pointer'
-              }
+            <DescriptionIcon
+              sx={{
+                position: "absolute",
+                right: 0,
+                bottom: 0,
+                height: "128px",
+                width: "128px",
+                marginRight: "-32px",
+                marginBottom: "-32px",
+                color: "rgb(61 255 213 / 64%)",
+                opacity: 0.5,
+              }}
+            />
+          </Box>
+          </Link>
+          <Link to="/letter" style={{ textDecoration: "none" }}>
+          <Box
+            sx={{
+              position: "relative",
+              padding: 3,
+              background: "linear-gradient(to right, #60a5fa, #2563eb)",
+              borderRadius: 2,
+              overflow: "hidden",
+              transition: "transform 0.3s, box-shadow 0.3s",
+              "&:hover": {
+                transform: "translateY(-5px)",
+                boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+              },
             }}
-            onClick={() => navigate('/letter')}
           >
-            <Typography variant="h6" gutterBottom>
-              Letter
+            <Typography
+              className="text_count"
+              variant="h4"
+              sx={{ color: "white", fontWeight: 600, mb: 2 }}
+            >
+              <CountUp end={110} duration={2} />
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Access and edit your Letter
+            <Typography
+              variant="subtitle1"
+              sx={{ color: "#bfdbfe", fontWeight: 600 }}
+            >
+              Urgent Letters
             </Typography>
-          </Paper>
+            <WarningIcon
+              sx={{
+                position: "absolute",
+                right: 0,
+                bottom: 0,
+                height: "128px",
+                width: "128px",
+                marginRight: "-32px",
+                marginBottom: "-32px",
+                color: "rgb(77 154 253)",
+                opacity: 0.5,
+              }}
+            />
+          </Box>
+          </Link>
+          <Link to="/file" style={{ textDecoration: "none" }}>
+          <Box
+            sx={{
+              position: "relative",
+              padding: 3,
+              background: "linear-gradient(to right, #f87171, #dc2626)",
+              borderRadius: 2,
+              overflow: "hidden",
+              transition: "transform 0.3s, box-shadow 0.3s",
+              "&:hover": {
+                transform: "translateY(-5px)",
+                boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+              },
+            }}
+          >
+            <Typography
+              className="text_count"
+              variant="h4"
+              sx={{ color: "white", fontWeight: 600, mb: 2 }}
+            >
+              <CountUp end={130} duration={2} />
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              sx={{ color: "#fecaca", fontWeight: 600 }}
+            >
+              Normal Files
+            </Typography>
+            <FolderIcon
+              sx={{
+                position: "absolute",
+                right: 0,
+                bottom: 0,
+                height: "128px",
+                width: "128px",
+                marginRight: "-32px",
+                marginBottom: "-32px",
+                color: "rgb(253 114 114)",
+                opacity: 0.5,
+              }}
+            />
+          </Box>
+</Link>
+<Link to="/file" style={{ textDecoration: "none" }}>
+          <Box
+            sx={{
+              position: "relative",
+              padding: 3,
+              background: "linear-gradient(to right, #fbbf24, #d97706)",
+              borderRadius: 2,
+              overflow: "hidden",
+              transition: "transform 0.3s, box-shadow 0.3s",
+              "&:hover": {
+                transform: "translateY(-5px)",
+                boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+              },
+            }}
+          >
+            <Typography
+              className="text_count"
+              variant="h4"
+              sx={{ color: "white", fontWeight: 600, mb: 2 }}
+            >
+              <CountUp end={200} duration={2} />
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              sx={{ color: "#fde68a", fontWeight: 600 }}
+            >
+              Date Set Files
+            </Typography>
+            <EventIcon
+              sx={{
+                position: "absolute",
+                right: 0,
+                bottom: 0,
+                height: "128px",
+                width: "128px",
+                marginRight: "-32px",
+                marginBottom: "-32px",
+                color: "rgb(253 209 102)",
+                opacity: 0.5,
+              }}
+            />
+          </Box>
+</Link>
+     <Link to="/file" style={{ textDecoration: "none" }}>
+          <Box
+            sx={{
+              position: "relative",
+              padding: 3,
+              background: "linear-gradient(to right, #c39bd3, #6c3483)",
+              borderRadius: 2,
+              overflow: "hidden",
+              transition: "transform 0.3s, box-shadow 0.3s",
+              "&:hover": {
+                transform: "translateY(-5px)",
+                boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+              },
+            }}
+          >
+            <Typography
+              className="text_count"
+              variant="h4"
+              sx={{ color: "white", fontWeight: 600, mb: 2 }}
+            >
+              <CountUp end={150} duration={2} />
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              sx={{ color: "#f3e8ff", fontWeight: 600 }}
+            >
+              Urgent Files
+            </Typography>
+            <InsertDriveFileIcon
+              sx={{
+                position: "absolute",
+                right: 0,
+                bottom: 0,
+                height: "128px",
+                width: "128px",
+                marginRight: "-32px",
+                marginBottom: "-32px",
+                color: "#c264f4",
+                opacity: 0.5,
+              }}
+            />
+          </Box>
+          </Link>
+          <Link to="/file" style={{ textDecoration: "none" }}>
+          <Box
+            sx={{
+              position: "relative",
+              padding: 3,
+              background: "linear-gradient(to right, #bc5e5e, #800000)",
+              borderRadius: 2,
+              overflow: "hidden",
+              transition: "transform 0.3s, box-shadow 0.3s",
+              "&:hover": {
+                transform: "translateY(-5px)",
+                boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+              },
+            }}
+          >
+            <Typography
+              className="text_count"
+              variant="h4"
+              sx={{ color: "white", fontWeight: 600, mb: 2 }}
+            >
+              <CountUp end={126} duration={2} />
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              sx={{ color: "#fecaca", fontWeight: 600 }}
+            >
+              Same Day Top Priority Files
+            </Typography>
+            <ScheduleIcon
+              sx={{
+                position: "absolute",
+                right: 0,
+                bottom: 0,
+                height: "128px",
+                width: "128px",
+                marginRight: "-32px",
+                marginBottom: "-32px",
+                color: "rgb(221 128 128 / 50%)",
+                opacity: 0.5,
+              }}
+            />
+          </Box>
+          </Link>
+          <Link to="/file" style={{ textDecoration: "none" }}>
+          <Box
+            sx={{
+              position: "relative",
+              padding: 3,
+              background: "linear-gradient(to right, #6b6bb8, #000080)",
+              borderRadius: 2,
+              overflow: "hidden",
+              transition: "transform 0.3s, box-shadow 0.3s",
+              "&:hover": {
+                transform: "translateY(-5px)",
+                boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+              },
+            }}
+          >
+            <Typography
+              className="text_count"
+              variant="h4"
+              sx={{ color: "white", fontWeight: 600, mb: 2 }}
+            >
+              <CountUp end={99} duration={2} />
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              sx={{ color: "#d1d5db", fontWeight: 600 }}
+            >
+              Immediate Most Files
+            </Typography>
+            <FlashOnIcon
+              sx={{
+                position: "absolute",
+                right: 0,
+                bottom: 0,
+                height: "128px",
+                width: "128px",
+                marginRight: "-32px",
+                marginBottom: "-32px",
+                color: "rgb(100 100 180)",
+                opacity: 0.5,
+              }}
+            />
+          </Box>
+          </Link>
+          <Box
+            sx={{
+              position: "relative",
+              padding: "46px 24px",
+              background:
+                "linear-gradient(to right, rgb(230 230 231), rgb(227 227 231))",
+              borderRadius: "8px",
+              textAlign: "center",
+              overflow: "hidden",
+              transition: "transform 0.3s, box-shadow 0.3s",
+            }}
+            onClick={() => navigate("/all-view")}
+          >
+            <button className="custom-btn btn-12">
+              <span>Click!</span>
+              <span>View all</span>
+            </button>
+          </Box>
         </Box>
-      </Paper>
-    </Container>
+        
+      </Box>
+    </>
   );
 };
 

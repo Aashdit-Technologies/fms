@@ -585,38 +585,43 @@ const handleRowSizeChangesentletter = (event) => {
           <Button
             variant="contained"
             size="small"
-            startIcon={<FaPencilAlt />}
+            
             onClick={(e) => { 
               e.stopPropagation(); 
               handleEditButtonClick(row); 
             }}
             sx={{ 
+            
               bgcolor: '#207785',
               '&:hover': {
                 bgcolor: '#1a5f6a',
               },
-              minWidth: 'auto',
+              minWidth: "auto",
+              padding: "6px 10px",
+              marginRight: "8px",
               px: 2
             }}
           >
-           
+           <FaPencilAlt />
           </Button>
 
           <Button
             variant="contained"
             size="small"
-            startIcon={<BsSend />}
+            
             onClick={(e) => handleOpenModal(row, e)}
             sx={{ 
               bgcolor: '#6c757d',
               '&:hover': {
                 bgcolor: '#5a6268',
               },
-              minWidth: 'auto',
+              minWidth: "auto",
+              padding: "6px 10px",
+              marginRight: "8px",
               px: 2
             }}
           >
-        
+        <BsSend />
       </Button>
 
         </div>
@@ -2630,10 +2635,10 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                   }}>
                     <thead>
                       <tr style={{ backgroundColor: '#f5f5f5' }}>
-                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Department Name <span style={{ color: "red" }}>*</span></th>
-                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Addressee Designation <span style={{ color: "red" }}>*</span></th>
-                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Addressee <span style={{ color: "red" }}>*</span></th>
-                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' }}>Memo Number</th>
+                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)' ,color:"#207785"}}>Department Name <span style={{ color: "red" }}>*</span></th>
+                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)',color:"#207785" }}>Addressee Designation <span style={{ color: "red" }}>*</span></th>
+                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)',color:"#207785" }}>Addressee <span style={{ color: "red" }}>*</span></th>
+                        <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)',color:"#207785" }}>Memo Number</th>
                         <th style={{ padding: '12px', borderBottom: '2px solid rgba(224, 224, 224, 1)', width: '55px' }}>
 
                             <IconButton
@@ -2657,12 +2662,12 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
   {rows.map((row, index) => (
     <tr key={index} style={{ borderBottom: '1px solid rgba(224, 224, 224, 1)' }}>
       <td style={{ padding: '8px' }}>
-        <TextField
-          select
-          fullWidth
-          size="small"
+        
+        <FormControl fullWidth size="small">
+         <Select
           value={row.departmentName}
           onChange={(e) => handleRowChange(index, "departmentName", e.target.value)}
+          displayEmpty
           error={!!errorsdep[index]?.departmentName}
           helperText={errorsdep[index]?.departmentName}
           sx={{
@@ -2679,21 +2684,22 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
             },
           }}
         >
-          <MenuItem value="">-- Select Department --</MenuItem>
+          <MenuItem value="">-- Select --</MenuItem>
           {departmentList.map((department) => (
             <MenuItem key={department.departmentId} value={department.departmentId}>
               {department.departmentName}
             </MenuItem>
           ))}
-        </TextField>
+        </Select>
+       </FormControl>
+
       </td>
       <td style={{ padding: '8px' }}>
-        <TextField
-          select
-          fullWidth
-          size="small"
+      <FormControl fullWidth size="small">
+        <Select
           value={row.addresseeDesignation}
           onChange={(e) => handleRowChange(index, "addresseeDesignation", e.target.value)}
+          displayEmpty
           error={!!errorsdep[index]?.addresseeDesignation}
           helperText={errorsdep[index]?.addresseeDesignation}
           sx={{
@@ -2710,21 +2716,21 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
             },
           }}
         >
-          <MenuItem value="">-- Select Designation --</MenuItem>
+          <MenuItem value="">-- Select  --</MenuItem>
           {designationList.map((designation) => (
             <MenuItem key={designation.id} value={designation.id}>
               {designation.name}
             </MenuItem>
           ))}
-        </TextField>
+        </Select>
+        </FormControl>
       </td>
       <td style={{ padding: '8px' }}>
-        <TextField
-          select
-          fullWidth
-          size="small"
+      <FormControl fullWidth size="small">
+        <Select
           value={row.addressee || ""}
           onChange={(e) => handleRowChange(index, "addressee", e.target.value)}
+          displayEmpty
           error={!!errorsdep[index]?.addressee}
           helperText={errorsdep[index]?.addressee}
           sx={{
@@ -2741,59 +2747,58 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
             },
           }}
         >
-          <MenuItem value="">-- Select Addressee --</MenuItem>
-          {Array.isArray(row.addressList) && row.addressList.length > 0 ? (
-            row.addressList.map((addressee) => (
-              <MenuItem key={addressee.id} value={addressee.id}>
-                {addressee.name}
-              </MenuItem>
-            ))
-          ) : (
-            <MenuItem value="" disabled>No addressees available</MenuItem>
-          )}
-        </TextField>
+          <MenuItem value="">-- Select --</MenuItem>
+          {Array.isArray(row.addressList) && row.addressList.length > 0 &&
+              row.addressList.map((addressee) => (
+                <MenuItem key={addressee.id} value={addressee.id}>
+                  {addressee.name}
+                </MenuItem>
+              ))
+            }
+        </Select>
+        </FormControl>
       </td>
-      <td style={{ padding: '8px' }}>
-        <TextField
-          fullWidth
-          size="small"
-          value={row.memoNumber}
-          onChange={(e) => handleRowChange(index, "memoNumber", e.target.value)}
-          placeholder="Enter memo number"
-          inputProps={{ maxLength: 20 }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: '#ced4da',
-              },
-              '&:hover fieldset': {
-                borderColor: '#207785',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#207785',
-              },
-            },
-          }}
-        />
-      </td>
-      <td style={{ padding: '8px', textAlign: 'center' }}>
-        <IconButton
-          onClick={() => handleRemoveRow(index)}
-          size="small"
-          sx={{
-            bgcolor: '#f44336',
-            color: 'white',
-            '&:hover': {
-              bgcolor: '#d32f2f',
-            },
-          }}
-        >
-          <FaMinus size={12} />
-        </IconButton>
-      </td>
-    </tr>
-  ))}
-</tbody>
+            <td style={{ padding: '8px' }}>
+              <TextField
+                fullWidth
+                size="small"
+                value={row.memoNumber}
+                onChange={(e) => handleRowChange(index, "memoNumber", e.target.value)}
+                placeholder="Enter memo number"
+                inputProps={{ maxLength: 20 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#ced4da',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#207785',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#207785',
+                    },
+                  },
+                }}
+              />
+            </td>
+            <td style={{ padding: '8px', textAlign: 'center' }}>
+              <IconButton
+                onClick={() => handleRemoveRow(index)}
+                size="small"
+                sx={{
+                  bgcolor: '#f44336',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: '#d32f2f',
+                  },
+                }}
+              >
+                <FaMinus size={12} />
+              </IconButton>
+            </td>
+          </tr>
+        ))}
+      </tbody>
 
                   </table>
                 </Box>
@@ -2817,7 +2822,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
 
               <div className="row mb-3">
                 <div className="col-md-3">
-                  <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 1,color:"#207785",fontWeight: 600,fontSize:"14px"}}>
                     Upload Letter:<span style={{ color: "red" }}>*</span>
                   </Typography>
                   <Box sx={{ 
@@ -2926,13 +2931,13 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     }
                   >
                     {formData.isUrgent ? (
-                      <FaToggleOn size={25} color="blue" />
+                      <FaToggleOn size={25} color="#0D6EFD" />
                     ) : (
                       <FaToggleOff size={25} color="gray" />
                     )}
                   </div>
                   <label className="form-check-label">
-                    {formData.isUrgent ? "Urgent Letter" : "Non-Urgent Letter"}
+                    {formData.isUrgent ? "Urgent Letter" : "Urgent Letter"}
                   </label>
                 </div>
 
@@ -2948,7 +2953,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     }
                   >
                     {formData.isConfidential ? (
-                      <FaToggleOn size={25} color="blue" />
+                      <FaToggleOn size={25} color="#0D6EFD" />
                     ) : (
                       <FaToggleOff size={25} color="gray" />
                     )}
@@ -2956,13 +2961,13 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                   <label className="form-check-label">
                     {formData.isConfidential
                       ? "Confidential Letter"
-                      : "Non-Confidential Letter"}
+                      : "Confidential Letter"}
                   </label>
                 </div>
               </div>
 
               {/* Enclosure Table */}
-              <div className="row mb-3">
+              <div className="row mb-3 ms-1 me-1">
                 {showTable && (
                   <TableContainer component={Paper} sx={{ width: '100%', overflowX: 'auto' }}>
                     <Table>
@@ -2971,9 +2976,9 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                         sx={{
                           backgroundColor: "#f5f5f5",
                           "& th": {
-                            color: "#000",
-                            fontWeight: "300",
-                            fontSize: "14px",
+                            color: "#207785",
+                            fontWeight: "600",
+                            fontSize: "16px",
                             borderBottom: "2px solid #e9ecef", 
                           },
                           boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.2)",
@@ -3760,17 +3765,17 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                       ></button>
                     </div>
                     <div className="modal-body">
-                      <table className="table table-bordered"
+                      <table className="table table-bordered mt-3 mb-3"
                         style={{ backgroundColor: "#f8f9fa", color: "#333" }} >
                         <thead>
-                          <tr style={{ backgroundColor: "#207785", color: "#fff" }}>
-                            <th>Sl No</th>
-                            <th>Office</th>
-                            <th>Department</th>
-                            <th>Designation</th>
-                            <th>Name</th>
-                            <th>Memo Number</th>
-                            <th>Diary Number</th>
+                          <tr style={{ backgroundColor: "#e5e8e8", color: "#fff" }}>
+                            <th style={{ fontWeight: "bold", fontSize: "14px" }}>Sl No</th>
+                            <th style={{ fontWeight: "bold", fontSize: "14px"}}>Office</th>
+                            <th style={{ fontWeight: "bold", fontSize: "14px" }}>Department</th>
+                            <th style={{ fontWeight: "bold", fontSize: "14px" }}>Designation</th>
+                            <th style={{ fontWeight: "bold", fontSize: "14px" }}>Name</th>
+                            <th style={{ fontWeight: "bold", fontSize: "14px" }}>Memo Number</th>
+                            <th style={{ fontWeight: "bold", fontSize: "14px" }}>Diary Number</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -3861,7 +3866,8 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                               <TableCell>
                                 <FormControl sx={{ width: '100%' }}>
                                   <Select
-                                  size="small"
+                                     size="small"
+                                     displayEmpty
                                     value={row.enclosureType}
                                     onChange={(e) => handleTableEnclosureRowChange(index, "enclosureType", e.target.value)}
                                   >

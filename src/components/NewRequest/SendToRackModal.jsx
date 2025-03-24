@@ -44,9 +44,9 @@ const SendToRackModal = ({ open, onClose, selectedFile, onSuccess }) => {
         actionTaken: selectedFile.status || "APPROVED",
         fileId: selectedFile.fileId,
         fileRecptId: selectedFile.fileReceiptId,
-        roomId: selectedRoom,
-        rackId: selectedRack,
-        cellNo: selectedCell,
+        roomId: selectedRoom || selectedFile.roomId,
+        rackId: selectedRack || selectedFile.rackId,
+        cellNo: selectedCell || selectedFile.cellNumber,
         checkFlag: isChecked ? "Y" : "N",
       };
       console.log("payload",payload);

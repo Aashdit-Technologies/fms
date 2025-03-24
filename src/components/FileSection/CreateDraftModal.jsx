@@ -34,7 +34,7 @@ const CreateDraftModal = ({
 }) => {
   const token =
     useAuthStore((state) => state.token) || sessionStorage.getItem("token");
-console.log("editMalady" , editMalady);
+  console.log("editMalady", editMalady);
 
   const [data, setData] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -86,15 +86,16 @@ console.log("editMalady" , editMalady);
         const selectedTemplate = officeNames.data.find(
           (template) => template.tempType === editMalady.tempType
         );
-  
+
         if (selectedTemplate) {
           setFormData((prev) => ({
             ...prev,
             office: selectedTemplate.templateId, // Ensure this is the correct field
             tempType: selectedTemplate.tempType,
-            contentss: selectedTemplate.tempContent || editMalady.letterContent || "",
+            contentss:
+              selectedTemplate.tempContent || editMalady.letterContent || "",
           }));
-  
+
           updatedContentRef.current =
             selectedTemplate.tempContent || editMalady.letterContent || "";
         }
@@ -571,7 +572,9 @@ console.log("editMalady" , editMalady);
         departmentId: selectedValues.department?.value || 0,
         designationId: selectedValues.designation?.value || 0,
       },
+      letterContentId: formData.office || editMalady?.letterContentId || null,
     };
+    console.log("Payload:", payload);
 
     console.log("Save/Approve Payload:", {
       ...payload,
@@ -601,13 +604,7 @@ console.log("editMalady" , editMalady);
       );
 
       if (response.data.outcome) {
-        toast.success(
-          action === "APPROVE"
-            ? "Draft Approved successfully!"
-            : editMalady
-            ? "Draft Updated successfully!"
-            : "Draft Created successfully!"
-        );
+        toast.success(response.data.message);
         resetForm();
         if (refetchData && typeof refetchData === "function") {
           refetchData();
@@ -619,7 +616,7 @@ console.log("editMalady" , editMalady);
     } catch (error) {
       console.error("Error saving draft:", error);
       toast.error("Failed to save draft");
-    }finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -627,7 +624,7 @@ console.log("editMalady" , editMalady);
   useEffect(() => {
     if (officeNames?.data) {
       console.log("officeNames.data:", officeNames.data);
-      setData(officeNames.data); // Set data from officeNames
+      setData(officeNames.data);
     }
   }, [officeNames]);
 
@@ -636,31 +633,35 @@ console.log("editMalady" , editMalady);
       console.error("officeNames.data is not an array:", officeNames?.data);
       return [];
     }
-  
-    return [
-      { label: "None", value: "" }, // Optional default option
-      ...officeNames.data.map((item) => ({
-        label: item.tempType, // Use tempType as the label
-        value: item.templateId, // Use templateId as the value
-        tempContent: item.tempContent, // Optional, for additional data
-      })),
-    ];
+
+    return officeNames.data.map((item) => ({
+      label: item.tempType,
+      value: item.templateId,
+      tempContent: item.tempContent,
+    }));
   }, [officeNames]);
 
   useEffect(() => {}, [officeOptions, formData.office]);
 
   const handleOfficeChange = (selectedOption) => {
     if (selectedOption) {
-      const contentss = selectedOption.tempContent || "";
+      const template = officeNames.data.find(
+        (t) => t.templateId === selectedOption.value
+      );
+
+      // Use existing content in edit mode, otherwise use template content
+      const content = editMalady
+        ? editMalady.letterContent || template?.tempContent || ""
+        : template?.tempContent || "";
 
       setFormData((prev) => ({
         ...prev,
         office: selectedOption.value,
         tempType: selectedOption.label,
-        contentss: contentss,
+        contentss: content,
       }));
 
-      updatedContentRef.current = contentss;
+      updatedContentRef.current = content;
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -672,6 +673,28 @@ console.log("editMalady" , editMalady);
       updatedContentRef.current = "";
     }
   };
+
+  useEffect(() => {
+    if (open && editMalady && officeNames?.data) {
+      // Find the matching template from officeNames data
+      const selectedTemplate = officeNames.data.find(
+        (template) => template.templateId === editMalady.letterContentId
+      );
+
+      if (selectedTemplate) {
+        setFormData((prev) => ({
+          ...prev,
+          office: selectedTemplate.templateId,
+          tempType: selectedTemplate.tempType,
+          contentss:
+            editMalady.letterContent || selectedTemplate.tempContent || "",
+        }));
+
+        updatedContentRef.current =
+          editMalady.letterContent || selectedTemplate.tempContent || "";
+      }
+    }
+  }, [open, editMalady, officeNames]);
 
   const handleClickClose = () => {
     setSelectedValues({
@@ -705,7 +728,8 @@ console.log("editMalady" , editMalady);
     onClose();
   };
 
-  return (<>
+  return (
+    <>
       {isLoading && <PageLoader />}
       <Modal
         open={open}
@@ -760,7 +784,9 @@ console.log("editMalady" , editMalady);
                   <ReactSelect
                     options={officeOptions}
                     value={officeOptions.find(
-                      (option) => option.value === formData.office
+                      (option) =>
+                        option.value ===
+                        (formData.office || editMalady?.letterContentId)
                     )}
                     onChange={handleOfficeChange}
                     isSearchable
@@ -769,16 +795,23 @@ console.log("editMalady" , editMalady);
                       control: (base) => ({
                         ...base,
                         fontSize: "14px",
+                        minHeight: "36px",
                       }),
                       option: (base) => ({
                         ...base,
                         fontSize: "14px",
+                        padding: "8px 12px",
                       }),
                       singleValue: (base) => ({
                         ...base,
                         fontSize: "14px",
                       }),
+                      menuPortal: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                      }),
                     }}
+                    menuPortalTarget={document.body}
                   />
                 </Grid>
                 <Grid item xs={6}>
@@ -886,7 +919,9 @@ console.log("editMalady" , editMalady);
                       })) || []
                     }
                     value={selectedValues.office}
-                    onChange={(option) => handleSelectionChange("office", option)}
+                    onChange={(option) =>
+                      handleSelectionChange("office", option)
+                    }
                     isSearchable
                     isClearable={true}
                     isDisabled={!selectedValues.company}
@@ -1052,14 +1087,14 @@ console.log("editMalady" , editMalady);
               onClick={() => handleSave("SAVE")}
               disabled={isLoading}
             >
-              {editMalady?.correspondenceId &&
-              editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId
+              {editMalady?.letterContent 
                 ? "Update"
                 : "Save"}
             </Button>
 
             {editMalady?.correspondenceId &&
-              editMalady.approverEmpRoleMapId === editMalady.currEmpDeptMapId && (
+              editMalady.approverEmpRoleMapId ===
+                editMalady.currEmpDeptMapId && (
                 <Button
                   variant="contained"
                   color="secondary"
@@ -1088,13 +1123,17 @@ console.log("editMalady" , editMalady);
             >
               Reset
             </Button>
-            <Button variant="contained" color="error" onClick={handleClickClose}>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleClickClose}
+            >
               Cancel
             </Button>
           </Box>
         </Box>
       </Modal>
-  </>
+    </>
   );
 };
 

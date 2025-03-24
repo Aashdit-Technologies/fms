@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
-import { Button } from "@mui/material";
+import { Button, TextField } from "@mui/material";
 import { FaEdit, FaHistory } from "react-icons/fa";
 import { LuFileOutput } from "react-icons/lu";
 import useAuthStore from "../../store/Store";
@@ -23,6 +23,8 @@ import {
 import { encryptPayload } from "../../utils/encrypt.js";
 import { FaEye } from "react-icons/fa6";
 import { PageLoader } from "../pageload/PageLoader.jsx";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 const customStyles = {
   table: {
@@ -112,9 +114,18 @@ const CompleteList = ({ onSwitchTab }) => {
 
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
   const [historyData, setHistoryData] = useState([]);
+  const [filterText, setFilterText] = useState("");
   console.log("custodianEmpDeptMapId", completeListData);
 
   const Navigate = useNavigate();
+  const filteredData = completeListData?.filter((item) => {
+    return (
+      item.fileNo?.toLowerCase().includes(filterText.toLowerCase()) ||
+      item.fileName?.toLowerCase().includes(filterText.toLowerCase()) ||
+      item.status?.toLowerCase().includes(filterText.toLowerCase()) ||
+      item.sentOn?.toLowerCase().includes(filterText.toLowerCase())
+    );
+  });
   useEffect(() => {
     fetchData();
   }, [pageNo, rowSize]);
@@ -207,6 +218,7 @@ const CompleteList = ({ onSwitchTab }) => {
 
       Navigate("/main-file", {
         state: fileData,
+
         replace: true,
       });
     } catch (error) {
@@ -342,7 +354,7 @@ const CompleteList = ({ onSwitchTab }) => {
 
     Navigate(
       "/main-file",
-      { state: { file: file, tabPanelId: 1 } },
+      { state: { file: file, tabPanelId: 3 } },
       { replace: true }
     );
   };
@@ -406,21 +418,6 @@ const CompleteList = ({ onSwitchTab }) => {
         <>
           <Button
             variant="contained"
-            color="secondary"
-            size="small"
-            title="History"
-            sx={{
-              minWidth: "auto",
-              padding: "6px 10px",
-              marginRight: "8px",
-            }}
-            onClick={() => handleHistoryClick(row)}
-            disabled={loading}
-          >
-            <FaHistory />
-          </Button>
-          <Button
-            variant="contained"
             color="success"
             onClick={() => handleViewStatus(row)}
             title="View"
@@ -433,8 +430,7 @@ const CompleteList = ({ onSwitchTab }) => {
           >
             <FaEye />
           </Button>
-          {row.custodianEmpDeptMapId ===
-          row.currUserEmpDeptMapId ? (
+          {row.custodianEmpDeptMapId === row.currUserEmpDeptMapId ? (
             <Button
               variant="contained"
               color="warning"
@@ -449,11 +445,28 @@ const CompleteList = ({ onSwitchTab }) => {
             >
               <LuFileOutput />
             </Button>
-          ) : ''}
+          ) : (
+            ""
+          )}
 
           {/* <Button variant="contained" color="error" size="small">
             Delete
           </Button> */}
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            title="History"
+            sx={{
+              minWidth: "auto",
+              padding: "6px 10px",
+              marginRight: "8px",
+            }}
+            onClick={() => handleHistoryClick(row)}
+            disabled={loading}
+          >
+            <FaHistory />
+          </Button>
         </>
       ),
     },
@@ -468,10 +481,24 @@ const CompleteList = ({ onSwitchTab }) => {
   // };
   return (
     <div>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <div className="row mb-3">
+          
+          <div className="form-group col-md-3 m-0">
+            <TextField
+              size="small"
+              placeholder="Search"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              style={{ width: "100%" }}
+            />
+          </div>
+        </div>
+      
       {loading && <PageLoader />}
       <DataTable
         columns={columns}
-        data={completeListData}
+        data={filteredData || []}
         progressComponent={<PageLoader />}
         pagination
         highlightOnHover
@@ -576,7 +603,7 @@ const CompleteList = ({ onSwitchTab }) => {
           </div>
         </div>
       )} */}
-
+</LocalizationProvider>
       <Modal
         open={fileDetailsModalVisible}
         onClose={() => setFileDetailsModalVisible(false)}
@@ -683,37 +710,72 @@ const CompleteList = ({ onSwitchTab }) => {
               <TableHead>
                 <TableRow>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Sl
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     File Number
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Sender
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Receiver
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc", backgroundColor: '#005F73',fontWeight: "bold",color: '#fff' }}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Docket No.
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold" ,color: '#fff'}}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Action Date
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold" ,color: '#fff'}}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Status
                   </TableCell>
