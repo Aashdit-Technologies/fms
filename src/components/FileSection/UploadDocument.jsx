@@ -281,96 +281,70 @@ const UploadDocument = ({
 
   const validateForm = (rows, initialContent, Mark) => {
     debugger;
+    // Clean up initialContent - remove whitespace, &nbsp;, and check for empty editor content
+    const cleanedContent = initialContent?.replace(/(&nbsp;|\s|<p>|<\/p>|<br>)/g, '').trim();
+    const isContentEmpty = !cleanedContent || cleanedContent === "";
   
-    const cleanedContent = initialContent.replace(/\s|&nbsp;/g, "").trim();
-    const isContentEmpty = !cleanedContent || cleanedContent === "<p><br></p>";
-  
+    // For MARKDOWN action, skip validation
     if (Mark === "MARKDOWN") {
       return true;
     }
   
-    let isRowEmpty = true; 
-    rows.forEach(row => {
-      if (row.type === "SELECT") {
-        row.type = ""; 
-        return false;  
-      }
-      if (row.subject || row.type || row.date || row.letterNumber || row.document) {
-        isRowEmpty = false; 
-      }
-    });
+    // Case 1: Check if both content and rows are empty
+    const areAllRowsEmpty = rows.every(row => 
+      !row.subject && !row.type && !row.date && !row.letterNumber && !row.document
+    );
   
-    if (isContentEmpty && isRowEmpty) {
+    if (isContentEmpty && areAllRowsEmpty) {
       toast.error("Please write some notes before save.");
-      return false; 
-    }
-  
-    let isAnyRowFilled = false; 
-    let isRowPartiallyFilled = false; 
-  
-    for (const row of rows) {
-      if (row.type === "SELECT") {
-        row.type = ""; 
-        return false;  
-      }
-  
-      const isRowEmptyCheck =
-        !row.subject &&
-        !row.type &&
-        !row.date &&
-        !row.letterNumber &&
-        !row.document;
-  
-      if (isRowEmptyCheck) {
-        toast.error("Row is mandatory.");
-        return false;
-      }
-  
-      const isRowComplete =
-        row.subject &&
-        row.type &&
-        row.date &&
-        (row.type !== "LETTER" || row.letterNumber) &&
-        row.document;
-  
-      if (isRowComplete) {
-        isAnyRowFilled = true;
-      }
-  
-      const isRowPartiallyFilledCheck =
-        (row.subject && !row.type) ||
-        (row.subject && !row.date) ||
-        (row.subject && !row.document) ||
-        (row.type && !row.subject) ||
-        (row.type && !row.date) ||
-        (row.type && !row.document) ||
-        (row.date && !row.subject) ||
-        (row.date && !row.type) ||
-        (row.date && !row.document) ||
-        (row.document && !row.subject) ||
-        (row.document && !row.type) ||
-        (row.document && !row.date);
-  
-      if (isRowPartiallyFilledCheck) {
-        isRowPartiallyFilled = true;
-        toast.error("All fields in a row are mandatory.");
-        return false; 
-      }
-  
-      if (!isRowComplete && !isRowEmptyCheck) {
-        toast.error("All fields in a row must be filled before submission.");
-        return false; 
-      }
-    }
-  
-    if (!isAnyRowFilled) {
-      toast.error("At least one row must be fully filled.");
       return false;
     }
   
-    return true; 
-  };
+    // Case 2: If initialContent has value, allow submission regardless of rows
+    if (!isContentEmpty) {
+      return true;
+    }
   
+    // Case 3: Validate rows when initialContent is empty
+    for (const [index, row] of rows.entries()) {
+      // Reset SELECT type
+      if (row.type === "SELECT") {
+        row.type = "";
+      }
+  
+      // Check if row is started but incomplete
+      const isRowStarted = row.subject || row.type || row.date || row.letterNumber || row.document;
+      
+      if (isRowStarted) {
+        // Validate required fields for started row
+        if (!row.subject || !row.type || !row.date || !row.document) {
+          toast.error(`Row ${index + 1}: All fields are mandatory.`);
+          return false;
+        }
+  
+        // Additional validation for LETTER type
+        if (row.type === "LETTER" && !row.letterNumber) {
+          toast.error(`Row ${index + 1}: Letter Number is required for Letter type.`);
+          return false;
+        }
+      }
+    }
+  
+    // Case 4: Ensure at least one row is filled when no content
+    const hasCompleteRow = rows.some(row => {
+      const isComplete = row.subject && row.type && row.date && row.document;
+      return row.type === "LETTER" 
+        ? isComplete && row.letterNumber 
+        : isComplete;
+    });
+  
+    if (!hasCompleteRow && isContentEmpty) {
+      toast.error("At least one row must be completely filled.");
+      return false;
+    }
+  
+    return true;
+  };
   
   
   

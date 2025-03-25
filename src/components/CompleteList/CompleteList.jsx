@@ -400,11 +400,11 @@ const CompleteList = ({ onSwitchTab }) => {
       selector: (row) => row.fromEmployee,
       sortable: true,
     },
-    {
-      name: "Completed On",
-      selector: (row) => row.completedOn,
-      sortable: true,
-    },
+    // {
+    //   name: "Completed On",
+    //   selector: (row) => row.completedOn,
+    //   sortable: true,
+    // },
     {
       name: "Status",
       selector: (row) => row.status,
@@ -414,6 +414,7 @@ const CompleteList = ({ onSwitchTab }) => {
     {
       name: "Action",
       style: { justifyContent: "center", gap: "8px" },
+      width: "150px",
       cell: (row) => (
         <>
           <Button

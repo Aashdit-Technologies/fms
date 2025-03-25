@@ -7,6 +7,7 @@ import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
 import { useNavigate } from "react-router-dom";
+import useMenuStore from "../Sidebar/menuStore";
 
 const RoleMenu = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -198,6 +199,16 @@ const RoleMenu = () => {
 
       setMenuIds([]);
       toast.success(response.data.message)
+          // Fetch updated menu from API
+    const updatedMenuResponse = await api.get("admin/menu/list", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (updatedMenuResponse.data?.data) {
+      useMenuStore.getState().setMenuData(updatedMenuResponse.data.data); 
+      useMenuStore.getState().menuData
+    }
+
     } catch (error) {
       console.error("Error submitting menu permissions:", error);
     } finally {
@@ -205,6 +216,7 @@ const RoleMenu = () => {
     }
   };
 
+ 
   const toggleExpand = (itemId) => {
     setExpandedItems((prev) => ({
       ...prev,

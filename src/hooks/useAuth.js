@@ -26,7 +26,7 @@ export const useAuth = () => {
         return false;
       }
 
-      const payload = { size:6,
+      const payload = { size:5,
         userName:credentials.userName
       };
       
@@ -66,7 +66,7 @@ export const useAuth = () => {
           userName: credentials.userName,
           password: credentials.password,
           captcha: credentials.userCaptcha,
-          byPassCaptcha: true,
+          byPassCaptcha: false,
         };
   
         const encryptedMessage = encryptPayload(payload);
@@ -75,10 +75,19 @@ export const useAuth = () => {
           dataObject: encryptedMessage,
         });
   
-        
+        if (!response.data.outcome) {
+          await generateCaptcha.mutateAsync({ 
+          userName: credentials.userName, 
+          password: credentials.password 
+          });
+          }
   
         return response.data;
       } catch (error) {
+        await generateCaptcha.mutateAsync({ 
+          userName: credentials.userName, 
+          password: credentials.password 
+          });
         const errorMessage = error.response?.data?.message || error.message || "Login failed.";
         toast.error(errorMessage);
         throw new Error(errorMessage);

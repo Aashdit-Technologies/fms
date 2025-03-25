@@ -351,8 +351,8 @@ const RequestStatus = ({ onSwitchTab }) => {
       width: "200px",
     },
     {
-      name: "From",
-      selector: (row) => row.createdBy,
+      name: "Current File Owner",
+      selector: (row) => row.currentFileOwner,
       sortable: true,
       width: "250px",
     },
@@ -360,12 +360,13 @@ const RequestStatus = ({ onSwitchTab }) => {
       name: "Sent On",
       selector: (row) => row.sentOn,
       sortable: true,
-      width: "155px",
+      width: "175px",
     },
     {
       name: "Status",
       selector: (row) => row.status,
       sortable: true,
+      width: "120px",
       cell: (row) => (
         <span
           className={`rounded p-1 text-white ${

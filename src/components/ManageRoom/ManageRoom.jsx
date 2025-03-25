@@ -245,16 +245,18 @@ const ManageRoom = () => {
       name: "Room Number",
       selector: (row) => row.roomNumber,
       sortable: true,
+      width: "550px",
     },
     {
       name: "Description",
       selector: (row) => row.description,
       sortable: true,
+      width: "550px",
     },
-    {
-      name: "Rack Count",
-      selector: (row) => row.rackCount || "N/A",
-    },
+    // {
+    //   name: "Rack Count",
+    //   selector: (row) => row.rackCount || "N/A",
+    // },
     // {
     //   name: "Active",
     //   cell: (row) =>

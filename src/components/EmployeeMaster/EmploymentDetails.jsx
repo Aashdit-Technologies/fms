@@ -412,19 +412,19 @@ const EmploymentDetails = ({ handleTabChange }) => {
                 select
                 fullWidth
                 label="Company"
-                value={row.company}
+                value={row.company || ""}
                 InputProps={{ sx: { height: '50px' } }}
                 onChange={(e) => handleChange(index, "company", e.target.value)}
-                SelectProps={{
-                  MenuProps: {
-                    PaperProps: {
-                      style: {
-                        maxHeight: 300, 
-                        width: 150, 
-                      },
-                    },
-                  },
-                }}
+                // SelectProps={{
+                //   MenuProps: {
+                //     PaperProps: {
+                //       style: {
+                //         maxHeight: 300, 
+                //         width: 150, 
+                //       },
+                //     },
+                //   },
+                // }}
               >
                  <MenuItem value="" >
                 --Select Company--

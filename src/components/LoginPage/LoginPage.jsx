@@ -5,6 +5,7 @@ import { MdLock, MdVisibility, MdVisibilityOff } from "react-icons/md";
 import { FaSignInAlt, FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { PageLoader } from "../pageload/PageLoader";
 import "./LoginPage.css";
 import Odisha from "../../assets/odishalogo.png";
 import LeftImg from "../../assets/animation-gif.gif";
@@ -21,7 +22,7 @@ const LoginPage = () => {
   const [userCaptcha, setUserCaptcha] = useState("");
   const { login, isLoggingIn, captcha, generateCaptcha } = useAuth();
   const token = useAuthStore.getState().token;
-
+  const [isLoading, setIsLoading] = useState(false);
   const setShowCaptchaField = useAuthStore(
     (state) => state.setShowCaptchaField
   );
@@ -50,6 +51,7 @@ const LoginPage = () => {
     }
 
     try {
+      setIsLoading(true);
       await generateCaptcha({ userName, password });
       setShowCaptchaField(true);
       return true;
@@ -58,6 +60,9 @@ const LoginPage = () => {
         autoClose: 1000,
       });
       return false;
+    }
+    finally {
+      setIsLoading(false); // Reset loading state
     }
   };
   const handleSubmit = async (e) => {
@@ -74,12 +79,22 @@ const LoginPage = () => {
 
     if (showCaptchaField && !userCaptcha.trim()) {
       toast.error("Please enter the captcha.", { autoClose: 1000 });
+    
+      try {
+      await handleRefreshCaptcha();
+      } catch (error) {
+      console.error("Failed to refresh captcha:", error);
+      }
       return;
-    }
+      }
+
 
     try {
+     
       await login({ userName, password, userCaptcha });
+      setUserCaptcha("");
     } catch (error) {
+     
       toast.error("Login failed. Please try again.", {
         autoClose: 1000,
       });
@@ -102,6 +117,8 @@ const LoginPage = () => {
   };
 
   return (
+    <>
+  {isLoading && <PageLoader />}
     <div className="login_main">
       <div className="container">
         <div className="log-logo-sec">
@@ -148,6 +165,7 @@ const LoginPage = () => {
                       onChange={handleUserNameChange}
                       autoComplete="off"
                       size="small"
+                      inputProps={{ maxLength: 250 }}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -159,26 +177,26 @@ const LoginPage = () => {
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           "& fieldset": {
-                            borderColor: "#c264f4", // Custom border color based on save state
+                            borderColor: "#c264f4", 
                           },
                           "&.Mui-focused fieldset": {
-                            borderColor: "#c264f4", // Change border color when focused
+                            borderColor: "#c264f4", 
                           },
                           "&:hover fieldset": {
-                            borderColor: "#c264f4", // Border color when hovered
+                            borderColor: "#c264f4", 
                           },
                         },
                         "& .MuiInputBase-input": {
-                          color: "#ccc", // Text color change after save
+                          color: "#ccc", 
                         },
                         "& .MuiInputLabel-root": {
-                          color: "#ccc", // Label color when saved
+                          color: "#ccc", 
                         },
                         "& .MuiInputLabel-root.Mui-focused": {
-                          color: "#ccc", // Change to the desired label color when focused
+                          color: "#ccc", 
                         },
                         "& .MuiInputBase-input::placeholder": {
-                          color: "#c264f4", // Placeholder color change on save
+                          color: "#c264f4",
                         },
                       }}
                     />
@@ -188,6 +206,7 @@ const LoginPage = () => {
                       label="Password"
                       variant="outlined"
                       size="small"
+                       inputProps={{ maxLength: 250 }}
                       fullWidth
                       type={showPassword ? "text" : "password"}
                       value={password}
@@ -218,26 +237,26 @@ const LoginPage = () => {
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           "& fieldset": {
-                            borderColor: "#c264f4", // Custom border color based on save state
+                            borderColor: "#c264f4", 
                           },
                           "&.Mui-focused fieldset": {
-                            borderColor: "#c264f4", // Change border color when focused
+                            borderColor: "#c264f4", 
                           },
                           "&:hover fieldset": {
-                            borderColor: "#c264f4", // Border color when hovered
+                            borderColor: "#c264f4", 
                           },
                         },
                         "& .MuiInputBase-input": {
-                          color: "#ccc", // Text color change after save
+                          color: "#ccc", 
                         },
                         "& .MuiInputLabel-root": {
-                          color: "#ccc", // Label color when saved
+                          color: "#ccc", 
                         },
                         "& .MuiInputLabel-root.Mui-focused": {
-                          color: "#ccc", // Change to the desired label color when focused
+                          color: "#ccc", 
                         },
                         "& .MuiInputBase-input::placeholder": {
-                          color: "#c264f4", // Placeholder color change on save
+                          color: "#c264f4", 
                         },
                       }}
                     />
@@ -261,36 +280,30 @@ const LoginPage = () => {
                           onChange={(e) => setUserCaptcha(e.target.value)}
                           autoComplete="off"
                           margin="normal"
-                          // sx={{
-                          //   "& .MuiOutlinedInput-root": {
-                          //     height: "45px",
-                          //   },
-
-                          //   flex: 4,
-                          // }}
+                          
                           sx={{
                             "& .MuiOutlinedInput-root": {
                               "& fieldset": {
-                                borderColor: "#c264f4", // Custom border color based on save state
+                                borderColor: "#c264f4", 
                               },
                               "&.Mui-focused fieldset": {
-                                borderColor: "#c264f4", // Change border color when focused
+                                borderColor: "#c264f4", 
                               },
                               "&:hover fieldset": {
-                                borderColor: "#c264f4", // Border color when hovered
+                                borderColor: "#c264f4", 
                               },
                             },
                             "& .MuiInputBase-input": {
-                              color: "#ccc", // Text color change after save
+                              color: "#ccc", 
                             },
                             "& .MuiInputLabel-root": {
-                              color: "#ccc", // Label color when saved
+                              color: "#ccc", 
                             },
                             "& .MuiInputLabel-root.Mui-focused": {
-                              color: "#ccc", // Change to the desired label color when focused
+                              color: "#ccc", 
                             },
                             "& .MuiInputBase-input::placeholder": {
-                              color: "#c264f4", // Placeholder color change on save
+                              color: "#c264f4", 
                               
                             },
 
@@ -388,6 +401,7 @@ const LoginPage = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

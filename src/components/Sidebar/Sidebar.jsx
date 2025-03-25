@@ -15,10 +15,14 @@ import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import { PageLoader } from "../pageload/PageLoader";
 
-const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
+import useMenuStore from "./menuStore";
+
+const Sidebar = ({ collapsed, setCollapsed}) => {
   const [openMenus, setOpenMenus] = useState({}); 
   const location = useLocation();
   const token = useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  
+  const menuData = useMenuStore((state) => state.menuData);
   const handleLinkClick = () => {
     setCollapsed(true); // Close sidebar
     setOpenMenus({}); // Reset open menus
@@ -27,6 +31,7 @@ const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
     data: apiResponse,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["menu"],
     queryFn: async () => {
@@ -57,11 +62,16 @@ const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
     },
   });
 
-  const menuItems = apiResponse || [];
+  // const menuItems = apiResponse || [];
 
+  // useEffect(() => {
+  //   if (setMenuData) setMenuData(menuItems);
+  // }, [menuItems, setMenuData]);
   useEffect(() => {
-    if (setMenuData) setMenuData(menuItems);
-  }, [menuItems, setMenuData]);
+    if (apiResponse) {
+      useMenuStore.getState().setMenuData(apiResponse); // Update Zustand state with menu data
+    }
+  }, [apiResponse]);
 
   const handleMenuClick = (id) => {
     setOpenMenus((prev) => ({
@@ -196,8 +206,9 @@ const Sidebar = ({ collapsed, setCollapsed, setMenuData }) => {
         </button>
       </div>
       <nav className="sidebar-nav">
-        {menuItems.map((menu) => renderMenu(menu))}
+        {menuData.map((menu) => renderMenu(menu))}
       </nav>
+      
     </div>
   );
 };

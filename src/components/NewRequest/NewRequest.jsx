@@ -631,6 +631,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       selector: (row) => row.sentOn,
 
       sortable: true,
+      width: "200px",
     },
 
     {
@@ -639,6 +640,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       selector: (row) => row.status,
 
       sortable: true,
+      width: "130px",
 
       cell: (row) => (
         <span className="bg-warning text-white rounded p-1">{row.status}</span>
@@ -1039,7 +1041,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
 
             <Button
               variant="contained"
-              color="secondary"
+              color="error"
               onClick={() => {
                 setFileDetailsModalVisible(false);
                 toggleBodyScroll(false);
