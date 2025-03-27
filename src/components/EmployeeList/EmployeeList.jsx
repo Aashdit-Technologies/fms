@@ -31,7 +31,7 @@ const customStyles = {
     style: {
       backgroundColor: "#005f73",
       color: "#ffffff",
-      // fontSize: "14px",
+      fontSize: "14px",
       fontWeight: "600",
       // textTransform: "uppercase",
       letterSpacing: "0.5px",
@@ -49,7 +49,7 @@ const customStyles = {
   },
   rows: {
     style: {
-      fontSize: "14px",
+      fontSize: "13px",
       fontWeight: "400",
       color: "#333",
       backgroundColor: "#ffffff",
@@ -338,13 +338,13 @@ const columns = [
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            width: 50, 
-            height: 35,
+            width: 40, 
+            height: 30,
             color: "#fff", 
             borderRadius:"5px"
           }}
         >
-          <FaPencilAlt size={16} />
+          <FaPencilAlt size={13} />
         </Box>
       </Button>
     ),

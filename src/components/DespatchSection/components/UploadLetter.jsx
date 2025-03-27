@@ -160,11 +160,11 @@ const validateForm = () => {
           color: "#fff",             
           display: "flex", 
           justifyContent: "space-between", 
-          alignItems: "center",
-          height: "60px",              
+          alignItems: "center",              
           fontWeight: "bold",
-          fontSize: "1.2rem",
-          padding: "10px 20px"         
+          fontSize: "18px",
+          padding: "8px 16px",
+          minHeight: "40px"        
         }}
       >
         Upload Letter
@@ -184,6 +184,7 @@ const validateForm = () => {
                 fullWidth
                 label="Letter No"
                 name="letterNo"
+                size='small'
                 value={formData.letterNo}
                 onChange={handleInputChange}
                 InputLabelProps={{
@@ -197,7 +198,7 @@ const validateForm = () => {
                 sx={{
                  
                   "& .MuiOutlinedInput-root": {
-                    height: "50px",
+                    // height: "50px",
                     "& fieldset": { borderColor: "#207785" },
                     "&:hover fieldset": { borderColor: "#1a5f6a" }, 
                   },
@@ -221,11 +222,12 @@ const validateForm = () => {
                 label="Ending Memo No"
                 name="endingMemoNo"
                 value={formData.endingMemoNo}
+                size='small'
                 onChange={handleInputChange}
                
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    height: "50px",
+                    // height: "50px",
                     "& fieldset": { borderColor: "#207785" }, 
                     "&:hover fieldset": { borderColor: "#1a5f6a" },
                   },
@@ -257,6 +259,7 @@ const validateForm = () => {
                     onChange={handleDateChange}
                     disableCloseOnSelect
                     format="DD/MM/YYYY"
+                    size="small"
                     slotProps={{
                       textField: {
                         fullWidth: true,
@@ -268,7 +271,7 @@ const validateForm = () => {
                         },
                         sx: {
                           "& .MuiInputBase-root": {
-                            height: "50px",
+                            // height: "50px",
                           },
                           "& .MuiOutlinedInput-root": {
                             "& fieldset": { borderColor: "#207785" },
@@ -313,6 +316,7 @@ const validateForm = () => {
                 type="file"
                 accept=".pdf"
                 id="file"
+                size='small'
                 onChange={handleFileChange}
                 fullWidth
                 InputLabelProps={{ shrink: true }}
@@ -325,7 +329,7 @@ const validateForm = () => {
                 sx={{
                   width: "420px",
                   "& .MuiOutlinedInput-root": {
-                    height: "50px",
+                    // height: "50px",
                     bgcolor: "#f9f9f9",
                     borderRadius: "4px",
                   },
@@ -342,13 +346,14 @@ const validateForm = () => {
       <DialogActions>
         <Button
           onClick={onClose}
-          sx={{ 
-            backgroundColor: "#F5F5F5", 
-            height: "10px",            
-            padding: "10px 20px",
-            display: "flex",
-            justifyContent: "flex-end" 
-          }}
+          sx={{
+            color: '#fff',
+            backgroundColor: '#d32f2f',
+            textTransform: 'none',
+                  '&:hover': {
+              backgroundColor: '#c62828',
+                  },
+                }}
         >
           Close
         </Button>

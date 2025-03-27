@@ -36,9 +36,11 @@ const FileDetails = ({ fileDetails }) => {
     // toast.warning("Task cancelled!");
   };
 
+ 
+
   return (
     <>
-      <div className="py-4">
+      <div className="">
         <Accordion defaultActiveKey="0" className="custom-accordion">
           <Accordion.Item eventKey="0">
             <Accordion.Header
@@ -72,7 +74,7 @@ const FileDetails = ({ fileDetails }) => {
                             style={{
                               fontWeight: "700",
                               color: "#207785",
-                              fontSize: "16px",
+                              fontSize: "14px",
                               textTransform: "capitalize",
                             }}
                           >
@@ -82,7 +84,7 @@ const FileDetails = ({ fileDetails }) => {
                             className="mb-0 fw-medium clickable-text"
                             style={{
                               fontWeight: "500",
-                              fontSize: "14px",
+                              fontSize: "15px",
                               textTransform: "capitalize",
                             }}
                             onClick={handleShowDetails}
@@ -91,7 +93,7 @@ const FileDetails = ({ fileDetails }) => {
                           </p>
                         </div>
                         <div className="mb-3">
-                          <label className="" style={{fontWeight:"700", color:"#207785", fontSize:"16px", textTransform:"capitalize"}}>
+                          <label className="" style={{fontWeight:"700", color:"#207785", fontSize:"15px", textTransform:"capitalize"}}>
                             File Name :
                           </label>
                           <p className="mb-0 fw-medium" style={{fontWeight:"500", fontSize:"14px", textTransform:"capitalize"}}>
@@ -105,7 +107,7 @@ const FileDetails = ({ fileDetails }) => {
                     <div className="card h-100 border-0 bg-light">
                       <div className="card-body">
                         <div className="mb-3">
-                          <label style={{fontWeight:"700", color:"#207785", fontSize:"16px", textTransform:"capitalize"}}>
+                          <label style={{fontWeight:"700", color:"#207785", fontSize:"15px", textTransform:"capitalize"}}>
                             Subject :
                           </label>
                           <p className="mb-0 fw-medium" style={{fontWeight:"500",  fontSize:"14px", textTransform:"capitalize"}}>
@@ -113,7 +115,7 @@ const FileDetails = ({ fileDetails }) => {
                           </p>
                         </div>
                         <div className="mb-3">
-                          <label style={{fontWeight:"700", color:"#207785", fontSize:"16px", textTransform:"capitalize"}}>
+                          <label style={{fontWeight:"700", color:"#207785", fontSize:"15px", textTransform:"capitalize"}}>
                             Title :
                           </label>
                           <p className="mb-0 fw-medium" style={{fontWeight:"500", fontSize:"14px", textTransform:"capitalize"}}>
@@ -162,7 +164,7 @@ const FileDetails = ({ fileDetails }) => {
           <Grid container spacing={2} sx={{ mt: 2 }}>
             {/* Column 1 */}
             <Grid item xs={12} sm={6}>
-              <DetailItem label="File Number" value={allDetails.fileNo} />
+              <DetailItem label="File Number" value={allDetails.fileNo}  />
               <DetailItem label="File Type" value={allDetails.fileType} />
               <DetailItem label="File Name" value={allDetails.fileName} />
               <DetailItem label="Subject" value={allDetails.subject} />
@@ -192,6 +194,18 @@ const FileDetails = ({ fileDetails }) => {
           </Box>
         </Box>
       </Modal>
+
+      <style>{`
+      
+      
+        .MuiTypography-caption{
+          font-weight: 600;
+          color: #207785;
+          font-size: 14px;
+          text-transform: capitalize;,
+        }
+      `}
+        </style>
     </>
   );
 };

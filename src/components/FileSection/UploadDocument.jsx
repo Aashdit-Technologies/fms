@@ -29,6 +29,8 @@ import {
   FaBan,
   FaCheckCircle,
   FaSearch,
+  FaCloudUploadAlt,
+  FaFile,
 } from "react-icons/fa";
 import Accordion from "react-bootstrap/Accordion";
 import Card from "react-bootstrap/Card";
@@ -77,8 +79,8 @@ const UploadDocument = ({
   }, [initialContent]);
   const [filePriority, setFilePriority] = useState("Normal");
   const [isConfidential, setIsConfidential] = useState(false);
-  const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
-  const [pendingConfidential, setPendingConfidential] = useState(false);
+  // const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
+  // const [pendingConfidential, setPendingConfidential] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSendToModalOpen, setIsSendToModalOpen] = useState(false);
@@ -89,6 +91,7 @@ const UploadDocument = ({
   const [organizationsData, setOrganizationsData] = useState([]);
   const [receiverEmpRoleMap, setReceiverEmpRoleMap] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const moveToRack = fileDetails?.data?.btnValue || null;
   const [selectedFiles, setSelectedFiles] = useState({});
@@ -138,17 +141,16 @@ const UploadDocument = ({
   }, [setRows]); // ✅ Including `setRows` for better stability (optional)
 
   const handleRemoveRow = (index) => {
-    if (rows.length > 1) {
-      setRows(rows.filter((_, i) => i !== index));
-
-      setSelectedFiles((prev) => {
-        const updatedFiles = { ...prev };
-        delete updatedFiles[index];
-        return updatedFiles;
-      });
-
-      // toast.warning("Row removed successfully!");
+    if (rows.length === 1) {
+      return;
     }
+
+    setRows((prevRows) => prevRows.filter((_, i) => i !== index));
+    setSelectedFiles((prev) => {
+      const updatedFiles = { ...prev };
+      delete updatedFiles[index];
+      return updatedFiles;
+    });
   };
 
   // const getMissingFields = (row) => {
@@ -209,12 +211,26 @@ const UploadDocument = ({
   };
 
   const handleFileChange = (index, file) => {
-    if (
-      file &&
-      (file.type === "image/jpeg" ||
-        file.type === "image/png" ||
-        file.type === "application/pdf")
-    ) {
+    if (!file) {
+      console.log("No file selected.");
+      toast.error("Please select a file");
+      return;
+    }
+  
+    if (file.name.length > 50) {
+      console.log("File name too long.");
+      toast.error("File name is too long. Maximum 50 characters allowed");
+      return;
+    }
+  
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      console.log("File size exceeds 5MB.");
+      toast.error("File size exceeds 5MB limit");
+      return;
+    }
+  
+    if (file && file.type === "application/pdf") {
       setSelectedFiles((prev) => ({
         ...prev,
         [index]: file,
@@ -222,17 +238,39 @@ const UploadDocument = ({
       const newRows = [...rows];
       newRows[index].document = file;
       setRows(newRows);
-      // toast.success("File uploaded successfully!");
     } else {
-      toast.error(
-        "Please select a valid document (JPG, PNG or PDF files only)"
-      );
+      console.log("Not a PDF file.");
+      toast.error("Please select a PDF file only");
     }
   };
+  
+  const handleDragEnter = (e, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
 
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files[0];
+    handleFileChange(index, file);
+  };
   const handleConfidentialChange = (e) => {
-    setPendingConfidential(e.target.checked);
-    setConfirmationModalOpen(true);
+    setIsConfidential(e.target.checked);
   };
 
   const fetchOrganizations = useMutation({
@@ -282,73 +320,79 @@ const UploadDocument = ({
   const validateForm = (rows, initialContent, Mark) => {
     debugger;
     // Clean up initialContent - remove whitespace, &nbsp;, and check for empty editor content
-    const cleanedContent = initialContent?.replace(/(&nbsp;|\s|<p>|<\/p>|<br>)/g, '').trim();
+    const cleanedContent = initialContent
+      ?.replace(/(&nbsp;|\s|<p>|<\/p>|<br>)/g, "")
+      .trim();
     const isContentEmpty = !cleanedContent || cleanedContent === "";
-  
+
     // For MARKDOWN action, skip validation
     if (Mark === "MARKDOWN") {
       return true;
     }
-  
+
     // Case 1: Check if both content and rows are empty
-    const areAllRowsEmpty = rows.every(row => 
-      !row.subject && !row.type && !row.date && !row.letterNumber && !row.document
+    const areAllRowsEmpty = rows.every(
+      (row) =>
+        !row.subject &&
+        !row.type &&
+        !row.date &&
+        !row.letterNumber &&
+        !row.document
     );
-  
+
     if (isContentEmpty && areAllRowsEmpty) {
       toast.error("Please write some notes before save.");
       return false;
     }
-  
+
     // Case 2: If initialContent has value, allow submission regardless of rows
     if (!isContentEmpty) {
       return true;
     }
-  
+
     // Case 3: Validate rows when initialContent is empty
     for (const [index, row] of rows.entries()) {
       // Reset SELECT type
       if (row.type === "SELECT") {
         row.type = "";
       }
-  
+
       // Check if row is started but incomplete
-      const isRowStarted = row.subject || row.type || row.date || row.letterNumber || row.document;
-      
+      const isRowStarted =
+        row.subject || row.type || row.date || row.letterNumber || row.document;
+
       if (isRowStarted) {
         // Validate required fields for started row
         if (!row.subject || !row.type || !row.date || !row.document) {
           toast.error(`Row ${index + 1}: All fields are mandatory.`);
           return false;
         }
-  
+
         // Additional validation for LETTER type
         if (row.type === "LETTER" && !row.letterNumber) {
-          toast.error(`Row ${index + 1}: Letter Number is required for Letter type.`);
+          toast.error(
+            `Row ${index + 1}: Letter Number is required for Letter type.`
+          );
           return false;
         }
       }
     }
-  
+
     // Case 4: Ensure at least one row is filled when no content
-    const hasCompleteRow = rows.some(row => {
+    const hasCompleteRow = rows.some((row) => {
       const isComplete = row.subject && row.type && row.date && row.document;
-      return row.type === "LETTER" 
-        ? isComplete && row.letterNumber 
+      return row.type === "LETTER"
+        ? isComplete && row.letterNumber
         : isComplete;
     });
-  
+
     if (!hasCompleteRow && isContentEmpty) {
       toast.error("At least one row must be completely filled.");
       return false;
     }
-  
+
     return true;
   };
-  
-  
-  
-  
 
   const handleDirectSubmit = async () => {
     await handleSubmit("Save");
@@ -358,7 +402,6 @@ const UploadDocument = ({
     const isContentEmpty = !cleanedContent || cleanedContent === "<p><br></p>";
 
     if (action !== "MARKDOWN") {
-
       const isValid = validateForm(rows, initialContent, action);
 
       if (isContentEmpty && !isValid) {
@@ -396,6 +439,7 @@ const UploadDocument = ({
         return false;
       }
     } catch (error) {
+      console.log("API Error:", error);
       toast.error(
         error.response?.data?.message ||
           error.message ||
@@ -468,6 +512,8 @@ const UploadDocument = ({
           toast.error(response.data?.message || "Operation failed!");
         }
       } catch (error) {
+        console.log("API Error:", error);
+        
         throw error;
       } finally {
         setIsLoading(false);
@@ -732,7 +778,7 @@ const UploadDocument = ({
                 </div>
               </Accordion.Header>
               <Accordion.Body>
-                <Box
+                {/* <Box
                   sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}
                 >
                   <IconButton
@@ -744,7 +790,7 @@ const UploadDocument = ({
                   >
                     <FaPlus style={{ color: "white" }} />
                   </IconButton>
-                </Box>
+                </Box> */}
 
                 <Box sx={{ mt: 2.5 }}>
                   {rows.map((row, index) => (
@@ -770,7 +816,6 @@ const UploadDocument = ({
                           // sx={{ height: "30px" }}
                         />
                       </Grid>
-
                       <Grid item xs={2.4}>
                         <FormControl fullWidth>
                           <InputLabel>Type</InputLabel>
@@ -790,7 +835,6 @@ const UploadDocument = ({
                           </Select>
                         </FormControl>
                       </Grid>
-
                       <Grid item xs={2}>
                         <TextField
                           fullWidth
@@ -816,7 +860,6 @@ const UploadDocument = ({
                           disabled={row.type !== "LETTER"}
                         />
                       </Grid>
-
                       <Grid item xs={2}>
                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                           <MobileDatePicker
@@ -864,15 +907,34 @@ const UploadDocument = ({
                             }}
                             slotProps={{
                               textField: {
+                                size: "small",
                                 fullWidth: true,
+                                // style: {
+                                //   width: "200px",
+                                // },
 
                                 InputProps: {
+                                  style: {
+                                    height: "40px",
+                                    fontSize: "14px",
+                                  },
                                   endAdornment: (
-                                    <CalendarToday color="action" />
+                                    <InputAdornment position="end">
+                                      <CalendarToday fontSize="small" />
+                                    </InputAdornment>
                                   ),
                                 },
                                 sx: {
-                                  "& .MuiInputBase-root": {},
+                                  "& .MuiInputBase-root": {
+                                    height: "40px",
+                                  },
+                                  "& .MuiOutlinedInput-root": {
+                                    height: "40px",
+                                  },
+                                  "& .MuiOutlinedInput-input": {
+                                    padding: "8.5px 14px",
+                                    height: "40px",
+                                  },
                                 },
                               },
                               actionBar: {
@@ -898,47 +960,112 @@ const UploadDocument = ({
                           />
                         </LocalizationProvider>
                       </Grid>
-
-                      <Grid item xs={2.4}>
+                            
+                      <Grid item xs={2.2}>
                         <Button
                           variant="contained"
                           component="label"
-                          startIcon={<FaFolderOpen />}
+                          startIcon={
+                            isDragging ? <FaCloudUploadAlt /> : <FaFolderOpen />
+                          }
                           sx={{
-                            bgcolor: "#207785",
+                            bgcolor: isDragging
+                              ? "rgba(32, 119, 133, 0.1)"
+                              : "#207785",
                             "&:hover": { bgcolor: "#207785" },
                             height: "40px",
+                            width: "100%",
+                            border: isDragging ? "2px dashed #207785" : "none",
+                            position: "relative",
+                            transition: "all 0.3s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                           }}
+                          onDragEnter={(e) => handleDragEnter(e, index)}
+                          onDragLeave={handleDragLeave}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, index)}
                         >
-                          {
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: "100%",
+                            }}
+                          >
                             <Typography
                               noWrap
                               sx={{
-                                minWidth: "150px",
-                                maxWidth: "150px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
+                                color: isDragging ? "#207785" : "white",
                               }}
                             >
-                              {selectedFiles[index]
-                                ? selectedFiles[index].name
-                                : "Upload File"}
-                              <span style={{ color: "red" }}>*</span>
+                              {selectedFiles[index] ? (
+                                <>
+                                  <FaFile />
+                                  {selectedFiles[index].name}
+                                </>
+                              ) : (
+                                <>
+                                  {isDragging ? (
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
+                                      }}
+                                    >
+                                      <FaCloudUploadAlt size={20} />
+                                      <span>Drop PDF here</span>
+                                    </Box>
+                                  ) : (
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      <span>Browse or drag & drop</span>
+                                      <span
+                                        style={{
+                                          color: "red",
+                                          marginLeft: "4px",
+                                        }}
+                                      >
+                                        *
+                                      </span>
+                                      <span
+                                        style={{
+                                          fontSize: "12px",
+                                          marginLeft: "4px",
+                                        }}
+                                      >
+                                        (PDF, max 5MB)
+                                      </span>
+                                    </Box>
+                                  )}
+                                </>
+                              )}
                             </Typography>
-                          }
+                          </Box>
                           <input
                             type="file"
                             hidden
-                            accept=".jpg,.jpeg,.png,.pdf"
+                            accept=".pdf,application/pdf"
                             onChange={(e) =>
                               handleFileChange(index, e.target.files[0])
                             }
                           />
                         </Button>
                       </Grid>
-
-                      {rows.length > 1 && (
+                      {/* {rows.length > 1 && (
                         <Grid item xs={0.8}>
                           <IconButton
                             size="small"
@@ -951,7 +1078,42 @@ const UploadDocument = ({
                             <FaMinus style={{ color: "white" }} />
                           </IconButton>
                         </Grid>
-                      )}
+                      )} */}
+                      <Grid item xs={0.8}>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          {/* Always show plus icon on first row */}
+                          {index === 0 && (
+                            <IconButton
+                              size="small"
+                              onClick={handleAddRow}
+                              sx={{
+                                bgcolor: "#207785",
+                                "&:hover": { bgcolor: "#207785" },
+                                height: "40px",
+                                width: "40px",
+                              }}
+                            >
+                              <FaPlus style={{ color: "white" }} />
+                            </IconButton>
+                          )}
+
+                          {/* Show minus icon if there's more than one row or if it's not the last remaining row */}
+                          {rows.length > 1 && (
+                            <IconButton
+                              size="small"
+                              onClick={() => handleRemoveRow(index)}
+                              sx={{
+                                bgcolor: "red",
+                                "&:hover": { bgcolor: "darkred" },
+                                height: "40px",
+                                width: "40px",
+                              }}
+                            >
+                              <FaMinus style={{ color: "white" }} />
+                            </IconButton>
+                          )}
+                        </Box>
+                      </Grid>
                     </Grid>
                   ))}
                 </Box>
@@ -1091,7 +1253,7 @@ const UploadDocument = ({
           </AccordionItem>
         </Accordion>
 
-        <Modal
+        {/* <Modal
           open={confirmationModalOpen}
           onClose={() => setConfirmationModalOpen(false)}
         >
@@ -1142,7 +1304,7 @@ const UploadDocument = ({
               </Button>
             </Box>
           </Box>
-        </Modal>
+        </Modal> */}
         {/* Modal for Table and Send Button */}
         <Modal
           open={isModalOpen}
@@ -1169,7 +1331,17 @@ const UploadDocument = ({
               overflow: "auto",
             }}
           >
-            <Typography variant="h6" sx={{ mb: 2 }}>
+            <Typography
+              variant="h6"
+              sx={{ mb: 2 }}
+              style={{
+                backgroundColor: "#207785",
+                color: "white",
+                padding: "10px",
+                width: "100%",
+                textAlign: "center",
+              }}
+            >
               Select Action
             </Typography>
 

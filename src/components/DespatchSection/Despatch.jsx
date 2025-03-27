@@ -9,7 +9,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Tooltip,
- 
+  
 } from '@mui/material';
 import DataTable from 'react-data-table-component';
 import { Visibility} from '@mui/icons-material';
@@ -24,6 +24,7 @@ import { MdFileUpload } from "react-icons/md";
 import {toast } from "react-toastify";
 import { PageLoader } from "../pageload/PageLoader";
 import { useNavigate } from 'react-router-dom';
+
 const customStyles = {
   table: {
     style: {
@@ -41,7 +42,7 @@ const customStyles = {
       color: "#ffffff",
       fontSize: "14px",
       fontWeight: "600",
-      // textTransform: "uppercase",
+      
       letterSpacing: "0.5px",
       minHeight: "52px",
       borderBottom: "2px solid #1a5f6a",
@@ -138,9 +139,6 @@ const Despatch = () => {
    const [dispatchdata, setDispatchData] = useState([]);
   const [expanded, setExpanded] = useState(true); 
   const [isLoading, setIsLoading] = useState(false);
-   
-  
-   
 
   const handleTabChange = (tab) => {
   setActiveTab(tab === 'newLetter' ? 'NEW_LETTER' : 'SENT_LETTER');
@@ -183,10 +181,8 @@ const Despatch = () => {
           },
         }
       );
-  
-     
-  
-      let responseData = response.data?.data?.correspondancelist;
+
+   let responseData = response.data?.data?.correspondancelist;
   
       if (!responseData) {
         setDispatchData([]);
@@ -242,9 +238,7 @@ const Despatch = () => {
           },
         }
       );
-  
-      
-  
+ 
       const enclosures = response.data?.data|| [];
     
       setSelectedRow({ ...row, enclosures });
@@ -275,7 +269,7 @@ const Despatch = () => {
             whiteSpace: 'nowrap', 
             overflow: 'hidden', 
             textOverflow: 'ellipsis', 
-            maxWidth: '200px'
+            maxWidth: '180px'
           }} 
           title={row.letterNo || ''}
         >
@@ -283,7 +277,7 @@ const Despatch = () => {
         </div>
       ),
         sortable: true,
-         width: '200px'
+         width: '180px'
          },
     { name: 'Ending Memo No.',
        selector: (row) => row.memoNo || '',
@@ -301,7 +295,7 @@ const Despatch = () => {
         </div>
       ),
         sortable: true,
-         width: '250px' 
+         width: '200px' 
         },
     { name: 'Subject', 
       selector: (row) => row.subject,
@@ -311,7 +305,7 @@ const Despatch = () => {
             whiteSpace: 'nowrap', 
             overflow: 'hidden', 
             textOverflow: 'ellipsis', 
-            // maxWidth: '200px'
+            maxWidth: '200px'
           }} 
           title={row.subject || ''}
         >
@@ -319,8 +313,9 @@ const Despatch = () => {
         </div>
       ),
        sortable: true, 
-       wrap: true,
-        grow: 2 },
+      //  wrap: true,
+      //   grow: 2 
+      },
     { name: 'From',
        selector: (row) => row.from,
        cell: row => (
@@ -337,9 +332,9 @@ const Despatch = () => {
         </div>
       ),
         sortable: true,
-         wrap: true,
-          grow: 1 ,
-          width:"200px"
+        //  wrap: true,
+        //   grow: 1 ,
+        //   width:"200px"
         },
     { name: 'Date',
        selector: (row) => row.date,
@@ -357,12 +352,12 @@ const Despatch = () => {
         </div>
       ),
         sortable: true, 
-        width: '120px' 
+        width: '150px' 
       },
     {
       name: "View",
       cell: (row) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 3 }}>
           {
             <Tooltip title="View Letter">
            <IconButton size="small" onClick={() => printLetter(row)} 
@@ -433,7 +428,7 @@ const Despatch = () => {
 
 
   const sentLetterColumns = [
-    { name: 'Sl No.', selector: (row, index) => index + 1, sortable: true, width: '80px' },
+    { name: 'Sl No.', selector: (row, index) => index + 1, sortable: true, width: '100px' },
     { name: 'Letter No.',
        selector: (row) => row.letterNo || '',
        cell: row => (
@@ -468,7 +463,7 @@ const Despatch = () => {
         </div>
       ),
        sortable: true, 
-       width: '250px',
+       width: '200px',
        
       },
     { name: 'Subject',
@@ -479,7 +474,7 @@ const Despatch = () => {
             whiteSpace: 'nowrap', 
             overflow: 'hidden', 
             textOverflow: 'ellipsis', 
-            maxWidth: '200px'
+            maxWidth: '150px'
           }} 
           title={row.subject || ''}
         >
@@ -487,8 +482,10 @@ const Despatch = () => {
         </div>
       ),
         sortable: true, 
-        wrap: true,
-         grow: 2 },
+        // wrap: true,
+        //  grow: 2 
+        width: '150px'
+        },
     { name: 'From', 
       selector: (row) => row.from, 
       cell: row => (
@@ -505,8 +502,9 @@ const Despatch = () => {
         </div>
       ),
       sortable: true,
-       wrap: true,
-        grow: 1 
+      //  wrap: true,
+      //   grow: 1 
+     
       },
     { name: 'Date',
        selector: (row) => row.date, 
@@ -524,12 +522,13 @@ const Despatch = () => {
         </div>
       ),
        sortable: true,
-        width: '120px' },
+        
+       },
     
     {
       name: "View",
       cell: (row) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 4 }}>
           <Tooltip title="View Letter">
           <IconButton size="small" onClick={() => handleDownloadview(row)} 
           sx={{ 
@@ -567,7 +566,7 @@ const Despatch = () => {
         </Tooltip>
         </Box>
       ),
-      width: "150px",
+      width: "180px",
       center: true,
     },
    
@@ -643,10 +642,8 @@ const Despatch = () => {
       if (response.data.outcome) {
         const letterContent = response.data.data;
   
-        // Store the letter content in localStorage
         localStorage.setItem('letterContent', JSON.stringify(letterContent));
-  
-        // Open a new tab with the print letter component
+ 
         window.open('/print-letter', '_blank');
       } else {
         toast.error(response.data.message);
@@ -663,7 +660,7 @@ const Despatch = () => {
 {isLoading && <PageLoader />}
     <Accordion 
     expanded={expanded} 
-    onChange={handleAccordionChange}
+   
     sx={{
       boxShadow:"3",
        backgroundColor: '#f5f8fa'
@@ -671,7 +668,7 @@ const Despatch = () => {
   >
     <AccordionSummary
       expandIcon={
-        <IconButton 
+        <IconButton  onClick={handleAccordionChange}
         sx={{
           backgroundColor: "#1a5f6a",
           color: "#fff",

@@ -284,7 +284,7 @@ const Ckeditor = ({
         .note-card-body {
           position: relative;
           padding: 20px;
-          margin-top: 25px;
+          margin-top: 15px;
           border-radius: 10px;
           box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
           transition: transform 0.2s ease-in-out;
@@ -293,8 +293,8 @@ const Ckeditor = ({
           position: absolute;
           top: -12px;
           right: -12px;
-          width: 40px;
-          height: 40px;
+          width: 35px;
+          height: 35px;
           color: white;
           border-radius: 50%;
           display: flex;

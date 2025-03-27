@@ -171,7 +171,7 @@ const EditProfile = ({ open, handleClose, data: initialData }) => {
             color: "#fff",
             height: "60px",
             fontWeight: "bold",
-            fontSize: "1.2rem",
+            fontSize: "18px",
             padding: "10px 20px",
           }}
         >
@@ -364,7 +364,7 @@ const EditProfile = ({ open, handleClose, data: initialData }) => {
           <Button variant="contained" onClick={handleSaveAndNext} sx={{
               backgroundColor: ' #1a5f6a',
               '&:hover': { backgroundColor: '#207785' },
-              fontSize: '1rem',
+              fontSize: '14px',
               fontWeight: 'bold',
               borderRadius: '8px',
              

@@ -22,10 +22,9 @@ import api from "../../../Api/Api";
 import useAuthStore from "../../../store/Store";
 import { encryptPayload } from "../../../utils/encrypt";
 import { PageLoader } from "../../pageload/PageLoader";
+import CloseIcon from "@mui/icons-material/Close";
 const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
 
-  
-  
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDownloadview = async (encloser) => {
@@ -82,26 +81,32 @@ const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle
         sx={{
-          bgcolor: '#f5f5f5',
-          color: '#000',
-          fontWeight: 'bold',
+          bgcolor: '#207785',
+          color: '#fff',
+          fontWeight: 500,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           borderBottom: '1px solid #e0e0e0',
+          fontSize: '18px',
+          padding: "8px 16px",
+          minHeight: "40px",
         }}
       >
         All Enclosures
+        <IconButton onClick={onClose} sx={{ color: "#fff" }}>
+    <CloseIcon />
+  </IconButton>
       </DialogTitle>
       <DialogContent sx={{ mt: 2, p: 2 }}>
         <TableContainer component={Paper} sx={{ mb: 2 }}>
           <Table className='table table-bordered'>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: '100px', fontWeight: 'bold' }}>Sl No.</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Enclosure Type</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Enclosure Name</TableCell>
-                <TableCell sx={{ width: '100px', fontWeight: 'bold' }}>Action</TableCell>
+            <TableHead >
+              <TableRow sx={{ backgroundColor: '#f5f5f5',}}>
+                <TableCell sx={{ width: '100px', fontWeight: 300, color: '#000', }}>Sl No.</TableCell>
+                <TableCell sx={{ fontWeight: 300, color: '#000' }}>Enclosure Type</TableCell>
+                <TableCell sx={{ fontWeight: 300, color: '#000' }}>Enclosure Name</TableCell>
+                <TableCell sx={{ width: '100px', fontWeight: 300, color: '#000' }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -147,8 +152,14 @@ const Enclosures = ({ open, onClose, enclosures = [], fileName, filePath }) => {
         </TableContainer>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button variant="contained" 
-          sx={{ textTransform: 'none',}}
-          color="warning" onClick={onClose}>
+         sx={{
+          backgroundColor: '#d32f2f',
+          textTransform: 'none',
+                '&:hover': {
+            backgroundColor: '#c62828',
+                },
+              }}
+           onClick={onClose}>
             Close
           </Button>
         </Box>

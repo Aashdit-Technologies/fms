@@ -684,7 +684,13 @@ const Correspondence = ({
                   ? "#6f42c1"
                   : row.corrType === "DRAFT"
                   ? "#F3B431"
-                  :row.corrType === "DRAWING" ? "#1287A5":row.corrType === "MAP" ? "#EA7773":row.corrType === "SKETCH" ? "#535C68": "#28a745",
+                  : row.corrType === "DRAWING"
+                  ? "#1287A5"
+                  : row.corrType === "MAP"
+                  ? "#EA7773"
+                  : row.corrType === "SKETCH"
+                  ? "#535C68"
+                  : "#28a745",
               color: "white",
               padding: "4px 10px",
               borderRadius: "10px",
@@ -906,7 +912,16 @@ const Correspondence = ({
       {loading && <PageLoader />}
       <TableContainer>
         <TopSection>
-          <Title>Correspondence</Title>
+          <Title
+            style={{
+              color: "rgb(5 44 101)",
+              fontSize: "20px",
+              fontWeight: "600",
+              fontFamily: `"Open Sans",Arial,sans-serif`,
+            }}
+          >
+            Correspondence
+          </Title>
           {fileDetails && fileDetails?.data.tabPanelId === 1 && (
             <ActionButton startIcon={<FaPlus />} onClick={handleCreateDraft}>
               Create Draft

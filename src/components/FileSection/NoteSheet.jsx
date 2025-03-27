@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { Card } from "react-bootstrap";
 import { Button } from "@mui/material";
 import { MdNote } from "react-icons/md";
@@ -23,10 +29,9 @@ const NoteSheet = ({
   const [writeNote, setWriteNote] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const token = useAuthStore((state) => state.token) || sessionStorage.getItem("token");
+  const token =
+    useAuthStore((state) => state.token) || sessionStorage.getItem("token");
   const editorContentRef = useRef(content);
-
-
 
   useEffect(() => {
     if (noteSheets && Array.isArray(noteSheets.data)) {
@@ -40,8 +45,6 @@ const NoteSheet = ({
     editorContentRef.current = content;
   }, [content]);
 
- 
-
   const handleWriteNoteClick = () => {
     setWriteNote(true);
     if (onContentChange && editorContentRef.current !== undefined) {
@@ -50,7 +53,7 @@ const NoteSheet = ({
       });
     }
   };
-  
+
   const handleCloseWriteNote = () => {
     setWriteNote(false);
     if (onContentChange && editorContentRef.current !== undefined) {
@@ -59,12 +62,6 @@ const NoteSheet = ({
       });
     }
   };
-  
-
-
- 
-
-  
 
   const togglePreview = async () => {
     setIsLoading(true);
@@ -72,18 +69,21 @@ const NoteSheet = ({
       const encryptedDload = encryptPayload({
         fileId: fileDetails.data.fileId,
       });
-  
+
       const response = await api.post(
         "/file/notesheet-preview",
         { dataObject: encryptedDload },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       console.log("API Response:", response.data);
-  
+
       if (response.data.outcome) {
-        sessionStorage.setItem("noteSheetPreviewData", JSON.stringify(response.data.data));
-  
+        sessionStorage.setItem(
+          "noteSheetPreviewData",
+          JSON.stringify(response.data.data)
+        );
+
         setTimeout(() => {
           window.open("/note-sheet-preview", "_blank");
         }, 500);
@@ -95,25 +95,22 @@ const NoteSheet = ({
       setIsLoading(false);
     }
   };
-  
-
 
   const convertHTMLToText = (html) => {
     const temp = document.createElement("div");
-  
+
     temp.innerHTML = html;
-  
+
     const links = temp.getElementsByTagName("a");
     for (let i = 0; i < links.length; i++) {
       links[i].target = "_blank";
-      links[i].style.color = '#007bff';  
+      links[i].style.color = "#007bff";
     }
-  
+
     return temp.innerHTML;
   };
-  
 
-  const badgeColors = ["#ff5733", "#1e90ff", "#28a745", "#ffcc00"];
+  const badgeColors = ["#51029C"];
 
   const renderedNotes = useMemo(() => {
     return notes.map((note, index) => (
@@ -139,11 +136,14 @@ const NoteSheet = ({
           <span className="text-primary">{note.senderName}</span> (
           {note.senderDesignation})
         </p>
-        <p className="note-content" dangerouslySetInnerHTML={{
-                    __html: convertHTMLToText(note.note),
-                  }}></p>
+        <p
+          className="note-content"
+          dangerouslySetInnerHTML={{
+            __html: convertHTMLToText(note.note),
+          }}
+        ></p>
         <p className="note-date">
-          {note.senderName} | {note.createdDate} | {note.createdTime}
+          {note.createdDate} | {note.createdTime}
         </p>
       </Card.Body>
     ));
@@ -159,7 +159,14 @@ const NoteSheet = ({
       >
         <Card className="p-4 mb-4 shadow-lg note-card">
           <div className="d-flex justify-content-between align-items-center note-header">
-            <h5 className="fw-bold text-uppercase text-dark d-flex align-items-center">
+            <h5
+              className="d-flex align-items-center"
+              style={{
+                color: "rgb(5 44 101)",
+                fontSize: "20px",
+                fontWeight: "600",
+              }}
+            >
               <MdNote className="text-success me-2" size={28} /> Note Sheet
             </h5>
             <div>
@@ -228,12 +235,14 @@ const NoteSheet = ({
               {notes.length > 0 ? renderedNotes : <p>No notes available</p>}
             </div>
 
-            <div className={`editor-container half-width ${writeNote ? "" : "d-none"}`}>
+            <div
+              className={`editor-container half-width ${
+                writeNote ? "" : "d-none"
+              }`}
+            >
               {showPreview ? (
                 <div className="preview-content">
-                  <div
-                    dangerouslySetInnerHTML={{ __html: content || "" }}
-                  />
+                  <div dangerouslySetInnerHTML={{ __html: content || "" }} />
                 </div>
               ) : (
                 writeNote && (
@@ -287,7 +296,7 @@ const NoteSheet = ({
         .notes-container {
           max-height: 405px;
           overflow-y: auto;
-          padding: 20px;
+          padding:6px 20px;
           overflow-x: hidden;
           max-width:100%;
         }
@@ -298,7 +307,6 @@ const NoteSheet = ({
         .note-card-body {
           position: relative;
           padding: 20px;
-          margin-top: 25px;
           border-radius: 10px;
           box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
           transition: transform 0.2s ease-in-out;
@@ -307,8 +315,8 @@ const NoteSheet = ({
           position: absolute;
           top: -12px;
           right: -12px;
-          width: 40px;
-          height: 40px;
+          width: 35px;
+          height: 35px;
           color: white;
           border-radius: 50%;
           display: flex;

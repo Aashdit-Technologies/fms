@@ -2,7 +2,7 @@
 .sidebar {
   width: 280px;
   height: 100vh;
-  background: url('../../assets/Login-Page.jpg');
+  background:#0f0f1a;
   background-size: cover;
   background-repeat: no-repeat;
   background-position: 90% 100%;

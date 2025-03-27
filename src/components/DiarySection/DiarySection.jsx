@@ -268,9 +268,7 @@ const DiarySection = () => {
   const [pageNoSent, setPageNoSent] = useState(1);
   const [totalPagessent, setTotalPagessent] = useState(0);
   const [selectedRows, setSelectedRows] = useState([]);
-  
 
-  
  const handlePageChange = (event, newPage) => {
   if (newPage !== pageNo) {
     setPageNo(newPage);
@@ -492,7 +490,7 @@ const handleRowSizeChangesentletter = (event) => {
                bgcolor: "#d32f2f",
                color: "white",
                padding: "5px 10px", 
-               fontSize: "10px", 
+               fontSize: "8px", 
                height: "23px", 
                "& .MuiChip-label": {
                  fontWeight: 500,
@@ -512,7 +510,7 @@ const handleRowSizeChangesentletter = (event) => {
     {
       name: "Addressee",
       cell: (row) => (
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center  gap-2">
           <IconButton
             onClick={() => handleAddressIconClick(row)}
             sx={{ 
@@ -527,7 +525,7 @@ const handleRowSizeChangesentletter = (event) => {
               borderRadius: '8px',
             }}
           >
-            <Visibility sx={{ fontSize: '1.2rem' }} />
+            <Visibility sx={{ fontSize: '1.2rem'}} />
           </IconButton>
         </div>
       ),
@@ -711,7 +709,7 @@ const handleRowSizeChangesentletter = (event) => {
             whiteSpace: 'nowrap', 
             overflow: 'hidden', 
             textOverflow: 'ellipsis', 
-            maxWidth: '150px'
+            // maxWidth: '150px'
           }} 
           title={row.addressee || ''}
         >
@@ -747,6 +745,7 @@ const handleRowSizeChangesentletter = (event) => {
     
     {
       name: "Action",
+      
       cell: (row) => (
         <IconButton
         onClick={(e) => { 
@@ -2387,7 +2386,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
         }
         };
   
-        const badgeColors = ["#ff5733", "#1e90ff", "#28a745", "#ffcc00"];
+        const badgeColors = ["#51029C"];
      
 
       return (
@@ -2645,9 +2644,9 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                               onClick={handleAddRow}
                               size="small"
                               sx={{ 
-                                bgcolor: '#4caf50',
+                                bgcolor: '#1a5f6a',
                                 color: 'white',
-                                '&:hover': { bgcolor: '#388e3c' },
+                                '&:hover': { bgcolor: '#207785' },
                               }}
                               disabled={rows.some(row => !row.departmentName || !row.addresseeDesignation || !row.addressee)}
                             >
@@ -2781,19 +2780,19 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                 }}
               />
             </td>
-            <td style={{ padding: '8px', textAlign: 'center' }}>
+            <td style={{ padding: '6px' }}>
               <IconButton
                 onClick={() => handleRemoveRow(index)}
                 size="small"
+                
                 sx={{
-                  bgcolor: '#f44336',
-                  color: 'white',
+                  color: '#d32f2f',
                   '&:hover': {
-                    bgcolor: '#d32f2f',
+                    backgroundColor: 'rgba(211, 47, 47, 0.04)',
                   },
                 }}
               >
-                <FaMinus size={12} />
+                <RemoveCircleOutline />
               </IconButton>
             </td>
           </tr>
@@ -2871,7 +2870,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                           borderRadius: 1,
                         }}
                       >
-                        <InsertDriveFileIcon color="primary" />
+                        <InsertDriveFileIcon sx={{ color: "#207785" }} />
                         <Typography variant="body2"
                         sx={{
                           flex: 1,
@@ -2887,7 +2886,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                         <IconButton
                           onClick={handleDocumentView} 
                           size="small"
-                          color="primary"
+                          sx={{ color: "#207785" }}
                         >
                           <VisibilityIcon/>
                         </IconButton>
@@ -2990,13 +2989,14 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                             <IconButton
                               onClick={handleAddEnclosureRow}
                               size="small"
+                              style={{marginRight:"7px"}}
                               sx={{ 
-                                bgcolor: '#4caf50',
+                                bgcolor: '#1a5f6a',
                                 color: 'white',
                                 '&:hover': {
-                                  bgcolor: '#388e3c',
+                                  bgcolor: '#207785',
                                 },
-                                padding: '8px',
+                                // padding: '8px',
                                
                               }}
                             >
@@ -3080,7 +3080,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                                       <IconButton
                                         onClick={() => handleDocumentViewEnclosureForm(row.fileName, row.filePath)}
                                         size="small"
-                                        color="primary"
+                                        sx={{ color: "#207785" }}
                                         edge="end"
                                       >
                                         <VisibilityIcon />
@@ -3096,9 +3096,10 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                               )} */}
                             </TableCell>
 
-                            <TableCell>
+                            <TableCell style={{ textAlign: 'Right', paddingRight: '16px' }}>
                               <IconButton
                                 onClick={(e) => handleRemoveEnclosureRow(index,e)}
+                                
                                 sx={{
                                   color: '#d32f2f',
                                   '&:hover': {
@@ -3245,18 +3246,20 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
           <div className="modal-dialog modal-xl">
             <div className="diary-section-model-content
              modal-content">
-              <div className="diary-section-model-header modal-header">
-                <h5 className="modal-title">Add Sender</h5>
+              <div className="diary-section-model-header modal-header"  style={{ backgroundColor: "#1a5f6a", color: "#ffffff" }}>
+                <h5 className="modal-title  " style={{fontSize: "18px", fontWeight: "500"}}>Add Sender</h5>
                 <button
                   type="button"
-                  className="btn-close"
+                
+                   className="btn-close btn-close-white"
+                  
                   onClick={handleModalClose}
                 ></button>
               </div>
               <div className="modal-body">
                 {/* Add Sender Details */}
                 <div className="diary-section-container">
-                  <div className="accordion-header">
+                  <div className="accordion-header ">
                     <span className="accordion-title">Add Sender Details</span>
                     <span 
                       className="accordion-icon"
@@ -3272,7 +3275,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                   {openSection === "addSender" && (
                     <div className="accordion-body">
                 <form>
-              <Grid container spacing={2} alignItems="center">
+              <Grid container spacing={2} alignItems="center"  >
                 <Grid item xs={12} md={3}>
                   <TextField
                     
@@ -3759,7 +3762,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                       <h5 className="modal-title">All Letter Recipients</h5>
                       <button
                         type="button"
-                        className="btn-close"
+                        className="btn-close btn-close-white"
                         onClick={() => setIsAddresssModalOpen(false)}
                          style={{ color: "#fff" }} 
                       ></button>
@@ -3843,13 +3846,14 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                                   <TableCell>Enclosure Type <span style={{ color: "red" }}>*</span></TableCell>
                                   <TableCell>Enclosure Name <span style={{ color: "red" }}>*</span></TableCell>
                                   <TableCell>Upload <span style={{ color: "red" }}>*</span></TableCell>
-                                  <TableCell align="center" width="100">
+                                  <TableCell align="center" width="100" >
                                     <IconButton
                                       onClick={handleAddTableEnclosureRow}
                                       size="small"
                                       sx={{
                                         bgcolor: "#207785",
                                         color: "white",
+                                        
                                         "&:hover": {
                                           bgcolor: "#1a5f6a",
                                         },
@@ -4255,8 +4259,9 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
                     p: 3,
                   }}
                 >
-                  <Typography variant="subtitle1" sx={{ mb: 2 ,color:"#1a5f6a",fontSize:"20px"}}>
-                    Notes
+                
+                  <Typography variant="subtitle1" sx={{ mb: 2, color: "#1a5f6a", fontSize: "20px", fontWeight: "bold" }}>
+                  Notes
                   </Typography>
                   {Array.isArray(selectedLetterDetails?.letterNotesArrays) &&
                   selectedLetterDetails.letterNotesArrays.length > 0 ? (
@@ -4422,7 +4427,7 @@ const handleDocumentViewEnclosureForm = async (fileName,filePath) => {
           font-size: 0.9rem;
         }
         .table th {
-          background-color: #f8f9fa;
+          background-color: #f5f5f5;
           font-weight: 500;
         }
         .modal-xl {

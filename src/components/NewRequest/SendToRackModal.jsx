@@ -33,13 +33,12 @@ const SendToRackModal = ({ open, onClose, selectedFile, onSuccess }) => {
   const [isChecked, setIsChecked] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   console.log(selectedFile, "selectedFile");
-  
 
   const token = useAuthStore.getState().token;
 
   const sendToRackMutation = useMutation({
     mutationFn: async () => {
-      debugger
+      debugger;
       const payload = {
         actionTaken: selectedFile.status || "APPROVED",
         fileId: selectedFile.fileId,
@@ -49,8 +48,7 @@ const SendToRackModal = ({ open, onClose, selectedFile, onSuccess }) => {
         cellNo: selectedCell || selectedFile.cellNumber,
         checkFlag: isChecked ? "Y" : "N",
       };
-      console.log("payload",payload);
-      
+      console.log("payload", payload);
 
       const encryptedMessage = encryptPayload(payload);
 
@@ -239,7 +237,7 @@ const SendToRackModal = ({ open, onClose, selectedFile, onSuccess }) => {
             gap={2}
           >
             {isChecked && (
-              <Box display="flex" gap={2} mb={3}>
+              <Box display="flex" gap={2} mb={3} style={{ width: "100%" }}>
                 <FormControl fullWidth>
                   <Typography level="body2" mb={1}>
                     Room
@@ -300,44 +298,45 @@ const SendToRackModal = ({ open, onClose, selectedFile, onSuccess }) => {
                 </FormControl>
               </Box>
             )}
-            <Box display="flex" alignItems="center" mb={3}>
-              <Checkbox
-                checked={isChecked}
-                onChange={(e) => setIsChecked(e.target.checked)}
-                id="change-location"
-              />
-              <Typography
-                component="label"
-                htmlFor="change-location"
-                sx={{ cursor: "pointer", userSelect: "none", ml: 1 }}
-              >
-                Change Room Details
-              </Typography>
-            </Box>
-
-            <Box display="flex" justifyContent="flex-end" gap={2}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleSubmit}
-                disabled={
-                  (isChecked &&
-                    (!selectedRoom || !selectedRack || !selectedCell)) ||
-                  sendToRackMutation.isLoading
-                }
-              >
-                Submit
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={() => {
-                  resetForm();
-                  onClose();
-                }}
-              >
-                Cancel
-              </Button>
+            <Box display="flex" alignItems="center" gap={2} >
+              <Box display="flex" alignItems="center" >
+                <Checkbox
+                  checked={isChecked}
+                  onChange={(e) => setIsChecked(e.target.checked)}
+                  id="change-location"
+                />
+                <Typography
+                  component="label"
+                  htmlFor="change-location"
+                  sx={{ cursor: "pointer", userSelect: "none", ml: 1 }}
+                >
+                  Change Room Details
+                </Typography>
+              </Box>
+              <Box display="flex" justifyContent="flex-end" gap={2}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSubmit}
+                  disabled={
+                    (isChecked &&
+                      (!selectedRoom || !selectedRack || !selectedCell)) ||
+                    sendToRackMutation.isLoading
+                  }
+                >
+                  Submit
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => {
+                    resetForm();
+                    onClose();
+                  }}
+                >
+                  Cancel
+                </Button>
+              </Box>
             </Box>
           </Box>
         </Box>

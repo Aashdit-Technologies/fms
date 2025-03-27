@@ -130,7 +130,7 @@ console.log("MainFile sharedEditorContent:", sharedEditorContent);
         fileDetails={fileData.fileDetails}
         refetchData={refetchData}
       />
-      <div className="d-flex justify-content-between gap-2">
+      <div className="d-flex justify-content-between gap-2 mt-2">
         <div className="main_note w-50">
           <NoteSheet
             noteSheets={fileData.noteSheets}
@@ -141,7 +141,7 @@ console.log("MainFile sharedEditorContent:", sharedEditorContent);
             refetchData={refetchData}
           />
         </div>
-        <div className="main_correspondence w-50">
+        <div className="main_correspondence w-50 ">
           <Correspondence
             correspondence={fileData.correspondence}
             fileDetails={fileData.fileDetails}

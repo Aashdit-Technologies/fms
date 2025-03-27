@@ -42,7 +42,7 @@ const customStyles = {
     style: {
       backgroundColor: "#005f73",
       color: "#ffffff",
-      // fontSize: "14px",
+      fontSize: "14px",
       fontWeight: "600",
       // textTransform: "uppercase",
       letterSpacing: "0.5px",
@@ -60,7 +60,7 @@ const customStyles = {
   },
   rows: {
     style: {
-      fontSize: "14px",
+      fontSize: "13px",
       fontWeight: "400",
       color: "#333",
       backgroundColor: "#ffffff",
@@ -681,6 +681,7 @@ const MovedToFileColumns = [
       <span style={{ 
         padding: '4px 8px', 
         borderRadius: '4px',
+        fontSize: '13px',
         backgroundColor: row.status === 'Moved' ? '#4caf50' : '#f44336',
         color: 'white'
       }}>
@@ -747,7 +748,7 @@ const MovedToFileColumns = [
 
       <Accordion 
         expanded={expanded} 
-        onChange={handleAccordionChange}
+       
         sx={{
           boxShadow: '3',
         
@@ -755,7 +756,7 @@ const MovedToFileColumns = [
       >
         <AccordionSummary
            expandIcon={
-            <IconButton 
+            <IconButton   onClick={handleAccordionChange}
             sx={{
               backgroundColor: "#1a5f6a",
               color: "#fff",

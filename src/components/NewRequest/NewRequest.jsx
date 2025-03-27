@@ -45,115 +45,103 @@ import SendToRackModal from "./SendToRackModal.jsx";
 const customStyles = {
   table: {
     style: {
-      border: "1px solid #ddd",
-      borderRadius: "10px",
+      border: "1px solid #e0e0e0",
+      borderRadius: "8px",
+      overflow: "hidden",
+      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
       backgroundColor: "#ffffff",
       marginBottom: "1rem",
     },
   },
-  tableWrapper: {
-    style: {
-      display: "block",
-      maxHeight: "450px",
-      overflowY: "auto",
-      boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
-      // backgroundColor: "#ffffff",
-    },
-  },
-
+  
   headRow: {
     style: {
-      backgroundColor: "#005f73",
-
+      backgroundColor: "#207785",
       color: "#ffffff",
-
-      // fontSize: "14px",
-
+      fontSize: "14px",
       fontWeight: "600",
 
-      textTransform: "uppercase",
-
       letterSpacing: "0.5px",
-
       minHeight: "52px",
-
-      borderBottom: "2px solid #003d4c",
+      borderBottom: "2px solid #1a5f6a",
     },
   },
-
   headCells: {
     style: {
       padding: "16px",
-
-      textAlign: "center",
-
-      fontWeight: "bold",
-
-      borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+      "&:not(:last-of-type)": {
+        borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+      },
     },
   },
-
   rows: {
     style: {
-      fontSize: "14px",
-
+      fontSize: "13px",
       fontWeight: "400",
-
-      color: "#333",
-
+      color: "#333333",
       backgroundColor: "#ffffff",
-
-      minHeight: "50px",
-
-      transition: "background-color 0.2s ease-in-out",
-
+      minHeight: "48px",
       "&:not(:last-of-type)": {
-        borderBottom: "1px solid #ddd",
+        borderBottom: "1px solid #e0e0e0",
       },
-
       "&:hover": {
-        backgroundColor: "#e6f2f5",
-
+        backgroundColor: "#f5f9fa",
         cursor: "pointer",
+        transition: "all 0.2s ease",
       },
     },
-
     stripedStyle: {
-      backgroundColor: "#f9f9f9",
+      backgroundColor: "#f8f9fa",
     },
   },
-
   cells: {
     style: {
       padding: "12px 16px",
-
-      textAlign: "center",
-
-      borderRight: "1px solid #ddd",
+      "&:not(:last-of-type)": {
+        borderRight: "1px solid #e0e0e0",
+      },
     },
   },
-
   pagination: {
     style: {
-      borderTop: "1px solid #ddd",
-
-      padding: "10px",
-
-      backgroundColor: "#f9f9f9",
+      borderTop: "1px solid #e0e0e0",
+      backgroundColor: "#f8f9fa",
+      color: "#333333",
+      fontSize: "13px",
+      fontWeight: "500",
+      padding: "8px 16px",
+      "& .MuiButtonBase-root": {
+        backgroundColor: "#207785",
+        color: "#ffffff",
+        "&:hover": {
+          backgroundColor: "#1a5f6a",
+        },
+      },
+    },
+    pageButtonsStyle: {
+      borderRadius: "4px",
+      height: "32px",
+      minWidth: "32px",
+      padding: "0 6px",
+      margin: "0 4px",
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+      backgroundColor: "#207785",
+      color: "#ffffff",
+      "&:hover:not(:disabled)": {
+        backgroundColor: "#1a5f6a",
+        color: "#ffffff",
+      },
+      "&:disabled": {
+        opacity: 0.5,
+        cursor: "not-allowed",
+      },
     },
   },
-
   noData: {
     style: {
       padding: "24px",
-
-      textAlign: "center",
-
-      fontSize: "14px",
-
-      color: "#777",
-
-      backgroundColor: "#f9f9f9",
+      color: "#666666",
     },
   },
 };
@@ -613,17 +601,28 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       ),
 
       sortable: true,
-
-      width: "400px",
+      width: "450px",
     },
 
     {
       name: "File Name",
 
-      selector: (row) => row.fileName,
+      selector: (row) => row.fileName || "NA",
 
       sortable: true,
-      width: "300px",
+      cell: (row) => (
+        <div
+          style={{
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+          title={row.fileName || ""}
+        >
+          {row.fileName || ""}
+        </div>
+      ),
+      width: "250px",
     },
     {
       name: "Sent On",
@@ -631,6 +630,18 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       selector: (row) => row.sentOn,
 
       sortable: true,
+      cell: (row) => (
+        <div
+          style={{
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+          title={row.sentOn || ""}
+        >
+          {row.sentOn || ""}
+        </div>
+      ),
       width: "200px",
     },
 
@@ -640,7 +651,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       selector: (row) => row.status,
 
       sortable: true,
-      width: "130px",
+      width: "115px",
 
       cell: (row) => (
         <span className="bg-warning text-white rounded p-1">{row.status}</span>
@@ -649,11 +660,12 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
 
     {
       name: "Action",
+      // width: "200px",
 
       cell: (row) => (
         <>
           <div className="main_btn d-flex justify-content-between">
-            <div className="main_btn_fst  ">
+            <div className="main_btn_fst  d-flex">
               <Button
                 variant="contained"
                 color="warning"
@@ -785,6 +797,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
               responsive
               fixedHeader
               fixedHeaderScrollHeight="450px"
+              width="50%"
             />
             <div className="d-flex justify-content-end align-items-center mt-3 gap-2">
               <div className="d-flex align-items-center">
@@ -869,37 +882,72 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
               <TableHead>
                 <TableRow>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Sl
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     File Number
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Sender
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold",color: '#fff' }}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Receiver
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc", backgroundColor: '#005F73',fontWeight: "bold",color: '#fff' }}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Docket No.
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold" ,color: '#fff'}}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Action Date
                   </TableCell>
                   <TableCell
-                    sx={{ border: "1px solid #ccc",backgroundColor: '#005F73', fontWeight: "bold" ,color: '#fff'}}
+                    sx={{
+                      border: "1px solid #ccc",
+                      backgroundColor: "#005F73",
+                      fontWeight: "bold",
+                      color: "#fff",
+                    }}
                   >
                     Status
                   </TableCell>
