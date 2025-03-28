@@ -620,7 +620,7 @@ const CreateDraftModal = ({
       setIsLoading(false);
     }
   };
-
+  const DEFAULT_TEMPLATE_OPTION = { value: '', label: 'Select Letter Template' };
   useEffect(() => {
     if (officeNames?.data) {
       console.log("officeNames.data:", officeNames.data);
@@ -631,14 +631,17 @@ const CreateDraftModal = ({
   const officeOptions = useMemo(() => {
     if (!Array.isArray(officeNames?.data)) {
       console.error("officeNames.data is not an array:", officeNames?.data);
-      return [];
+      return [DEFAULT_TEMPLATE_OPTION];
     }
-
-    return officeNames.data.map((item) => ({
-      label: item.tempType,
-      value: item.templateId,
-      tempContent: item.tempContent,
-    }));
+  
+    return [
+      DEFAULT_TEMPLATE_OPTION,
+      ...officeNames.data.map((item) => ({
+        label: item.tempType,
+        value: item.templateId,
+        tempContent: item.tempContent,
+      }))
+    ];
   }, [officeNames]);
 
   useEffect(() => {}, [officeOptions, formData.office]);
@@ -787,7 +790,7 @@ const CreateDraftModal = ({
                       (option) =>
                         option.value ===
                         (formData.office || editMalady?.letterContentId)
-                    )}
+                    )|| DEFAULT_TEMPLATE_OPTION}
                     onChange={handleOfficeChange}
                     isSearchable
                     isClearable={true}

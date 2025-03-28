@@ -216,20 +216,20 @@ const UploadDocument = ({
       toast.error("Please select a file");
       return;
     }
-  
+
     if (file.name.length > 50) {
       console.log("File name too long.");
       toast.error("File name is too long. Maximum 50 characters allowed");
       return;
     }
-  
+
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       console.log("File size exceeds 5MB.");
       toast.error("File size exceeds 5MB limit");
       return;
     }
-  
+
     if (file && file.type === "application/pdf") {
       setSelectedFiles((prev) => ({
         ...prev,
@@ -243,7 +243,7 @@ const UploadDocument = ({
       toast.error("Please select a PDF file only");
     }
   };
-  
+
   const handleDragEnter = (e, index) => {
     e.preventDefault();
     e.stopPropagation();
@@ -513,7 +513,7 @@ const UploadDocument = ({
         }
       } catch (error) {
         console.log("API Error:", error);
-        
+
         throw error;
       } finally {
         setIsLoading(false);
@@ -960,7 +960,7 @@ const UploadDocument = ({
                           />
                         </LocalizationProvider>
                       </Grid>
-                            
+
                       <Grid item xs={2.2}>
                         <Button
                           variant="contained"
@@ -1023,7 +1023,9 @@ const UploadDocument = ({
                                       }}
                                     >
                                       <FaCloudUploadAlt size={20} />
-                                      <span>Drop PDF here</span>
+                                      <span style={{ fontSize: "12px" }}>
+                                        Drop PDF here
+                                      </span>
                                     </Box>
                                   ) : (
                                     <Box
@@ -1032,7 +1034,9 @@ const UploadDocument = ({
                                         alignItems: "center",
                                       }}
                                     >
-                                      <span>Browse or drag & drop</span>
+                                      <span style={{ fontSize: "10px" }}>
+                                        Browse or drag & drop
+                                      </span>
                                       <span
                                         style={{
                                           color: "red",
@@ -1043,8 +1047,8 @@ const UploadDocument = ({
                                       </span>
                                       <span
                                         style={{
-                                          fontSize: "12px",
-                                          marginLeft: "4px",
+                                          fontSize: "10px",
+                                          // marginLeft: "4px",
                                         }}
                                       >
                                         (PDF, max 5MB)
@@ -1086,14 +1090,17 @@ const UploadDocument = ({
                             <IconButton
                               size="small"
                               onClick={handleAddRow}
+                              variant="outlined"
                               sx={{
                                 bgcolor: "#207785",
                                 "&:hover": { bgcolor: "#207785" },
-                                height: "40px",
-                                width: "40px",
+                                height: "25px",
+                                width: "25px",
                               }}
                             >
-                              <FaPlus style={{ color: "white" }} />
+                              <FaPlus
+                                style={{ color: "white" }}
+                              />
                             </IconButton>
                           )}
 
@@ -1105,8 +1112,8 @@ const UploadDocument = ({
                               sx={{
                                 bgcolor: "red",
                                 "&:hover": { bgcolor: "darkred" },
-                                height: "40px",
-                                width: "40px",
+                                height: "25px",
+                                width: "25px",
                               }}
                             >
                               <FaMinus style={{ color: "white" }} />
@@ -1118,7 +1125,7 @@ const UploadDocument = ({
                   ))}
                 </Box>
 
-                <Grid container spacing={2} sx={{ mt: 4 }}>
+                <Grid container spacing={2} sx={{ mt: 2 }}>
                   <Grid item xs={6}>
                     <FormControl fullWidth>
                       <InputLabel>File Priority</InputLabel>

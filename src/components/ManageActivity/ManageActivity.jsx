@@ -13,82 +13,105 @@ import "./ManageActivity.css";
 // import { Button } from "@mui/material";
 
 const customStyles = {
-  textarea: {
-    minHeight: "50px",
-    resize: "vertical",
-    overflow: "auto",
-  },
   table: {
     style: {
-      border: "1px solid #ddd",
-      borderRadius: "10px",
+      border: "1px solid #e0e0e0",
+      borderRadius: "8px",
       overflow: "hidden",
-      boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
       backgroundColor: "#ffffff",
       marginBottom: "1rem",
     },
   },
+  
   headRow: {
     style: {
-      backgroundColor: "#005f73",
+      backgroundColor: "#207785",
       color: "#ffffff",
-      // fontSize: "14px",
+      fontSize: "14px",
       fontWeight: "600",
-      textTransform: "uppercase",
+
       letterSpacing: "0.5px",
       minHeight: "52px",
-      borderBottom: "2px solid #003d4c",
+      borderBottom: "2px solid #1a5f6a",
     },
   },
   headCells: {
     style: {
       padding: "16px",
-      textAlign: "center",
-      fontWeight: "bold",
-      borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+      "&:not(:last-of-type)": {
+        borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+      },
     },
   },
   rows: {
     style: {
-      fontSize: "14px",
+      fontSize: "13px",
       fontWeight: "400",
-      color: "#333",
+      color: "#333333",
       backgroundColor: "#ffffff",
-      minHeight: "50px",
-      transition: "background-color 0.2s ease-in-out",
+      minHeight: "48px",
       "&:not(:last-of-type)": {
-        borderBottom: "1px solid #ddd",
+        borderBottom: "1px solid #e0e0e0",
       },
       "&:hover": {
-        backgroundColor: "#e6f2f5",
+        backgroundColor: "#f5f9fa",
         cursor: "pointer",
+        transition: "all 0.2s ease",
       },
     },
     stripedStyle: {
-      backgroundColor: "#f9f9f9",
+      backgroundColor: "#f8f9fa",
     },
   },
   cells: {
     style: {
       padding: "12px 16px",
-      textAlign: "center",
-      borderRight: "1px solid #ddd",
+      "&:not(:last-of-type)": {
+        borderRight: "1px solid #e0e0e0",
+      },
     },
   },
   pagination: {
     style: {
-      borderTop: "1px solid #ddd",
-      padding: "10px",
-      backgroundColor: "#f9f9f9",
+      borderTop: "1px solid #e0e0e0",
+      backgroundColor: "#f8f9fa",
+      color: "#333333",
+      fontSize: "13px",
+      fontWeight: "500",
+      padding: "8px 16px",
+      "& .MuiButtonBase-root": {
+        backgroundColor: "#207785",
+        color: "#ffffff",
+        "&:hover": {
+          backgroundColor: "#1a5f6a",
+        },
+      },
+    },
+    pageButtonsStyle: {
+      borderRadius: "4px",
+      height: "32px",
+      minWidth: "32px",
+      padding: "0 6px",
+      margin: "0 4px",
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+      backgroundColor: "#207785",
+      color: "#ffffff",
+      "&:hover:not(:disabled)": {
+        backgroundColor: "#1a5f6a",
+        color: "#ffffff",
+      },
+      "&:disabled": {
+        opacity: 0.5,
+        cursor: "not-allowed",
+      },
     },
   },
   noData: {
     style: {
       padding: "24px",
-      textAlign: "center",
-      fontSize: "14px",
-      color: "#777",
-      backgroundColor: "#f9f9f9",
+      color: "#666666",
     },
   },
 };
@@ -373,6 +396,7 @@ const ManageActivity = () => {
                       variant="outlined"
                       id="activityCode"
                       name="activityCode"
+                      size="small"
                       value={activity.activityCode}
                       onChange={handleInputChange}
                       error={
@@ -398,6 +422,7 @@ const ManageActivity = () => {
                       variant="outlined"
                       id="activityName"
                       name="activityName"
+                      size="small"
                       value={activity.activityName}
                       onChange={handleInputChange}
                       error={
@@ -427,6 +452,7 @@ const ManageActivity = () => {
                       maxRows={10}
                       id="activityRemarks"
                       name="activityRemarks"
+                      size="small"
                       value={activity.activityRemarks}
                       onChange={handleInputChange}
                       error={

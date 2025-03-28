@@ -30,6 +30,7 @@ const customStyles = {
       marginBottom: "1rem",
     },
   },
+  
   headRow: {
     style: {
       backgroundColor: "#207785",
@@ -359,6 +360,7 @@ const ManageRoom = () => {
                   fullWidth
                   id="roomNumber"
                   name="roomNumber"
+                  size="small"
                   value={room.roomNumber}
                   onChange={handleInputChange}
                   placeholder="Enter Room"
@@ -379,6 +381,7 @@ const ManageRoom = () => {
                   variant="outlined"
                   fullWidth
                   multilines
+                  size="small"
                   minRows={3}
                   maxRows={6}
                   id="description"
