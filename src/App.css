@@ -681,3 +681,6 @@ h6 {
 .accordion-body{
   padding:15px 1%;
 }
+.jodit-add-new-line {
+  display: none !important;
+}

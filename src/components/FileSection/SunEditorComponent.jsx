@@ -64,17 +64,20 @@ const SunEditorComponent = ({
   const config = {
     readonly: false,
     placeholder: placeholder || "",
-    height: "300px",
+    height: "350px",
     askBeforePasteHTML: false,
     askBeforePasteFromWord: false,
     defaultActionOnPaste: "insert_clear_html",
     enter: "br",
     events: {
       beforePaste: (e) => {
-        e.preventDefault(); // Prevent default paste behavior
+        e.preventDefault(); 
         saveCursorPosition();
-        const pastedContent = e.clipboardData.getData("text/plain");
-        insertAtCursor(pastedContent); // Insert pasted text at cursor
+        const pastedContent = e.clipboardData.getData("text/plain") || e.clipboardData.getData("text/plain");
+        if (pastedContent) {
+          // Handle Excel and Word content
+          insertAtCursor(pastedContent);
+        }
         restoreCursorPosition();
       },
       beforeChange: saveCursorPosition,

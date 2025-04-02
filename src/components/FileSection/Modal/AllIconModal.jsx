@@ -370,7 +370,7 @@ export const UploadModal = ({
       })
     );
 
-    toast.success(`File selected: ${file.name}`);
+    // toast.success(`File selected: ${file.name}`);
   };
 
   useEffect(() => {
@@ -396,20 +396,16 @@ export const UploadModal = ({
         }
       );
 
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
+    
 
       if (
         action === "download" &&
         (enc.enclosuretype?.toLowerCase() === "letter" ||
           enc.enclosuretype?.toLowerCase() === "draft")
       ) {
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = enc.docFilename || "document.pdf";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank");
       } else {
         window.open(url, "_blank");
       }

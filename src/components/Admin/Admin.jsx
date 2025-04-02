@@ -26,6 +26,7 @@ import PrintLetter from "../DespatchSection/components/PrintLetter";
 import ChangePassword from "../Header/ChangePassword";
 import EditBasicDetails from "../Header/EditBasicDetails";
 import AllView from "../Welcome/AllView";
+import ManageMaster from "../ManageOwnership/ManageMaster";
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(true);
@@ -236,6 +237,15 @@ const Admin = () => {
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <AllView />
+                </React.Suspense>
+              }
+            />
+
+              <Route
+              path="/manage-ownership"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <ManageMaster/>
                 </React.Suspense>
               }
             />

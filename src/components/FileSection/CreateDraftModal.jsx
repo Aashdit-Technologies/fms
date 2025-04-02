@@ -71,12 +71,10 @@ const CreateDraftModal = ({
 
   // Update formData.content when editor content changes
   const handleTextUpdate = useCallback((value) => {
-    // Store the content in the ref and state, but keep it isolated from other editors
     updatedContentRef.current = value;
-
-    setFormData((prevState) => ({
-      ...prevState,
-      contentss: value,
+    setFormData(prev => ({
+      ...prev,
+      contentss: value
     }));
   }, []);
 
@@ -88,16 +86,14 @@ const CreateDraftModal = ({
         );
 
         if (selectedTemplate) {
+          const initialContent = selectedTemplate.tempContent || editMalady.letterContent || "";
+          updatedContentRef.current = initialContent;
           setFormData((prev) => ({
             ...prev,
-            office: selectedTemplate.templateId, // Ensure this is the correct field
+            office: selectedTemplate.templateId,
             tempType: selectedTemplate.tempType,
-            contentss:
-              selectedTemplate.tempContent || editMalady.letterContent || "",
+            contentss: initialContent
           }));
-
-          updatedContentRef.current =
-            selectedTemplate.tempContent || editMalady.letterContent || "";
         }
       }
     }
@@ -135,7 +131,7 @@ const CreateDraftModal = ({
       subject: "",
       referenceNo: "",
       addedBy: "",
-      content: "",
+      contentss: "",
       office: "",
       tempType: "",
     });
@@ -145,16 +141,18 @@ const CreateDraftModal = ({
 
   const populateEditData = async () => {
     if (editMalady) {
-      // Set basic form data
-      setFormData({
+      // Initialize content immediately
+      const initialContent = editMalady.letterContent || "";
+      updatedContentRef.current = initialContent;
+      setFormData(prev => ({
+        ...prev,
         subject: editMalady.subject || "",
         referenceNo: editMalady.referenceNo || "",
         addedBy: editMalady.addedBy || "",
         office: editMalady.office || "",
-        contentss: editMalady.letterContent || "",
+        contentss: initialContent,
         tempType: editMalady.tempType || "",
-      });
-      updatedContentRef.current = editMalady.letterContent || "";
+      }));
       setContents(editMalady.subject || "");
 
       const empDeptMapVo = editMalady.employeeDeptMapVo || {};
@@ -527,6 +525,7 @@ const CreateDraftModal = ({
         break;
     }
   };
+
   const validateForm = () => {
     const errors = [];
 
@@ -546,6 +545,7 @@ const CreateDraftModal = ({
 
     return errors;
   };
+
   const handleSave = async (action) => {
     const errors = validateForm();
 
@@ -554,13 +554,17 @@ const CreateDraftModal = ({
       return;
     }
     setIsLoading(true);
+    
+    // Use the ref value which is always up-to-date
+    const currentContent = updatedContentRef.current;
+    
     const payload = {
       correspondenceId: editMalady?.correspondenceId || null,
       fileId: allDetails?.fileId,
       fileReceiptId: allDetails?.fileReceiptId,
       subject: contents,
       approverEmpRoleMapId: selectedValues.authorities?.value || null,
-      letterContent: updatedContentRef.current,
+      letterContent: currentContent,
       letterNo: formData.office || null,
       correspondenceDate: null,
       displayType: null,
@@ -574,7 +578,6 @@ const CreateDraftModal = ({
       },
       letterContentId: formData.office || editMalady?.letterContentId || null,
     };
-    console.log("Payload:", payload);
 
     console.log("Save/Approve Payload:", {
       ...payload,
@@ -601,11 +604,13 @@ const CreateDraftModal = ({
             Authorization: `Bearer ${token}`,
           },
         }
-      );
+      ); 
 
       if (response.data.outcome) {
         toast.success(response.data.message);
-        resetForm();
+        if (!editMalady) {
+          resetForm();
+        }
         if (refetchData && typeof refetchData === "function") {
           refetchData();
         }
@@ -620,7 +625,13 @@ const CreateDraftModal = ({
       setIsLoading(false);
     }
   };
-  const DEFAULT_TEMPLATE_OPTION = { value: '', label: 'Select Letter Template' };
+
+  const DEFAULT_TEMPLATE_OPTION = {
+    value: "",
+    label: "Select Letter Template",
+    tempContent: "",
+  };
+
   useEffect(() => {
     if (officeNames?.data) {
       console.log("officeNames.data:", officeNames.data);
@@ -631,70 +642,60 @@ const CreateDraftModal = ({
   const officeOptions = useMemo(() => {
     if (!Array.isArray(officeNames?.data)) {
       console.error("officeNames.data is not an array:", officeNames?.data);
-      return [DEFAULT_TEMPLATE_OPTION];
+      return [];
     }
-  
-    return [
-      DEFAULT_TEMPLATE_OPTION,
-      ...officeNames.data.map((item) => ({
-        label: item.tempType,
-        value: item.templateId,
-        tempContent: item.tempContent,
-      }))
-    ];
+
+    return officeNames.data.map((item) => ({
+      label: item.tempType,
+      value: item.templateId,
+      tempContent: item.tempContent,
+    }));
   }, [officeNames]);
 
-  useEffect(() => {}, [officeOptions, formData.office]);
-
   const handleOfficeChange = (selectedOption) => {
-    if (selectedOption) {
+    let newContent = "";
+    
+    if (selectedOption && selectedOption.value !== "") {
       const template = officeNames.data.find(
-        (t) => t.templateId === selectedOption.value
+        t => t.templateId === selectedOption.value
       );
-
-      // Use existing content in edit mode, otherwise use template content
-      const content = editMalady
-        ? editMalady.letterContent || template?.tempContent || ""
-        : template?.tempContent || "";
-
-      setFormData((prev) => ({
-        ...prev,
-        office: selectedOption.value,
-        tempType: selectedOption.label,
-        contentss: content,
-      }));
-
-      updatedContentRef.current = content;
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        office: "",
-        tempType: "",
-        contentss: "",
-      }));
-
-      updatedContentRef.current = "";
+      newContent = template?.tempContent || "";
     }
+    
+    // Update both ref and state
+    updatedContentRef.current = newContent;
+    setFormData(prev => ({
+      ...prev,
+      office: selectedOption?.value || "",
+      tempType: selectedOption?.label || "",
+      contentss: newContent
+    }));
   };
 
   useEffect(() => {
-    if (open && editMalady && officeNames?.data) {
-      // Find the matching template from officeNames data
-      const selectedTemplate = officeNames.data.find(
-        (template) => template.templateId === editMalady.letterContentId
-      );
-
-      if (selectedTemplate) {
-        setFormData((prev) => ({
-          ...prev,
-          office: selectedTemplate.templateId,
-          tempType: selectedTemplate.tempType,
-          contentss:
-            editMalady.letterContent || selectedTemplate.tempContent || "",
-        }));
-
-        updatedContentRef.current =
-          editMalady.letterContent || selectedTemplate.tempContent || "";
+    if (open && editMalady) {
+      setShowForm(true);
+      // Initialize content immediately
+      const initialContent = editMalady.letterContent || "";
+      updatedContentRef.current = initialContent;
+      setFormData(prev => ({
+        ...prev,
+        contentss: initialContent
+      }));
+  
+      // Then find and set template if exists
+      if (officeNames?.data && editMalady.letterContentId) {
+        const selectedTemplate = officeNames.data.find(
+          template => template.templateId === editMalady.letterContentId
+        );
+  
+        if (selectedTemplate) {
+          setFormData(prev => ({
+            ...prev,
+            office: selectedTemplate.templateId,
+            tempType: selectedTemplate.tempType,
+          }));
+        }
       }
     }
   }, [open, editMalady, officeNames]);
@@ -785,15 +786,20 @@ const CreateDraftModal = ({
                 <Grid item xs={6}>
                   <label>Letter Template</label>
                   <ReactSelect
-                    options={officeOptions}
-                    value={officeOptions.find(
-                      (option) =>
-                        option.value ===
-                        (formData.office || editMalady?.letterContentId)
-                    )|| DEFAULT_TEMPLATE_OPTION}
+                    options={[DEFAULT_TEMPLATE_OPTION, ...officeOptions]}
+                    value={
+                      formData.office
+                        ? officeOptions.find(
+                            (option) => option.value === formData.office
+                          )
+                        : DEFAULT_TEMPLATE_OPTION
+                    }
                     onChange={handleOfficeChange}
                     isSearchable
-                    isClearable={true}
+                    isClearable={false}
+                    components={{
+                      IndicatorSeparator: () => null,
+                    }}
                     styles={{
                       control: (base) => ({
                         ...base,
@@ -812,6 +818,9 @@ const CreateDraftModal = ({
                       menuPortal: (base) => ({
                         ...base,
                         zIndex: 9999,
+                      }),
+                      clearIndicator: () => ({
+                        display: "none",
                       }),
                     }}
                     menuPortalTarget={document.body}
@@ -1076,6 +1085,7 @@ const CreateDraftModal = ({
 
           <Box sx={{ mt: 2 }} className="editor-containers">
             <ModalEditor
+               key={`${formData.office}-${editMalady?.correspondenceId}`} // Important for forcing re-render
               defaultText={formData.contentss || ""}
               onTextUpdate={handleTextUpdate}
             />
@@ -1090,9 +1100,7 @@ const CreateDraftModal = ({
               onClick={() => handleSave("SAVE")}
               disabled={isLoading}
             >
-              {editMalady?.letterContent 
-                ? "Update"
-                : "Save"}
+              {editMalady?.letterContent ? "Update" : "Save"}
             </Button>
 
             {editMalady?.correspondenceId &&
@@ -1111,18 +1119,7 @@ const CreateDraftModal = ({
             <Button
               variant="contained"
               color="warning"
-              onClick={() => {
-                setFormData({
-                  subject: "",
-                  referenceNo: "",
-                  addedBy: "",
-                  contentss: "",
-                  office: "",
-                  tempType: "",
-                });
-                updatedContentRef.current = "";
-                resetForm();
-              }}
+              onClick={resetForm}
             >
               Reset
             </Button>

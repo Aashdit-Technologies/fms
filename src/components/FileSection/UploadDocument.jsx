@@ -122,7 +122,7 @@ const UploadDocument = ({
     if (selectedRow !== null && selectedRow !== undefined) {
       newEndpointMutation.mutate();
     } else {
-      console.log("Invalid selectedRow:", selectedRow); // Log invalid row
+      console.log("Invalid selectedRow:", selectedRow); 
       toast.error("Please select a valid row.");
     }
   };
@@ -138,7 +138,7 @@ const UploadDocument = ({
         document: null,
       },
     ]);
-  }, [setRows]); // ✅ Including `setRows` for better stability (optional)
+  }, [setRows]); 
 
   const handleRemoveRow = (index) => {
     if (rows.length === 1) {
@@ -153,46 +153,7 @@ const UploadDocument = ({
     });
   };
 
-  // const getMissingFields = (row) => {
-  //   const missingFields = [];
-  //   if (!row.subject?.trim()) missingFields.push("Subject");
-  //   if (row.type === "SELECT") missingFields.push("Type");
-  //   if (row.type === "LETTER" && !row.letterNumber?.trim()) {
-  //     missingFields.push("Letter Number");
-  //   }
-  //   if (!row.date) missingFields.push("Date");
-  //   if (!row.document) missingFields.push("Document");
-  //   return missingFields;
-  // };
-
-  // const isAnyFieldFilled = (row) => {
-  //   return (
-  //     row.subject?.trim() ||
-  //     row.type !== "SELECT" ||
-  //     (row.type === "LETTER" ? row.letterNumber?.trim() : false) ||
-  //     row.date ||
-  //     row.document
-  //   );
-  // };
-
-  // const isRowEmpty = (row) => {
-  //   if (row.type === "LETTER") {
-  //     return (
-  //       !row.subject?.trim() &&
-  //       row.type === "" &&
-  //       !row.letterNumber?.trim() &&
-  //       !row.date &&
-  //       !row.document
-  //     );
-  //   } else {
-  //     return (
-  //       !row.subject?.trim() &&
-  //       row.type === "" &&
-  //       !row.date &&
-  //       !row.document
-  //     );
-  //   }
-  // };
+  
 
   const handleInputChange = (index, field, value) => {
     setRows((prevRows) =>
@@ -285,6 +246,15 @@ const UploadDocument = ({
   });
 
   const handleOpenModal = async () => {
+    const cleanedContent = initialContent
+      ?.replace(/(&nbsp;|\s|<p>|<\/p>|<br>)/g, "")
+      .trim();
+    const isContentEmpty = !cleanedContent || cleanedContent === "";
+
+    if (isContentEmpty) {
+      toast.error("Please write some notes");
+      return;
+    }
     setIsLoading(true);
     try {
       const isSubmissionSuccessful = await handleSubmit(); // ✅ Ensure handleSubmit succeeds
@@ -303,9 +273,7 @@ const UploadDocument = ({
     }
   };
 
-  // const handleEndTask = () => {
-  //   toast.warning("Task ended!");
-  // };
+
 
   const handleCancel = () => {
     navigate("/file");
@@ -317,78 +285,97 @@ const UploadDocument = ({
     return dayjs(date).format("DD/MM/YYYY");
   };
 
+  
   const validateForm = (rows, initialContent, Mark) => {
     debugger;
-    // Clean up initialContent - remove whitespace, &nbsp;, and check for empty editor content
     const cleanedContent = initialContent
       ?.replace(/(&nbsp;|\s|<p>|<\/p>|<br>)/g, "")
       .trim();
     const isContentEmpty = !cleanedContent || cleanedContent === "";
 
-    // For MARKDOWN action, skip validation
     if (Mark === "MARKDOWN") {
       return true;
     }
 
-    // Case 1: Check if both content and rows are empty
-    const areAllRowsEmpty = rows.every(
-      (row) =>
-        !row.subject &&
-        !row.type &&
-        !row.date &&
-        !row.letterNumber &&
-        !row.document
-    );
-
-    if (isContentEmpty && areAllRowsEmpty) {
-      toast.error("Please write some notes before save.");
-      return false;
-    }
-
-    // Case 2: If initialContent has value, allow submission regardless of rows
     if (!isContentEmpty) {
       return true;
     }
 
-    // Case 3: Validate rows when initialContent is empty
-    for (const [index, row] of rows.entries()) {
-      // Reset SELECT type
-      if (row.type === "SELECT") {
-        row.type = "";
-      }
+    const hasAnyRowWithData = rows.some(
+      (row) =>
+        row.subject?.trim() ||
+        row.type ||
+        row.date ||
+        row.letterNumber?.trim() ||
+        row.document
+    );
 
-      // Check if row is started but incomplete
-      const isRowStarted =
-        row.subject || row.type || row.date || row.letterNumber || row.document;
-
-      if (isRowStarted) {
-        // Validate required fields for started row
-        if (!row.subject || !row.type || !row.date || !row.document) {
-          toast.error(`Row ${index + 1}: All fields are mandatory.`);
-          return false;
-        }
-
-        // Additional validation for LETTER type
-        if (row.type === "LETTER" && !row.letterNumber) {
-          toast.error(
-            `Row ${index + 1}: Letter Number is required for Letter type.`
-          );
-          return false;
-        }
-      }
+    if (!hasAnyRowWithData && isContentEmpty) {
+      toast.error("Please Write some notes");
+      return false;
     }
 
-    // Case 4: Ensure at least one row is filled when no content
-    const hasCompleteRow = rows.some((row) => {
-      const isComplete = row.subject && row.type && row.date && row.document;
-      return row.type === "LETTER"
-        ? isComplete && row.letterNumber
-        : isComplete;
-    });
+    if (hasAnyRowWithData) {
+      for (const [index, row] of rows.entries()) {
+       
+        if (row.type === "SELECT") {
+          row.type = "";
+        }
+  
+        const isRowEmpty =
+          !row.subject?.trim() &&
+          !row.type &&
+          !row.date &&
+          !row.letterNumber?.trim() &&
+          !row.document;
 
-    if (!hasCompleteRow && isContentEmpty) {
-      toast.error("At least one row must be completely filled.");
-      return false;
+ 
+        if (!isRowEmpty) {
+          if (!row.subject?.trim()) {
+            toast.error(`Row ${index + 1}: Subject is required`);
+            return false;
+          }
+          if (!row.type) {
+            toast.error(`Row ${index + 1}: Type is required`);
+            return false;
+          }
+          if (!row.date) {
+            toast.error(`Row ${index + 1}: Date is required`);
+            return false;
+          }
+          if (!row.document) {
+            toast.error(`Row ${index + 1}: Document is required`);
+            return false;
+          }
+          if (row.type === "LETTER" && !row.letterNumber?.trim()) {
+            toast.error(
+              `Row ${index + 1}: Letter Number is required for Letter type`
+            );
+            return false;
+          }
+        } else {
+          
+          const previousRowHasData = rows
+            .slice(0, index)
+            .some(
+              (prevRow) =>
+                prevRow.subject?.trim() ||
+                prevRow.type ||
+                prevRow.date ||
+                prevRow.letterNumber?.trim() ||
+                prevRow.document
+            );
+
+          if (previousRowHasData) {
+            toast.error(
+              `Row ${
+                index + 1
+              }: All rows must be filled when using multiple rows`
+            );
+            return false;
+          }
+        }
+      }
     }
 
     return true;
@@ -597,7 +584,7 @@ const UploadDocument = ({
   const handleMarkupOrMarkdown = async (action) => {
     if (action === "MARKUP" && !initialContent.trim()) {
       toast.error(
-        "Please write some notes in the Notesheet before proceeding."
+        "Please write some notes"
       );
       return;
     }
@@ -664,7 +651,7 @@ const UploadDocument = ({
 
   const handleEndTaskClick = async () => {
     if (!initialContent.trim()) {
-      toast.error("Please write some notes before ending the task.");
+      toast.error("Please write some notes ");
       return;
     }
 
@@ -679,7 +666,7 @@ const UploadDocument = ({
 
   const handleMoveToRackClick = async () => {
     if (!initialContent.trim()) {
-      toast.error("Please write some notes before moving to rack.");
+      toast.error("Please write some notes.");
       return;
     }
 
@@ -1098,9 +1085,7 @@ const UploadDocument = ({
                                 width: "25px",
                               }}
                             >
-                              <FaPlus
-                                style={{ color: "white" }}
-                              />
+                              <FaPlus style={{ color: "white" }} />
                             </IconButton>
                           )}
 

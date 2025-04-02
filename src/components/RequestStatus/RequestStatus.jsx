@@ -318,7 +318,7 @@ const RequestStatus = ({ onSwitchTab }) => {
 
       console.log("History Data Response:", response.data);
 
-      setHistoryData(response.data.fileHist || []);
+      setHistoryData(response.data.data.fileHist || []);
 
       setHistoryModalVisible(true);
     } catch (error) {
@@ -659,7 +659,7 @@ const RequestStatus = ({ onSwitchTab }) => {
           </Button> */}
             <Button
               variant="contained"
-              color="secondary"
+              color="error"
               onClick={() => setFileDetailsModalVisible(false)}
             >
               Close
@@ -790,7 +790,7 @@ const RequestStatus = ({ onSwitchTab }) => {
           <DialogActions>
             <Button
               variant="contained"
-              color="secondary"
+              color="error"
               onClick={() => setHistoryModalVisible(false)}
             >
               Close

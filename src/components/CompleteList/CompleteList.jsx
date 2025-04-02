@@ -183,7 +183,7 @@ const CompleteList = ({ onSwitchTab }) => {
 
       console.log("History Data Response:", response.data);
 
-      setHistoryData(response.data.fileHist || []);
+      setHistoryData(response.data.data.fileHist || []);
 
       setHistoryModalVisible(true);
     } catch (error) {
@@ -424,7 +424,7 @@ const CompleteList = ({ onSwitchTab }) => {
     },
     {
       name: "From",
-      selector: (row) => row.fromEmployee,
+      selector: (row) => row.currentFileOwner,
       sortable: true,
     },
     // {
@@ -511,8 +511,8 @@ const CompleteList = ({ onSwitchTab }) => {
     <div>
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <div className="row mb-3">
-          
-          <div className="form-group col-md-3 m-0">
+        <div className="form-group col-md-9 m-0"></div>
+          <div className="form-group col-md-3 m-auto">
             <TextField
               size="small"
               placeholder="Search"
@@ -713,7 +713,7 @@ const CompleteList = ({ onSwitchTab }) => {
             </Button>
             <Button
               variant="contained"
-              color="secondary"
+              color="error"
               onClick={() => setFileDetailsModalVisible(false)}
             >
               Close
@@ -844,7 +844,7 @@ const CompleteList = ({ onSwitchTab }) => {
           <DialogActions>
             <Button
               variant="contained"
-              color="secondary"
+              color="error"
               onClick={() => setHistoryModalVisible(false)}
             >
               Close

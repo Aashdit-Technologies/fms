@@ -444,7 +444,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
 
       console.log("History Data Response:", response.data);
 
-      setHistoryData(response.data.fileHist || []);
+      setHistoryData(response.data.data.fileHist || []);
 
       setHistoryModalVisible(true);
     } catch (error) {
@@ -988,7 +988,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
           <DialogActions>
             <Button
               variant="contained"
-              color="secondary"
+              color="error"
               onClick={() => setHistoryModalVisible(false)}
             >
               Close

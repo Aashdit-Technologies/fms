@@ -1,9 +1,0 @@
-node_modules
-fams
-.gitignore
-README.md
-/dist/
-.log
-.tmp
-.swp
-.bak
