@@ -666,21 +666,25 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
         <>
           <div className="main_btn d-flex justify-content-between">
             <div className="main_btn_fst  d-flex">
+            {row.custodianEmpDeptMapId === row.currUserEmpDeptMapId ? (
               <Button
-                variant="contained"
-                color="warning"
-                size="small"
-                title="Send to Rack"
-                sx={{
-                  minWidth: "auto",
-                  padding: "6px 10px",
-                  marginRight: "8px",
-                }}
-                onClick={() => handleSendToRack(row)}
-                disabled={loading}
-              >
-                <MdOutlineMoveDown />
-              </Button>
+              variant="contained"
+              color="warning"
+              size="small"
+              title="Send to Rack"
+              sx={{
+                minWidth: "auto",
+                padding: "6px 10px",
+                marginRight: "8px",
+              }}
+              onClick={() => handleSendToRack(row)}
+              disabled={loading}
+            >
+              <MdOutlineMoveDown />
+            </Button>
+            ) : ("")
+            }
+              
 
               <Button
                 variant="contained"

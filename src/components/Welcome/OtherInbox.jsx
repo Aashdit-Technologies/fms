@@ -28,7 +28,7 @@ const OtherInbox = () => {
       totalCount: 2,
     },
     {
-      role: "DEO",
+      role: "DEO Section",
       letters: 42,
       urgentLetters: 0,
       normalFiles: 0,
@@ -39,7 +39,7 @@ const OtherInbox = () => {
       totalCount: 45,
     },
     {
-      role: "Dispatch Section",
+      role: "Despatch Section",
       letters: 0,
       urgentLetters: 0,
       normalFiles: 85,

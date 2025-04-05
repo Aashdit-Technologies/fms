@@ -175,9 +175,9 @@ const FileDetails = ({ fileDetails }) => {
             {/* Column 2 */}
             <Grid item xs={12} sm={6}>
               <DetailItem label="Custodian" value={allDetails.custodian} />
-              <DetailItem label="Room Number" value={allDetails.room} />
-              <DetailItem label="Rack Number" value={allDetails.rack} />
-              <DetailItem label="Cell Number" value={allDetails.cell} />
+              <DetailItem label="Room Number" value={allDetails.roomNumber} />
+              <DetailItem label="Rack Number" value={allDetails.rackNumber} />
+              <DetailItem label="Cell Number" value={allDetails.cellNumber} />
               <DetailItem label="Created By" value={allDetails.createdBy} />
               <DetailItem label="Created Date" value={allDetails.createdDate} />
             </Grid>

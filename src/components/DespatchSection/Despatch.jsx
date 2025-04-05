@@ -9,6 +9,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   Tooltip,
+  InputAdornment,
+  TextField,
   
 } from '@mui/material';
 import DataTable from 'react-data-table-component';
@@ -24,7 +26,7 @@ import { MdFileUpload } from "react-icons/md";
 import {toast } from "react-toastify";
 import { PageLoader } from "../pageload/PageLoader";
 import { useNavigate } from 'react-router-dom';
-
+import SearchIcon from '@mui/icons-material/Search';
 const customStyles = {
   table: {
     style: {
@@ -139,10 +141,30 @@ const Despatch = () => {
    const [dispatchdata, setDispatchData] = useState([]);
   const [expanded, setExpanded] = useState(true); 
   const [isLoading, setIsLoading] = useState(false);
-
+  const [searchQuery, setSearchQuery] = useState('');
   const handleTabChange = (tab) => {
   setActiveTab(tab === 'newLetter' ? 'NEW_LETTER' : 'SENT_LETTER');
     
+  };
+  const filterData = (data, tab) => {
+    if (!searchQuery) return data;
+  
+    const query = searchQuery.toLowerCase();
+    
+    return data.filter(item => {
+      // Common fields for both tabs
+      if (
+        (item.letterNo && item.letterNo.toLowerCase().includes(query)) ||
+        (item.memoNo && item.memoNo.toLowerCase().includes(query)) ||
+        (item.subject && item.subject.toLowerCase().includes(query)) ||
+        (item.from && item.from.toLowerCase().includes(query)) ||
+        (item.date && item.date.toLowerCase().includes(query))
+      ) {
+        return true;
+      }
+      
+      return false;
+    });
   };
   const handleAccordionChange = () => {
     setExpanded(!expanded);
@@ -731,11 +753,30 @@ const Despatch = () => {
 </Box>
 
      {/* Data Table */}
-    <Paper>
+    <Paper >
+    <div className="d-flex justify-content-end mb-1">
+            <div className="col-md-3">
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon style={{ color: '#207785' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </div>
+          </div>
   {activeTab === 'NEW_LETTER' && (
     <DataTable
       columns={newLetterColumns}
-      data={dispatchdata}
+      data={filterData(dispatchdata, 'NEW_LETTER')}
       customStyles={customStyles}
       pagination
       paginationPerPage={10}
@@ -751,7 +792,7 @@ const Despatch = () => {
   {activeTab === 'SENT_LETTER' && (
     <DataTable
       columns={sentLetterColumns}
-      data={dispatchdata}
+      data={filterData(dispatchdata, 'SENT_LETTER')}
       customStyles={customStyles}
       pagination
       paginationPerPage={10}

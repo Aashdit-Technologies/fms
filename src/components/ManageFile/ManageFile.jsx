@@ -162,6 +162,7 @@ const ManageFile = () => {
       fileName: formFileName,
       subject: formSubject,
     };
+    console.log("Payload:", payload);
 
     try {
       const token = useAuthStore.getState().token;

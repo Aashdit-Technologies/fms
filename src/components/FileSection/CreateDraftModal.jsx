@@ -628,7 +628,7 @@ const CreateDraftModal = ({
 
   const DEFAULT_TEMPLATE_OPTION = {
     value: "",
-    label: "Select Letter Template",
+    label: "none",
     tempContent: "",
   };
 
@@ -661,8 +661,7 @@ const CreateDraftModal = ({
       );
       newContent = template?.tempContent || "";
     }
-    
-    // Update both ref and state
+
     updatedContentRef.current = newContent;
     setFormData(prev => ({
       ...prev,
@@ -675,7 +674,7 @@ const CreateDraftModal = ({
   useEffect(() => {
     if (open && editMalady) {
       setShowForm(true);
-      // Initialize content immediately
+     
       const initialContent = editMalady.letterContent || "";
       updatedContentRef.current = initialContent;
       setFormData(prev => ({
@@ -683,7 +682,7 @@ const CreateDraftModal = ({
         contentss: initialContent
       }));
   
-      // Then find and set template if exists
+   
       if (officeNames?.data && editMalady.letterContentId) {
         const selectedTemplate = officeNames.data.find(
           template => template.templateId === editMalady.letterContentId

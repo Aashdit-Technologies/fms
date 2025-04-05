@@ -123,7 +123,7 @@ const Admin = () => {
               path="manage-custodian"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
-                  <ManageCustodian />
+                  <ManageMaster/>
                 </React.Suspense>
               }
             />
@@ -237,15 +237,6 @@ const Admin = () => {
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <AllView />
-                </React.Suspense>
-              }
-            />
-
-              <Route
-              path="/manage-ownership"
-              element={
-                <React.Suspense fallback={<div>Loading...</div>}>
-                  <ManageMaster/>
                 </React.Suspense>
               }
             />

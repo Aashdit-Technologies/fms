@@ -13,13 +13,13 @@ import {
   AccordionDetails,
   Typography,
   IconButton,
-  Pagination
+  Pagination,
+  InputAdornment
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-
-
+import SearchIcon from '@mui/icons-material/Search';
 import api from "../../Api/Api";
 import useAuthStore from "../../store/Store";
 import { encryptPayload } from "../../utils/encrypt";
@@ -122,18 +122,69 @@ const LetterList = () => {
   const [expanded, setExpanded] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [totalRows, setTotalRows] = useState(0);
-  
+ 
   
   const TAB_CODES = {
     NEW_LETTER: 'NEW_LETTER',
     SENT_LETTER: 'SENT_LETTER',
     MOVE_FILE: 'MOVE_FILE'
   };
+  const [searchQueries, setSearchQueries] = useState({
+    [TAB_CODES.NEW_LETTER]: '',
+    [TAB_CODES.SENT_LETTER]: '',
+    [TAB_CODES.MOVE_FILE]: ''
+  });
   const [tabStates, setTabStates] = useState({
     [TAB_CODES.NEW_LETTER]: { pageNo: 1, rowSize: 10, totalPages: 0 },
     [TAB_CODES.SENT_LETTER]: { pageNo: 1, rowSize: 10, totalPages: 0 },
     [TAB_CODES.MOVE_FILE]: { pageNo: 1, rowSize: 10, totalPages: 0 },
   });
+
+  const handleSearchChange = (tabCode, value) => {
+    setSearchQueries(prev => ({
+      ...prev,
+      [tabCode]: value
+    }));
+  };
+
+  const filterLetters = (data, tabCode) => {
+    const query = searchQueries[tabCode].toLowerCase();
+    if (!query) return data;
+
+    return data.filter(letter => {
+      
+      if (
+        (letter.letterNumber && letter.letterNumber.toLowerCase().includes(query)) ||
+        (letter.senderDate && letter.senderDate.toLowerCase().includes(query)) ||
+        (letter.updatedDateTime && letter.updatedDateTime.toLowerCase().includes(query)) ||
+        (letter.memoNo && letter.memoNo.toLowerCase().includes(query))
+      ) {
+        return true;
+      }
+
+      switch (tabCode) {
+        case TAB_CODES.NEW_LETTER:
+          return (
+            (letter.diaryNumber && letter.diaryNumber.toLowerCase().includes(query)) ||
+            (letter.letterSource && letter.letterSource.toLowerCase().includes(query)) ||
+            (letter.sender && letter.sender.toLowerCase().includes(query))
+          );
+        case TAB_CODES.SENT_LETTER:
+          return (
+            (letter.sendTo && letter.sendTo.toLowerCase().includes(query)) ||
+            (letter.subject && letter.subject.toLowerCase().includes(query))
+          );
+        case TAB_CODES.MOVE_FILE:
+          return (
+            (letter.diaryNumber && letter.diaryNumber.toLowerCase().includes(query)) ||
+            (letter.subject && letter.subject.toLowerCase().includes(query)) ||
+            (letter.status && letter.status.toLowerCase().includes(query))
+          );
+        default:
+          return false;
+      }
+    });
+  };
 
   const handlePageChange = (event, newPage) => {
     if (newPage !== tabStates[activeTab].pageNo) {
@@ -159,7 +210,7 @@ const LetterList = () => {
         [activeTab]: {
           ...prevStates[activeTab],
           rowSize: newSize,
-          pageNo: 1, // Reset page when row size changes
+          pageNo: 1,
         },
       };
       fetchLetters(activeTab, updatedStates);
@@ -217,7 +268,7 @@ const LetterList = () => {
   
   useEffect(() => {
     fetchLetters(activeTab);
-  }, [activeTab]); // Now it runs only when the tab changes
+  }, [activeTab]);
   
 
 const handleViewLetterDetail = async (row, tabCode) => {
@@ -234,10 +285,7 @@ const handleViewLetterDetail = async (row, tabCode) => {
       receiptId: row.receiptId,
       tabCode: tabCode,
     };
-
- 
-
-    const response = await api.post(
+ const response = await api.post(
       "letter/view-letter",
       { dataObject: encryptPayload(payload) },
       {
@@ -247,7 +295,6 @@ const handleViewLetterDetail = async (row, tabCode) => {
       }
     );
    
-
     if (!response.data || !response.data.data) {
       console.error("Error: API response is missing 'data'.", response.data);
       return;
@@ -266,10 +313,6 @@ const handleViewLetterDetail = async (row, tabCode) => {
     setIsLoading(false);
   }
 };
-
-
-
-  
 
   const handleCloseLetterDetail = () => {
     setOpenLetterDetail(false);
@@ -713,8 +756,6 @@ const MovedToFileColumns = [
     }
   };
 
- 
-
   return (
     <>
      {isLoading && <PageLoader />}
@@ -807,32 +848,32 @@ const MovedToFileColumns = [
             </Tabs>
           </Paper>
 
-          {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-          
-            <TextField
-            type="number"
-            size="small"
-            value={rowSize || 10} 
-            onChange={(e) => {
-              const value = parseInt(e.target.value, 10);
-              if (!isNaN(value) && value > 0) {
-                handleRowsPerPageChange(value);
-              }
-            }}
-            label="Records per page"
-            sx={{ width: 150 }}
-            inputProps={{ min: 1 }}
-/>
-          </Box> */}
-
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
-        
+          <div className="d-flex justify-content-end mb-3">
+            <div className="col-md-3">
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                placeholder="Search letters..."
+                value={searchQueries[activeTab]}
+                onChange={(e) => handleSearchChange(activeTab, e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon style={{ color: '#207785' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </div>
+          </div>
           <DataTable
-  columns={getActiveColumns()}
-  data={letters}
-  customStyles={customStyles}
-  responsive
-/>
+          columns={getActiveColumns()}
+          data={filterLetters(letters, activeTab)}
+          customStyles={customStyles}
+          responsive
+        />
 
 <div className="d-flex justify-content-end align-items-center mt-3 gap-2">
   <div className="d-flex align-items-center">
