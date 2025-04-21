@@ -7,9 +7,8 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { PageLoader } from "../pageload/PageLoader";
 import "./LoginPage.css";
-import Odisha from "../../assets/odishalogo.png";
+import cggovt from "../../assets/cggovt.png";
 import LeftImg from "../../assets/animation-gif.gif";
-
 import { IoKeySharp } from "react-icons/io5";
 import { MdRefresh } from "react-icons/md";
 import useAuthStore from "../../store/Store";
@@ -133,10 +132,10 @@ const LoginPage = () => {
                 gap: "10px",
               }}
             >
-              <img src={Odisha} alt="" />
+              <img src={cggovt} alt="" />
               <div className="logo_head mt-3">
                 <h2>FILE MANAGEMENT SYSTEM</h2>
-                <h6>Higher Education Information & Management System</h6>
+                <h6>Government of Chhattisgarh</h6>
               </div>
             </div>
           </Link>

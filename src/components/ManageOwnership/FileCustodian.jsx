@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   TextField,
@@ -6,75 +6,54 @@ import {
   Button,
   Paper,
   Typography,
-  Divider,
   Grid,
   InputAdornment,
  Pagination,
  Dialog,
- DialogTitle,
  DialogContent,
  DialogActions,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import DataTable from 'react-data-table-component';
-import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import FileCustodianModal from './FileCustodianModal';
+import useApiListStore from '../ManageFile/ApiListStore';
+import useAuthStore from "../../store/Store";
+import api from "../../Api/Api";
+import { encryptPayload } from "../../utils/encrypt.js";
 const FileCustodian = () => {
-    
-  const navigate = useNavigate();
-
- const officeOptions = ['HO', 'Branch A', 'Branch B', 'Branch C'];
-  const custodianOptions = [
-    'None',
-    'ABAKASH MISHRA (HO, Cwi, GM (Civil))',
-    'John Doe (Branch A, Manager)',
-    'Jane Smith (Branch B, Supervisor)',
-    'Robert Johnson (Branch C, Director)'
-  ];
- const fileData = [
-    {
-      id: 1,
-      fileNumber: 'IDCO/HO-CIVIL/A-10032/05/2021/V-1',
-      subject: 'Tour Programme',
-      custodianStatus: 'ABAKASH MISHRA (HO, Cwi, GM (Civil)) ',
-      status: 'Pending'
-    },
-    {
-      id: 2,
-      fileNumber: 'IDCO/HO-CIVIL/O-1912/05/2021/V-1',
-      subject: 'Requisition for released of funds towards operational cost felling and removal of trees',
-      custodianStatus: 'ABAKASH MISHRA (HO, Cwi, GM (Civil)) ',
-      status: 'Approved'
-    }
-  ];
-
-  const roomOptions = ['101', '102', '103', '201', '202'];
-  const rackOptions = ['R-1', 'R-2', 'R-3', 'R-4'];
-  const cellOptions = ['C-1', 'C-2', 'C-3', 'C-4'];
-
-  const [fromOffice, setFromOffice] = useState('');
-  const [fromCustodian, setFromCustodian] = useState('');
-  const [toOffice, setToOffice] = useState('');
-  const [toCustodian, setToCustodian] = useState(null);
   const [searchText, setSearchText] = useState('');
-  const [selectedRows, setSelectedRows] = useState([]);
-   const [rowSize, setRowSize] = useState(10);
-   const [pageNo, setPageNo] = useState(1);
-   const [totalPages, setTotalPages] = useState(1);
- const [roomNumber, setRoomNumber] = useState('');
-  const [rackNumber, setRackNumber] = useState('');
-  const [cellNumber, setCellNumber] = useState('');
+  const [pageNo, setPageNo] = useState(1);
+  const [rowSize, setRowSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
+   
   const [selectedFile, setSelectedFile] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [showLocationFields, setShowLocationFields] = useState(false);
-  const handleFileNumberClick = (row) => {
-    setSelectedFile({
-      fileNumber: row.fileNumber,
-      ...row.details
-    });
-    setModalOpen(true);
-  };
+  
+   const [selectedRack, setSelectedRack] = useState(null);
+    const [selectedRoom, setSelectedRoom] = useState(null);
+    const [selectedCell, setSelectedCell] = useState(null);
+    const [currentRackCells, setCurrentRackCells] = useState(0);
+     const [roomData, setRoomData] = useState([]);
+     const [rackData, setRackData] = useState([]);
+// office drop down states
+  const { fetchAllData, office} = useApiListStore();
+  const [selectedOffice, setSelectedOffice] = useState('');
+  // custodian drop down state
+  const [custodianData, setCustodianData] = useState([]);
+  const [selectedCustodian, setSelectedCustodian] = useState("");
+  const [loading, setLoading] = useState(false);
+  // custodian table data
+    const [custodianTableData, setCustodianTableData] = useState([]);
+    // selected office list data
+   const [selectedOfficeTo, setSelectedOfficeTo] = useState("");
+   // custodian drop down state
+   const [custodianDataTo, setCustodianDataTo] = useState([]);
+   const [selectedCustodianTo, setSelectedCustodianTo] = useState("");
+   const [selectedFiles, setSelectedFiles] = useState([]);
    const customStyles = {
     table: {
       style: {
@@ -129,19 +108,238 @@ const FileCustodian = () => {
     },
     };
 
+     useEffect(() => {
+    const fetchCustodianData = async () => {
+      if (!selectedOffice) {
+        setCustodianData([]);
+        return;
+      }
+      setLoading(true);
+      const payload = { officeId: selectedOffice };
+      try {
+        const token = useAuthStore.getState().token;
+        const encryptedMessage = encryptPayload(payload);
+        const response = await api.get("file/custodian-list-by-office-id", {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { dataObject: encryptedMessage },
+        });
+        setCustodianData(response.data.data || []);
+      } catch (error) {
+        console.error("Error fetching custodian data:", error);
+        setCustodianData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustodianData();
+  }, [selectedOffice]);
+
+  useEffect(() => {
+    const fetchCustodianTableData = async () => {
+
+      if (!selectedCustodian) {
+        setCustodianTableData([]);
+        return;
+      }
+
+      setLoading(true);
+      const payload = { fromCustodianId: selectedCustodian };
+
+      try {
+        const token = useAuthStore.getState().token;
+        const encryptedMessage = encryptPayload(payload);
+        const response = await api.get("file/file-custodian", {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { dataObject: encryptedMessage },
+        });
+
+        setCustodianTableData(response.data.data || []);
+        console.log(setCustodianTableData);
+      } catch (error) {
+        console.error("Error fetching custodian table data:", error);
+        setCustodianTableData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustodianTableData();
+  }, [selectedCustodian]);
+
+  const filteredData = custodianTableData.filter(
+    (item) =>
+      item.docFileName.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.subjectName.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.status.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+
+   useEffect(() => {
+      const fetchCustodianDataTo = async () => {
+        if (!selectedOfficeTo) {
+          setCustodianDataTo([]);
+          return;
+        }
+  
+        setLoading(true);
+        const payload = { officeId: selectedOfficeTo };
+        try {
+          const token = useAuthStore.getState().token;
+          const encryptedMessage = encryptPayload(payload);
+          const response = await api.get("file/custodian-list-by-office-id", {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { dataObject: encryptedMessage },
+          });
+  
+          setCustodianDataTo(response.data.data || []);
+        } catch (error) {
+          console.error("Error fetching custodian data:", error);
+          setCustodianDataTo([]);
+        }finally{
+          setLoading(false);
+        } 
+      };
+  
+      fetchCustodianDataTo();
+    }, [selectedOfficeTo]);
+  
+    const handleFileNumberClick = async (row) => {
+      try {
+        setSelectedFile({
+          fileNumber: row.docFileName,
+          subject: row.subjectName,
+          custodian: row.fullName,
+          docFileId: row.docFileId,
+          status: row.status
+        });
+        setModalOpen(true);
+    
+        const payload = {
+          tabPanelId: 2,
+          fileId: row.docFileId,
+          fileReceiptId: 0
+        };
+        const encryptedPayload = encryptPayload(payload);
+        const response = await api.post(
+          'file/basic-details',
+          { dataObject: encryptedPayload },
+          { 
+            headers: { 
+              Authorization: `Bearer ${useAuthStore.getState().token}` 
+            } 
+          }
+        );
+        const fileDetails = response.data; 
+        setSelectedFile(prev => ({
+          ...prev,
+          ...fileDetails,
+          
+          fileType: fileDetails.type,
+          fileName: fileDetails.name,
+         
+        }));
+    
+      } catch (error) {
+        console.error('Error fetching basic details:', error);
+        
+      }
+    };
+
+    const handleRackChange = (event, newValue) => {
+      setSelectedRack(newValue ? newValue.rackId : "");
+      setSelectedCell(null);
+  
+      if (newValue) {
+        setCurrentRackCells(newValue.noOfCell);
+      } else {
+        setCurrentRackCells(0);
+      }
+    };
+  
+    const handleRoomChange = (event, newValue) => {
+      setSelectedRoom(newValue ? newValue.docRoomId : "");
+      setIsRoomSelected(!!newValue);
+      setSelectedRack(null);
+      setSelectedCell(null);
+      setCurrentRackCells(0);
+    };
+
+    useEffect(() => {
+      const fetchRoomData = async () => {
+        try {
+          const token = useAuthStore.getState().token;
+  
+          const response = await api.get("/manage-room", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setRoomData(response.data.data);
+        } catch (error) {
+          console.error("Error fetching room data:", error);
+        }
+      };
+      fetchRoomData();
+    }, []);
+  
+    useEffect(() => {
+      const fetchRackData = async () => {
+        if (!selectedRoom) {
+          setRackData([]);
+          return;
+        }
+  
+        const payload = { docRoomId: selectedRoom };
+  
+        try {
+          const token = useAuthStore.getState().token;
+          const encryptedMessage = encryptPayload(payload);
+          const response = await api.get("/manage-file-rack", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            params: {
+              dataObject: encryptedMessage,
+            },
+          });
+          console.log("Fetched Rack Data:", response.data.data);
+          setRackData(response.data.data);
+        } catch (error) {
+          console.error("Error fetching rack data:", error);
+          setRackData([]);
+        }
+      };
+  
+      fetchRackData();
+    }, [selectedRoom]);
+  
+
     const columns = [
+      {
+        name: "Select",
+        cell: (row) => (
+          <input
+            type="checkbox"
+            checked={selectedFiles.includes(row.docFileId)}
+            onChange={() => handleCheckboxChange(row.docFileId)}
+          />
+        ),
+        ignoreRowClick: true,
+        allowOverflow: true,
+        button: true,
+      },
     {
       name: "SL",
       selector: (row, index) => index + 1,
       sortable: true,
-      width: "80px",
+      width: "100px",
       center: true,
     },
     {
         name: "File Number",
-        selector: row => row.fileNumber,
+        selector: row => row.docFileName,
         sortable: true,
-        width: "250px",
+        // width: "350px",
         cell: row => (
           <div 
             style={{ 
@@ -153,24 +351,25 @@ const FileCustodian = () => {
             }}
             onClick={() => handleFileNumberClick(row)}
           >
-            {row.fileNumber}
+            {row.docFileName}
           </div>
         ),
       },
     {
       name: "Subject",
-      selector: row => row.subject,
+      selector: row => row.subjectName,
       sortable: true,
+      width:"250px",
       wrap: true,
       cell: row => (
         <div style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
-          {row.subject}
+          {row.subjectName}
         </div>
       )
     },
     {
       name: "Custodian Status",
-      selector: row => row.custodianStatus,
+      selector: row => row.fullName,
       sortable: true,
       width: "250px",
     },
@@ -178,43 +377,135 @@ const FileCustodian = () => {
         name: " Status",
         selector: row => row.status,
         sortable: true,
-        width: "150px",
+        width: "120px",
       },
     ];
     
-    const handleSubmit = () => {
-    console.log({
-      fromOffice,
-      fromCustodian,
-      toOffice,
-      toCustodian,
-      roomNumber,
-      rackNumber,
-      cellNumber,
-      selectedFiles: selectedRows
-    });
-   
-  };
+    const handleCheckboxChange = (docFileId) => {
+      setSelectedFiles((prevSelected) =>
+        prevSelected.includes(docFileId)
+          ? prevSelected.filter((id) => id !== docFileId)
+          : [...prevSelected, docFileId]
+      );
+    };
 
+    const handleAssignFiles = async () => {
+    
+      if (!selectedOffice) {
+        toast.warning("Please select Office (From)");
+        return;
+      }
+    
+      if (!selectedCustodian) {
+        toast.warning("Please select Custodian (From)");
+        return;
+      }
+      if (selectedFiles.length === 0) {
+        toast.warning("Please select at least one file to assign");
+        return;
+      }
+    
+      if (!selectedOfficeTo) {
+        toast.warning("Please select Office (To)");
+        return;
+      }
+    
+      if (!selectedCustodianTo) {
+        toast.warning("Please select Custodian (To)");
+        return;
+      }
+  
+      const isPhysicalLocationRequired = true; 
+      
+      if (isPhysicalLocationRequired) {
+        if (!selectedRoom) {
+          toast.warning("Please select Room");
+          return;
+        }
+    
+        if (!selectedRack) {
+          toast.warning("Please select Rack");
+          return;
+        }
+    
+        if (!selectedCell) {
+          toast.warning("Please select Cell");
+          return;
+        }
+      }
+    setLoading(true);
+      const payload = {
+        fromEmpDeptMapId: selectedCustodian,
+        toEmpDeptMapId: selectedCustodianTo,
+        changeIds: selectedFiles,
+      };
+  
+      try {
+        const token = useAuthStore.getState().token;
+        const encryptedMessage = encryptPayload(payload);
+        const response = await api.post(
+          "file/assign-file",
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { dataObject: encryptedMessage },
+          }
+        );
+  
+        if (response.status === 200) {
+          toast.success(response.data.message);
+  
+          setCustodianTableData((prevData) =>
+            prevData.filter((file) => !selectedFiles.includes(file.docFileId))
+          );
+          setSelectedCustodian("");
+          setSelectedCustodianTo("");
+          setSelectedFiles([]);
+          setSelectedFiles([]);
+          setCustodianTableData([]);
+          setSearchText("");
+          setSelectedRoom(null);
+          setSelectedRack(null);
+          setSelectedCell(null);
+          setSelectedOffice(""); 
+          setSelectedOfficeTo(""); 
+        
+        }
+     
+      } catch (error) {
+        console.error("Error assigning files:", error);
+        toast.error("Failed to assign files.");
+        
+      }finally{
+        setLoading(false);
+      }
+    };
+   
   const handleCancel = () => {
-    setToOffice('');
-    setToCustodian(null);
-    setRoomNumber('');
-    setRackNumber('');
-    setCellNumber('');
-    setShowLocationFields(false);
-    setSearchText('');
-    setSelectedRows([]);
+    console.log("Form cancelled");
+};
+const paginatedData = useMemo(() => {
+  const startIndex = (pageNo - 1) * rowSize;
+  return filteredData.slice(startIndex, startIndex + rowSize);
+}, [filteredData, pageNo, rowSize]);
+
+useEffect(() => {
+  setTotalRecords(filteredData.length);
+  setTotalPages(Math.ceil(filteredData.length / rowSize));
+
+  if (pageNo > Math.ceil(filteredData.length / rowSize)) {
+    setPageNo(1);
+  }
+}, [filteredData, rowSize, pageNo]);
+
+const handlePageChange = (event, newPage) => {
+  setPageNo(newPage);
 };
 
-  const handlePageChange = (event, newPage) => {
-    setPageNo(newPage);
-  };
-
-  const handleRowSizeChange = (event) => {
-    setRowSize(Number(event.target.value));
-    setPageNo(1);
-  };
+const handleRowSizeChange = (event) => {
+  setRowSize(Number(event.target.value));
+  setPageNo(1); 
+};
 
   return (
     <Box>
@@ -222,12 +513,15 @@ const FileCustodian = () => {
         <Grid container spacing={2}>
         <Grid item xs={4} sx={{ mb: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-                Office (From):
+                Office (From):<span style={{ color: 'red', marginLeft: '2px' }}>*</span>
             </Typography>
             <Autocomplete
-                value={fromOffice}
-                onChange={(_, newValue) => setFromOffice(newValue)}
-                options={officeOptions}
+               options={office}
+               getOptionLabel={(option) => option.officeOrgName}
+               value={office.find((o) => o.officeOrgId === selectedOffice) || null}
+              onChange={(event, newValue) =>
+              setSelectedOffice(newValue ? newValue.officeOrgId : "")
+            }
                 noOptionsText={
                 <Box sx={{ 
                     padding: 1,
@@ -241,7 +535,7 @@ const FileCustodian = () => {
                 }
                 renderInput={(params) => (
                 <TextField 
-                    {...params} 
+                    {...params}  
                     variant="outlined" 
                     size="small" 
                     fullWidth 
@@ -253,12 +547,19 @@ const FileCustodian = () => {
           
           <Grid item xs={4} sx={{ mb: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Custodian (From):
+              Custodian (From):<span style={{ color: 'red', marginLeft: '2px' }}>*</span>
             </Typography>
             <Autocomplete
-              value={fromCustodian}
-              onChange={(_, newValue) => setFromCustodian(newValue)}
-              options={custodianOptions}
+             options={custodianData}
+             getOptionLabel={(option) => option.custodianName}
+             value={
+               custodianData.find((c) => c.custodianId === selectedCustodian) ||
+               null
+             }
+            
+             onChange={(event, newValue) =>
+               setSelectedCustodian(newValue ? newValue.custodianId : "")
+             }
               noOptionsText={
                 <Box sx={{ 
                     padding: 1,
@@ -305,58 +606,58 @@ const FileCustodian = () => {
         <Box>
           <DataTable
             columns={columns}
-            data={fileData}
+            data={paginatedData}
             customStyles={customStyles}
-            selectableRows
+            
           />
-           <div className="d-flex justify-content-end align-items-center  gap-2">
-                <div className="d-flex align-items-center">
-                <span className="me-2">Rows per page:</span>
-                <select
-                    value={rowSize}
-                    onChange={handleRowSizeChange}
-                    className="form-select form-select-sm"
-                    style={{ width: "80px", marginLeft: "8px" }}
-                >
-                    <option value={10}>10</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                    <option value={150}>150</option>
-                </select>
-                </div>
+           <div className="d-flex justify-content-end align-items-center gap-2">
+      <div className="d-flex align-items-center">
+        <span className="me-2">Rows per page:</span>
+        <select
+          value={rowSize}
+          onChange={handleRowSizeChange}
+          className="form-select form-select-sm"
+          style={{ width: "80px", marginLeft: "8px" }}
+        >
+          <option value={10}>10</option>
+          <option value={50}>50</option>
+          <option value={100}>100</option>
+          <option value={150}>150</option>
+        </select>
+      </div>
 
-                <div className="d-flex align-items-center">
-                <Pagination
-                    count={totalPages}
-                    page={pageNo}
-                    onChange={handlePageChange}
-                    variant="outlined"
-                    color="primary"
-                    size="medium"
-                    showFirstButton
-                    showLastButton
-                    siblingCount={1}
-                    boundaryCount={1}
-                    sx={{
-                    "& .MuiPaginationItem-root": {
-                        margin: "0 2px",
-                        minWidth: "32px",
-                        height: "32px",
-                    },
-                    "& .Mui-selected": {
-                        backgroundColor: "#1a5f6a !important",
-                        color: "white",
-                        "&:hover": {
-                        backgroundColor: "#1a5f6a",
-                        },
-                    },
-                    }}
-                />
-                <span className="ms-3">
-                    Page {pageNo} of {totalPages}
-                </span>
-                </div>
-            </div>
+      <div className="d-flex align-items-center">
+        <Pagination
+          count={totalPages}
+          page={pageNo}
+          onChange={handlePageChange}
+          variant="outlined"
+          color="primary"
+          size="medium"
+          showFirstButton
+          showLastButton
+          siblingCount={1}
+          boundaryCount={1}
+          sx={{
+            "& .MuiPaginationItem-root": {
+              margin: "0 2px",
+              minWidth: "32px",
+              height: "32px",
+            },
+            "& .Mui-selected": {
+              backgroundColor: "#1a5f6a !important",
+              color: "white",
+              "&:hover": {
+                backgroundColor: "#1a5f6a",
+              },
+            },
+          }}
+        />
+        <span className="ms-3">
+          Page {pageNo} of {totalPages} ({totalRecords} records)
+        </span>
+      </div>
+      </div>
         </Box>
                      
           <Grid container spacing={2}>
@@ -365,14 +666,14 @@ const FileCustodian = () => {
                 Office (To): <span style={{ color: 'red', marginLeft: '2px' }}>*</span>
                 </Typography>
                 <Autocomplete
-                    value={toOffice}
-                    onChange={(_, newValue) => {
-                        setToOffice(newValue);
-                        if (newValue && toCustodian) {
-                            setConfirmationOpen(true);
-                        }
-                    }}
-                    options={officeOptions}
+                     options={office}
+                     getOptionLabel={(option) => option.officeOrgName}
+                     value={office.find((o) => o.officeOrgId === selectedOfficeTo) || null}
+                     onChange={(event, newValue) => {
+                       setSelectedOfficeTo(newValue ? newValue.officeOrgId : "");
+                       setSelectedCustodianTo(""); 
+                       
+                     }}
                     noOptionsText={
                         <Box sx={{ 
                             padding: 1,
@@ -407,14 +708,22 @@ const FileCustodian = () => {
             </Typography>
   
           <Autocomplete
-              value={toCustodian}
-              onChange={(_, newValue) => {
-                  setToCustodian(newValue);
-                  if (newValue && toOffice) {
-                      setConfirmationOpen(true);
-                  }
+              
+              options={custodianDataTo}
+              getOptionLabel={(option) => option.custodianName}
+              value={
+                custodianDataTo.find(
+                  (c) => c.custodianId === selectedCustodianTo
+                ) || null
+              }
+           
+              onChange={(event, newValue) => {
+                setSelectedCustodianTo(newValue ? newValue.custodianId : "");
+                
+                if (newValue && selectedOfficeTo) {
+                  setConfirmationOpen(true);
+                }
               }}
-              options={custodianOptions}
               noOptionsText={
                   <Box sx={{ 
                       padding: 1,
@@ -438,7 +747,7 @@ const FileCustodian = () => {
           </Grid>
         </Grid>
         {showLocationFields && (
-    <Grid container spacing={2} sx={{ mt: 1 }}>
+       <Grid container spacing={2} sx={{ mt: 1 }}>
         <Typography variant="subtitle1" gutterBottom sx={{ 
             width: '100%', 
             fontWeight: 'bold', 
@@ -450,61 +759,79 @@ const FileCustodian = () => {
         </Typography>
         
         <Grid item xs={4}>
-            <Typography variant="subtitle2" gutterBottom>
-                Room Number:<span style={{ color: 'red', marginLeft: '2px' }}>*</span>
-            </Typography>
-            <Autocomplete
-                value={roomNumber}
-                onChange={(_, newValue) => setRoomNumber(newValue)}
-                options={roomOptions}
-                noOptionsText={
-                    <Box sx={{ 
-                        padding: 1,
-                        backgroundColor: '#ccd1d1',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        textAlign: 'center'
-                    }}>
-                        No matches found
-                    </Box>
-                }
-                renderInput={(params) => (
-                    <TextField {...params} variant="outlined" size="small" fullWidth />
-                )}
-            />
-        </Grid>
-        <Grid item xs={4}>
-            <Typography variant="subtitle2" gutterBottom>
-                Rack Number:<span style={{ color: 'red', marginLeft: '2px' }}>*</span>
-            </Typography>
-            <Autocomplete
-                value={rackNumber}
-                onChange={(_, newValue) => setRackNumber(newValue)}
-                options={rackOptions}
-                noOptionsText={
-                    <Box sx={{ 
-                        padding: 1,
-                        backgroundColor: '#ccd1d1',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        textAlign: 'center'
-                    }}>
-                        No matches found
-                    </Box>
-                }
-                renderInput={(params) => (
-                    <TextField {...params} variant="outlined" size="small" fullWidth />
-                )}
-            />
-        </Grid>
+    <Typography variant="subtitle2" gutterBottom>
+        Room Number:<span style={{ color: 'red', marginLeft: '2px' }}>*</span>
+    </Typography>
+    <Autocomplete
+  options={roomData}
+  getOptionLabel={(option) => option.roomNumber}
+  value={roomData.find((r) => r.docRoomId === selectedRoom) || null}
+  onChange={(event, newValue) => {
+    if (newValue) {
+      setSelectedRoom(newValue.docRoomId); 
+    } else {
+      setSelectedRoom(null);
+    }
+  }}
+  noOptionsText={
+    <Box
+      sx={{
+        padding: 1,
+        backgroundColor: '#ccd1d1',
+        color: '#fff',
+        fontWeight: 'bold',
+        textAlign: 'center',
+      }}
+    >
+      No matches found
+    </Box>
+  }
+  renderInput={(params) => (
+    <TextField {...params} variant="outlined" size="small" fullWidth />
+  )}
+/>
+
+</Grid>
+<Grid item xs={4}>
+    <Typography variant="subtitle2" gutterBottom>
+        Rack Number:<span style={{ color: 'red', marginLeft: '2px' }}>*</span>
+    </Typography>
+    <Autocomplete
+        options={rackData}
+        getOptionLabel={(option) => option.rackNumber}
+        value={
+          rackData.find((r) => r.rackId === selectedRack) || null
+        }
+        onChange={handleRackChange}
+        
+        noOptionsText={
+            <Box sx={{ 
+                padding: 1,
+                backgroundColor: '#ccd1d1',
+                color: '#fff',
+                fontWeight: 'bold',
+                textAlign: 'center'
+            }}>
+                No matches found
+            </Box>
+        }
+        renderInput={(params) => (
+            <TextField {...params} variant="outlined" size="small" fullWidth />
+        )}
+    />
+   </Grid>
         <Grid item xs={4}>
             <Typography variant="subtitle2" gutterBottom>
                 Cell No:<span style={{ color: 'red', marginLeft: '2px' }}>*</span>
             </Typography>
             <Autocomplete
-                value={cellNumber}
-                onChange={(_, newValue) => setCellNumber(newValue)}
-                options={cellOptions}
+                options={[...Array(currentRackCells)].map(
+                  (_, index) => index + 1
+                )}
+                getOptionLabel={(option) => option.toString()}
+                value={selectedCell}
+                onChange={(event, newValue) => setSelectedCell(newValue)}
+                
                 noOptionsText={
                     <Box sx={{ 
                         padding: 1,
@@ -526,7 +853,7 @@ const FileCustodian = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
           <Button 
             variant="contained" 
-            onClick={handleSubmit}
+            onClick={handleAssignFiles}
             
             sx={{ 
               backgroundColor: '#1a5f6a',
@@ -589,7 +916,7 @@ const FileCustodian = () => {
                 fontWeight: 'bold'
             }}
         >
-            Cancel
+            No
         </Button>
         <Button 
             onClick={() => {
@@ -612,7 +939,7 @@ const FileCustodian = () => {
             OK
         </Button>
     </DialogActions>
-</Dialog>
+   </Dialog>
       </Paper>
     </Box>
   );

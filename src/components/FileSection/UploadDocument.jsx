@@ -77,7 +77,7 @@ const UploadDocument = ({
   useEffect(() => {
     setEditorContent(initialContent || "");
   }, [initialContent]);
-  const [filePriority, setFilePriority] = useState("Normal");
+  // const [filePriority, setFilePriority] = useState("Normal");
   const [isConfidential, setIsConfidential] = useState(false);
   // const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   // const [pendingConfidential, setPendingConfidential] = useState(false);
@@ -97,6 +97,9 @@ const UploadDocument = ({
   const [selectedFiles, setSelectedFiles] = useState({});
   const [isMoveToRackModalOpen, setIsMoveToRackModalOpen] = useState(false);
 
+  const [filePriorityOptions, setFilePriorityOptions] = useState([]); 
+  const [filePriority, setFilePriority] = useState(''); 
+
   const options = [
     { value: "LETTER", label: "Letter" },
     { value: "DOCUMENT", label: "Document" },
@@ -105,6 +108,31 @@ const UploadDocument = ({
     { value: "SKETCH", label: "Sketch" },
     { value: "OTHER", label: "Other" },
   ];
+
+  useEffect(() => {
+    const fetchPriorityOptions = async () => {
+      try {
+        const response = await api.get('file/file-priority-list');
+        console.log("priority list", response.data.data);
+        
+        // Access the data array directly from response.data
+        const options = response.data.data || [];
+        
+        setFilePriorityOptions(options); 
+        
+        if (options.length > 0) {
+          // Set the first option's priorityCode as default value
+          setFilePriority(options[0].priorityCode); 
+        }
+      } catch (error) {
+        console.error('Error fetching priorities:', error);
+      }
+    };
+  
+    fetchPriorityOptions();
+  }, []);
+  
+
 
   const handleRadioButtonChange = (index) => {
     setSelectedRow(index);
@@ -1111,26 +1139,25 @@ const UploadDocument = ({
                 </Box>
 
                 <Grid container spacing={2} sx={{ mt: 2 }}>
-                  <Grid item xs={6}>
-                    <FormControl fullWidth>
-                      <InputLabel>File Priority</InputLabel>
-                      <Select
-                        value={filePriority}
-                        onChange={(e) => setFilePriority(e.target.value)}
-                        label="File Priority"
-                        size="small"
-                      >
-                        <MenuItem value="Normal">Normal</MenuItem>
-                        <MenuItem value="Urgent">Urgent</MenuItem>
-                        <MenuItem value="Same day top priority">
-                          Same day top priority
-                        </MenuItem>
-                        <MenuItem value="Immediate most">
-                          Immediate most
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
+                
+
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel>File Priority</InputLabel>
+                  <Select
+                    value={filePriority}
+                    onChange={(e) => setFilePriority(e.target.value)}
+                    label="File Priority"
+                    size="small"
+                  >
+                    {filePriorityOptions.map((option) => (
+                      <MenuItem key={option.priorityCode} value={option.priorityCode}>
+                        {option.priorityName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
                   <Grid item xs={6}>
                     <Box

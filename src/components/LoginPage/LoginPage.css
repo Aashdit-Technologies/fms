@@ -154,7 +154,7 @@
 }
 .log-logo-sec img {
   width: 8%;
-  filter: brightness(0) invert(1);
+  /* filter: brightness(0) invert(1); */
   object-fit: cover;
 }
 .logo_head h2 {

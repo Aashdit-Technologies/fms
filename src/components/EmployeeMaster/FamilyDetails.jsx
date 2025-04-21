@@ -450,7 +450,7 @@ const isValid =validateFamilyFields (rows);
           ))}
 
           {/* Navigation Buttons */}
-          <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
+          <Box sx={{ mt: 3, display: "flex", justifyContent: "center", alignItems:"center", gap:2 }}>
             <Button variant="contained" color="secondary" onClick={handleBack}>
               Back
             </Button>

@@ -14,7 +14,7 @@ import { encryptPayload } from "../../utils/encrypt.js";
 
 import MainFile from "../FileSection/MainFile.jsx";
 
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { toast } from "react-toastify";
 import "./NewRequest.css";
@@ -41,6 +41,7 @@ import { MdOutlineMoveDown } from "react-icons/md";
 
 import { PageLoader } from "../pageload/PageLoader";
 import SendToRackModal from "./SendToRackModal.jsx";
+import { useDashboardStore } from "../Welcome/store.js";
 
 const customStyles = {
   table: {
@@ -149,7 +150,7 @@ const customStyles = {
 const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
   const [selectedFileModule, setSelectedFileModule] = useState("0");
 
-  const [priority, setPriority] = useState("All");
+  // const [priority, setPriority] = useState("All");
 
   const [prioritylyst, setPrioritylyst] = useState("");
 
@@ -189,6 +190,10 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
   console.log("filedetails", fileDetails);
 
   const Navigate = useNavigate();
+console.log("prioritylyst list", prioritylyst);
+
+const { priority, setPriority } = useDashboardStore();
+const location = useLocation();
 
   const filteredData = nRData.data?.filter((item) => {
     return (
@@ -276,7 +281,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
   }, [roomId]);
 
   const fetchFilteredData = async (
-    priority,
+    priorityCode,
     fileModule,
     page = pageNo,
     size = rowSize
@@ -287,7 +292,7 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
       const token = useAuthStore.getState().token;
 
       const payload = {
-        priority: priority || null,
+        priority: priorityCode || null,
 
         fileModule: fileModule || null,
 
@@ -321,10 +326,10 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
     }
   };
 
-  useEffect(() => {
-    fetchFilteredData(priority, selectedFileModule, pageNo, rowSize);
-  }, [priority, selectedFileModule]);
 
+  useEffect(() => {
+    fetchFilteredData(priority?.priorityCode, selectedFileModule, pageNo, rowSize);  
+  }, [priority, selectedFileModule]);
   // Update handlePageChange function
   const handlePageChange = (event, newPage) => {
     if (newPage !== pageNo) {
@@ -726,32 +731,44 @@ const NewRequest = ({ handelRefecthNew, onSwitchTab }) => {
     },
   ];
 
+
+  useEffect(() => {
+    if (!priority) {
+      setPriority({ priorityName: "All", priorityCode: "All" });
+    }
+  }, [priority, setPriority]);
   return (
     <div>
       <div className="row">
-        <div className="form-group col-md-3">
-          {/* <label htmlFor="prioritySelect">Priority</label> */}
-
-          <Autocomplete
-            id="prioritySelect"
-            size="small"
-            options={["All", ...prioritylyst]}
-            getOptionLabel={(option) => option}
-            value={priority || null}
-            onChange={(event, newValue) => setPriority(newValue || "")}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Select Priority"
-                variant="outlined"
-                fullWidth
-              />
-            )}
+        
+      <div className="form-group col-md-3">
+      <Autocomplete
+        id="prioritySelect"
+        size="small"
+        options={[{priorityName: "All", priorityCode: "All"}, ...prioritylyst]}
+        getOptionLabel={(option) => option.priorityName}
+        value={priority}
+        onChange={(event, newValue) => {
+          const selected = newValue || { priorityName: "All", priorityCode: "All" };
+          setPriority(selected);
+          fetchFilteredData(selected.priorityCode);
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Select Priority"
+            variant="outlined"
+            fullWidth
           />
-        </div>
+        )}
+        isOptionEqualToValue={(option, value) => 
+          option.priorityCode === value?.priorityCode
+        }
+      />
+    </div>
 
         <div className="form-group col-md-3">
-          {/* <label htmlFor="fileModuleSelect">File Module</label> */}
+          
 
           <Autocomplete
             size="small"

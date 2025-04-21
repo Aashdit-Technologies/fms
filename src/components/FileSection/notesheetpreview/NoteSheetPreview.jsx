@@ -43,10 +43,20 @@ const NoteSheetPreview = () => {
     setSelectAll(!selectAll);
   };
 
-  const handleSelectNote = (id) => {
-    setSelectedNotes((prev) =>
-      prev.includes(id) ? prev.filter((noteId) => noteId !== id) : [...prev, id]
-    );
+
+  const handleSelectNote = (noteId) => {
+    setSelectedNotes(prevSelected => {
+      if (prevSelected.includes(noteId)) {
+        setSelectAll(false);
+        return prevSelected.filter(id => id !== noteId);
+      } else {
+        const newSelected = [...prevSelected, noteId];
+        if (newSelected.length === previewData.length) {
+          setSelectAll(true);
+        }
+        return newSelected;
+      }
+    });
   };
 
   const highlightText = (text) => {
@@ -154,48 +164,50 @@ const NoteSheetPreview = () => {
       </div>
       
 
-      <div className="mt-4 bg-white p-4 shadow rounded-lg">
-        <h2 className="text-center" style={{ fontSize: "20px", fontWeight: "600", color: "#052C65" }}>NOTE SHEET</h2>
-        
-        {previewData.length === 0 ? (
-          <p className="text-gray-500 text-center mt-2">No note sheet available.</p>
-        ) : (
-          <>
-            <FormControlLabel
-              control={<Checkbox checked={selectAll} onChange={handleSelectAll} />}
-              label="Select All"
-              className="mb-4"
-            />
+   
 
-            {previewData.map((note) => (
-              <div key={note.noteSheetId} className="border-t pl-4 mt-4 d-flex align-items-center">
-                <div className="w-25" style={{ borderRight: "1px solid #e5e7eb" }}>
-                  <div className="flex items-center">
-                    <Checkbox
-                      checked={selectedNotes.includes(note.noteSheetId)}
-                      onChange={() => handleSelectNote(note.noteSheetId)}
-                    />
-                    <div>
-                      <p className="text-sm text-gray-600 mb-2" dangerouslySetInnerHTML={{ __html: highlightText(`Noting No: ${note.notingNo}`) }} />
-                      <p className="text-sm text-gray-600 m-0" dangerouslySetInnerHTML={{ __html: highlightText(`Docket No: ${note.docketNumber}`) }} />
-                      <p className="text-sm text-gray-600 m-0" dangerouslySetInnerHTML={{ __html: highlightText(note.createdDate) }} />
-                    </div>
-                  </div>
-                </div>
+<div className="mt-4 bg-white p-4 shadow rounded-lg">
+    <h2 className="text-center" style={{ fontSize: "20px", fontWeight: "600", color: "#052C65" }}>NOTE SHEET</h2>
+    
+    {previewData.length === 0 ? (
+      <p className="text-gray-500 text-center mt-2">No note sheet available.</p>
+    ) : (
+      <>
+        <FormControlLabel
+          control={<Checkbox checked={selectAll} onChange={handleSelectAll} />}
+          label="Select All"
+          className="mb-4"
+        />
 
-                <div className="w-75 px-4" style={{ marginTop: "65px" }}>
-                  <div className="border-l-4 border-gray-400 pl-4">
-                    <p className="mt-2" dangerouslySetInnerHTML={{ __html: highlightText(note.note) }} />
-                  </div>
-                  <div className="mt-4 text-right float-end">
-                    <p className="text-right float-end" dangerouslySetInnerHTML={{ __html: highlightText(`${note.senderName} <br /> (${note.senderDesignation})`) }} />
-                  </div>
+        {previewData.map((note) => (
+          <div key={note.noteSheetId} className="border-t pl-4 mt-4 d-flex align-items-center">
+            <div className="w-25" style={{ borderRight: "1px solid #e5e7eb" }}>
+              <div className="flex items-center">
+                <Checkbox
+                  checked={selectedNotes.includes(note.noteSheetId)}
+                  onChange={() => handleSelectNote(note.noteSheetId)}
+                />
+                <div>
+                  <p className="text-sm text-gray-600 mb-2" dangerouslySetInnerHTML={{ __html: highlightText(`Noting No: ${note.notingNo}`) }} />
+                  <p className="text-sm text-gray-600 m-0" dangerouslySetInnerHTML={{ __html: highlightText(`Docket No: ${note.docketNumber}`) }} />
+                  <p className="text-sm text-gray-600 m-0" dangerouslySetInnerHTML={{ __html: highlightText(note.createdDate) }} />
                 </div>
               </div>
-            ))}
-          </>
-        )}
-      </div>
+            </div>
+
+            <div className="w-75 px-4" style={{ marginTop: "65px" }}>
+              <div className="border-l-4 border-gray-400 pl-4">
+                <p className="mt-2" dangerouslySetInnerHTML={{ __html: highlightText(note.note) }} />
+              </div>
+              <div className="mt-4 text-right float-end">
+                <p className="text-right float-end" dangerouslySetInnerHTML={{ __html: highlightText(`${note.senderName} <br /> (${note.senderDesignation})`) }} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </>
+    )}
+  </div>
     </div>
   );
 };

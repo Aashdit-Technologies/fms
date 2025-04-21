@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import "./Header.css";
-import odishalogo from "../../assets/odishalogo.png";
+import cggovt from "../../assets/cggovt.png";
 import { IoMdLogOut } from "react-icons/io";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import api from "../../Api/Api";
@@ -181,11 +181,11 @@ const Header = ({ collapsed }) => {
           <div className="col-md-4">
             <div className="left-header">
               <div className="logo-sec">
-                <img src={odishalogo} alt="Logo" />
+                <img src={cggovt} alt="Logo" />
               </div>
               <div className="logo-text">
                 <h2>FILE MANAGEMENT SYSTEM</h2>
-                <p>Higher Education Information & Management System</p>
+                <p>Government of Chhattisgarh</p>
               </div>
             </div>
           </div>

@@ -27,6 +27,7 @@ import ChangePassword from "../Header/ChangePassword";
 import EditBasicDetails from "../Header/EditBasicDetails";
 import AllView from "../Welcome/AllView";
 import ManageMaster from "../ManageOwnership/ManageMaster";
+import FileTrackingSearch from "../Reports/FileTrackingSearch";
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(true);
@@ -120,10 +121,10 @@ const Admin = () => {
               }
             />
             <Route
-              path="manage-custodian"
+              path="manage-ownership"
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
-                  <ManageMaster/>
+                 <ManageMaster/>
                 </React.Suspense>
               }
             />
@@ -237,6 +238,14 @@ const Admin = () => {
               element={
                 <React.Suspense fallback={<div>Loading...</div>}>
                   <AllView />
+                </React.Suspense>
+              }
+            />
+             <Route
+              path="/reports"
+              element={
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <FileTrackingSearch/>
                 </React.Suspense>
               }
             />

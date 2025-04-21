@@ -699,8 +699,8 @@ const EmploymentDetails = ({ handleTabChange }) => {
         ))}
         
 
-        <Box sx={{ mt: 3, display: "flex", justifyContent: "space-between" }}>
-          <Button variant="contained" color="secondary" onClick={handleBack}>
+        <Box  sx={{ mt: 3, display: "flex", justifyContent: "center", alignItems:"center",  gap:2}}>
+          <Button variant="contained" color="secondary" onClick={handleBack} >
             Back
           </Button>
           <Button variant="contained" color="primary"  onClick={handleSaveAndNext}>

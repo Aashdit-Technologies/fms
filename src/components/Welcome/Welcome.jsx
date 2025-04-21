@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import {
   Description as DescriptionIcon,
@@ -10,13 +10,49 @@ import {
   FlashOn as FlashOnIcon,
 } from "@mui/icons-material";
 import CountUp from "react-countup";
-
+import api from "../../Api/Api";
 import { Link, useNavigate } from "react-router-dom";
-
+import { PageLoader } from "../pageload/PageLoader";
+import { useDashboardStore } from "./store";
 const Welcome = () => {
   const navigate=useNavigate()
+  const [isLoading, setIsLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState({
+    letters: 0,
+    urgentLetters: 0,
+    normalFiles: 0,
+    dateSetFiles: 0,
+    urgentFiles: 0,
+    sameDayPriorityFiles: 0,
+    immediateMostFiles: 0
+  });
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        const response = await api.post("dashboard/current-role-dashboard-data");
+        
+        // Ensure we have data and merge with defaults
+        setDashboardData(prev => ({
+          ...prev, // Keep initial values if some are missing in response
+          ...(response.data.data || {}) // Spread the response data if it exists
+        }));
+        
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchDashboardData();
+  }, []);
+
+ 
   return (
     <>
+      {isLoading && <PageLoader/>}
       <Box>
         <Box
           sx={{
@@ -58,7 +94,7 @@ const Welcome = () => {
                 fontSize: "2.5rem",
               }}
             >
-              <CountUp end={100} duration={2} />
+             <CountUp end={dashboardData?.letters || 0} duration={2} />
             </Typography>
             <Typography
               variant="subtitle1"
@@ -101,7 +137,7 @@ const Welcome = () => {
               variant="h4"
               sx={{ color: "white", fontWeight: 600, mb: 2 }}
             >
-              <CountUp end={110} duration={2} />
+              <CountUp end={dashboardData.urgentLetters} duration={2} />
             </Typography>
             <Typography
               variant="subtitle1"
@@ -124,7 +160,12 @@ const Welcome = () => {
             />
           </Box>
           </Link>
-          <Link to="/file" style={{ textDecoration: "none" }}>
+          <Link 
+  to="/file" 
+ 
+  style={{ textDecoration: "none" }}
+  onClick={() => useDashboardStore.getState().setPriority({ priorityName: "Normal", priorityCode: "NORMAL" })}
+>
           <Box
             sx={{
               position: "relative",
@@ -144,7 +185,7 @@ const Welcome = () => {
               variant="h4"
               sx={{ color: "white", fontWeight: 600, mb: 2 }}
             >
-              <CountUp end={130} duration={2} />
+              <CountUp end={dashboardData.normalFiles} duration={2} />
             </Typography>
             <Typography
               variant="subtitle1"
@@ -167,7 +208,12 @@ const Welcome = () => {
             />
           </Box>
 </Link>
-<Link to="/file" style={{ textDecoration: "none" }}>
+<Link 
+  to="/file" 
+ 
+  style={{ textDecoration: "none" }}
+  onClick={() => useDashboardStore.getState().setPriority({ priorityName: "Date-Set", priorityCode: "DATE_SET" })}
+>
           <Box
             sx={{
               position: "relative",
@@ -187,7 +233,7 @@ const Welcome = () => {
               variant="h4"
               sx={{ color: "white", fontWeight: 600, mb: 2 }}
             >
-              <CountUp end={200} duration={2} />
+              <CountUp end={dashboardData.dateSetFiles} duration={2} />
             </Typography>
             <Typography
               variant="subtitle1"
@@ -210,7 +256,12 @@ const Welcome = () => {
             />
           </Box>
 </Link>
-     <Link to="/file" style={{ textDecoration: "none" }}>
+<Link 
+  to="/file" 
+
+  style={{ textDecoration: "none" }}
+  onClick={() => useDashboardStore.getState().setPriority({ priorityName: "Urgent", priorityCode: "URGENT" })}
+>
           <Box
             sx={{
               position: "relative",
@@ -230,7 +281,7 @@ const Welcome = () => {
               variant="h4"
               sx={{ color: "white", fontWeight: 600, mb: 2 }}
             >
-              <CountUp end={150} duration={2} />
+              <CountUp end={dashboardData.urgentFiles} duration={2} />
             </Typography>
             <Typography
               variant="subtitle1"
@@ -253,7 +304,12 @@ const Welcome = () => {
             />
           </Box>
           </Link>
-          <Link to="/file" style={{ textDecoration: "none" }}>
+          <Link 
+  to="/file" 
+ 
+  style={{ textDecoration: "none" }}
+  onClick={() => useDashboardStore.getState().setPriority({ priorityName: "Same day top priority", priorityCode: "SAME_DAY" })}
+>
           <Box
             sx={{
               position: "relative",
@@ -273,7 +329,7 @@ const Welcome = () => {
               variant="h4"
               sx={{ color: "white", fontWeight: 600, mb: 2 }}
             >
-              <CountUp end={126} duration={2} />
+              <CountUp end={dashboardData.sameDayPriorityFiles} duration={2} />
             </Typography>
             <Typography
               variant="subtitle1"
@@ -296,7 +352,12 @@ const Welcome = () => {
             />
           </Box>
           </Link>
-          <Link to="/file" style={{ textDecoration: "none" }}>
+          <Link 
+  to="/file" 
+ 
+  style={{ textDecoration: "none" }}
+  onClick={() => useDashboardStore.getState().setPriority({ priorityName: "Immediate most", priorityCode: "IMMEDIATE" })}
+>
           <Box
             sx={{
               position: "relative",
@@ -316,7 +377,7 @@ const Welcome = () => {
               variant="h4"
               sx={{ color: "white", fontWeight: 600, mb: 2 }}
             >
-              <CountUp end={99} duration={2} />
+              <CountUp end={dashboardData.immediateMostFiles} duration={2} />
             </Typography>
             <Typography
               variant="subtitle1"
