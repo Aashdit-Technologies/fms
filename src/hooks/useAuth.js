@@ -66,7 +66,7 @@ export const useAuth = () => {
           userName: credentials.userName,
           password: credentials.password,
           captcha: credentials.userCaptcha,
-          byPassCaptcha: true,
+          byPassCaptcha: false,
         };
   
         const encryptedMessage = encryptPayload(payload);

@@ -51,7 +51,7 @@ const Header = ({ collapsed }) => {
       }
       return response.data.data;
     } catch (error) {
-      console.error("Roles fetch error:", error);
+      // console.error("Roles fetch error:", error);
       // toast.error('Failed to fetch roles. Please try again later.');
       throw error;
     } finally {
@@ -116,9 +116,9 @@ const Header = ({ collapsed }) => {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries(["roles"]);
       queryClient.invalidateQueries(["menu"]);
-      toast.success("Role changed successfully", {
-        autoClose: 1000,
-      });
+      // toast.success("Role changed successfully", {
+      //   autoClose: 1000,
+      // });
       setTimeout(() => {
         navigate("/");
       }, 1100);

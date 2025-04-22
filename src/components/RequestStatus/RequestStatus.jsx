@@ -419,7 +419,7 @@ const RequestStatus = ({ onSwitchTab }) => {
       name: "Status",
       selector: (row) => row.status,
       sortable: true,
-      width: "120px",
+      // width: "120px",
       cell: (row) => (
         <span
           className={`rounded p-1 text-white ${

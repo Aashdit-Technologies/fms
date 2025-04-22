@@ -21,13 +21,15 @@ import useApiListStore from '../ManageFile/ApiListStore';
 import useAuthStore from "../../store/Store";
 import api from "../../Api/Api";
 import { encryptPayload } from "../../utils/encrypt.js";
+import { PageLoader } from "../pageload/PageLoader";
+import customStyles from "../customStyles.jsx";
 const FileCustodian = () => {
   const [searchText, setSearchText] = useState('');
   const [pageNo, setPageNo] = useState(1);
   const [rowSize, setRowSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-   
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
@@ -54,59 +56,7 @@ const FileCustodian = () => {
    const [custodianDataTo, setCustodianDataTo] = useState([]);
    const [selectedCustodianTo, setSelectedCustodianTo] = useState("");
    const [selectedFiles, setSelectedFiles] = useState([]);
-   const customStyles = {
-    table: {
-      style: {
-        border: "1px solid #ddd",
-        borderRadius: "10px",
-        overflow: "hidden",
-        boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
-        backgroundColor: "#ffffff",
-        marginBottom: "1rem",
-      },
-    },
-    headRow: {
-      style: {
-        backgroundColor: "#005f73",
-        color: "#ffffff",
-        fontSize: "14px",
-        fontWeight: "600",
-        minHeight: "52px",
-        borderBottom: "2px solid #003d4c",
-      },
-    },
-    headCells: {
-      style: {
-        padding: "12px 8px",
-        textAlign: "left",
-        fontWeight: "bold",
-        borderRight: "1px solid rgba(255, 255, 255, 0.1)",
-      },
-    },
-    rows: {
-      style: {
-        fontSize: "13px",
-        fontWeight: "400",
-        color: "#333",
-        backgroundColor: "#ffffff",
-        minHeight: "50px",
-        "&:not(:last-of-type)": {
-          borderBottom: "1px solid #ddd",
-        },
-        "&:hover": {
-          backgroundColor: "#e6f2f5",
-        },
-      },
-    },
-    cells: {
-      style: {
-        padding: "12px 8px",
-        textAlign: "left",
-        borderRight: "1px solid #ddd",
-        wordBreak: "break-word",
-      },
-    },
-    };
+  
 
      useEffect(() => {
     const fetchCustodianData = async () => {
@@ -114,8 +64,9 @@ const FileCustodian = () => {
         setCustodianData([]);
         return;
       }
-      setLoading(true);
+      
       const payload = { officeId: selectedOffice };
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         const encryptedMessage = encryptPayload(payload);
@@ -128,7 +79,7 @@ const FileCustodian = () => {
         console.error("Error fetching custodian data:", error);
         setCustodianData([]);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -143,9 +94,9 @@ const FileCustodian = () => {
         return;
       }
 
-      setLoading(true);
+     
       const payload = { fromCustodianId: selectedCustodian };
-
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         const encryptedMessage = encryptPayload(payload);
@@ -160,7 +111,7 @@ const FileCustodian = () => {
         console.error("Error fetching custodian table data:", error);
         setCustodianTableData([]);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -183,8 +134,9 @@ const FileCustodian = () => {
           return;
         }
   
-        setLoading(true);
+        
         const payload = { officeId: selectedOfficeTo };
+        setIsLoading(true);
         try {
           const token = useAuthStore.getState().token;
           const encryptedMessage = encryptPayload(payload);
@@ -198,7 +150,7 @@ const FileCustodian = () => {
           console.error("Error fetching custodian data:", error);
           setCustodianDataTo([]);
         }finally{
-          setLoading(false);
+          setIsLoading(false);
         } 
       };
   
@@ -206,6 +158,7 @@ const FileCustodian = () => {
     }, [selectedOfficeTo]);
   
     const handleFileNumberClick = async (row) => {
+      setIsLoading(true);
       try {
         setSelectedFile({
           fileNumber: row.docFileName,
@@ -245,6 +198,9 @@ const FileCustodian = () => {
         console.error('Error fetching basic details:', error);
         
       }
+      finally{
+        setIsLoading(false);
+      }
     };
 
     const handleRackChange = (event, newValue) => {
@@ -268,6 +224,7 @@ const FileCustodian = () => {
 
     useEffect(() => {
       const fetchRoomData = async () => {
+        setIsLoading(true);
         try {
           const token = useAuthStore.getState().token;
   
@@ -277,6 +234,9 @@ const FileCustodian = () => {
           setRoomData(response.data.data);
         } catch (error) {
           console.error("Error fetching room data:", error);
+        }
+        finally{
+          setIsLoading(false);
         }
       };
       fetchRoomData();
@@ -290,7 +250,7 @@ const FileCustodian = () => {
         }
   
         const payload = { docRoomId: selectedRoom };
-  
+        setIsLoading(true);
         try {
           const token = useAuthStore.getState().token;
           const encryptedMessage = encryptPayload(payload);
@@ -307,6 +267,9 @@ const FileCustodian = () => {
         } catch (error) {
           console.error("Error fetching rack data:", error);
           setRackData([]);
+        }
+        finally{
+          setIsLoading(false);
         }
       };
   
@@ -433,13 +396,13 @@ const FileCustodian = () => {
           return;
         }
       }
-    setLoading(true);
+ 
       const payload = {
         fromEmpDeptMapId: selectedCustodian,
         toEmpDeptMapId: selectedCustodianTo,
         changeIds: selectedFiles,
       };
-  
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         const encryptedMessage = encryptPayload(payload);
@@ -477,7 +440,7 @@ const FileCustodian = () => {
         toast.error("Failed to assign files.");
         
       }finally{
-        setLoading(false);
+        setIsLoading(false);
       }
     };
    
@@ -508,6 +471,8 @@ const handleRowSizeChange = (event) => {
 };
 
   return (
+    <>
+     {isLoading && <PageLoader />}
     <Box>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>
@@ -942,6 +907,7 @@ const handleRowSizeChange = (event) => {
    </Dialog>
       </Paper>
     </Box>
+    </>
   );
 };
 

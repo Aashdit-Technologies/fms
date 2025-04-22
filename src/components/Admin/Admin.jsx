@@ -50,9 +50,24 @@ const Admin = () => {
 
   const flatMenuItems = getFlatMenuItems(menuItems);
 
+  // const lazyLoadComponent = (componentName) => {
+  //   try {
+  //     return React.lazy(() => import(`../${componentName}`));
+  //   } catch (error) {
+  //     console.error(`Error loading component: ${componentName}`, error);
+  //     return null;
+  //   }
+  // };
   const lazyLoadComponent = (componentName) => {
     try {
-      return React.lazy(() => import(`../${componentName}`));
+      // First try component folder structure
+      return React.lazy(() => 
+        import(`../${componentName}/${componentName}.jsx`)
+          .catch(() => 
+            // Fallback to direct file
+            import(`../${componentName}.jsx`)
+          )
+      );
     } catch (error) {
       console.error(`Error loading component: ${componentName}`, error);
       return null;

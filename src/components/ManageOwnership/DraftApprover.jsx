@@ -17,6 +17,8 @@ import useAuthStore from "../../store/Store";
 import api from "../../Api/Api";
 import { encryptPayload } from "../../utils/encrypt.js";
 import { toast } from 'react-toastify';
+import { PageLoader } from "../pageload/PageLoader";
+import customStyles from "../customStyles.jsx";
 const DraftApprover = () => {
 
   const [toOffice, setToOffice] = useState('');
@@ -44,14 +46,17 @@ const DraftApprover = () => {
 
    const [draftApproverTableData, setDraftApproverTableData] = useState([]);
  const [selectedFiles, setSelectedFiles] = useState([]);
+ const [isLoading, setIsLoading] = useState(false);
+
    useEffect(() => {
     const fetchCustodianData = async () => {
       if (!selectedOffice) {
         setCustodianData([]);
         return;
       }
-      setLoading(true);
+      
       const payload = { officeId: selectedOffice };
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         const encryptedMessage = encryptPayload(payload);
@@ -64,7 +69,7 @@ const DraftApprover = () => {
         console.error("Error fetching custodian data:", error);
         setCustodianData([]);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -79,8 +84,9 @@ const DraftApprover = () => {
         return;
       }
 
-      setLoading(true);
+     
       const payload = { officeId: selectedOfficeTo };
+      setIsLoading(true);
       try {
         const token = useAuthStore.getState().token;
         const encryptedMessage = encryptPayload(payload);
@@ -94,7 +100,7 @@ const DraftApprover = () => {
         console.error("Error fetching custodian data:", error);
         setCustodianDataTo([]);
       }finally{
-        setLoading(false);
+        setIsLoading(false);
       } 
     };
 
@@ -109,9 +115,9 @@ const DraftApprover = () => {
         return;
       }
 
-      setLoading(true);
+     
       const payload = { empDeptMapId: selectedCustodian };
-
+      setIsLoading(false);
       try {
         const token = useAuthStore.getState().token;
         const response = await api.post("file/get-draft-correspondence-list",
@@ -126,7 +132,7 @@ const DraftApprover = () => {
         console.error("Error fetching Draft Approver table data:", error);
         setDraftApproverTableData([]);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -147,59 +153,7 @@ const DraftApprover = () => {
       item.approver.toLowerCase().includes(searchText.toLowerCase()) ||
       item.corrType.toLowerCase().includes(searchText.toLowerCase())
   );
-   const customStyles = {
-    table: {
-      style: {
-        border: "1px solid #ddd",
-        borderRadius: "10px",
-        overflow: "hidden",
-        boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
-        backgroundColor: "#ffffff",
-        marginBottom: "1rem",
-      },
-    },
-    headRow: {
-      style: {
-        backgroundColor: "#005f73",
-        color: "#ffffff",
-        fontSize: "14px",
-        fontWeight: "600",
-        minHeight: "52px",
-        borderBottom: "2px solid #003d4c",
-      },
-    },
-    headCells: {
-      style: {
-        padding: "12px 8px",
-        textAlign: "left",
-        fontWeight: "bold",
-        borderRight: "1px solid rgba(255, 255, 255, 0.1)",
-      },
-    },
-    rows: {
-      style: {
-        fontSize: "13px",
-        fontWeight: "400",
-        color: "#333",
-        backgroundColor: "#ffffff",
-        minHeight: "50px",
-        "&:not(:last-of-type)": {
-          borderBottom: "1px solid #ddd",
-        },
-        "&:hover": {
-          backgroundColor: "#e6f2f5",
-        },
-      },
-    },
-    cells: {
-      style: {
-        padding: "12px 8px",
-        textAlign: "left",
-        borderRight: "1px solid #ddd",
-        wordBreak: "break-word",
-      },
-    },
-    };
+  
 
     const columns = [
       {
@@ -281,13 +235,13 @@ const DraftApprover = () => {
           toast.warning("Please select Draft Approver (To)");
           return;
         }
-  setLoading(true);
+ 
     const payload = {
       fromEmpDeptMapId: selectedCustodian,
       toEmpDeptMapId: selectedCustodianTo,
       changeIds: selectedFiles,
     };
-
+    setIsLoading(true);
     try {
       const token = useAuthStore.getState().token;
       
@@ -321,7 +275,7 @@ const DraftApprover = () => {
       toast.error("Failed to draft approver files.");
       
     }finally{
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -356,6 +310,9 @@ const DraftApprover = () => {
  };
 
   return (
+    <>
+     {isLoading && <PageLoader />}
+   
     <Box>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>
@@ -619,6 +576,7 @@ const DraftApprover = () => {
        
       </Paper>
     </Box>
+    </>
   );
 };
 
